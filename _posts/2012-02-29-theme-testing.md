@@ -189,4 +189,6 @@ scelerisque lorem.
 
 ## Reddit Disapproval Face **ಠ_ಠ**
 
+jekyll --server --auto to run local server
+
 That's all folks!
