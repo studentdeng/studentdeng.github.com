@@ -1,42 +1,45 @@
-# Jekyll-Bootstrap
 
-The quickest way to start and publish your Jekyll powered blog. 100% compatible with GitHub pages
+# About
 
-## Usage
-
-For all usage and documentation please see: <http://jekyllbootstrap.com>
-
-## Version
-
-0.2.9 - stable and versioned using [semantic versioning](http://semver.org/).
-
-## Contributing 
-
-This repository tracks 2 projects:
-
-- **Jekyll-Bootstrap Framework.**  
-  The framework for which users should clone and build their blog on top of is available in the master branch.
-  
-  To contribute to the framework please make sure to checkout your branch based on `jb-development`!!
-  This is very important as it allows me to accept your pull request without having to publish a public version release.
-  
-  Small, atomic Features, bugs, etc.   
-  Use the `jb-development` branch but note it will likely change fast as pull requests are accepted.   
-  Please rebase as often as possible when working.   
-  Work on small, atomic features/bugs to avoid upstream commits affecting/breaking your development work.
-  
-  For Big Features or major API extensions/edits:   
-  This is the one case where I'll accept pull-requests based off the master branch.
-  This allows you to work in isolation but it means I'll have to manually merge your work into the next public release.
-  Translation : it might take a bit longer so please be patient! (but sincerely thank you).
- 
-- **Jekyll-Bootstrap Documentation Website.**    
-  The documentation website at <http://jekyllbootstrap.com> is maintained in the gh-pages branch.
-  Please fork and contribute documentation additions to this branch only.
-
-The master and gh-pages branch do not share the same ancestry. Please treat them as completely separate git repositories!
-
+This is the data for my blog at [williamting.com](http://williamting.com/),
+running off [Jekyll Bootstrap](http://jekyllbootstrap.com/).
 
 ## License
 
-[Creative Commons](http://creativecommons.org/licenses/by-nc-sa/3.0/)
+Content in the following directories is copyrighted by William Ting. No reuse is
+allowed without permission.
+
+- posts/
+
+All other directories and files are MIT Licensed unless otherwise defined,
+please feel free to use.
+
+The theme's original author made no attempt at testing the design on IE
+browsers. I am equally uninclined to go down that rabbit hole.
+
+## Jekyll-Bootstrap Theme Info
+
+- Theme Name: min-ting
+- Description: A minimalist theme for
+  [Jekyll](https://github.com/mojombo/jekyll)
+via [Jekyll-Bootstrap](http://jekyllbootstrap.com/)'s theming engine. Forked
+from [Yuya Saito](http://www.layouts-the.me/)'s
+[the-minimum](https://github.com/studiomohawk/jekyll-theme-the_minimum) theme.
+- Author: Yuya Saito, William Ting
+
+### How To Use?
+
+1. [Jekyll](https://github.com/mojombo/jekyll)
+2. [Jekyll-Bootstrap](http://jekyllbootstrap.com/)
+
+### Attributions
+
+- [Jekyll-Bootstrap](http://jekyllbootstrap.com/) / [CC BY-NC-SA
+  3.0](http://creativecommons.org/licenses/by-nc-sa/3.0/)
+- [Modernizr](http://www.modernizr.com/) / MIT
+- [Frameless](http://framelessgrid.com/) / [CC0](http://creativecommons.org/publicdomain/zero/1.0/)
+- [HTML5 Boilerplate](http://html5boilerplate.com/) / [The
+  Unlicense](http://unlicense.org) aka Public Domain
+- [Font Awesome](http://fortawesome.github.com/Font-Awesome/) / [CC BY
+  3.0](http://creativecommons.org/licenses/by/3.0/)
+- [Yuya Saito](https://github.com/studiomohawk/jekyll-theme-the_minimum) / MIT
