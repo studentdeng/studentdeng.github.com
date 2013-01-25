@@ -29,6 +29,12 @@
 								<span class="year">{{ page.date | date: '%Y' }}</span>
 							</date>
 						</p>
+						<p>
+						{% if site.weibo_share %}
+     						{% include share/weibo.html %}
+ 						{% endif %}	
+						</p>
+
 						<ul class="list-tag list-linear">
 							<li class="list-head">tags: </li>
 							{% assign tags_list = page.tags %}
