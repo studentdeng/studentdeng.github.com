@@ -29,6 +29,12 @@
 								<span class="year">{{ page.date | date: '%Y' }}</span>
 							</date>
 						</p>
+						<ul class="list-tag list-linear">
+							<li class="list-head">tags: </li>
+							{% assign tags_list = page.tags %}
+							{% include JB/tags_list %}
+						</ul>
+
 						<p>
 						{% if site.weibo_share %}
      						{% include share/weibo.html %}
@@ -40,12 +46,6 @@
 							<script type="text/javascript" id="UYScript" src="http://v1.uyan.cc/js/iframe.js?UYUserId=1737602" async=""></script>
 							<!-- UY END -->
 						</p>
-
-						<ul class="list-tag list-linear">
-							<li class="list-head">tags: </li>
-							{% assign tags_list = page.tags %}
-							{% include JB/tags_list %}
-						</ul>
 					</div><!-- meta -->
 				</div><!-- entry-content -->
 				<div class="misc-content">
@@ -54,8 +54,6 @@
 						<div style="float: right;"><a href="#page">&uarr; Back to Top</a></div>
 						<div style="clear: both;"></div>
 					</div>
-
-					{% include JB/comments %}
 				</div><!-- misc-content -->
 
 			</div><!-- bd -->
