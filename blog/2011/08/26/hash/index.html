@@ -111,281 +111,312 @@
 
 <p>一个简单的例子，linux2.4 在处理进程中，需要一个通过pid找到进程的要求，而具体实现则是利用了hash。在处理冲突时，采用的是链表的方法。不过由于是操作系统的代码，所以这里并不是通常意义的双向链表，pidhash_next 指向后一个进程，但是pidhash_pprev指向的是前一个进程的pidhash_next的地址。虽然不长，但是理解这段还是需要稍微动下脑筋，系统之所以这么实现，似乎是能够提高增加和删除时链表的效率。</p>
 
-<p>/<em> PID hashing. (shouldnt this be dynamic?) </em>/</p>
+<p>  /<em> PID hashing. (shouldnt this be dynamic?) </em>/
+  #define PIDHASH_SZ (4096 >> 2)
+  extern struct task_struct <em>pidhash[PIDHASH_SZ];
+  #define pid_hashfn(x) ((((x) >> 8) ^ (x)) &amp; (PIDHASH_SZ - 1))
+  static inline void hash_pid(struct task_struct </em>p)
+  {</p>
 
-<h1>define PIDHASH_SZ (4096 >> 2)</h1>
-
-<p>extern struct task_struct *pidhash[PIDHASH_SZ];</p>
-
-<h1>define pid_hashfn(x) ((((x) >> 8) ^ (x)) &amp; (PIDHASH_SZ - 1))</h1>
-
-<p>static inline void hash_pid(struct task_struct *p)
-{</p>
-
-<pre><code>struct task_struct **htable = &amp;pidhash[pid_hashfn(p-&gt;pid)]; 
-if((p-&gt;pidhash_next = *htable) != NULL)//如果发生的冲突 
-    (*htable)-&gt;pidhash_pprev = &amp;p-&gt;pidhash_next;//这里可以看出，pprev是上一个进程的next指针的地址 
-*htable = p; 
-p-&gt;pidhash_pprev = htable;//新的进程的pprev是指向了hash表项中的自己的地址 
+<pre><code>  struct task_struct **htable = &amp;pidhash[pid_hashfn(p-&gt;pid)]; 
+  if((p-&gt;pidhash_next = *htable) != NULL)//如果发生的冲突 
+      (*htable)-&gt;pidhash_pprev = &amp;p-&gt;pidhash_next;//这里可以看出，pprev是上一个进程的next指针的地址 
+  *htable = p; 
+  p-&gt;pidhash_pprev = htable;//新的进程的pprev是指向了hash表项中的自己的地址 
 </code></pre>
 
-<p>}
-static inline void unhash_pid(struct task_struct *p)
-{</p>
+<p>  }
+  static inline void unhash_pid(struct task_struct *p)
+  {</p>
 
-<pre><code>if(p-&gt;pidhash_next)//如果有冲突 
-    p-&gt;pidhash_next-&gt;pidhash_pprev = p-&gt;pidhash_pprev; 
-*p-&gt;pidhash_pprev = p-&gt;pidhash_next;//当没有冲突时，就会置NULL 
+<pre><code>  if(p-&gt;pidhash_next)//如果有冲突 
+      p-&gt;pidhash_next-&gt;pidhash_pprev = p-&gt;pidhash_pprev; 
+  *p-&gt;pidhash_pprev = p-&gt;pidhash_next;//当没有冲突时，就会置NULL 
 </code></pre>
 
-<p>}
-static inline struct task_struct *find_task_by_pid(int pid)
-{</p>
+<p>  }
+  static inline struct task_struct *find_task_by_pid(int pid)
+  {</p>
 
-<pre><code>struct task_struct *p, **htable = &amp;pidhash[pid_hashfn(pid)]; 
-for(p = *htable; p &amp;&amp; p-&gt;pid != pid; p = p-&gt;pidhash_next); 
-return p; 
+<pre><code>  struct task_struct *p, **htable = &amp;pidhash[pid_hashfn(pid)]; 
+  for(p = *htable; p &amp;&amp; p-&gt;pid != pid; p = p-&gt;pidhash_next); 
+  return p; 
 </code></pre>
 
-<p>}
+<p>  }
 SGI STL的例子 hash</p>
 
 <p>SGI STL中的hashtable 同样采用的是开链法设计，这里就是hashtable中节点的样子</p>
 
-<p>template <class _Val>
-struct <em>Hashtable_node
-{
-  </em>Hashtable_node* <em>M_next;
-  </em>Val _M_val;
-};</p>
+<p>  template <class _Val>
+  struct _Hashtable_node
+  {</p>
+
+<pre><code>_Hashtable_node* _M_next; 
+_Val _M_val; 
+</code></pre>
+
+<p>  };</p>
 
 <p>这里可以看出，hashtable并没有利用现有的list等容器，而是自己简单的创建一个单向链表并维护。由于hashtable中的每一项元素都是一连串的数据（处理冲突而在一个链表中），所以将hashtable中的元素成为bucket，表示这个元素其实可能有“一桶子”东西，最后hashtable通过vector管理bucket，实现动态增长。</p>
 
 <p>同之前一样，首先从iterator开始了解。下面是hashtable的iterator实现。</p>
 
-<p>template &lt;class <em>Val, class </em>Key, class _HashFcn,</p>
+<p>  template &lt;class <em>Val, class </em>Key, class _HashFcn,</p>
 
-<pre><code>      class _ExtractKey, class _EqualKey, class _Alloc&gt;
+<pre><code>        class _ExtractKey, class _EqualKey, class _Alloc&gt;
 </code></pre>
 
-<p>struct <em>Hashtable_iterator {
-  typedef hashtable&lt;</em>Val,<em>Key,</em>HashFcn,<em>ExtractKey,</em>EqualKey,_Alloc></p>
+<p>  struct _Hashtable_iterator {</p>
 
-<pre><code>      _Hashtable;
+<pre><code>typedef hashtable&lt;_Val,_Key,_HashFcn,_ExtractKey,_EqualKey,_Alloc&gt;
+        _Hashtable;
+typedef _Hashtable_iterator&lt;_Val, _Key, _HashFcn, 
+                            _ExtractKey, _EqualKey, _Alloc&gt;
+        iterator;
+typedef _Hashtable_const_iterator&lt;_Val, _Key, _HashFcn, 
+                                  _ExtractKey, _EqualKey, _Alloc&gt;
+        const_iterator;
+typedef _Hashtable_node&lt;_Val&gt; _Node;
+typedef forward_iterator_tag iterator_category; 
+typedef _Val value_type;
+typedef ptrdiff_t difference_type;
+typedef size_t size_type;
+typedef _Val&amp; reference;
+typedef _Val* pointer;
+_Node* _M_cur;         //指向当前的节点
+_Hashtable* _M_ht;     //指向hashtable容器
+_Hashtable_iterator(_Node* __n, _Hashtable* __tab) 
+  : _M_cur(__n), _M_ht(__tab) {}
+_Hashtable_iterator() {}
+reference operator*() const { return _M_cur-&gt;_M_val; }
 </code></pre>
 
-<p>  typedef <em>Hashtable_iterator&lt;</em>Val, <em>Key, </em>HashFcn,</p>
+<p>  #ifndef __SGI_STL_NO_ARROW_OPERATOR</p>
 
-<pre><code>                          _ExtractKey, _EqualKey, _Alloc&gt;
-      iterator;
+<pre><code>pointer operator-&gt;() const { return &amp;(operator*()); }
 </code></pre>
 
-<p>  typedef <em>Hashtable_const_iterator&lt;</em>Val, <em>Key, </em>HashFcn,</p>
+<p>  #endif /<em> __SGI_STL_NO_ARROW_OPERATOR </em>/</p>
 
-<pre><code>                                _ExtractKey, _EqualKey, _Alloc&gt;
-      const_iterator;
+<pre><code>iterator&amp; operator++();
+iterator operator++(int);
+bool operator==(const iterator&amp; __it) const
+  { return _M_cur == __it._M_cur; }
+bool operator!=(const iterator&amp; __it) const
+  { return _M_cur != __it._M_cur; }
 </code></pre>
 
-<p>  typedef <em>Hashtable_node<_Val> </em>Node;
-  typedef forward_iterator_tag iterator_category;
-  typedef <em>Val value_type;
-  typedef ptrdiff_t difference_type;
-  typedef size_t size_type;
-  typedef </em>Val&amp; reference;
-  typedef <em>Val* pointer;
-  </em>Node<em> <em>M_cur;         //指向当前的节点
-  </em>Hashtable</em> <em>M_ht;     //指向hashtable容器
-  </em>Hashtable_iterator(<em>Node* __n, </em>Hashtable* __tab)</p>
-
-<pre><code>: _M_cur(__n), _M_ht(__tab) {}
-</code></pre>
-
-<p>  <em>Hashtable_iterator() {}
-  reference operator*() const { return </em>M_cur->_M_val; }</p>
-
-<h1>ifndef __SGI_STL_NO_ARROW_OPERATOR</h1>
-
-<p>  pointer operator->() const { return &amp;(operator*()); }</p>
-
-<h1>endif /<em> __SGI_STL_NO_ARROW_OPERATOR </em>/</h1>
-
-<p>  iterator&amp; operator++();
-  iterator operator++(int);
-  bool operator==(const iterator&amp; __it) const</p>
-
-<pre><code>{ return _M_cur == __it._M_cur; }
-</code></pre>
-
-<p>  bool operator!=(const iterator&amp; __it) const</p>
-
-<pre><code>{ return _M_cur != __it._M_cur; }
-</code></pre>
-
-<p>};
+<p>  };
 可以看出，这里的迭代器设计成只能向后移动，在operator ++ 中，我们可以看到迭代器的移动。</p>
 
-<p>template <class _Val, class _Key, class _HF, class _ExK, class _EqK,
-class _All>
-<em>Hashtable_iterator&lt;</em>Val,<em>Key,</em>HF,<em>ExK,</em>EqK,<em>All>&amp;
-</em>Hashtable_iterator&lt;<em>Val,</em>Key,<em>HF,</em>ExK,<em>EqK,</em>All>::operator++()
-{</p>
+<p>  template <class _Val, class _Key, class _HF, class _ExK, class _EqK,
+  class _All>
+  <em>Hashtable_iterator&lt;</em>Val,<em>Key,</em>HF,<em>ExK,</em>EqK,<em>All>&amp;
+  </em>Hashtable_iterator&lt;<em>Val,</em>Key,<em>HF,</em>ExK,<em>EqK,</em>All>::operator++()
+  {</p>
 
-<pre><code>const _Node* __old = _M_cur;
-_M_cur = _M_cur-&gt;_M_next;
-if (!_M_cur) {
-    size_type __bucket = _M_ht-&gt;_M_bkt_num(__old-&gt;_M_val);
-    while (!_M_cur &amp;&amp; ++__bucket &lt; _M_ht-&gt;_M_buckets.size())
-       _M_cur = _M_ht-&gt;_M_buckets[__bucket];
- }
- return *this;
+<pre><code>  const _Node* __old = _M_cur;
+  _M_cur = _M_cur-&gt;_M_next;
+  if (!_M_cur) {
+      size_type __bucket = _M_ht-&gt;_M_bkt_num(__old-&gt;_M_val);
+      while (!_M_cur &amp;&amp; ++__bucket &lt; _M_ht-&gt;_M_buckets.size())
+         _M_cur = _M_ht-&gt;_M_buckets[__bucket];
+   }
+   return *this;
 </code></pre>
 
-<p>}
-首先在链表（一个bucket）中寻找下一个节点，如果是链表中的最后一个节点，那么寻找下一个链表（bucket）中的节点。了解迭代器之后，开始了解容器本身。</p>
+<p>  }</p>
+
+<p>首先在链表（一个bucket）中寻找下一个节点，如果是链表中的最后一个节点，那么寻找下一个链表（bucket）中的节点。了解迭代器之后，开始了解容器本身。</p>
 
 <p>之前可以看出，SGI STL 虽然采用的是开链法，但是在分配空间大小时，依然采用的是质数，这一点和.net framework 中的dictionary一样。大小差不多是2倍</p>
 
-<p>static const int <strong>stl_num_primes = 28;
-static const unsigned long </strong>stl_prime_list[<strong>stl_num_primes] =
-{
-  53ul,         97ul,         193ul,       389ul,       769ul,
-  1543ul,       3079ul,       6151ul,      12289ul,     24593ul,
-  49157ul,      98317ul,      196613ul,    393241ul,    786433ul,
-  1572869ul,    3145739ul,    6291469ul,   12582917ul,  25165843ul,
-  50331653ul,   100663319ul,  201326611ul, 402653189ul, 805306457ul,
-  1610612741ul, 3221225473ul, 4294967291ul
-};
-//找到下一个大于n的质数，lower_bound是一个二分法查找。
-inline unsigned long </strong>stl_next_prime(unsigned long <strong>n)
-{
-  const unsigned long* </strong>first = <strong>stl_prime_list;
-  const unsigned long* </strong>last = <strong>stl_prime_list + </strong>stl_num_primes;
-  const unsigned long<em> pos = lower_bound(<strong>first, </strong>last, <strong>n);
-  return pos == </strong>last ? </em>(__last - 1) : *pos;
-}
-hashTable 中最重要的部分是扩容。那么，我们看看，SGI STL是怎么做的</p>
+<p>  static const int <strong>stl_num_primes = 28;
+  static const unsigned long </strong>stl_prime_list[__stl_num_primes] =
+  {</p>
 
-<p>pair&lt;iterator, bool> insert_unique(const value_type&amp; <strong>obj)
-{
-  resize(_M_num_elements + 1);
-  return insert_unique_noresize(</strong>obj);
-}</p>
-
-<p>template <class _Val, class _Key, class _HF, class _Ex, class _Eq, class _All>
-void hashtable&lt;<em>Val,</em>Key,<em>HF,</em>Ex,<em>Eq,</em>All>
-  ::resize(size_type <strong>num_elements_hint)
-{
-  const size_type </strong>old_n = _M_buckets.size();
-  if (<strong>num_elements_hint > </strong>old_n) {</p>
-
-<pre><code>//如果需要扩容，我们找到下一个质数
-const size_type __n = _M_next_size(__num_elements_hint);
-if (__n &gt; __old_n) {
-  //搞一个新的buckets
-  vector&lt;_Node*, _All&gt; __tmp(__n, (_Node*)(0),
-                             _M_buckets.get_allocator());
-  __STL_TRY {
-    for (size_type __bucket = 0; __bucket &lt; __old_n; ++__bucket) {
-      //遍历之旧的buckets
-      _Node* __first = _M_buckets[__bucket];
-      while (__first) {
-        //遍历旧的bucket，这里，我们根据新的大小找到了新的位置
-        size_type __new_bucket = _M_bkt_num(__first-&gt;_M_val, __n);
-        //将旧的bucket数据改为 我们正在处理的item的下一个 
-        _M_buckets[__bucket] = __first-&gt;_M_next;
-        //把我们现在处理的item 插入到新的buckets中。
-        __first-&gt;_M_next = __tmp[__new_bucket];
-        __tmp[__new_bucket] = __first;
-        //将我们当前处理的item，修改为旧数据的下一个
-        __first = _M_buckets[__bucket];          
-      }
-    }
-    //都搞定了，我们将buckets更换。
-    _M_buckets.swap(__tmp);
-  }
+<pre><code>53ul,         97ul,         193ul,       389ul,       769ul,
+1543ul,       3079ul,       6151ul,      12289ul,     24593ul,
+49157ul,      98317ul,      196613ul,    393241ul,    786433ul,
+1572869ul,    3145739ul,    6291469ul,   12582917ul,  25165843ul,
+50331653ul,   100663319ul,  201326611ul, 402653189ul, 805306457ul, 
+1610612741ul, 3221225473ul, 4294967291ul
 </code></pre>
 
-<h1>ifdef __STL_USE_EXCEPTIONS</h1>
+<p>  };
+  //找到下一个大于n的质数，lower_bound是一个二分法查找。
+  inline unsigned long <strong>stl_next_prime(unsigned long </strong>n)
+  {</p>
 
-<pre><code>  catch(...) {
-    for (size_type __bucket = 0; __bucket &lt; __tmp.size(); ++__bucket) {
-      while (__tmp[__bucket]) {
-        _Node* __next = __tmp[__bucket]-&gt;_M_next;
-        _M_delete_node(__tmp[__bucket]);
-        __tmp[__bucket] = __next;
-      }
-    }
-    throw;
-  }
-</code></pre>
-
-<h1>endif /<em> __STL_USE_EXCEPTIONS </em>/</h1>
-
-<pre><code>}
+<pre><code>const unsigned long* __first = __stl_prime_list;
+const unsigned long* __last = __stl_prime_list + __stl_num_primes;
+const unsigned long* pos = lower_bound(__first, __last, __n);
+return pos == __last ? *(__last - 1) : *pos;
 </code></pre>
 
 <p>  }
+  hashTable 中最重要的部分是扩容。那么，我们看看，SGI STL是怎么做的</p>
+
+<p>  pair&lt;iterator, bool> insert_unique(const value_type&amp; __obj)
+  {</p>
+
+<pre><code>resize(_M_num_elements + 1); 
+return insert_unique_noresize(__obj); 
+</code></pre>
+
+<p>  }</p>
+
+<p>  template <class _Val, class _Key, class _HF, class _Ex, class _Eq, class _All>
+  void hashtable&lt;<em>Val,</em>Key,<em>HF,</em>Ex,<em>Eq,</em>All></p>
+
+<pre><code>::resize(size_type __num_elements_hint)
+</code></pre>
+
+<p>  {</p>
+
+<pre><code>const size_type __old_n = _M_buckets.size();
+if (__num_elements_hint &gt; __old_n) {
+  //如果需要扩容，我们找到下一个质数
+  const size_type __n = _M_next_size(__num_elements_hint);
+  if (__n &gt; __old_n) {
+    //搞一个新的buckets
+    vector&lt;_Node*, _All&gt; __tmp(__n, (_Node*)(0),
+                               _M_buckets.get_allocator());
+    __STL_TRY {
+      for (size_type __bucket = 0; __bucket &lt; __old_n; ++__bucket) {
+        //遍历之旧的buckets
+        _Node* __first = _M_buckets[__bucket];
+        while (__first) {
+          //遍历旧的bucket，这里，我们根据新的大小找到了新的位置
+          size_type __new_bucket = _M_bkt_num(__first-&gt;_M_val, __n);
+          //将旧的bucket数据改为 我们正在处理的item的下一个 
+          _M_buckets[__bucket] = __first-&gt;_M_next;
+          //把我们现在处理的item 插入到新的buckets中。
+          __first-&gt;_M_next = __tmp[__new_bucket];
+          __tmp[__new_bucket] = __first;
+          //将我们当前处理的item，修改为旧数据的下一个
+          __first = _M_buckets[__bucket];          
+        }
+      }
+      //都搞定了，我们将buckets更换。
+      _M_buckets.swap(__tmp);
+    }
+</code></pre>
+
+<p>  #ifdef __STL_USE_EXCEPTIONS</p>
+
+<pre><code>    catch(...) {
+      for (size_type __bucket = 0; __bucket &lt; __tmp.size(); ++__bucket) {
+        while (__tmp[__bucket]) {
+          _Node* __next = __tmp[__bucket]-&gt;_M_next;
+          _M_delete_node(__tmp[__bucket]);
+          __tmp[__bucket] = __next;
+        }
+      }
+      throw;
+    }
+</code></pre>
+
+<p>  #endif /<em> __STL_USE_EXCEPTIONS </em>/</p>
+
+<pre><code>  }
 }
-当然，这个只是insert_unique ，insert_equal 类似，这里不做描述。</p>
+</code></pre>
+
+<p>  }</p>
+
+<p>当然，这个只是insert_unique ，insert_equal 类似，这里不做描述。</p>
 
 <p>除了resize，hashtable中还有一个吸引我们的就是hash func。但是，一般我们并不会指定hash func， 那么，我们看看SGI STL 是如何选择hash 函数的。</p>
 
-<h1>ifndef __SGI_STL_HASH_FUN_H</h1>
+<p>  #ifndef <strong>SGI_STL_HASH_FUN_H
+  #define </strong>SGI_STL_HASH_FUN_H
+  #include &lt;stddef.h>
+  <strong>STL_BEGIN_NAMESPACE
+  template <class _Key> struct hash { };
+  //字符串这里看来稍微有了一些操作
+  inline size_t </strong>stl_hash_string(const char* __s)
+  {</p>
 
-<h1>define __SGI_STL_HASH_FUN_H</h1>
+<pre><code>unsigned long __h = 0; 
+for ( ; *__s; ++__s)
+  __h = 5*__h + *__s;
 
-<h1>include &lt;stddef.h></h1>
-
-<p><strong>STL_BEGIN_NAMESPACE
-template <class _Key> struct hash { };
-//字符串这里看来稍微有了一些操作
-inline size_t </strong>stl_hash_string(const char<em> <strong>s)
-{
-  unsigned long </strong>h = 0;
-  for ( ; </em><strong>s; ++</strong>s)</p>
-
-<pre><code>__h = 5*__h + *__s;
+return size_t(__h);
 </code></pre>
 
-<p>  return size_t(<strong>h);
-}
-//这些东西，通过c++ 模板偏特化实现，我们看到，这些东西，啥都没做，只是返回而已。所以，如果
-//希望获得最佳的性能，实现仿函数。是非常必要的。
-</strong>STL_TEMPLATE_NULL struct hash&lt;char<em>>
-{
-  size_t operator()(const char</em> <strong>s) const { return </strong>stl_hash_string(<strong>s); }
-};
-</strong>STL_TEMPLATE_NULL struct hash<const char*>
-{
-  size_t operator()(const char* <strong>s) const { return </strong>stl_hash_string(<strong>s); }
-};
-</strong>STL_TEMPLATE_NULL struct hash<char> {
-  size_t operator()(char <strong>x) const { return </strong>x; }
-};
-<strong>STL_TEMPLATE_NULL struct hash<unsigned char> {
-  size_t operator()(unsigned char </strong>x) const { return <strong>x; }
-};
-</strong>STL_TEMPLATE_NULL struct hash<signed char> {
-  size_t operator()(unsigned char <strong>x) const { return </strong>x; }
-};
-<strong>STL_TEMPLATE_NULL struct hash<short> {
-  size_t operator()(short </strong>x) const { return <strong>x; }
-};
-</strong>STL_TEMPLATE_NULL struct hash<unsigned short> {
-  size_t operator()(unsigned short <strong>x) const { return </strong>x; }
-};
-<strong>STL_TEMPLATE_NULL struct hash<int> {
-  size_t operator()(int </strong>x) const { return <strong>x; }
-};
-</strong>STL_TEMPLATE_NULL struct hash<unsigned int> {
-  size_t operator()(unsigned int <strong>x) const { return </strong>x; }
-};
-<strong>STL_TEMPLATE_NULL struct hash<long> {
-  size_t operator()(long </strong>x) const { return <strong>x; }
-};
-</strong>STL_TEMPLATE_NULL struct hash<unsigned long> {
-  size_t operator()(unsigned long <strong>x) const { return </strong>x; }
-};
+<p>  }
+  //这些东西，通过c++ 模板偏特化实现，我们看到，这些东西，啥都没做，只是返回而已。所以，如果
+  //希望获得最佳的性能，实现仿函数。是非常必要的。
+  __STL_TEMPLATE_NULL struct hash&lt;char*>
+  {</p>
+
+<pre><code>size_t operator()(const char* __s) const { return __stl_hash_string(__s); }
+</code></pre>
+
+<p>  };
+  __STL_TEMPLATE_NULL struct hash<const char*>
+  {</p>
+
+<pre><code>size_t operator()(const char* __s) const { return __stl_hash_string(__s); }
+</code></pre>
+
+<p>  };
+  __STL_TEMPLATE_NULL struct hash<char> {</p>
+
+<pre><code>size_t operator()(char __x) const { return __x; }
+</code></pre>
+
+<p>  };
+  __STL_TEMPLATE_NULL struct hash<unsigned char> {</p>
+
+<pre><code>size_t operator()(unsigned char __x) const { return __x; }
+</code></pre>
+
+<p>  };
+  __STL_TEMPLATE_NULL struct hash<signed char> {</p>
+
+<pre><code>size_t operator()(unsigned char __x) const { return __x; }
+</code></pre>
+
+<p>  };
+  __STL_TEMPLATE_NULL struct hash<short> {</p>
+
+<pre><code>size_t operator()(short __x) const { return __x; }
+</code></pre>
+
+<p>  };
+  __STL_TEMPLATE_NULL struct hash<unsigned short> {</p>
+
+<pre><code>size_t operator()(unsigned short __x) const { return __x; }
+</code></pre>
+
+<p>  };
+  __STL_TEMPLATE_NULL struct hash<int> {</p>
+
+<pre><code>size_t operator()(int __x) const { return __x; }
+</code></pre>
+
+<p>  };
+  __STL_TEMPLATE_NULL struct hash<unsigned int> {</p>
+
+<pre><code>size_t operator()(unsigned int __x) const { return __x; }
+</code></pre>
+
+<p>  };
+  __STL_TEMPLATE_NULL struct hash<long> {</p>
+
+<pre><code>size_t operator()(long __x) const { return __x; }
+</code></pre>
+
+<p>  };
+  __STL_TEMPLATE_NULL struct hash<unsigned long> {</p>
+
+<pre><code>size_t operator()(unsigned long __x) const { return __x; }
+</code></pre>
+
+<p>  };
 SQLite 的hash表。</p>
 
 <p>SQLite是在移动设备上普遍的一个家伙， 他用到了2种HASH， 一种和上面的SGI STL 类似，在PC端，在做增加的时候，判断了数据量大小（一般10个），如果小于，则采用双向链表的方式，不是则采用hash存储。只是，在移动分支中我没有找到，PC端的确有这样的设计，也许在mobile上做了精简。这种hash，用于SQLite底层的内存管理，缓存部分，SQLite采用的是LRU的方式缓存。</p>
