@@ -1,27 +1,25 @@
----
-layout: nil
----
 <?xml version="1.0" encoding="utf-8"?>
 <feed xmlns="http://www.w3.org/2005/Atom">
 
-  <title><![CDATA[{{ site.title }}]]></title>
-  <link href="{{ site.url }}/atom.xml" rel="self"/>
-  <link href="{{ site.url }}/"/>
-  <updated>{{ site.time | date_to_xmlschema }}</updated>
-  <id>{{ site.url }}/</id>
+  <title><![CDATA[studentdeng Blog]]></title>
+  <link href="http://studentdeng.github.com/atom.xml" rel="self"/>
+  <link href="http://studentdeng.github.com/"/>
+  <updated>2013-03-03T13:14:20+08:00</updated>
+  <id>http://studentdeng.github.com/</id>
   <author>
-    <name><![CDATA[{{ site.author | strip_html }}]]></name>
-    {% if site.email %}<email><![CDATA[{{ site.email }}]]></email>{% endif %}
+    <name><![CDATA[studentdeng]]></name>
+    
   </author>
   <generator uri="http://octopress.org/">Octopress</generator>
 
-  {% for post in site.posts limit: 20 %}
+  
   <entry>
-    <title type="html"><![CDATA[{{ post.title | cdata_escape }}]]></title>
-    <link href="{{ site.url }}{{ post.url }}"/>
-    <updated>{{ post.date | date_to_xmlschema }}</updated>
-    <id>{{ site.url }}{{ post.id }}</id>
-    <content type="html"><![CDATA[{{ post.content | expand_urls: site.url | cdata_escape }}]]></content>
+    <title type="html"><![CDATA[test]]></title>
+    <link href="http://studentdeng.github.com/blog/2013/03/03/test/"/>
+    <updated>2013-03-03T01:53:00+08:00</updated>
+    <id>http://studentdeng.github.com/blog/2013/03/03/test</id>
+    <content type="html"><![CDATA[<h1>hello world</h1>
+]]></content>
   </entry>
-  {% endfor %}
+  
 </feed>
