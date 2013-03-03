@@ -4,7 +4,7 @@
   <title><![CDATA[Category: configure | studentdeng Blog]]></title>
   <link href="http://studentdeng.github.com/blog/categories/configure/atom.xml" rel="self"/>
   <link href="http://studentdeng.github.com/"/>
-  <updated>2013-03-03T21:59:00+08:00</updated>
+  <updated>2013-03-04T00:05:22+08:00</updated>
   <id>http://studentdeng.github.com/</id>
   <author>
     <name><![CDATA[studentdeng]]></name>
@@ -99,6 +99,87 @@ s_format = [[NSDateFormatter alloc] init];
 [s_format setDateFormat:@"eee MMM dd HH:mm:ss ZZZZ yyyy"];
 [s_format setLocale:[[NSLocale alloc] initWithLocaleIdentifier:@"en_US_POSIX"]]; //之前少了设定Locale
 </code></pre>
+]]></content>
+  </entry>
+  
+  <entry>
+    <title type="html"><![CDATA[bochs-configure]]></title>
+    <link href="http://studentdeng.github.com/blog/2012/02/14/bochs-configure/"/>
+    <updated>2012-02-14T23:55:00+08:00</updated>
+    <id>http://studentdeng.github.com/blog/2012/02/14/bochs-configure</id>
+    <content type="html"><![CDATA[<h1>Bochs + freedos安装配置</h1>
+
+<pre><code>sudo apt-get install build-essential
+
+sudo apt-get install xorg-dev
+
+sudo apt-get install libgtk2.0-dev
+</code></pre>
+
+<p>下载</p>
+
+<pre><code>bochshttp://bochs.sourceforge.net/cgi-bin/topper.pl?name=See+All+Releases&amp;url=http://sourceforge.net/projects/bochs/files
+
+$ tar vxaf bochs-2.5.1.tar.gz
+
+$ cd bochs-2.5.1
+
+$ ./configure –enable-debugger-enable-disasm
+
+$ make
+
+$ sudo make install
+</code></pre>
+
+<p>下载freedoshttp://bochs.sourceforge.net/diskimages.html 复制到工作目录下</p>
+
+<h1>Bochs 配置 先通过dos引导，我们的软件复制在B盘下</h1>
+
+<pre><code>############################################################### 
+# Configuration file for Bochs 
+###############################################################
+
+# how much memory the emulated machine will have 
+megs: 32
+
+# filename of ROM images 
+romimage: file=/usr/share/bochs/BIOS-bochs-latest 
+vgaromimage: file=/usr/share/vgabios/vgabios.bin
+
+# what disk images will be used 
+floppya: 1_44=freedos.img, status=inserted 
+floppyb: 1_44=pm.img, status=inserted
+
+# choose the boot disk. 
+boot: a
+
+# where do we send log messages? 
+# log: bochsout.txt
+
+# disable the mouse 
+mouse: enabled=0
+
+# enable key mapping, using US layout as default. 
+keyboard_mapping: enabled=1, map=/usr/share/bochs/keymaps/x11-pc-us.map
+
+#enabled debug using xchg bx, bx
+
+magic_break:enabled=1
+
+可以通过下面方式来部署程序，当然，写成makefile最省事
+
+$ sudo mount –o loop pm.img /mnt/floppy
+
+$ sudo cp test.com /mnt/floppy
+
+$ sudo umount /mnt/floppy
+</code></pre>
+
+<h1>bochs 调试</h1>
+
+<p>调试方法很多，这里介绍最简单的方式之一。bochs 配置中增加 magic_break:enabled=1</p>
+
+<p>代码中增加xchg bx, bx，bochs会停在代码出。当然，前提是bochs需要支持debug</p>
 ]]></content>
   </entry>
   

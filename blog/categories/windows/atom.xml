@@ -4,7 +4,7 @@
   <title><![CDATA[Category: windows | studentdeng Blog]]></title>
   <link href="http://studentdeng.github.com/blog/categories/windows/atom.xml" rel="self"/>
   <link href="http://studentdeng.github.com/"/>
-  <updated>2013-03-03T21:59:00+08:00</updated>
+  <updated>2013-03-04T00:05:22+08:00</updated>
   <id>http://studentdeng.github.com/</id>
   <author>
     <name><![CDATA[studentdeng]]></name>
@@ -12,6 +12,1329 @@
   </author>
   <generator uri="http://octopress.org/">Octopress</generator>
 
+  
+  <entry>
+    <title type="html"><![CDATA[为什么没有SendThreadMessage呢？]]></title>
+    <link href="http://studentdeng.github.com/blog/2011/03/31/sendthreadmessage/"/>
+    <updated>2011-03-31T23:24:00+08:00</updated>
+    <id>http://studentdeng.github.com/blog/2011/03/31/sendthreadmessage</id>
+    <content type="html"><![CDATA[<p>最近忙公司的项目（或是毕设吧），发现很长时间没有总结了。是该换换脑子了。</p>
+
+<p>“为什么没有SendThreadMessage呢？”这个问题，就来自自己平时实现的一些程序逻辑中。在一些具体的场景中，对像我这样的初学者来说，往往喜欢通过windwos的消息机制来完成UI线程和worker线程之间的同步，而不是去通过信号量或其他的去做。所以，这个问题一直困惑了自己很久。而现在，就来搞明白这个、</p>
+
+<p>google一下，这个问题，在一个大牛（Raymond Chen）http://blogs.msdn.com/b/oldnewthing/archive/2008/12/23/9248851.aspx）的博客中提到了，而且也引发了很多讨论。我这里简单的”翻译”一下Raymond Chen自己的看法。</p>
+
+<p>”想象中的SendThreadMessage是如何工作的呢？调用SendMessage 把消息直接分发给窗口过程？但是我们没有看到消息泵，想象中的SendThreadMessage将会把消息分发给谁呢？因为我们没有‘thread window procedure’这样的东东去处理我们的消息。</p>
+
+<p>是的，我们可以自己在我们的线程中做一个消息泵，但是，想象中的SendThreadMessage，需要等待这个消息处理完毕。但是，我们怎么能够知道这个消息处理完毕了？因为我们不可能等待DispatchMessage返回，而DispatchMessage失败则是因为我们并不知道应该往哪一个窗口分发消息。window manager给线程发送一个消息，仅此而已。</p>
+
+<p>你可能会认为，我们可以等待知道下一个GetMessage or PeekMessage，这样我们可以确定这个消息解决了。但是，我们却不能保证下一个消息检索函数(GetMessage PeekMessage)，是来自我们之前的消息泵。比如，我们这个线程消息，启动了一个模态窗口，是的。当我们的消息检索函数告诉我们这个消息已经处理完毕了。但是，事实上那个模态窗口还在，因为他自己又创建了一个消息泵。“</p>
+
+<p>这段虽然不长，但是却另我头大无比。GetMessage ，  DispatchMessage。这2个基本的函数，天天用，但是却对他们的行为知之甚少，算上第一次写HelloWorld 到现在，至少也有1年了，依然朦胧，感到十分惭愧。而这也就是这篇总结要做的。而这的确是一个庞大的工程，因为要了解这2个函数，需要把握windows的消息机制。而windwos 并没有给我们源代码参考，这里参考ReactOS的实现，虽然不是windows正统，但是，应该差不远，至少是和win2003的相似。开始步入正题。</p>
+
+<p>我们首先需要了解的是，UI线程 和我们的普通的Worker线程之间的区别是什么。</p>
+
+<p>msdn http://msdn.microsoft.com/en-us/library/ms644927提到：</p>
+
+<p>”To avoid the overhead of creating a message queue for non–GUI threads, all threads are created initially without a message queue. The system creates a thread-specific message queue only when the thread makes its first call to one of the specific user functions; no GUI function calls result in the creation of a message queue.“</p>
+
+<p>既然，系统创建每一个线程时都是普通的non–GUI thread，直到GDI， User函数调用，才为线程创建消息队列，那么我们就从这些函数调用开始。</p>
+
+<p>windwos在开始时，和linux一样 图形这部分是在用户空间中的进程负责，后面为了减少进程之间的环境切换，而放入了内核中。那么在系统调用这层，我们就看到了有2种情况。一种调用是原来的”内核”的调用，而另一种是新加进来的原来在用户空间的调用，这部分被称为扩充系统调用，这部分代码被放在了可以动态安装的模块win32k.sys。与之对应，系统的调用表就有了2个，一个是只包括之前的”来自内核的系统调用“，另一个则在之前的基础上，增加了图形图像的系统调用。当我们的系统调用被发现是扩充系统调用时，也就是，原来的的表不能满足我们的要求。windwos会将会扩充系统调用表。并装载win32k.sys模块。那么，我们的普普通通的线程就开始变为GUI线程了。</p>
+
+<p>激动人心的旅程就从这里开始了。</p>
+
+<p>开源代码就是好，随意都能够贴出来。</p>
+
+<pre><code>NTSTATUS
+NTAPI
+PsConvertToGuiThread(VOID)
+{
+    ULONG_PTR NewStack;
+    PVOID OldStack;
+    PETHREAD Thread = PsGetCurrentThread();
+    PEPROCESS Process = PsGetCurrentProcess();
+    NTSTATUS Status;
+    PAGED_CODE();
+
+    /* Validate the previous mode */
+    if (KeGetPreviousMode() == KernelMode) return STATUS_INVALID_PARAMETER;
+
+    /* If no win32k, crashes later */
+    ASSERT(PspW32ProcessCallout != NULL);
+
+    /* Make sure win32k is here */
+    if (!PspW32ProcessCallout) return STATUS_ACCESS_DENIED;
+
+    /* Make sure it's not already win32 */
+    if (Thread-&gt;Tcb.ServiceTable != KeServiceDescriptorTable)
+    {
+        /* We're already a win32 thread */
+        return STATUS_ALREADY_WIN32;
+    }
+
+    /* Check if we don't already have a kernel-mode stack */
+    if (!Thread-&gt;Tcb.LargeStack)
+    {
+        /* We don't create one */
+        NewStack = (ULONG_PTR)MmCreateKernelStack(TRUE, 0);
+        if (!NewStack)
+        {
+            /* Panic in user-mode */
+            NtCurrentTeb()-&gt;LastErrorValue = ERROR_NOT_ENOUGH_MEMORY;
+            return STATUS_NO_MEMORY;
+        }
+
+        /* We're about to switch stacks. Enter a guarded region */
+        KeEnterGuardedRegion();
+
+        /* Switch stacks */
+        OldStack = KeSwitchKernelStack((PVOID)NewStack,
+                                       (PVOID)(NewStack - KERNEL_STACK_SIZE));
+
+        /* Leave the guarded region */
+        KeLeaveGuardedRegion();
+
+        /* Delete the old stack */
+        MmDeleteKernelStack(OldStack, FALSE);
+    }
+
+    /* This check is bizare. Check out win32k later */
+    if (!Process-&gt;Win32Process)
+    {
+        /* Now tell win32k about us */
+        Status = PspW32ProcessCallout(Process, TRUE);
+        if (!NT_SUCCESS(Status)) return Status;
+    }
+
+    /* Set the new service table */
+    Thread-&gt;Tcb.ServiceTable = KeServiceDescriptorTableShadow;
+    ASSERT(Thread-&gt;Tcb.Win32Thread == 0);
+
+    /* Tell Win32k about our thread */
+    Status = PspW32ThreadCallout(Thread, PsW32ThreadCalloutInitialize);
+    if (!NT_SUCCESS(Status))
+    {
+        /* Revert our table */
+        Thread-&gt;Tcb.ServiceTable = KeServiceDescriptorTable;
+    }
+
+    /* Return status */
+    return Status;
+}
+</code></pre>
+
+<p>之前没有提到的是，这里判断了一下线程system stack的大小，因为GUI线程要比普通的线程增加了更多的嵌套调用，从而需要更多的system stack。MmCreateKernelStack就是分配空间的函数。这里只是分配了64K的大小，普通的thread system stack大小为12K。当然，按照惯例，这里64K的堆栈，只是提交了其中12K的大小。并设置好guard page。超过12K则产生异常然后再分配空间。一个进程，如果有一个线程是GUI线程，那么这个进程就是GUI 进程，那么，如果不是GUI进程，我们当然先得把进程转过来。PspW32ProcessCallout是一个函数指针，指向Win32kProcessCallback。这里就是干这个了，会初始化一系列的结构体，键盘格式，GDI 句柄表等等。我们这里略过这些细节。</p>
+
+<p>我们看到，系统的ServiceTable换成了大的表。而PspW32ThreadCallout指向Win32kThreadCallback，这里就完成了把普通线程转换成GUI线程的过程。对于操作系统这么复杂的东东来说，要初始化的结构体真是茫茫的多。我们这里关注一点，在Win32kThreadCallback中，我们找到了创建消息队列的入口。Win32Thread->MessageQueue = MsqCreateMessageQueue(Thread);</p>
+
+<p>系统有了消息队列，但是，并不能构成真正的win32应用程序。我们开发者，还需要在自己的窗口程序中构造一个简单的Message Dump，让我们看看这个GetMessage，到底做了什么。</p>
+
+<p>GetMessage，最后会调用NtUserGetMessage。</p>
+
+<pre><code>BOOL APIENTRY
+NtUserGetMessage(PMSG pMsg,
+                  HWND hWnd,
+                  UINT MsgFilterMin,
+                  UINT MsgFilterMax )
+{
+    MSG Msg;
+    BOOL Ret;
+
+    if ( (MsgFilterMin|MsgFilterMax) &amp; ~WM_MAXIMUM )
+    {
+        EngSetLastError(ERROR_INVALID_PARAMETER);
+        return FALSE;
+    }
+
+    UserEnterExclusive();
+
+    RtlZeroMemory(&amp;Msg, sizeof(MSG));
+
+    Ret = co_IntGetPeekMessage(&amp;Msg, hWnd, MsgFilterMin, MsgFilterMax, PM_REMOVE, TRUE);
+
+    UserLeave();
+
+    if (Ret)
+    {
+        _SEH2_TRY
+        {
+            ProbeForWrite(pMsg, sizeof(MSG), 1);
+            RtlCopyMemory(pMsg, &amp;Msg, sizeof(MSG));
+        }
+        _SEH2_EXCEPT(EXCEPTION_EXECUTE_HANDLER)
+        {
+            SetLastNtError(_SEH2_GetExceptionCode());
+            Ret = FALSE;
+        }
+        _SEH2_END;
+    }
+
+    return Ret;
+}
+</code></pre>
+
+<p>原谅我略过一些茫茫多的细节。</p>
+
+<pre><code>BOOL FASTCALL
+co_IntGetPeekMessage( PMSG pMsg,
+                      HWND hWnd,
+                      UINT MsgFilterMin,
+                      UINT MsgFilterMax,
+                      UINT RemoveMsg,
+                      BOOL bGMSG )
+{
+    //.......
+    do
+    {
+        Present = co_IntPeekMessage( pMsg,
+                                     Window,
+                                     MsgFilterMin,
+                                     MsgFilterMax,
+                                     RemoveMsg,
+                                     bGMSG );
+        if (Present)
+        {
+           /* GetMessage or PostMessage must never get messages that contain pointers */
+           ASSERT(FindMsgMemory(pMsg-&gt;message) == NULL);
+
+           if (pMsg-&gt;message != WM_PAINT &amp;&amp; pMsg-&gt;message != WM_QUIT)
+           {
+              pti-&gt;timeLast = pMsg-&gt;time;
+              pti-&gt;ptLast   = pMsg-&gt;pt;
+           }
+
+           // The WH_GETMESSAGE hook enables an application to monitor messages about to
+           // be returned by the GetMessage or PeekMessage function.
+
+           co_HOOK_CallHooks( WH_GETMESSAGE, HC_ACTION, RemoveMsg &amp; PM_REMOVE, (LPARAM)pMsg);
+
+           if ( bGMSG )
+           {
+              Present = (WM_QUIT != pMsg-&gt;message);
+              break;
+           }
+        }
+
+        if ( bGMSG )
+        {
+           if ( !co_IntWaitMessage(Window, MsgFilterMin, MsgFilterMax) )
+           {
+              Present = -1;
+              break;
+           }
+        }
+        else
+        {
+           if (!(RemoveMsg &amp; PM_NOYIELD))
+           {
+              IdlePing();
+              // Yield this thread!
+              UserLeave();
+              ZwYieldExecution();
+              UserEnterExclusive();
+              // Fall through to exit.
+              IdlePong();
+           }
+           break;
+        }
+    }
+    while( bGMSG &amp;&amp; !Present );
+
+    // Been spinning, time to swap vinyl...
+    if (pti-&gt;pClientInfo-&gt;cSpins &gt;= 100)
+    {
+       // Clear the spin cycle to fix the mix.
+       pti-&gt;pClientInfo-&gt;cSpins = 0;
+       //if (!(pti-&gt;TIF_flags &amp; TIF_SPINNING)) FIXME need to swap vinyl..
+    }
+    return Present;
+}
+</code></pre>
+
+<p>IntGetPeekMessage，就是一个循环，不断的调用co_IntPeekMessage 从消息队列中取出消息，如果没有消息，那么我们就调用co_IntWaitMessage等待消息，然后往复，除非我们遇到了WM_QUIT。</p>
+
+<p>co_IntPeekMessage 看来是实现的关键,而他也是PeekMessage的关键部分。同样,略过那些繁琐的细节。当然，这并不是指那些不重要，而是实在是太多了。这个函数是整个消息机制的核心部分。需要慢慢来。</p>
+
+<p>说了这么多，我们还不知道消息队列是啥模样了。</p>
+
+<pre><code>typedef struct _USER_MESSAGE_QUEUE
+{
+  /* Reference counter, only access this variable with interlocked functions! */
+  LONG References;
+
+  /* Owner of the message queue */
+  struct _ETHREAD *Thread;
+  /* Queue of messages sent to the queue. */
+  LIST_ENTRY SentMessagesListHead;                          //被“发送”的消息队列
+  /* Queue of messages posted to the queue. */
+  LIST_ENTRY PostedMessagesListHead;                        //被"Post"的消息队列
+  /* Queue for hardware messages for the queue. */
+  LIST_ENTRY HardwareMessagesListHead;                      //来自硬件的消息队列
+
+  //.........
+
+  /* messages that are currently dispatched by other threads */
+  LIST_ENTRY DispatchingMessagesHead;                           //  已经发送而对方尚未处理的消息队列
+  /* messages that are currently dispatched by this message queue, required for cleanup */
+  LIST_ENTRY LocalDispatchingMessagesHead;                     // 本地正在分发的消息队列
+
+  //........
+
+} USER_MESSAGE_QUEUE, *PUSER_MESSAGE_QUEUE;
+</code></pre>
+
+<p>SentMessagesListHead 这个队列的东西是发送到我们这个消息队列的消息。 也就是，当其他地方调用SendMessage到我们这个消息队列时，那个消息会放在这个队列中。</p>
+
+<p>PostedMessagesListHead 同理，是其他地方调用PostMessage，然后把他那个消息放在了这个队列中。</p>
+
+<p>PostMessage这个函数比较容易实现，我们只需要挂在目标的PostedMessagesListHead队列中就可以了。但是SendMessage就要复杂很多了。</p>
+
+<p>如果发送方和接收方是在一个线程中，那么SendMessage会直接调用本窗口的窗口过程函数来处理这个消息。</p>
+
+<p>如果发送方和接收方不在一个线程中，那么发送方就必须要等待接收方的运行结果之后，才能继续执行。而这个，就形成了一个感觉上是同步的一个过程。感觉上这个似乎也不是很复杂。但也不是一个很简单的线程同步问题。</p>
+
+<p>想一下这个问题，当GUI线程A向GUI线程B发送一个消息时，线程B处理A这个消息时，又需要向线程A发送一个消息。那么，这2个线程会死锁么？ 当然不会。要知道，windwos搞这一套为的就是构造一个完整的消息驱动机制，更抽象的讲，这个消息机制也算的上是一个线程通信机制。而这一套东东，最复杂的是在于，这些东东需要用户程序结合到一起，才能真正的运行起来。也就是说，我们的应用程序，必须符合windwos程序的规范，才能和windwos消息机制参与起来。而这个参与中最重要的东东就是我们之前提到的GetMessage，DispatchingMessagesHead 和 LocalDispatchingMessagesHead 则是实现这一套机制中非常重要的部分。</p>
+
+<p>DispatchingMessagesHead  当我们自己SendMessage到其他地方时，我们的消息是需要等待对面的结果，那么这个需要等待的消息就被放置到这里。这里可能会对一些windwos菜鸟觉得困惑，困惑这个为什么能够形成一个队列呢？这里先把问题留下来。</p>
+
+<p>让我们站在接受者的消息队列的角度来看，当有人给我们SendMessage了，我们需要在这里处理，也就是Message Dispatch，当我们搞出这个消息的返回值时，我们接受方，还必须等待对面的人把我们的这个消息的返回值拿走，这个消息才算是搞定了。这里由于可能是不同线程，甚至是不同进程之间数据传递。所以这些东西必须要考虑在内，而这些消息放在哪里呢？LocalDispatchingMessagesHead 就跳出来解决这个问题。</p>
+
+<p>总的说一下，当我们SendMessage一个消息时，会挂在接收方的SentMessagesListHead队列中，并挂在发送方的DispatchingMessagesHead。</p>
+
+<p>接受方先查看SentMessagesListHead 是否有消息，有的话，则从SendMessageListHead中删除掉，并添加到LocalDispatchingMessagesHead队列中，等我们把这个消息处理完毕，从LocalDispatchingMessagesHead将这个消息删除。</p>
+
+<p>我们首先关注这4个队列。那个硬件的队列主要是鼠标和键盘的东东。</p>
+
+<p>第一次看这个可能有点晕，不急。有一个笼统的概念之后，我们在来看细节。这部分还不是非常复杂。</p>
+
+<pre><code>/*
+ * Internal version of PeekMessage() doing all the work
+ */
+BOOL FASTCALL
+co_IntPeekMessage( PMSG Msg,
+                   PWND Window,
+                   UINT MsgFilterMin,
+                   UINT MsgFilterMax,
+                   UINT RemoveMsg,
+                   BOOL bGMSG )
+{
+    //...
+    do
+    {
+        //..
+        /* Dispatch sent messages here. */
+        while ( co_MsqDispatchOneSentMessage(ThreadQueue) )
+        {
+           //...
+        }
+
+        //...
+
+        /* Now check for normal messages. */
+        if ((ProcessMask &amp; QS_POSTMESSAGE) &amp;&amp;
+            MsqPeekMessage( ThreadQueue,
+                            RemoveMessages,
+                            Window,
+                            MsgFilterMin,
+                            MsgFilterMax,
+                            ProcessMask,
+                            Msg ))
+        {
+               return TRUE;
+        }
+
+        /* Now look for a quit message. */
+        if (ThreadQueue-&gt;QuitPosted)
+        {
+            /* According to the PSDK, WM_QUIT messages are always returned, regardless
+               of the filter specified */
+            Msg-&gt;hwnd = NULL;
+            Msg-&gt;message = WM_QUIT;
+            Msg-&gt;wParam = ThreadQueue-&gt;QuitExitCode;
+            Msg-&gt;lParam = 0;
+            if (RemoveMessages)
+            {
+                ThreadQueue-&gt;QuitPosted = FALSE;
+                ClearMsgBitsMask(ThreadQueue, QS_POSTMESSAGE);
+                pti-&gt;pcti-&gt;fsWakeBits &amp;= ~QS_ALLPOSTMESSAGE;
+                pti-&gt;pcti-&gt;fsChangeBits &amp;= ~QS_ALLPOSTMESSAGE;
+            }
+            return TRUE;
+        }
+
+        /* Check for hardware events. */
+        if ((ProcessMask &amp; QS_MOUSE) &amp;&amp;
+            co_MsqPeekMouseMove( ThreadQueue,
+                                 RemoveMessages,
+                                 Window,
+                                 MsgFilterMin,
+                                 MsgFilterMax,
+                                 Msg ))
+        {
+            return TRUE;
+        }
+
+        if ((ProcessMask &amp; QS_INPUT) &amp;&amp;
+            co_MsqPeekHardwareMessage( ThreadQueue,
+                                       RemoveMessages,
+                                       Window,
+                                       MsgFilterMin,
+                                       MsgFilterMax,
+                                       ProcessMask,
+                                       Msg))
+        {
+            return TRUE;
+        }
+
+        /* Check for sent messages again. */
+        while ( co_MsqDispatchOneSentMessage(ThreadQueue) )
+        {
+           if (HIWORD(RemoveMsg) &amp;&amp; !bGMSG) Hit = TRUE;
+        }
+        if (Hit) return FALSE;
+
+        /* Check for paint messages. */
+        if ((ProcessMask &amp; QS_PAINT) &amp;&amp;
+            pti-&gt;cPaintsReady &amp;&amp;
+            IntGetPaintMessage( Window,
+                                MsgFilterMin,
+                                MsgFilterMax,
+                                pti,
+                                Msg,
+                                RemoveMessages))
+        {
+            return TRUE;
+        }
+
+       /* This is correct, check for the current threads timers waiting to be
+          posted to this threads message queue. If any we loop again.
+        */
+        if ((ProcessMask &amp; QS_TIMER) &amp;&amp;
+            PostTimerMessages(Window))
+        {
+            continue;
+        }
+
+        return FALSE;
+    }
+    while (TRUE);
+
+    return TRUE;
+}
+</code></pre>
+
+<p>co_MsqDispatchOneSentMessage 这里做的就是从SendMessageListHead 中取出一个别人SendMessage到我们这里的一个消息。 当我们把这些别人SendMessage给我们的消息处理完，就跳出那个循环，MsqPeekMessage 则去搞定别人PostMessage给我们的消息，最后再次检查一次co_MsqDispatchOneSentMessage，有没有人给我们发送了SendMessage消息，因为这之间的间隔是有可能有新的SendMessage消息。然后是IntGetPaintMessage 和PostTimerMessages这个名字就很容易理解了。而且，这里我们也看出了消息的优先级，为了提高Paint的效率，Paint是统一处理的。而且我们也看到了Timer消息，事实上我们看出他的优先级低于Paint，这样，我们就可以在timer中绘制函数，因为，我们每一次处理timer之前，我们能够保证我们的Paint消息已经被处理了。而且，我们也看出timer的确不准，在他前面有太多的东西要做了。</p>
+
+<p>我们还需要了解下，我们的消息结构。是的，这个Post消息是要挂在队列中的。</p>
+
+<pre><code>typedef struct _USER_MESSAGE
+{
+  LIST_ENTRY ListEntry;
+  MSG Msg;
+  DWORD QS_Flags;
+} USER_MESSAGE, *PUSER_MESSAGE;
+</code></pre>
+
+<p>Send的消息这里就要麻烦很多了。</p>
+
+<pre><code>typedef struct _USER_SENT_MESSAGE
+{
+  LIST_ENTRY ListEntry;                            //接受方的队列
+  MSG Msg;
+  DWORD QS_Flags;  // Original QS bits used to create this message.
+  PKEVENT CompletionEvent;                    //这个用来做线程的唤醒操作
+  LRESULT* Result;
+  LRESULT lResult;
+  struct _USER_MESSAGE_QUEUE* SenderQueue;
+  struct _USER_MESSAGE_QUEUE* CallBackSenderQueue;
+  SENDASYNCPROC CompletionCallback;
+  ULONG_PTR CompletionCallbackContext;
+  /* entry in the dispatching list of the sender's message queue */
+  LIST_ENTRY DispatchingListEntry;                //发送方的DispatchingMessageList
+  INT HookMessage;
+  BOOL HasPackedLParam;
+} USER_SENT_MESSAGE, *PUSER_SENT_MESSAGE;
+</code></pre>
+
+<p>这个家伙，才是真正挂在发送队列中的数据结构，我们的MSG只是其中的一个数据成员。这里，就和我们之前提到的，这个消息，是在2个队列中存在，一边在发送方的DispatchingMessageList，表示这个消息正在分发，一边在接受方的SentMessagesListHead，表示这个消息被发送过来。等待处理。</p>
+
+<p>让我们一看co_MsqDispatchOneSentMessage的究竟。</p>
+
+<pre><code>BOOLEAN FASTCALL
+co_MsqDispatchOneSentMessage(PUSER_MESSAGE_QUEUE MessageQueue)
+{
+   PUSER_SENT_MESSAGE SaveMsg, Message;
+   PLIST_ENTRY Entry;
+   LRESULT Result;
+   PTHREADINFO pti;
+
+   if (IsListEmpty(&amp;MessageQueue-&gt;SentMessagesListHead))
+   {
+      return(FALSE);
+   }
+
+   /* remove it from the list of pending messages */
+   Entry = RemoveHeadList(&amp;MessageQueue-&gt;SentMessagesListHead);
+   Message = CONTAINING_RECORD(Entry, USER_SENT_MESSAGE, ListEntry);
+
+   pti = MessageQueue-&gt;Thread-&gt;Tcb.Win32Thread;
+
+   SaveMsg = pti-&gt;pusmCurrent;
+   pti-&gt;pusmCurrent = Message;
+
+   // Processing a message sent to it from another thread.
+   if ( ( Message-&gt;SenderQueue &amp;&amp; MessageQueue != Message-&gt;SenderQueue) ||
+        ( Message-&gt;CallBackSenderQueue &amp;&amp; MessageQueue != Message-&gt;CallBackSenderQueue ))
+   {  // most likely, but, to be sure.
+      pti-&gt;pcti-&gt;CTI_flags |= CTI_INSENDMESSAGE; // Let the user know...
+   }
+
+   /* insert it to the list of messages that are currently dispatched by this
+      message queue */
+   InsertTailList(&amp;MessageQueue-&gt;LocalDispatchingMessagesHead,
+                  &amp;Message-&gt;ListEntry);
+
+   ClearMsgBitsMask(MessageQueue, Message-&gt;QS_Flags);
+
+   if (Message-&gt;HookMessage == MSQ_ISHOOK)
+   {  // Direct Hook Call processor
+      Result = co_CallHook( Message-&gt;Msg.message,     // HookId
+                           (INT)(INT_PTR)Message-&gt;Msg.hwnd, // Code
+                            Message-&gt;Msg.wParam,
+                            Message-&gt;Msg.lParam);
+   }
+   else if (Message-&gt;HookMessage == MSQ_ISEVENT)
+   {  // Direct Event Call processor
+      Result = co_EVENT_CallEvents( Message-&gt;Msg.message,
+                                    Message-&gt;Msg.hwnd,
+                                    Message-&gt;Msg.wParam,
+                                    Message-&gt;Msg.lParam);
+   }
+   else
+   {  /* Call the window procedure. */
+      Result = co_IntSendMessage( Message-&gt;Msg.hwnd,
+                                  Message-&gt;Msg.message,
+                                  Message-&gt;Msg.wParam,
+                                  Message-&gt;Msg.lParam);
+   }
+
+   /* remove the message from the local dispatching list, because it doesn't need
+      to be cleaned up on thread termination anymore */
+   RemoveEntryList(&amp;Message-&gt;ListEntry);
+
+   /* remove the message from the dispatching list if needed, so lock the sender's message queue */
+   if (!(Message-&gt;HookMessage &amp; MSQ_SENTNOWAIT))
+   {
+      if (Message-&gt;DispatchingListEntry.Flink != NULL)
+      {
+         /* only remove it from the dispatching list if not already removed by a timeout */
+         RemoveEntryList(&amp;Message-&gt;DispatchingListEntry);
+      }
+   }
+   /* still keep the sender's message queue locked, so the sender can't exit the
+      MsqSendMessage() function (if timed out) */
+
+   if (Message-&gt;QS_Flags &amp; QS_SMRESULT)
+   {
+      Result = Message-&gt;lResult;
+   }
+
+   /* Let the sender know the result. */
+   if (Message-&gt;Result != NULL)
+   {
+      *Message-&gt;Result = Result;
+   }
+
+   if (Message-&gt;HasPackedLParam == TRUE)
+   {
+      if (Message-&gt;Msg.lParam)
+         ExFreePool((PVOID)Message-&gt;Msg.lParam);
+   }
+
+   /* Notify the sender. */
+   if (Message-&gt;CompletionEvent != NULL)
+   {
+      KeSetEvent(Message-&gt;CompletionEvent, IO_NO_INCREMENT, FALSE);
+   }
+
+   /* Call the callback if the message was sent with SendMessageCallback */
+   if (Message-&gt;CompletionCallback != NULL)
+   {
+      co_IntCallSentMessageCallback(Message-&gt;CompletionCallback,
+                                    Message-&gt;Msg.hwnd,
+                                    Message-&gt;Msg.message,
+                                    Message-&gt;CompletionCallbackContext,
+                                    Result);
+   }
+
+   /* Only if it is not a no wait message */
+   if (!(Message-&gt;HookMessage &amp; MSQ_SENTNOWAIT))
+   {
+      IntDereferenceMessageQueue(Message-&gt;SenderQueue);
+      IntDereferenceMessageQueue(MessageQueue);
+   }
+
+   /* free the message */
+   ExFreePoolWithTag(Message, TAG_USRMSG);
+
+   /* do not hangup on the user if this is reentering */
+   if (!SaveMsg) pti-&gt;pcti-&gt;CTI_flags &amp;= ~CTI_INSENDMESSAGE;
+   pti-&gt;pusmCurrent = SaveMsg;
+
+   return(TRUE);
+}
+</code></pre>
+
+<p>我们首先从SentMessagesListHead把消息移动到LocalDispatchingMessagesHead，让我们略掉那些细节的标志位和hook的部分。co_IntSendMessage，则把这个消息发送出去，然后把结果给我们，然后我们把消息从接收方的LocalDispatchingMessagesHead，删掉。如果发送方还在等我们的消息，我们就把他从发送方的DispatchingMessagesHead中删掉这条消息，（因为有些消息，是有时间限制的，可能已经早就被从DispatchingMessagesHead删掉了）。然后把返回结果保存起来。当然，有些消息还是有附件的，一些资源需要释放。这里是那些消息就不在这里赘述了，而且我们也不关心这些。然后，我们通过Message->CompletionEvent来通知发送方，该醒过来了。最后，我们看到，如果这个消息有回调函数，这里并没有直接调用回调函数，而是又通过了消息机制发送了一个消息给自己（在自己的Post队列中）。有了这个，的确很容易去理解MSDN的相关意思了。有时候，真的。MS的文档为什么那么全，因为他不给我们看源代码，有源代码还需要那么多的详细文档么？而且，那些文档真的不能彻底说清楚。</p>
+
+<p>转了这么远，问题又被迭代到co_IntSendMessage 上了。co_IntSendMessage 其实是co_IntSendMessageTimeout 的一个特殊调用。</p>
+
+<pre><code>LRESULT FASTCALL
+co_IntSendMessageTimeout( HWND hWnd,
+                          UINT Msg,
+                          WPARAM wParam,
+                          LPARAM lParam,
+                          UINT uFlags,
+                          UINT uTimeout,
+                          ULONG_PTR *uResult )
+{
+    PWND DesktopWindow;
+    HWND *Children;
+    HWND *Child;
+
+    if (HWND_BROADCAST != hWnd)
+    {
+        return co_IntSendMessageTimeoutSingle(hWnd, Msg, wParam, lParam, uFlags, uTimeout, uResult);
+    }
+
+    DesktopWindow = UserGetWindowObject(IntGetDesktopWindow());
+    if (NULL == DesktopWindow)
+    {
+        EngSetLastError(ERROR_INTERNAL_ERROR);
+        return 0;
+    }
+
+    /* Send message to the desktop window too! */
+    co_IntSendMessageTimeoutSingle(DesktopWindow-&gt;head.h, Msg, wParam, lParam, uFlags, uTimeout, uResult);
+
+    Children = IntWinListChildren(DesktopWindow);
+    if (NULL == Children)
+    {
+        return 0;
+    }
+
+    for (Child = Children; NULL != *Child; Child++)
+    {
+        co_IntSendMessageTimeoutSingle(*Child, Msg, wParam, lParam, uFlags, uTimeout, uResult);
+    }
+
+    ExFreePool(Children);
+
+    return (LRESULT) TRUE;
+}
+</code></pre>
+
+<p>我们不考虑广播的情况，看简单的给单个窗口发送消息的co_IntSendMessageTimeoutSingle</p>
+
+<pre><code>static LRESULT FASTCALL
+co_IntSendMessageTimeoutSingle( HWND hWnd,
+                                UINT Msg,
+                                WPARAM wParam,
+                                LPARAM lParam,
+                                UINT uFlags,
+                                UINT uTimeout,
+                                ULONG_PTR *uResult )
+{
+    NTSTATUS Status;
+    PWND Window = NULL;
+    PMSGMEMORY MsgMemoryEntry;
+    INT lParamBufferSize;
+    LPARAM lParamPacked;
+    PTHREADINFO Win32Thread;
+    ULONG_PTR Result = 0;
+    DECLARE_RETURN(LRESULT);
+    USER_REFERENCE_ENTRY Ref;
+
+    if (!(Window = UserGetWindowObject(hWnd)))
+    {
+        RETURN( FALSE);
+    }
+
+    UserRefObjectCo(Window, &amp;Ref);
+
+    Win32Thread = PsGetCurrentThreadWin32Thread();
+
+    IntCallWndProc( Window, hWnd, Msg, wParam, lParam);
+
+    if ( NULL != Win32Thread &amp;&amp;
+         Window-&gt;head.pti-&gt;MessageQueue == Win32Thread-&gt;MessageQueue)
+    {
+        //本线程的消息，我们直接调用用户的窗口回调函数，终于要结束了。
+        Result = (ULONG_PTR)co_IntCallWindowProc( Window-&gt;lpfnWndProc,
+                                                  !Window-&gt;Unicode,
+                                                  hWnd,
+                                                  Msg,
+                                                  wParam,
+                                                  lParamPacked,
+                                                  lParamBufferSize );
+        if(uResult)
+        {
+            *uResult = Result;
+        }
+
+        ObDereferenceObject(Win32Thread-&gt;pEThread);
+
+        IntCallWndProcRet( Window, hWnd, Msg, wParam, lParam, (LRESULT *)uResult);
+
+        if (! NT_SUCCESS(UnpackParam(lParamPacked, Msg, wParam, lParam, FALSE)))
+        {
+            DPRINT1("Failed to unpack message parameters\n");
+            RETURN( TRUE);
+        }
+
+        RETURN( TRUE);
+    }
+
+    //不是本线程，我们只能去转发这个消息了。
+
+    do
+    {
+        Status = co_MsqSendMessage( Window-&gt;head.pti-&gt;MessageQueue,
+                                    hWnd,
+                                    Msg,
+                                    wParam,
+                                    lParam,
+                                    uTimeout,
+                                    (uFlags &amp; SMTO_BLOCK),
+                                    MSQ_NORMAL,
+                                    uResult );
+    }
+    while ((STATUS_TIMEOUT == Status) &amp;&amp;
+           (uFlags &amp; SMTO_NOTIMEOUTIFNOTHUNG) &amp;&amp;
+           !MsqIsHung(Window-&gt;head.pti-&gt;MessageQueue));
+
+    IntCallWndProcRet( Window, hWnd, Msg, wParam, lParam, (LRESULT *)uResult);
+
+    if (STATUS_TIMEOUT == Status)
+    {
+        /*
+MSDN says:
+    Microsoft Windows 2000: If GetLastError returns zero, then the function
+    timed out.
+    XP+ : If the function fails or times out, the return value is zero.
+    To get extended error information, call GetLastError. If GetLastError
+    returns ERROR_TIMEOUT, then the function timed out.
+*/
+        EngSetLastError(ERROR_TIMEOUT);
+        RETURN( FALSE);
+    }
+    else if (! NT_SUCCESS(Status))
+    {
+        SetLastNtError(Status);
+        RETURN( FALSE);
+    }
+
+    RETURN( TRUE);
+
+CLEANUP:
+    if (Window) UserDerefObjectCo(Window);
+    END_CLEANUP;
+}
+</code></pre>
+
+<p>这里我们终于看到结果了。当然，这里又给我们带出一个问题”系统是如何调用我们写的函数呢？是在什么时候调用？是通过什么方式？”这同样是，特别是第一次写windwos程序的菜鸟们遇到的第一个问题。这个问题说清楚还是挺麻烦的。这部分这里先留下。</p>
+
+<p>让我们把大脑堆栈弹到开始。</p>
+
+<p>还是这个问题”系统是如何调用我们写的函数呢？是在什么时候调用？是通过什么方式？”现在我们还不能回答所有问题，但是却可以回答”系统什么时候调用我们的窗口过程函数”。</p>
+
+<p>我们调用系统的代码，或是说是调用系统服务，API等什么的，是通过中断机制完成的。并通过查找系统调用表来找到相对应的系统函数。也就是，我们可以随时随地利用中断机制去执行系统代码（当然是在限制下）。那么，系统可以随时随地的去执行我们用户空间的代码么？有点难，我们不去思考那么复杂的，因为还有一些其他的机制做这些类似的工作。我们只是去思考其中的一种，如何调用我们的窗口过程函数。</p>
+
+<p>很容易想到，随时随地执行用户的代码很难。因为没有硬件的支持去让我们完成类似中断的机制。那系统只能在一些特定的地方才能有机会去执行我们的窗口过程函数。显然，GetMessage就是这个执行用户窗口过程函数的地方。而当用户程序在处理一个消息时，系统是没有办法有任何作为的。只能等待用户下一次调用GetMessage类似的函数，才能重新获得代码的控制。我们在co_IntPeekMessage中看出些端倪。如果消息队列中，没有任何消息，那么GetMessage并不会退出，也就是不将执行权给用户的代码，而是进入等待状态。如果这时来的一些SendMessage的消息，线程会唤醒并执行这些代码。除非有一个Post或是其他消息，才会从GetMessage返回给用户空间。</p>
+
+<p>换句话就是，如果我们的Sendmessage是发给不同的线程，只能在GetMessage这个函数内部执行。如果那个接收方的线程阻塞了，那么我们的SendMessage就不会返回，因为他并没有执行GetMessage。</p>
+
+<p>在去思考另一个问题，当我们Sendmessage到另一个线程，而另一个线程并没有执行我们的GetMessage，在执行他的代码，而我们的线程看起来显然是被挂起等待了，是么？并不是，因为他还是可以接受其他线程发送过来的消息。这显然是处理在处理我们之前讨论过的一种情况。的确很有意思。因为从windwos的角度看，需要实现这种强壮的消息机制。那么这是一个什么过程呢？清楚一点。其实就是需要一种机制，也就是在等待对方线程处理完毕之前，可以处理别人发给我们的消息。哈哈。WaitForMultipleObjects等待2个event一个是要等待处理完毕的消息，一个是要等待sendmessage过来的新消息。当醒来时判断是什么让我们清醒过来，如果对面的线程不给力，我们只能继续循环等待。而这个也就是sendmessage的过程。</p>
+
+<pre><code>NTSTATUS FASTCALL
+co_MsqSendMessage(PUSER_MESSAGE_QUEUE MessageQueue,
+                  HWND Wnd, UINT Msg, WPARAM wParam, LPARAM lParam,
+                  UINT uTimeout, BOOL Block, INT HookMessage,
+                  ULONG_PTR *uResult)
+{
+   PTHREADINFO pti;
+   PUSER_SENT_MESSAGE Message;
+   KEVENT CompletionEvent;
+   NTSTATUS WaitStatus;
+   PUSER_MESSAGE_QUEUE ThreadQueue;
+   LARGE_INTEGER Timeout;
+   PLIST_ENTRY Entry;
+   LRESULT Result = 0;   //// Result could be trashed. ////
+
+   if(!(Message = ExAllocatePoolWithTag(PagedPool, sizeof(USER_SENT_MESSAGE), TAG_USRMSG)))
+   {
+      DPRINT1("MsqSendMessage(): Not enough memory to allocate a message");
+      return STATUS_INSUFFICIENT_RESOURCES;
+   }
+
+   KeInitializeEvent(&amp;CompletionEvent, NotificationEvent, FALSE);
+
+   pti = PsGetCurrentThreadWin32Thread();
+   ThreadQueue = pti-&gt;MessageQueue;
+   ASSERT(ThreadQueue != MessageQueue);
+
+   Timeout.QuadPart = (LONGLONG) uTimeout * (LONGLONG) -10000;
+
+   /* FIXME - increase reference counter of sender's message queue here */
+
+   Message-&gt;Msg.hwnd = Wnd;
+   Message-&gt;Msg.message = Msg;
+   Message-&gt;Msg.wParam = wParam;
+   Message-&gt;Msg.lParam = lParam;
+   Message-&gt;CompletionEvent = &amp;CompletionEvent;
+   Message-&gt;Result = &amp;Result;
+   Message-&gt;lResult = 0;
+   Message-&gt;QS_Flags = 0;
+   Message-&gt;SenderQueue = ThreadQueue;
+   Message-&gt;CallBackSenderQueue = NULL;
+   IntReferenceMessageQueue(ThreadQueue);
+   Message-&gt;CompletionCallback = NULL;
+   Message-&gt;CompletionCallbackContext = 0;
+   Message-&gt;HookMessage = HookMessage;
+   Message-&gt;HasPackedLParam = FALSE;
+
+   IntReferenceMessageQueue(MessageQueue);
+
+   /* add it to the list of pending messages */
+   InsertTailList(&amp;ThreadQueue-&gt;DispatchingMessagesHead, &amp;Message-&gt;DispatchingListEntry);
+
+   /* queue it in the destination's message queue */
+   InsertTailList(&amp;MessageQueue-&gt;SentMessagesListHead, &amp;Message-&gt;ListEntry);
+
+   Message-&gt;QS_Flags = QS_SENDMESSAGE;
+   MsqWakeQueue(MessageQueue, QS_SENDMESSAGE, TRUE);
+
+   /* we can't access the Message anymore since it could have already been deleted! */
+
+   if(Block)
+   {
+      //我们绝大部分都是不阻塞的。
+   }
+   else
+   {
+      PVOID WaitObjects[2];
+
+      WaitObjects[0] = &amp;CompletionEvent;
+      WaitObjects[1] = ThreadQueue-&gt;NewMessages;
+      do
+      {
+         UserLeaveCo();
+
+         WaitStatus = KeWaitForMultipleObjects(2, WaitObjects, WaitAny, UserRequest,
+                                               UserMode, FALSE, (uTimeout ? &amp;Timeout : NULL), NULL);
+
+         UserEnterCo();
+
+         if(WaitStatus == STATUS_TIMEOUT)
+         {
+            //...
+         }
+         while (co_MsqDispatchOneSentMessage(ThreadQueue))
+            ;
+      }
+      while (NT_SUCCESS(WaitStatus) &amp;&amp; STATUS_WAIT_0 != WaitStatus);
+   }
+
+   if(WaitStatus != STATUS_TIMEOUT)
+      *uResult = (STATUS_WAIT_0 == WaitStatus ? Result : -1);
+
+   return WaitStatus;
+}
+</code></pre>
+
+<p>GetMessage返回了，一般是跑2个函数。</p>
+
+<p>TranslateMessage(&amp;msg);
+DispatchMessage(&amp;msg);</p>
+
+<p>这里我们不讨论TranslateMessage，这个主要是辅助一些硬件消息相关。</p>
+
+<p>DispatchMessage的事情，就是做这个调用相对用的窗口过程部分。这部分主要是从系统调用我们的代码，目前对这个还没有什么兴趣。</p>
+
+<p>类似的还有模态窗口，产生模态窗口的窗口，会阻塞一些消息，但是却不是阻塞所有的消息，别的线程依然可以给发SendMessage。为什么呢？他们之间会有联系么？</p>
+]]></content>
+  </entry>
+  
+  <entry>
+    <title type="html"><![CDATA[胡言乱语计算机二]]></title>
+    <link href="http://studentdeng.github.com/blog/2011/02/27/computer2/"/>
+    <updated>2011-02-27T23:08:00+08:00</updated>
+    <id>http://studentdeng.github.com/blog/2011/02/27/computer2</id>
+    <content type="html"><![CDATA[<p>中断和异常处理是OS中非常重要的组成部分，当然windows也不例外，他们是我们理解OS一些概念、机制的基础。</p>
+
+<p>中断和异常简单的来说，就是在程序正常执行流程中，突发一个事件，导致程序的执行流程转向另外的执行流程中。而我们绝大多数编写的程序都是顺序执行的，我们的确体会不到这样的机制能够给我们带来多少好处。但是这个在OS的设计中，确实深入到各个方面，以至于没有中断异常处理，现代OS根本无法构建。为了简单理解，我们可以看看这个例子。</p>
+
+<p>比如我们准备带我们的宠物狗狗出去散步，但是由于狗狗非常淘气，经常单独行动（这里，我们是无法预知狗狗会在什么时候跑掉的），在没有任何其他道具的帮助下，我们只能每隔一段时间去看看狗狗是否跟着我们。那么用code来模仿这个行为，那么就是这个样子。</p>
+
+<pre><code>while(living) //人的行为简单说其实就是不断的重复重复...
+{
+    //do something
+    ...
+    if(!VerifyDog())//看看狗狗还跟的没有
+    {
+        //狗丢了....    
+    }
+    ...    
+}
+</code></pre>
+
+<p>如果我们这个while循环中，没有其他事情，仅仅是和狗狗在一起，那么狗狗不会丢，但是如果我们突然遇到一个美女，驻足观赏了一会之后…狗狗不见了。</p>
+
+<p>是的，我们通过轮询这种方式，不可能保证狗狗一定会在我们身边。那么如何才能保证狗狗一定在我们身边呢？无论我们走到哪里都会紧紧跟着呢？生活常识告诉我们，只需要给狗狗戴上链子，这样狗狗就会“听话”的跟在我们左右。那么我们就可以通过这样的code来展示我们的行为。</p>
+
+<pre><code>while(living)
+{
+    leash(FuncProc); 
+    while(bOutSide)
+    {
+       //doSomeThing 
+    }
+    UnLeash();    
+}
+
+FuncProc()
+{
+    狗狗想跑,抓紧链子。：）
+}
+</code></pre>
+
+<p>好了，在我们带狗狗出去玩之前，我们给狗狗栓了链子，那么我们在外出的时候，就可以随行所欲的“看美女了”。一旦狗狗有不轨行为，我们只是需要下意识的抓紧便能保证狗狗不会跑丢。而这，要比隔一段时间查看狗狗在不在要简单多了，我们可以完全从这个事情上解脱出来。做更重要的事情。而这一切，其实就是默默跑了一个异常处理的过程。</p>
+
+<p>我们通过leash(FuncProc); 注册了一个callback函数
+我们可以做我们想做的事情，而不在我们的while循环中体现任何有关狗狗的信息。
+当狗狗有不轨行为时，链子第一时间通知我们狗狗的行为，然后我们能够在第一时间制止狗狗。
+然后我们继续while中的事情。
+当然，回家了要把狗狗放出来（大部分的狗狗都不喜欢狗链子….）。
+从某种角度上来看，OS相当于人，而我们写的一些应用层的程序则相当于宠物狗狗。而异常处理，就是这条链子。对操作系统来说，他希望找到一条能够应对所有狗狗的超级链子。而在这么多狗狗中，总有那些不听话的，希望能够摆脱这条链子的狗狗。而这条链子也在这2端的发展下，变得越来越强壮。</p>
+
+<p>这篇文章的角度就是站在OS的角度，希望找到这条能够应对各种狗狗（主要是不听话的狗狗）的链子。也就是初步学习windows 的SEH的整体设计和思路（这个帽子的确很大）。下一篇则站在狗狗的角度来学习我们如何能够摆脱这条链子（这个帽子也挺大的），也就是SEH的相关安全机制。当然这篇是理解后面的基础。</p>
+
+<p>当然，OS本身的实现和人狗链子的关系也是微妙的。现代操作系统的整个设计是分层的。有些时候是人是狗已经不再重要了。就像真实世界的我们，我们无法从那些枷锁中挣脱，真的。我们有时候真不知道我们是人？是狗？</p>
+
+<p>闲话扯得太多了。为了更清楚的了解异常，我们需要进一步了解我们的计算机。类似的这种程序控制流的变化，还有中断(interrupt)，陷阱(trap)，错误(fault)，终止（abort）而中断，我们通常又分为软中断，和硬中断（这个又通常省略硬字）。是的，我相信对于绝大多数的和我一个水平的菜鸟来说，这些概念都是可以令人抓狂的。而造成这样的原因主要是在于计算机的发展是在是太快速了，所以，有些概念在这个过程中得到了扩展，而这些概念又和计算机体系结构密切相关，所以我们经常看到甚至是一些权威书籍之间有概念的冲突，是的。这个当然不是人家的错误，只是处在了不同的时空，而这也就是语言的悲剧。他永远不可能给我们准确的答案，除非数学。所以这里我们需要先搞清楚这些概念。把那些恼人的语言上的细枝末节过滤掉之后，整个东东也不复杂了。当然整个学习都在我们最“熟悉”的x86下，其他平台也不不难掌握了。</p>
+
+<p>为了减少中英文的差异，在一些概念描述上，这里就不再一次引入另一门语言，虽然他是伟大的语言。为了能够较为清晰的了解他们之间的区别。我们不得不扯一些硬件相关的知识，事实上，也许这些“旁敲侧击”让你回想到了学校的那些认为不重要的课程《机组》《模电》《计算机体系结构》《微机原理接口》等。</p>
+
+<p>在8086下，原谅我再次重复，有2种这样的机制。interrupt、exception。interrupt分为可屏蔽中断和不可屏蔽中断。exception分为 fault、trap、abort。概念有点多，慢慢来。</p>
+
+<p>经过上一篇的胡扯，我们知道了CPU眼中，把这些硬件当成逻辑存储器，最后和存储器构成一个地址空间。但是有些笼统，这里稍微再了解一点。和CPU通过总线相连的芯片除了各种存储器外，还有3种芯片</p>
+
+<ul>
+<li>各种接口卡（显卡，网卡）上的接口芯片，它们控制接口卡</li>
+<li>主板上的接口芯片，CPU通过它们对一些外设访问</li>
+<li>其他芯片，存储相关的系统信息或对输入输出处理</li>
+</ul>
+
+
+<p>而这些芯片都有一组可以由CPU读写的寄存器。这些寄存器有2点相同。</p>
+
+<ul>
+<li>和CPU总线相连。</li>
+<li>CPU对它们进行读写是通过控制些向他们所在的芯片发出端口读写命令</li>
+</ul>
+
+
+<p>所以，在CPU看来，这些外部的寄存器相当于端口，并对他们一起编址，从而又搞了一个端口地址空间，或是叫做IO端口空间。这里再扯的远一点，事实上，在x86下，我们现在知道有2个地址空间，一个是存储器的地址空间还有一个是IO地址空间，为什么不把IO地址空间也映射到存储器地址空间中呢？这样我们就可以再弄一些逻辑存储器了。是的这样设计的确简单，但是却浪费了一些CPU的地址空间，所以当时intel考虑到为了不浪费而又搞了一个IO地址空间，所以我们访问这些端口的时候，也就必须通过另外的指令来做。我们把这种IO编址称为独立编址。x86一共有64K个8bit的IO端口。事实上还有另一种思路和我们之前的想法一致，将这些IO的空间跑到了存储器地址空间，而这个又叫做统一编址。也就是说，这些IO寄存器与存储器单元一样看待。这样的设计在ARM中则比较常见。呵呵，有点乱，让我们看个例子。</p>
+
+<p>那就用我们最熟悉的键盘来说。当我们在键盘上操作时，CPU是如何知道的呢？</p>
+
+<p>键盘中有专门的芯片用于监视键盘上每一个键的状态，当我们按下一个键时，接通电路，这个芯片就会产生一个成为扫描码的东东，来表示键的位置，当键弹起的时候，同样产生一个扫描码。扫描码就保存在了键盘接口芯片的寄存器中（CPU来看这就是一个端口）。那么当键盘的输入到到端口时，我们这篇文章的主角终于来了。芯片向CPU发出中断信息。到这里，键盘的事情OK了。</p>
+
+<p>那么芯片是如何给CPU发送中断呢？我们可以通过线将CPU和芯片连接起来，但是这样会遇到一个无法回避的问题，可以和CPU连接的线是有限的，但是CPU外部的这些设备确是非常多的，所以必须管理这些设备，让其中一些设备共享一条线。而这也就是中断控制器的作用之一，所以，真实的情况是类似如下的。</p>
+
+<p><img src="/images/computer2.png" alt="alt text" /></p>
+
+<p>inter x86通过2片中断控制器8259A来响应外部中断源（就是指产生中断的设备，比如键盘）。和中断控制器相连的每条线被称为中断线。我们看出如果想发送中断给CPU，那么必须得获得这条线的控制权。那么我们申请中断线的这个动作，叫做IRQ（Interrupt ReQuirement）。当然“申请中断线”这也有一个更加专业的叫法申请IRQ或是申请中断号。</p>
+
+<p>而这个8259A做的事情就是</p>
+
+<ul>
+<li>监视中断线，检查产生的IRQ信号</li>
+<li><p>如果中断线上产生了一个IRQ信号</p>
+
+<p>  把IRQ信号转换成对应的中断向量
+  这个向量存放在中断控制器的一个IO端口，CPU从而可以通过数据总线访问向量
+  这个信号则发送到CPU的INTR引脚，也即是触发一个中断
+  等待CPU确认中断之后，写入PIC(可编程中断控制器)的IO端口，并清INTR</p></li>
+</ul>
+
+
+<p>但是事实上还没有完，我们知道CPU在一个时刻只能处理一个事情。我们有那么多的外围设备，当他们都要CPU时间时，这里就有一个先后问题了。也就是需要对这些中断分级别。而且在有些特殊的中断下，是不可以被其他中断打断的。呵呵，这里就引入了可屏蔽中断和不可屏蔽中断。那么我们就可以有选择的处理一些中断，而放弃另一些中断在一些极端情况下。而且有些中断处理过程中是不可以再处理中断的。可屏蔽中断IRQ信号通常是通过CPU的INTR引脚发给CPU的。而不可屏蔽中断信号通常是通过NMI引脚发给CPU。呵呵，这就是可屏蔽中断和不可屏蔽中断区别之一。</p>
+
+<p>那么我们再来搞定异常。</p>
+
+<p>为了能够稍微再了解一点，我们需要知道一些CPU内部是如何执行一条指令的。原谅我这里就不赘述了。只是搞一个例子。</p>
+
+<p>当CPU执行汇编指令IDIV。首先会检查源操作数（除数）是否为0，如果为0，则CPU在执行这条指令中，就会产生一个除零异常（在CPU眼里，汇编也成高级语言了）。通过中断的例子，我们看出，中断是CPU外部告诉CPU的执行流程需要转变。那么异常和中断最大的不同就是异常是CPU自己本身执行时发现的。中断的来源通常是外部设备，异常的来源则有3种。</p>
+
+<ul>
+<li>程序错误，当CPU在执行程序指令时遇到操作数错误或是指令非法。前者的例子就是除零，后者的例子可以是在用户模式下执行特权指令</li>
+<li>某些特殊指令。这些指令的本身就是产生异常。</li>
+<li>intel在P6引入了机器检查异常（Machine Check Exception）。当CPU执行指令期间检测到CPU内部或是外部硬件错误。</li>
+</ul>
+
+
+<p>可见，对CPU来说，中断是异步的，因为CPU完全是被动的指望外部硬件给他一个信号。而异常，则是CPU自己发起，从CPU来看则是同步的。</p>
+
+<p>我们之前已经了解了CPU是如何获知异常，中断。那么CPU接下来的动作又是什么呢？首先需要区分出这些不同的异常，中断。具体则是需要区分出产生中断的来源，8086使用被称为中断类型码的数据来表示中断源。中断类型码为一个字节数据。8086最多可以表示256种中断源。那么接受到各种中断或是异常时，接下来需要做不同处理，那么分别处理中断或是异常的程序入口，叫做中断向量（这里可没有异常向量一回事，这里被统一看待）。而这些中断向量组成一张线性表被称为中断向量表。由于是线性表，我们可以很容易的构造一个类型码到中断向量的映射。</p>
+
+<p>这里还需要强调一点。之前我们提到的异常的分类，那么这些异常的区别是什么呢？既然是控制流的转变，那么就有如何恢复和如何报告控制流转变这2种情况需要我们考虑，而事实上，fault abort trap 就是按照这样划分的。</p>
+
+<ul>
+<li>错误类（fault）异常是在产生这个异常指令的指令之前发起。fault通常在执行指令或是执行指令之中被CPU检测到。如果检测到，那么异常将机器的状态恢复到这条指令开始的地方，这样。指令就可以继续执行。可见错误类异常可以无缝继续执行，但是如果没有解决，则会陷入死循环。</li>
+<li>陷阱（trap）异常是在产生这个异常指令完成之后，立即产生。那么异常之后的恢复就是引起这条指令的下一个指令（这个是逻辑上的，可不是空间上的）。 可见trap也是可以无缝继续执行。</li>
+<li>终止（abort）异常用来报告严重的错误，而这种错误已经严重到不可恢复的地步，也可以说，我们已经不知道该如何恢复了。整个都乱了。比如一些硬件错误。</li>
+</ul>
+
+
+<p>当然到了80386之后，由于保护模式的引入，这部分又引入了各种门，中断们，陷阱门等等，恢复的过程也分了内核态和用户态。而这些个过程，绝大多数书籍都有相关详细的说明，这里不做赘述。有兴趣的同学可以自己翻阅。这里引入这些概念是为了对硬件处理中断有一个笼统的概念，这样会对我们理解OS是如何模拟这个异常过程提供一些帮助。</p>
+
+<p>这里还需要再强调一点，我们可以通过一些指令来屏蔽 可屏蔽中断，事实上，大多数的外接设备都是可屏蔽中断。但是我们的异常确是不可以被屏蔽的。有了之前的基础，我们可以从硬件本身的搭建思考这个原因，也可以从整体设计去思考这样设计的原因。这里算是留个问题吧。我已经觉得我是在是太罗嗦了。</p>
+
+<p>当然这些划分也不是非常精确，有一些错误类异常也是不能恢复执行的。哎，没办法，谁让这计算机是人造的呢。事实上，计算机的世界中充斥着“差不多”，“懒惰”这类思想，如果非要钻严谨的牛角尖只会增加自己的痛苦。因为我们不是在搞数学，有些东西可能背负着我们现在的视野所不能企及的历史问题。所以还是那句话，存在即是道理。我们没有资格对他们评头论足，在我们彻底搞出一个自认为更加合理的东西之前。当然这也是人造科学最让一些喜欢追求完美的家伙们郁闷的地方。呵呵，如果真的有可能，真的应该去拥抱数学。当然人造科学也有好处，是的。他和我们大多数的思维一致，甚至是我们现实经验的抽象，看看计算机的那些最基本的核心概念，stack queue。</p>
+
+<p>差点忘了，还有一个软中断的概念，这里通常指的是INT n这样的指令。如果站在CPU的角度，这个明显是异常，因为这个控制流的转变是CPU内部检测到的。</p>
+
+<p>让我们从茫茫的硬件跳出来。别忘了我们是要了解OS的异常处理。我们可对CPU的世界没有兴趣。是的。正是因为这些硬件太过于底层，而且不同的硬件结构都有不同的地方。那么操作系统如何来保证自己可以在多个这样的硬件平台上执行呢？一个最常见，最通俗的就是OS自己再抽象一个异常，中断。自己定义一个。是的，再没有比自己推倒旧体制，重建新秩序让人更兴奋的了。这样上层的应用就不需要考虑这些细枝末节了。事实上，OS是将这些异常，中断打包在一起管理的。因为他们本质上都是程序执行流程的转换。我们只能看到这是一种“跳转，恢复”而已。所以，现在我们可以忽略掉上面所讲的所有东西。（这里可能会有一种误解，所以我这里叫胡言乱语，要想完全真实的了解这些过程，intel手册，当然如果想要吃下这东西，《机组》《体系结构》….）。</p>
+
+<p>庄子也讲，计人之所知，不若其所不知；其生之时，不若未生之时；以其至小求穷其至大之域，是故迷乱而不能自得也。这些东西还是因人而异。我这里可没有给大家传递必须要学那些硬件知识，或是鼓励大家怎么怎么做。事实上我也没有这个能力，退一步，即使我有这个能力，也没有这个资格。用自己的特例来推广到大家这本身就是一个本末倒置的问题。其实，哎，再加一句废话。存在即是理由，技术本身没有错，错的只是人的角度而已。而这也就是人造科学的悲剧，它不可能让所有人都满意，相反那些只有神才能理解的东西--数学，不以人类意志为转移。</p>
+
+<p>让我们扯开那些鸡毛蒜皮的东西，静下心来。站在OS的角度来观察异常。那就拿我们最“熟悉”的windows。好吧。windows自己搞了一个异常处理机制。而这里面最熟悉的就是SEH了。当然这不是windows中唯一的异常处理机制。等我们了解SEH之后，再了解他。因为他并不是NT设计之初就存在的。这里可能又要绕绕了。MS真正的操作系统是NT。而95 98 只是dos的一层皮，并不真正算我们想象中的操作系统。</p>
+
+<p>当然NT也搞了自己的一套中断的概念，只是这里。我觉得我们应该暂时放下。在OS，IO处理那部分在来讲述。我觉得这次的硬件有些多了。涉及的太多，反而不能讲述清楚了。</p>
+
+<p>既然我们要弄一个抽象的中间值，那么我们显然只能从异常被CPU识别，然后经过各种机制之后，扔给我们来看的就是NT给我们定义的异常，也是给他自己定义的异常。</p>
+
+<pre><code>typedef struct _EXCEPTION_RECORD { 
+    DWORD ExceptionCode; 
+    DWORD ExceptionFlags; 
+    struct _EXCEPTION_RECORD *ExceptionRecord; 
+    PVOID ExceptionAddress; 
+    DWORD NumberParameters; 
+    DWORD ExceptionInformation[EXCEPTION_MAXIMUM_PARAMETERS]; 
+}  EXCEPTION_RECORD;
+</code></pre>
+
+<p>EXCEPTION_RECORD 定义异常，更多的可以参考msdn，http://msdn.microsoft.com/en-us/library/aa363082(VS.85).aspx这里只是简单提几点。</p>
+
+<p>ExceptionCode 是NT分配给异常的编码，用来表示是一个什么样的异常。比如我们最熟悉的 0xC0000005 STATUS_ACCESS_VIOLATION。</p>
+
+<p>ExceptionAddress 则表示异常产生的地方。（这里其实是不准确的，如果我们从硬件的角度去看，因为有些地方windows替我们做了一些额外的事情。后面会提到一个例子。）</p>
+
+<p>既然要模拟实现这种程序控制流的转换，那么我们需要提供系统一个函数执行的入口，说白了就是一个函数指针。那么就是下面的这个样子。</p>
+
+<pre><code>EXCEPTION_DISPOSITION 
+__cdecl _except_handler( 
+     struct _EXCEPTION_RECORD *ExceptionRecord, 
+     void * EstablisherFrame, 
+     struct _CONTEXT *ContextRecord, 
+     void * DispatcherContext 
+     );
+</code></pre>
+
+<p>让我们先略过这些参数。思考一些问题。我们应该如何注册我们的函数入口，何时解除我们的回调函数。如果站在NT的角度，这些函数入口又该记录在哪里？</p>
+
+<p>最直观的想法就是模仿硬件那种线性设计，搞一张表，来存储这些函数入口。但是我们这种直接想到的，往往都不是真实的设计。我这里只能猜想，由于这些设计都是20年前的东西，过多的访问外部的表，可能会冲击缓存性能。</p>
+
+<p>那么我们怎么做才能在少影响缓存性能的情况下，还能触发程序执行流程转换？而且我们并不知道哪里会出现程序流程的转换。而且由于我们需要模拟这个流程，也就是要支持底层中的中断来让我们普通程序捕获的同时，我们还想要扩展，自定义一些异常来抛出，使得程序流程转换。这个的确是一个复杂的问题。事实上，在我们的程序中已经给我们提供了一个实现这个机制的空间。他就是计算机中里程碑的东东，堆栈。</p>
+
+<p>堆栈是什么时候出现的，这个已经不清楚了。但是可以确定的是现在已经几乎没有能够脱离堆栈而运行的程序。堆栈给我们提供了非常出色的环境。</p>
+
+<p>记录子程序调用轨迹，使得嵌套子程序调用成为可能
+通过堆栈传递子程序调用参数，从而简化程序设计。因为寄存器的数目很可能是不够用的。
+基于堆栈的程序局部变量的概念得以出现，使得模块化程序设计和结构化程序设计成为可能，也最后导致了进程，线程。
+程序执行的轨迹和局部变量结合一起成为“脉络”即上下文。这给我们恢复程序执行，跳转程序执行提供了保障，甚至后面的调度。
+我猜想，正是因为SEH的设计和堆栈密不可分，所以才叫“结构化异常处理”吧。</p>
+
+<p>回想一开始的那个带狗狗出去玩的例子，栓链子和解开链子，构成了一段受保护的空间。事实上，编译器在给我们构造可以支持SEH的环境时，也是这样的。进入<strong>try block之前，加保护，在当前程序的堆栈空间中构造一些结构，也就是我们的回调函数入口等其他一些必要的结构。而当我们离开</strong>try block 之后，则就像释放普通的临时变量一样释放掉这些结构体。而且堆栈还有其他的好处，由于我们可以根据堆栈去构造类似printf的不定参数的功能，所以，编译器在支持NT的SEH机制时，可以加入其他一些结构，这样比较方便的扩展和优化这些基本的机制，从而提高效率。减少支持异常的开销。而且事实上，对于异常的开销，如果没有触发异常，现代的编译器已经几乎做到零开销，只是当真正的触发异常时，效率会大幅下降。当然。异常提供了非常强大的转换程序流程的能力，而这也是那些病毒，木马最喜欢的事情。更不说这些相关的SEH结构体就构造在程序的堆栈中，这种没有任何保护的地方。所以需要非常多的安全机制协同保护。而这些问题，大概直到vista后win7才基本上做到了完美，或是那些牛人还没有找到漏洞。</p>
+
+<p>所以说，我们自定义的异常，一般都是程序执行流程中的极端情况，万万不能像理解硬件中断那种思想去理解，也就是异常是不能用来控制程序中大多数流程转变。只能用于极端情况，作为最后的手段。当然，这个可能并不是20年前的那些牛人都能想到的。相关的有关SEH编译器级实现可以参考</p>
+
+<p>Matt Pietrek的文章</p>
+
+<p>http://www.microsoft.com/msj/0197/exception/exception.aspx，</p>
+
+<p>还有我自己写的2篇。</p>
+
+<p>http://www.cnblogs.com/studentdeng/archive/2010/12/15/1907232.html</p>
+
+<p>http://www.cnblogs.com/studentdeng/archive/2010/12/21/1912991.html</p>
+
+<p>原谅我把我的文章和Matt Pietrek的放到一起。当然，这些东西都是最最基础的。</p>
+
+<p>但是这篇可不是去学习具体的实现机制，要明白这个，还是需要一定的汇编基础和多一些的耐心，其实，怎么说呢，对于c的反汇编，主要还是靠耐心吧，没有太多的技术（纯个人感觉，我觉得c++的需要更多些技术）。而且如果再稍微了解一点SEH的安全机制，就会发现，我们似乎又回到了最开始的想法。构造一个表来保存这些回调函数的一些信息。呵呵，事物的发展似乎又回到了原点，但是我们的认识却不在一个层面上了。螺旋发展，也增加了我们学习这些古老东东的难度。真的，有时候真不知道为什么自己会处在这个时代。20年前的操作系统还有人敢说能够比较全面地了解。对于现在的千万级，有的linux甚至是亿级代码量来说。呼呼。穷极一生也仅仅皮毛而已，不过对于计算机这种新科学来说，还能搞个皮毛。而物理，数学那就是还没了解就over了。。。。。。</p>
+
+<p>对比之前的硬件结构，我们已经了解了我们自定义的“异常信号”，“异常向量”。那么我们又是如何根据“异常信号”找到这些“异常向量”呢？那么我们就必须要了解NT的异常触发的模型了。当异常跳出来时，NT的顺序是这样的。（准确说异常在用户态下，关于内核态的我们不管他）</p>
+
+<ul>
+<li>调试器 first chance</li>
+<li>堆栈上的那些回调函数</li>
+<li>调试器 second chance</li>
+<li>环境子系统
+怎么说呢，我觉得这篇真的好长，环境子系统还是放在OS进程线程那部分了解吧。现在可以把它想象成NT进程的妈吧。反正只要是要创建一个进程都要告她一下。当异常最后也没找到属于他的回调函数，那么就给他妈管教了。当然，NT之所以这样设计异常，就是要构建一个非常强壮的设计。能够将问题层层分类解决。是的，当问题复杂到一定程度之后，虽然我们通常的理解是一步到位会快些，但是事实往往分层更容易开发，维护，管理和甚至是优化。如果不分层，那么想象，搞这么多信息，还需要能支持用户扩展，而且，这个异常处理充斥整个系统本身设计。MS如何能够协同那么多人开发，即使都是天才？</li>
+</ul>
+
+
+<p>整个NT处理异常就是这样的，异常来了，OS先找debugger，debugger不管，那就在程序堆栈上找人，也不管，唉，debugger你还不管？ 好吧，subsystem你搞定吧。对于这种谁都不管的异常，正式一点的叫法是未处理异常，这个也其实是比较复杂的，因为2K， XP，vista的策略都不同。策略本身不复杂但为什么不同？ 有机会的话，需要再深入一点学习一点。</p>
+
+<p>这里面对大多数同学，如果不了解汇编的话，可能无法理解这个调试器为什么要跑2次？要知道我们现在可是在和效率赛跑，而且为什么调试器首先要捕获异常？而不是我们本身的程序？</p>
+
+<p>我们想一个问题。在我们使用debugger调试程序的时候，我们的程序凭什么能够加入断点，然后停下来？CPU执行可是老老实实的按照一条条的指令跑的，没有那些花花肠子。当我们单步调试的时候，为什么程序执行一条指令（我这里指调试汇编代码，调试c，c++这些还需要稍微麻烦一点）就要停下来呢？当我们有了中断的概念就不难理解这个问题了。是的。就是发生了中断。导致CPU暂停了当前被调试进程，而把控制流转向到了debugger。那么怎么暂停？为什么能够暂停？这个还是交给OS的调度和同步那里再学习吧。</p>
+
+<p>事实上，这个断点（我说的这种）就是指令INT 3。他可以说是我们非常熟悉，但又陌生的。不知道大家在一开始用c编程的时候，至少是我自己，在辛苦了半天之后，一运行发现屏幕上跑出一大堆烫烫烫烫。事实上，他就是INT 3。</p>
+
+<p>INT 3的机器码是1100 1100b（0xCC）。一个字节长。编译器在debug下会给我们创建额外的栈空间并填上INT 3，至于为什么这样，我这里就不啰嗦了。这种纯菜鸟错误，通常是没把指针玩明白。有点远，呵呵，为什么扯这么远，是因为在有了之前的硬件知识，这里很可能产生疑问。看这个指令的样子，我们发现他是个软中断，或称为trap。那么根据之前所讲的，这里的异常地址应该是这条指令的下一条。但是我们这里看到的却是我们打断点的这条指令。那么要搞清楚这个，又要稍微绕绕下。当我们加入一个断点的时候，vc会自动记录下我们这个断点的位置信息。当调试的时候，vc会把这些断点位置处的指令换成我们的INT 3。也就是替换掉一个字节。当然，替换之前要保存原来的。这个过程叫做落实断点（resolve break point）。那么当CPU执行到INT 3指令时。是的。这时我们就明白了，为什么要先让调试器捕获异常了。这些东西要是先给了我们做，那么调试器就没法子实现功能了。然后就是一系列的硬件，OS的事情。vc把之前我们的代码再恢复过来。所以这也就是RtlRaiseException产生的软件异常并不会先扔给debugger first chance。因为我们自己搞得东西是不可能和debugger有任何关系的。</p>
+
+<p>我们这里需要特别关注下NT干的事。</p>
+
+<p>对于NT来说，INT 3 会导致CPU执行KiTrap03程序。（为什么执行这个，我们在IO那里再了解）。在WRK中，我们可以看到这部分的源代码。这里不得不提MS，不知道哪个脑子别了改锥的人想出了一个这么限定，代码不能超过50行。无语。</p>
+
+<pre><code>mov     esi, ecx                ; ExceptionInfo 2
+mov     edi, edx                ; ExceptionInfo 3
+mov     edx, eax                ; ExceptionInfo 1
+
+mov     ebx, [ebp]+TsEip
+dec     ebx                     ; (ebx)-&gt; int3 instruction
+mov     ecx, 3
+mov     eax, STATUS_BREAKPOINT
+call    CommonDispatchException ; Never return
+</code></pre>
+
+<p>不管怎么说，人家总是做出贡献了。我们看到了dec ebx。是的。在处理异常的时候，nt这里修正了一下，而那个1，就是INT 3这条指令的长度。现在我们就明白为什么我们能正确看到我们的代码了。也验证了trap的流程。</p>
+
+<p>绕了很远，把思路拉回来。</p>
+
+<p>让我们再思考一个问题，程序流程突然转变了，甚至可能永远回不来了，而且我们现在的代码是看不出这个状态。也就是我们随时都可能被别人抢了。哎，可惜啊，咱们处在最底层。人为刀俎，我为鱼肉。但是NT还是比较有人性的。而且这也是很有必要的。在程序流程突然转变了。在保护的这段代码中，可能有一些关键的操作没有做。比如内存释放，一些同步的锁等。但是由于某种未知原因，我们只能放弃这部分操作。那么我们的这部分被动代码什么时候执行呢？而且，由于这些保护的代码很可能由于函数调用，在形式上或是非形式上，都可以形成一个嵌套的关系。这些释放的顺序，从那里开始释放，释放到哪里？这都是NT需要给我们规划好的。</p>
+
+<p>不要被我复杂的言论迷惑，实际上整个过程很简单。因为我们程序的执行流程信息都在堆栈上。我们根据堆栈信息我们可以很容易找到起点和终点。那么从问题出发点，到结束点。我们便走了2次。第一次从出发点到结束点，这是为了找到处理程序。第二次则是叫做stack unwind，栈展开。 从出发点到结束点。当然这个过程中，依然有很多更复杂的问题。异常查找时很可能产生死循环。unwind的过程也可以被随时中断或是走到其他地方。而导致我们写的那些备用代码无法执行。事实上NT给了我们非常多的选择。vc只是披了一层皮。</p>
+
+<p>SEH就像ReactOS上写的一样，“SEH is a game which is played between OS and Compiler (Keywords: <strong>try, </strong>except, __finally)。</p>
+
+<p>写在最后</p>
+
+<p>我发现我越来越罗嗦了。絮叨絮叨的像个大妈。
+后面的部分依然有点穿越。在不谈具体实现的细节下去说清楚SEH的基本过程，对我还是太复杂了，应该是我还没有理解透彻，慢慢来吧。具体过程可以参考我推荐的3篇文章，当然。最好的方法是自己推导。
+我真的不知道这篇文章是写给自己还是写给别人看的。是的。如果我是读者，当我看到这篇文章的时候，我真想向这个作者扔砖头。</p>
+]]></content>
+  </entry>
+  
+  <entry>
+    <title type="html"><![CDATA[胡言乱语计算机一]]></title>
+    <link href="http://studentdeng.github.com/blog/2011/01/22/computer1/"/>
+    <updated>2011-01-22T22:51:00+08:00</updated>
+    <id>http://studentdeng.github.com/blog/2011/01/22/computer1</id>
+    <content type="html"><![CDATA[<p>操作系统是连接硬件和应用软件之间的纽带。至少目前是这样的。而操作系统这门课也是计算机专业的必修课之一。无奈当时混沌。并没有真正的上好这一门课，之所以叫胡言乱语。是因为这里面的水对我来说实在是太深了。任何一个小的问题背后都是一个深渊。所以第一篇，从最初的（大学课程最初）开始讲起。</p>
+
+<p>8086，应该是学计算机最开始的地方。可以说是我们现在x86系列的最简单，最基础的实现。里面的设计都或多或少的影响到了后面系列的实现。所以，学校从这里开始，的确是非常明智的，虽然当时我不这么认为。但是想要了解或是明白8086的设计，那么也就要带出另外的那些更为底层的，计算机指令集，机器语言，引脚，门，电压等等。当然我不是说这些不重要，但是如果有这些基础，的确可以加快，加深8086以及其他系列的一些知识的理解。这里就略过这些东西。一是自己能力不足，二是我觉得现在谈这个真的不是很重要。想想，这2个原因其实也就一个 ：)。</p>
+
+<p>存储器是计算机的核心部件。现在的计算机围绕存储器来构建，所以必须从存储器开始。</p>
+
+<p>在CPU眼中，存储器保存的东东。只有2种：指令和数据。当然退而求其次，存储器中没有指令和数据之分，只有0和1。这个世界的确是非常的和谐简单。那么CPU是如何分别这2种东东呢。这完全取决于CPU自己。当遇到二进制信息如1000100111011000时，CPU可以把他看成大小为89D8H的数据处理，也可以看做是指令mov ax bx来执行。</p>
+
+<p>存储器被划分为若干个存储单元，一般来说，一个存储单元大小为一个Byte。一个拥有128个存储单元的存储器。容量为128个字节。</p>
+
+<p>那么存储器被划分为了多个存储单元，从0开始排序。CPU从内存中读取数据，首先需要的就是存储单元的地址，也就是CPU需要知道读取哪一个存储单元中数据。当然CPU不仅仅需要知道地址，还需要告诉存储器要做什么操作，是读还是写？而且在计算机中，也不仅仅只有一个存储器，也不仅仅只有一种设备需要去操作。还需要指明对哪一个设备操作。所以。CPU对数据的读写，需要以下的基本信息。</p>
+
+<p>存储单元地址（地址）
+设备选择，读写命令（控制）
+读写的数据（数据）
+那么CPU通过什么来将这些信息传递给设备呢？CPU计算机中的这些设备处理传输信息都是电信号,连接这些设备的导线为总线。总线根据传送信息不同，分为地址总线，控制总线，数据总线。</p>
+
+<p>CPU从3号单元中读取数据过程：</p>
+
+<p><img src="/images/computer-1.png" alt="alt text" /></p>
+
+<p>CPU通过地址线将地址信息3发出
+CPU通过控制线发出读命令，选中存储器，通知到读数据
+将3号单元中的数据8通过数据线交给CPU
+既然知道了CPU读取数据的流程，那么CPU能够找到多少个这样的地址是我们遇到的下面的问题。显然，地址总线上能传递多少种不同的地址，那么CPU就可以找到多少个存储单元的地址。</p>
+
+<p>如果CPU有10根地址总线，1根能够提供2种信号：1、0。那么10根就能提供2<sup>10个，也就是1024种。那么我们就说CPU的寻址大小为1K。或这个CPU的地址空间为1K。</sup></p>
+
+<p>CPU与各个设备之间传递数据是通过数据总线进行。所以，数据总线的宽度决定了CPU和外界数据传递的速度。我们很容易想到16根数据线可以一次传递2个字节。</p>
+
+<p>同样类似的。控制总线的宽度，也决定了CPU对外部的控制种类。所以，决定了CPU对外部的控制能力。</p>
+
+<p>当我们买电脑的时候。除了考虑CPU以外，还需要搞定一个好的主板。当我们打开电脑之后，看到的首先也是这个大家伙。而且如果你的电脑主板被烧坏的话，那么基本上这个电脑主机也就完蛋了。可见主板在现在计算机中的地位。</p>
+
+<p>主板最基本的作用就是通过它把计算机的核心部分通过总线（地址、控制、数据总线）相连，并且还需要为扩展预留接口。当我们买到一个主板时，会看到有非常多的接口卡槽，而事实上CPU控制这些设备就是通过总线去控制这些接口卡来进行的。</p>
+
+<p><img src="/images/computer-2.png" alt="alt text" /></p>
+
+<p>上面的那些东东，不管是显卡，声卡，网卡。都有两点相同。</p>
+
+<p>都和CPU总线相连
+CPU进行读写操作是，都是通过控制线发出内存读写命令。
+也就是说，CPU操作他们的时候，都把他们当做内存来对待。把这些不同的设备组成一个大的逻辑存储器。这个逻辑存储器就是我们的地址空间。</p>
+
+<p><img src="/images/computer-10.png" alt="alt text" /></p>
+
+<p>在上面这个图中，所有的物理存储器都被看作一个由许多存储单元构成的逻辑存储器，每一个都有一个地址段，也就是一段地址空间。CPU往这段空间中读写数据，其实就是读写了物理存储器。</p>
+
+<p>那么我们可以看出。CPU的地址总线宽度是在是太重要了。在我们的8086中，地址总线宽度为20，也就是可以搞定2<sup>20个不同的地址。也就是说8086的地址空间大小为1MB。</sup></p>
+
+<p>不同的计算机系统，的地址空间分配是不同的。如下是8086的</p>
+
+<p><img src="/images/computer-3.png" alt="alt text" /></p>
+
+<p>看到这幅图，那么我们就可以从容的写一个HelloWorld程序输出到我们的屏幕上。</p>
+
+<p>因为我们可以直接在A0000~BFFFF中写数据，而这些数据会跑到显卡中最后跑到屏幕上。</p>
+
+<p>那么我们现在明白了。CPU访问内存单元时，需要给出这个内存单元的地址，所有的内存单元构成存储空间是一个一维线性空间。每一个内存单元在这个空间中都有唯一地址，这个唯一的地址，就是物理地址。</p>
+
+<p>CPU通过地址总线送入存储器的。必须是一个内存单元的物理地址。同样，这个地址在CPU内部中必须搞定这个地址，再发送到地址总线之前。不同的CPU形成物理地址的方式也不同。而我们现在所考虑的就是8086是如何搞定这个物理地址的。</p>
+
+<p>那么我们又必须要了解些其他知识。8086是16位结构的CPU。那么他的意思是</p>
+
+<p>运算器一次最多处理16为数据
+寄存器最大宽度16位
+寄存器和运算器之间的内部线为16位。
+也就是说，8086一次只能处理，传输，存储（寄存器）16位的地址。从我们大多数人的思维，一个地址，也就是一个指针，最好和一个整数的长度一致。但是，我们知道8086的地址总线为20位。达到了1MB的寻址。为什么会是这样的呢？在很久很久以前，当CPU的技术从8位发展到16位的时候，地址总线本来也应该是16位，也就是64K。但是大家发现这个太小了。然后intel决定采用1M。这个在当时，的确是非常的大，而盖茨甚至还有“无论对谁来说,640K内存都足够了”的言论。当然。这里并没有不敬在里面。只能说，计算机的发展实在是太迅速了。所以，地址总线的宽度为20位。但是这个带来了一个问题。面对16位的ALU，如何来填补这个呢？</p>
+
+<p>Intel设计了一种在当时看来一个非常巧妙的方法。也就有了我们现在看到的8086地址翻译。16位段地址+16位偏移来形成这个20位的地址。</p>
+
+<p>随着计算机的发展，我们越来越的希望计算机能够处理更多的事情，伴随着CPU运算能力的提升。整个计算机的性能主要是卡在了CPU利用率上。面对“优秀”的CPU，我们并没有充分的利用它实在是暴殄天物。所以我们希望我们的CPU能够给我们做更多的事情，最好不要停。就像老早的资本家总是希望工人天天干活一样。</p>
+
+<p>不幸的是，在当时的DOS操作系统下面。是单任务的。并不支持多任务。我们不能在听音乐的时候打开文本文档编辑。那么，构造计算机的那些老前辈们，想到的一个招数是时间片。每个程序都有机会获得这些时间片，通过不断的轮询，只要这个时间足够短，那么人类是无法觉察出来。我们会有这个错觉，好多的程序再一起执行。</p>
+
+<p>虽然我们在DOS可以利用内存驻留的技术实现类似的体验，但是这个却并不是安全的。因为我们往往是通过修改中断向量表来做。我们无法保证其他程序是否正确修改中断向量表。而且如果我们的程序通过这里修改，并成为我们程序的一部分时，也就意味着，其他的程序也能这么做。那么我们很难保证计算机中的各个程序能够互不影响。同样，包括操作系统。这也就意味着我们无法构建一个安全的环境，让我们的操作系统，以及各个程序不互相影响，制约。</p>
+
+<p>同样，当我们将CPU时间片分给那些程序的时候。在一开始的初期，并不是我们这样的多任务。而是一种叫做协作式多任务。操作系统控制CPU的时间片，而每个程序形成一个队列。每个程序在获得CPU时间后必须归还CPU。注意，这里的归还是程序本身的事情，而不是操作系统的事情。也就是说，如果有一个程序不想归还时间片，或是他不小心陷入一个死循环，那么别的程序也就无法执行，甚至包括操作系统自己本身。因为他自己也在那个队列里面傻等。那么这整个世界也就变得混沌不堪了。因为操作系统，并不能识别哪一个程序是不良的程序。</p>
+
+<p>造成这些问题的根本原因在于，我们并没有等级的概念。也就是说，整个硬件资源对我们的每一个程序都是平等的。事实上8086下我们看到了任何一个程序，都可以通过段+偏移来实现访问整个地址空间。甚至是中断向量表还有硬件。所以，在这个原始社会下。我们达到了真正意义上的公平，但是也验证了低下生产力的现实。</p>
+
+<p>所以，为了实现这些功能。必须有硬件的支持。那么80386也就跳入了我们的视野。事实上，他就是为了支持我们的想法（实现多任务，实现各个任务互不影响）而诞生的。</p>
+
+<p>在开始介绍80386之前。我们好好思考一下我们需要实现的功能。</p>
+
+<p>实现等级观念，有些程序需要有特权。执行一些系统的核心部分，而一些程序必须在一些限制上运行。具体的讲则是有些地址空间不能访问，有些寄存器不能读取或是修改。
+需要提供一个复杂的内存管理，来帮助我们实现各个任务的独立的地址空间。这样可以保证一个任务不会随意修改另一个任务的数据。
+其实，让我们说到根上。其实我们需要实现针对地址空间的保护。只有实现了这种保护机制，我们才能保护操作系统的代码，维护操作系统的特权。而有了操作系统的支持下，我们才能继续去谈内存管理，和保护操作系统之上的各种程序之间不互相影响。搞定了这些之后，我们就不难理解8086的缺陷以及80386为什么要实现这些功能了。当然。这个过程肯定不会像8086那样平滑。因为这完全是一个不同的设计思路，思想。即使，他披着一张似乎有着段加偏移量的一层皮。</p>
+
+<p>好吧，让我扯的远一点。随着生产力的发展，有一个超牛B的程序，他想做其他程序的老大。让他们乖乖听话。而这个程序，就是操作系统。可惜啊，在原始社会，生产力不足。并不能让所有的人都听话。让我们暂时告别原始社会，我们来到了奴隶社会。其实计算机发展也和人类社会一样。我们出现了阶级，让我们仔细看看这个维持统治阶级工具的核心——80386体系结构。</p>
+
+<p>80386以后，CPU历经多种改进，虽然速度提高了几个量级，功能上也有很多改进。但并没有重大的质的改变。所以统称为i386结构，如果除去大量的3D密集型图形图像运算，并行等之后。其实，只是相当于一个更更快速80386而已。</p>
+
+<p>80386是32位的CPU。也就是ALU数据总线是32位。这里，我们终于在地址总线和数据总线一致了。都是32位。当面对地址总线的宽度达到32位。也就是CPU的寻址能力达到了2<sup>32</sup> = 4G。这的确是一个相当大的空间。为了保证这个空间的和谐。80386增加了一个叫做保护模式的一个名词。但是为了和之前的8086体系兼容，又有了实模式和虚拟86模式。</p>
+
+<p>这里只是简单的介绍。实模式，没有什么其他的意义。只是比原来的8086寄存器大了。CPU快了。一些指令和操作更加方便容易了。</p>
+
+<p>保护模式则是重点。事实上，没有保护模式，现代操作系统是无法构建的，在x86下。</p>
+
+<p>既然我们有了这么大的一个空间，那么该如何分配呢？很容易的想法是，我们可以把地址空间平均分给各个任务。那么他们都有了各自的地址，他们只要在各自地方做就好了。但是这个同样假设这各个程序都是善良的。而且，对于各种各样的硬件又该如何做呢？他们所映射的CPU地址空间该如何保护？而且，当我们真正的运行着相当多的任务的时候，我们的内存，是否还能经得住呢？而这些问题归根到底是因为CPU的地址空间每一个任务都是可见的，那么就想通过各种各样的渠道来搞破坏。所以，为了构建操作系统的核心地位，以及各个任务之间的互不干涉。操作系统中最重要的概念登场了——虚拟存储技术。</p>
+
+<p>其实，这是一个很简单的道理。统治阶级（操作系统）为了维持他的权威，他把珍贵的核心资源（CPU地址空间）和被统治阶级（用户程序）之间加了一个中间层，从而核心资源（CPU地址空间）对被统治阶级（用户程序）是透明的而统治阶级（操作系统）所独占。然后他又对所有的被统治阶级（用户程序）整了一个弥天大谎:“你们有整个4G的CPU地址空间。而且你们在跑的时候（程序运行）是独占所有资源的”。然后被统治阶级（用户程序）就在这个统治阶级（操作系统）下勾画的这个美丽的世界下安分的生活下去了，至少是绝大多数。（这里的表达不准确，这里的用户程序，其实我的意思是任务，或是说，在普通程序，我们可以写这么一个地址，在高地址空间上，只是如果我们去操作他，操作系统不让我们这么做。但是我们还是能“看”到的。感觉还是不合适，这段可以去掉：)）</p>
+
+<p>OK。操作系统给这个世界整个一个这么大的谎言。现在计算机的核心资源都在他的掌握下了，他的目的终于达到了。但是就和再苛刻的资本家也得给工人发工资一样。如果没有了被统治阶级，统治阶级还有什么存在意义呢？所以，操作系统也必须给用户程序一个高效的获得CPU资源的方式。也就是要给用户程序发工资。</p>
+
+<p>而一个程序运行的最基本的要求就是数据。瞎话扯了这么多。该来点正经东东了。</p>
+
+<p>80386CPU的内存管理支持2种，段式，和段页式。这些都为操作系统实现内存管理提供了硬件基础。</p>
+
+<p>CPU的段机制，提供了一种手段。可以将系统的内存空间分成一个个较少的受保护区域。每个区域称为一个段。每个段都有自己的基地址，边界和访问权限。但是80386在实现这个的时候，不得不背上历史的负担。intel选择了在原有段寄存器的基础上构筑保护模式。并保留了原来的16位段寄存器。并添加了2个段寄存器FS,GS。但是我们看到了。光是用段寄存器来确定一个地址是不行的。因为我们需要这个地址段的长度（边界），访问权限等等。所以，这里变成了一个数据结构，而不是之前8086的那个单纯的基地址。</p>
+
+<p>所以，intel在做这个的时候，改变了段寄存器的功能，使他从单一的基地址，改成了指向一个数据结构的地址（或是数据结构的指针可能好听点）。这样，CPU才能获得它足够的信息。而这，也是学过8086 再看80386最让人迷惑的地方。因为这个完全是2套东东。而且根本上没有任何关系。</p>
+
+<p>让我们捋一下当一条访问内存指令的执行情况。</p>
+
+<p>根据指令的性质确定使用哪一个段寄存器。
+根据段寄存器内容，找到相应的段描述符结构。
+找到基地址。
+将指令中的发出的地址位移，检查是否越界。
+根据指令的性质和段描述符中的访问权限看时候越权。
+一切正常，我们相加获得实际物理地址。
+CPU搞定段需要知道3个信息。</p>
+
+<p>段基地址
+段界限
+段属性
+段信息的长度是64位。段基地址32位。段界限20位，段属性12位。而这个段信息标准的叫法就是段描述符。而许许多多的段描述符组成个段描述符表。</p>
+
+<p>为了能够访问段描述符表，80386中新增了2个寄存器来寻址段描述符表：GDTR和LDTR。GDTR为全局描述符表寄存器，LDTR为局部描述符表寄存器。GDTR是48位，直接指向内存的线性地址，32位的线性基地址，16位的边界描述这个表的大小。LDTR是16位寄存器，表示的是全局描述符表的索引。这说明LDT其实就是GDT中的一项而已。</p>
+
+<p>段寄存器中的内容为16位。由于指向的内容改变了。所以也有了新的名字，为段选择子。</p>
+
+<p><img src="/images/computer-4.png" alt="alt text" /></p>
+
+<p>TI表示要索引的段描述表种类。TI = 0表示全局描述符表，TI = 1表示局部描述符表。由于索引只有13位，也就是说，我们的表项最多2<sup>13</sup> = 8K个描述符。RPL 表示请求特权级，用于特权检查。</p>
+
+<p>我们现在仔细看看这个索引指向的内容，描述符表。</p>
+
+<p>在一个多任务系统中。通常我们会同时存在很多个任务，每个任务涉及多个段，每个段都需要存放段描述符。那么描述符根据用途不同，IA-32处理器分为3种描述符表。全局描述符表GDT，局部描述符表LDT。中断描述符表IDT。IDT将放在后面中讨论。段描述符的结构比较纠结，充分体现了历史负担。这里也就不继续了，不过，这个真是一个相当“太监”的结构。</p>
+
+<p>GDT表是全局的。一个系统中通常只有一个GDT。供所有任务使用。LDT和具体任务相关，每个任务都可以有一个LDT。也可以多个任务共享一个LDT。</p>
+
+<p><img src="/images/computer-5.png" alt="alt text" /></p>
+
+<p>根据上图，我们可以形象的看出，段内存管理的计算方式。讲了这么多的理论，让我们稍微动动手。</p>
+
+<p>使用Windbg调试程序，可以使用dg命令来显示一个段选择子指向的段描述符详细信息。首先看下CS</p>
+
+<p><img src="/images/computer-6.png" alt="alt text" /></p>
+
+<p>Sel就是选择子（selector）。base limit就是之前的基地址，和边界。Code就是段的类型。RE = ReadOnly + Executable。Ac表示访问过</p>
+
+<p>Pl表示特权级别（Privilege Level）。3的意思是用户特权。Size表示代码的长度，Bg意味32位代码。Gran表示粒度 Pg代表为内存页4K。Pres代表是否在内存中（我们之前看到了那么多的表项，8K，事实上并不是都在内存中的，当不在内存中时，访问会重新载入这个内容，所以需要记录）。Long 下的Nl表示 这个不是64位代码。</p>
+
+<p>我们看到了SS DS ES 一样。</p>
+
+<p><img src="/images/computer-7.png" alt="alt text" /></p>
+
+<p>我们看到了类型是数据，并可以读写。而且我们发现。SS DS ES CS 的基地址都为0，长度都是整个内存空间大小。Intel把这种方式成为平坦模式（Flat）。我们看到了当我们通过段+偏移获得一个地址，其实基地址的作用已经没有了。limit也是最大空间4G，作用也很小了。可见，在平坦模式下，只是段管理的一个特例。我们只是关注与权限而已。</p>
+
+<p>等等，少了一个。FS这个段寄存器比较特殊这里只是贴个图。具体的会在后面总结他。当然这里面的知识非常多，还有各种各样的段描述符存在。但是如果是和我一样在这些方面是新手，我觉得还是知道的少一点比较好。</p>
+
+<p><img src="/images/computer-8.png" alt="alt text" /></p>
+
+<p>我们看出，根据段内存管理下。我们把程序分成了不同类型。有代码部分，有数据部分等。但事实上，无论是windows 还是linux都没有采用段内存管理，准确说是只使用Flat模式,也就说。只是使用了权限部分来针对特权级对代码和数据保护。</p>
+
+<p>Intel在80286实现保护模式，段式内存管理。但是发现了如果不支持页式管理是不行的。所以，在80386下，需要支持页式管理。也就是说，80386又背起了历史的负担，既要维护段式管理，还要实现页式管理。</p>
+
+<p>之前的段式管理机制，是通过段寄存器转换加偏移形成一个32位的物理地址。这个是真正的物理地址，也就是这个是要在地址总线上跑的。也就是说应用程序获得的这个地址是真实的地址，那么也就对操作系统对内存换入换出增大了困难。而且对需要对code和data分类管理，导致程序加载过慢。而且缺乏足够的对内存管理的粒度，而究其原因，就在于它并没有真正的隔离用户程序和实际资源以及等等问题。所以，页式管理开始登场了。</p>
+
+<p>本来页式管理和段式管理是不需要结合在一起的。但是在80386中。保护模式的实现是和段式管理分不开的（权限控制）。我们在查看CS的代码段描述符时，我们看出执行的这段代码的优先级是3。所以intel设计80386时，就考虑利用原有的基础再扩充。那么也就有了我们现在的基于段式管理的页式管理。也就意味着，我们需要在段式管理上再建立一个地址映射。说白了就是。这整个一套地址转译，需要将逻辑地址，通过段式管理转成线性地址，再通过页式管理最终转成真实的物理地址。那么如果我们启用了页式管理，那么段式管理的运行结果就不是之前的真实的物理地址，而成了一个中间地址或是线性地址。而这个过程。同样也是从8086跳到80386比较费劲的地方。</p>
+
+<p>80386将线性地址空间划分为4KByte的页面（一般情况下）。每个页面可以被映射至物理存储空间中任意一块4KByte大小的区间。在段式管理下，连续的逻辑地址转译后在线性地址空间还是连续的。页式管理下物理空间却可以不连续。所以我们可控的粒度更小，从而更灵活。而物理空间的不连续，也就意味着我们可以更加灵活的把暂时不用的数据放到外部存储器，通常为硬盘。而这也就解决了我们多任务下，物理内存不够的情况。</p>
+
+<p>当然，灵活的背后便是复杂的机制，在我们继续了解详细的页式管理过程之前。我们先看一下我们真正的需求，以及80386给我们提供了什么。</p>
+
+<p>我们的首先目的是特权机制。通过特权机制来保证操作系统的权威。也就是一些指令，寄存器只能由操作系统这一级别的才能操作。而用户程序不能操作。这是段式管理已经搞定的。那么剩下的问题就是用户程序和用户程序之间互不影响。</p>
+
+<p>在页式管理中，我们已经有了一个虚拟层：线性地址。事实上。每一个任务都有一个这样的虚拟地址。任务中针对地址的操作都是在这个虚拟地址上而不是真正的物理地址。我们知道。我们的数据最终和物理地址相关联才有意义。这个中间层，使得任务不知道自己确切的物理地址，也就为了保证一个任务不会被另一个任务随意修改或访问。</p>
+
+<p>80386页式管理的核心是将线性地址空间划分成一个个页面，大小一般为4K。那么我们需要保存这一个个页面的映射关系。而我们知道，现在的地址空间大小是4G。那么我们剩下的就是如何管理，或是保存这些信息。我们首先发现，这个空间对我们绝大多数程序来说都太大了。所以为了减少保存这些映射的资源，80386使用了分级管理，所以，一个简单的线性地址被拆成了3个部分。</p>
+
+<p><img src="/images/computer-9.png" alt="alt text" /></p>
+
+<p>分别为Directory， Table 和Offset。</p>
+
+<p>对于一般来说，页面大小为4K。为了能够找到每一个Byte，那么我们需要12位才能找到。也就是Offset = 12的原因。</p>
+
+<p>我们称指向一个页面的地址（指针）为页表项，多个页表项的集合构成页表。10位table，也就意味着我们能够表示1K个pageTableEntry。那么我们总共能够表示的4MByte。</p>
+
+<p>指向页表的地址（指针）为页目录项。多个页目录项的集合构成页目录。10位的Directory，也就意味着我们能够表示1K个Directory entry。那么我们总共能够表示4GByte。正好为我们的地址空间大小。</p>
+
+<p>CR3寄存器，则给我们指出了Directory 的基地址。所以它又有了另一个名字，页目录基地址寄存器（PDBR）。</p>
+
+<p>具体的取址这里就不描述了。因为上图已经很清楚了。</p>
+
+<p>这真是一个看似完美的方案。但是现实是很残酷的。我们并没有那么多的内存。为了能够跑起那么多的程序，支持多任务，也就是意味着，我们需要在一些时候，把一些内存搬到硬盘。那么当我们访问这些页面的时候，就会产生pagefault，然后操作系统会把这部分页面再搬入到内存中。</p>
+
+<p>当然，还有相当多的细节这里无法阐述。事实上，我们也不可能一下子把这些东东搞清楚，毕竟这些东西离我们还是有些远。下一篇将从应用的层面扯。当然在合适的时机，我们还需要回来。比如另一些重要的概念如中断。</p>
+]]></content>
+  </entry>
   
   <entry>
     <title type="html"><![CDATA[SEH 学习笔记二]]></title>
@@ -1515,656 +2838,6 @@ EBP-18 Standard ESP in frame
 <p>2、本来想尽可能的在这一篇中没有或是少有汇编，但是这个的确对我来说，是一个比较复杂的问题，而且越到最后，其实汇编也是不可避免的，因为真实的代码也很有可能就是汇编写的，我们实在是没有必要去把他翻译成c。</p>
 
 <p>这篇文章里面的问题还是很多的，也很有可能会给第一次接触这些的同学一些误解，下一篇将更深入的理解SEH机制，将尽可能的减少这些误解（也包括自己理解错误），内容包括global unwind，异常嵌套和一些很基础很基础的SEH安全机制的总结。</p>
-]]></content>
-  </entry>
-  
-  <entry>
-    <title type="html"><![CDATA[PE文件初探二]]></title>
-    <link href="http://studentdeng.github.com/blog/2010/10/06/pe2/"/>
-    <updated>2010-10-06T21:15:00+08:00</updated>
-    <id>http://studentdeng.github.com/blog/2010/10/06/pe2</id>
-    <content type="html"><![CDATA[<p>上一篇主要是很初略的总结了是什么，这篇要总结下为什么。以下部分参照了http://msdn.microsoft.com/en-us/magazine/cc301727.aspx和http://blog.donews.com/zwell/archive/2005/10/21/596302.aspx两位大牛的文章。和上述不同的是本文主要的涉及内容来自win7。当然我这里并没有真正的涉及win7，以及Vista所加入的新内容，（因为那些对现在的我来说实在是太复杂了）。win7 只是一个壳子，我描述的核心是在win2K，甚至是在windows3.1这些版本中就已经有的。当然为了能够更详细的理解整个过程。反汇编了部分loader的源代码。 pseudocode下载。</p>
-
-<p>当然，我看到的windows loader的代码对我来说依然是非常庞大，这里仅仅记录了程序正确路线，并没有完善错误路线，往往是return error来结束。当然，在代码中，难免有错误，特别是对我来说，这是第一次从汇编角度观察windows。也希望各位大牛，能够帮我指出里面的错误。</p>
-
-<p>一开始本来是想长篇大论的去写这一篇文章，因为涉及到的内容实在太多。而且大部分都是再重复大师们的内容。这里实在是不敢造次。仅仅记录一些自己认为有必要重复和自己所遇到的问题。上面2篇文章非常值得研究，如果你也对这方面感兴趣。</p>
-
-<p>最后，由于最近时间很紧，代码还是缺少了一些部分。还有相当一部分需要去完善细节，现在之所以记录，仅仅害怕时间长了。自己会懒惰而没有记下这个过程。当然，我会在这个《PE文件初探系列》的最后补全代码。</p>
-
-<p>当我们调用LoadLibraryEx LoadLibrary类似的函数，我们会进入到LdrpLoadDll，就让我们从它开始载入过程。</p>
-
-<p>LdrpLoadDll的大体思路Russ Osterlund，已经解释的很清楚了。为了查阅方便，原谅我这里只是简单翻译重复一下。</p>
-
-<p>检查这个module是否已经被载入过了
-将没有载入的module映射到地址空间
-遍历module的导入表，找到是否需要再导入其他的module。需要则导入并递归1。
-所有相关的module载入完毕后，更新module load count。
-初始化module
-清理一些结尾工作。更新module Flag。
-首先我们遇到的一个重要的函数是LdrApplyFileNameRedirection。这个函数主要是为了解决Dll hell。一种Side-by-Side Assembly的技术，相关的信息可以参考。http://dipplum.com/2009/11/09/side-by-side-assembly/。SxS已经大大超过了我所能解释的范围。原谅我先跳过这步。在STATUS_SXS_KEY_NOT_FOUND后，我们来到了一个非常重要的函数LdrpFindOrMapDll 。</p>
-
-<p>遍历进程LdrpHashTable，查找dll是否已经载入
-查找是否是系统已知KnownDll。
-查找dll文件名，并修正到完整路径名。
-遍历peb中的InLoadOrderModuleList查找dll是否已经载入
-没有找到则将dll映射到地址空间
-这个函数还是比较简单的。但是我却遇到了一个让我很费解的问题。</p>
-
-<pre><code>_KSYSTEM_TIME
-   +0x000 LowPart          : Uint4B
-   +0x004 High1Time        : Int4B
-   +0x008 High2Time        : Int4B
-#define MM_SHARED_USER_DATA_VA      0x7FFE0000
-#define USER_SHARED_DATA ((KUSER_SHARED_DATA * const)MM_SHARED_USER_DATA_VA)
-KUSER_SHARED_DATA ksd;
-
-eax=ksd.SystemTime.High1Time;
-ecx=ksd.SystemTime;
-edx=ksd.SystemTime.High2Time;
-
-KSYSTEM_TIME ktime;
-//real code     
-//eax=[0x7ffe0018];
-//ecx=[0x7ffe0014];
-//edx=[0x7ffe001c];
-do
-{
-    ktime.High1Time= ().High1Time;
-    ktime.LowPart=().LowPart;
-    ktime.High2Time= ().High2Time;
-}
-while(ktime.High1Time!=ktime.High2Time);
-//code end
-typedef struct _KUSER_SHARED_DATA {
-
-    /* Current low 32-bit of tick count and tick count multiplier.
-     * N.B. The tick count is updated each time the clock ticks.
-     */
-    volatile ULONG TickCountLow;
-    UINT32 TickCountMultiplier;
-
-    /* Current 64-bit interrupt time in 100ns units. */
-    volatile KSYSTEM_TIME InterruptTime;
-
-    /* Current 64-bit system time in 100ns units. */
-    volatile KSYSTEM_TIME SystemTime;
-
-    /* Current 64-bit time zone bias. */
-    volatile KSYSTEM_TIME TimeZoneBias;
-} KUSER_SHARED_DATA, *PKUSER_SHARED_DATA;
-</code></pre>
-
-<p>以上结构是wrk上的代码，win7的比他复杂太多了，而且其他的数据成员我们也并不关心。</p>
-
-<p>这是在LdrpFindOrMapDll最后，把数据插入到InLoadOrderModuleList，InMemoryOrderModuleList中遇到的。</p>
-
-<p>这个其实是获得系统时间的过程。更为详细的地方在这里http://www.dcl.hpi.uni-potsdam.de/research/WRK/2007/08/getting-os-information-the-kuser_shared_data-structure/</p>
-
-<p>简单的说。当clock ISR 处理的时候是先更新High2Time，然后LowPart，High1Time。
-而用户程序读取的时候是反着的顺序。 而这一切都是为了同步。但构成这个成立的前提是volatile 关键字，也就是说这样虽然减少了lock的时间，但是却也放弃了CPU的缓冲机制，每次都写操作都必须通过内存。而这个时间更新的速度是如此之快（100ns？），那么是不是同样会对效率造成冲击呢？相信MS一定做了不少测试来衡量利弊，但是再面对现在的多CPU下。是否一定适合呢？这里面涉及到太多有关硬件的知识，缓存的算法。CPU调度等等。。。这个问题还是交给10年，甚至20年后的我吧。这里标记下。更希望大牛能给出解释。//TODO:</p>
-
-<p>如果我们的dll被载入了（原来没有，刚刚被映射），那么我们通常会遇到LdrpProcessStaticImports ，而LdrpCorProcessImports，我这里似乎没有遇到。//TODO这里需要完善。</p>
-
-<p>BasepProbeForDllManifest ,原谅我再次跳过一个函数依然和dll hell有关，这些高级的东东，还是等我们弄清楚基本的东西回过来再解决他们。</p>
-
-<pre><code>LdrpProcessStaticImports
-</code></pre>
-
-<p>修改相应页面为PAGE_READWRITE。
-如果dll 绑定 则采用绑定方式载入dll
-如果没有dll 绑定或绑定失败则已普通方式载入dll
-恢复相应页面。
-先看普通方式载入。我们来到了LdrpHandleOldFormatImportDescriptors。这里我们遍历导入表，对每个导入表的module调用LdrpHandleOneOldFormatImportDescriptor。</p>
-
-<p>LdrpLoadImportModule 将相应的module导入
-调用LdrpProcessStaticImports。查找ped的ldr的StaticLink。找到则更新load count。没有找到则初始化并插入链表首部。
-更新IAT表。
-LdrpLoadImportModule 这是一个非常重要的函数。</p>
-
-<pre><code>LdrpApplyFileNameRedirection。
-LdrpFindOrMapDll
-LdrpProcessStaticImports
-LdrpHandleTlsData //这里相关dll初始化的部分，会在下一篇文章中总结。目前，我们只是关心载入。
-</code></pre>
-
-<p>完毕后插入InInitializationOrderModuleLis
-这里就有点麻烦了。这里面涉及到了很多的递归。让我们重新理解下。</p>
-
-<p>当我们程序编译链接成可执行程序后。loader会检查我们程序,通常可是.exe的文件。操作系统发现有一些dll文件需要载入（我们程序中使用了dll的函数，最通常的例子就是我们使用的系统API，那些函数的代码并不在我们.exe里，而在系统dll中，如ntdll，gdi32.dll等，所以我们必须把他们载入CPU才能执行代码），那么我们需要首先从dll导入表中查找我们需要的dll。去寻找那些我们调用的函数。就和上一篇文章中提到的MessageBox函数。但是，我们发现我们的MessageBox函数地址并不是真正函数的地址，loader 需要遍历dll的导出表。而在那里，我们找到了函数的地址，然后经过计算，loader帮我们把函数真实地址添入。而这个真实添入的地址所构成的表则为IAT表。MS的编译器还会保存另一个表，是在IAT添入之前的样子，叫做INT表。而其他的编译器可能并没有这个表生成。比如Borland。为什么保留这个INT表，等绑定之后再解释。</p>
-
-<p>OK，看样子十分完美，我们找到了我们所需要的dll的地址，但是事实上却很复杂。因为我们所导入的dll，很可能使用了另外的dll的代码中的函数。那么我们必须递归的调用，来把我们.exe中所有有关系的dll，都载入才能保证我们执行时，IAT表中的代码地址，真实的是我们需要的代码。有了这个大体的感觉。让我们查看整个过程的细节。</p>
-
-<p>LdrpSnapIAT</p>
-
-<p>LdrpSnapIAT做的事情也很简单，遍历导入表内容，并查找导出表内容，再调用LdrpSnapThunk。</p>
-
-<p>LdrpSnapThunk</p>
-
-<p>遍历导入表，根据序号或名字查找导入函数。
-遍历导出表，查找相应导入函数的地址。
-将计算好的函数地址添入IAT表。
-函数很好理解，当我们使用函数名字查找时，会遇到一个很重要的函数LdrpNameToOrdinal，Russ Osterlund的precode给出了详细代码，我觉得win7在这里并没有太大改动。LdrpNameToOrdinal是一个简单的二分法在导出表中查找匹配函数位置。而如果我们使用序号来查找，则可以直接定位到函数地址，而不需要经过这么一个字符串查找过程。当然不管是按照名字还是序号查找之前，有一个编译器给我们的提示，hint来查找函数。（不过这个真的没什么用。面对那么多的导出函数，就提示一个。怎么可能满足要求？）。</p>
-
-<p>不管用什么方法，我们总算是朝着我们的目标前进了。但是另一个问题来了。有些函数的地址却在导出表中，这就是dll函数的转发问题。</p>
-
-<p>什么是转发？</p>
-
-<p>我们之前说我们需要查找一个函数的地址，我们找到了这个xxx.dll。但是这个xxx.dll却告诉我们，这个函数地址也不在他那里，而在xxxx.dll里。这个就是转发的过程。用那个破的再不能破的例子就是kernel32 的HeapAlloc 转发到了ntdll中。</p>
-
-<p>那么为什么要有转发？</p>
-
-<p>看样子，似乎是MS在给我们打马虎眼，通过转发来保证他的源代码不被泄露。给我们一个表面的公开函数，然后去调用它不公开的函数。除了这一点，转发函数的另一个重要的特点是，他割断了部分dll之间的关系。</p>
-
-<p>让我们首先回头看一下，会发现，loader在做这个添入IAT表的时候是十分辛苦的。</p>
-
-<p>即便是使用了二分法来查找。但是面对字符串的挨个比较。这个效率是无法接受的。如果有些dll导出了上百了dll。还有一些长长的名字（事实上会更长，因为如果用c++，编译器还要加名字）。
-IAT处在代码段，是可读的。会在多个进程之间共享。一个进程对共享数据页面做了修改，操作系统会启动copy_on_write机制去创建另一个页面然后把修改的数据保存下来。为这个修改页面后的进程保留一个private的页面。如果我们的dll在多个进程载入的地址相同。那么我们就会有一大堆的private页面，但是却完全一样。这确实浪费了我们的资源，操作系统分配页面的时候，可不会去比较页面是否一样。（//TODO:check windows也许会在某些时间真的去比较这些页面是否相同，然后相同会修改成共享，但是由于我英文太差，不知道老外是瞎扯还是真有，时间也很长了，页面也一时找不到了。。。无奈）。
-当然我们一般的应用程序，不会有那么多的函数去做，但是MS自己却是地地道道的需要做。面对那么多的API函数。MS提供了一系列的优化载入dll的措施，分别节省了link时间（转发），重定位时间（rebase），添入IAT表时间（bind），延迟了载入时间（delay load）。同样也适用于我们的应用程序。（不过效率有多大的提高呢？反正肯定是有的）。当然，每一个解决都不是完美的方案，都有自己的缺陷。</p>
-
-<p>我们首先遇到了转发。</p>
-
-<p>转发的直白意思是，这个函数我提供一个入口，但是实现的代码却在别的dll中。那么他是如何提高我们的dll载入效率呢？</p>
-
-<p>如果我们在程序中调用了A.dll，A.dll 使用了func1 ，func2，func3。而func1被转发到了B.dll中的Bfunc1。如果我们在A.dll中使用了func1那么，我们必须载入B.dll。但是如果我们在A.dll中，没有使用func1，那么如果func1是转发到B.dll的，那么我们就不会载入B.dll，而如果我们是通过导入的方式做func1,那么不管是否使用，我们都要载入B.dll。为什么？因为我们的.exe和A.dll建立的关系，而A.dll的导入表中有B.dll,A和B的这种紧密关系，使我们不得不把B.dll载入进来，但我们的.exe却永远不会使用B.dll中的任何函数。（如果我们不使用A.dll中的func1）。而转发，则可以避免这个情况。因为在A.dll的导入表中，没有Bfunc1。</p>
-
-<p>OK，转发函数。割断了部分DLL之间的联系。他直接减少了link的时间。这个好。彻底不用载入了。</p>
-
-<p>让我们继续LdrpSnapThunk。的转发处理</p>
-
-<p>查找是否是转发函数，在export table中。
-比较是否是ntdll（不管是大写还是小写还是都有，反正都算）。相等则直接获得ntdll的 forwardEntry。//TODO:这里总觉得有种很怪的感觉，很怪很怪的感觉。
-如果不是ntdll，那么我们回到了原点调用LdrpLoadDll。
-（可选）调用LdrpRecordForwarder，查找ldr的ForwarderLinks。没有则添加。并更新load count。
-最后调用LdrGetProcedureAddressEx，获得相应函数地址。
-由于LdrGetProcedureAddressEx涉及到了dll的初始化问题。所以这篇不细说，下一篇再总结他。</p>
-
-<p>转发给我们解决了一个问题。那些不使用的没关系的dll，并没有被我们载入进来。但是如果我们使用了函数，依然会有IAT表的添入，查找，那一系列的问题。OK。让我们来看看另一个解决方案。绑定。不过在这个之前，需要理解下重定位。</p>
-
-<p>重定位部分的代码，Russ Osterlund没有写，我也没有写（希望后面我能完善了）。有关的知识网上很多。这里不重复了。只是解释下原因。我们在程序中的绝大部分数据都是相对的偏移量。因为我们不能确定我们的PE文件最终会被操作系统载入到那个位置上去。在编译和链接的过程，我们是相对一个默认的位置来生成相应的代码。这些默认值，会被写到PE头文件中去。windows loader在载入的时候，如果发现有冲突，则会重新计算这些偏移量。当然，为了减少这个运算。我们可以通过rebase来处理。</p>
-
-<p>还是让我们把注意力集中在bind上面。</p>
-
-<p>我们看到loader首先就是查找是不是可以使用bind来做。</p>
-
-<p>LdrpHandleNewFormatImportDescriptors</p>
-
-<p>遍历绑定描述符表，和导入描述符表。查找是否匹配
-成功则调用LdrpHandleOneNewFormatImportDescriptor，否则返回INVALID_IMAGE_FORMAT(0xC000007B)，直到0。
-  LdrpHandleOneNewFormatImportDescriptor</p>
-
-<p>LdrpLoadImportModule，加载module
-LdrpRecordStaticImport 加载导入的一系列东东
-如果bind失败，则调用LdrpSnapIAT。
-如果bind成功，则遍历绑定转发表。IMAGE_BOUND_FORWARDER_REF，依次调用LdrpLoadImportModule， LdrpRecordStaticImport。
-最后不管bind是否成功调用LdrpFixupIATForRelocatedImport。
-//TODO LdrpFixupIATForRelocatedImport,没有全部完成，真不知道MS搞一个这个巨大的函数名字有什么深意。看来是逼我把这个重定位做了，: ) 。</p>
-
-<p>bind这部分比较难。LdrpFixupIATForRelocatedImport的部分我没有完成，所以这部分应该是有很多值得推敲的地方。</p>
-
-<p>等最近不忙了。再彻底搞定他。</p>
-
-<p>最后剩下了一部分。就是INT的问题。这个问题的出现是为了我们在处理bind失败所必须的。当bind被失败后，我们不得不和原来一样去做。这是INT表作用体现处理了。当然如果没有INT表。整个载入则会直接down掉。</p>
-
-<p>使用bind，我们将避免了动态添入IAT所需要花费的空间和时间。这的确是一个是非优秀的设计。但是同样的。他的条件实在太苛刻了。如果其中有部分更新的操作系统，某个系统的dll被更新了。那么这一切也随之破灭了。他实在是太脆弱了。</p>
-
-<p>最后写给自己的</p>
-
-<p>这的确不是一篇完整的文章。因为有太多太多的知识对我来说是一个空白。每一个函数后面都可能是给我打开一个新的世界。在没有对已经存在的世界有一个清醒的认识前，非常容易造成溢出。有时候，真想找一个事情，可以就像操作系统分配物理内存一样。你什么时候使用给你一点，而且还能具有不错的缓存性能。而在这整个过程最郁闷的就是要不什么也没有，要不多的你放不下。而且各种跳转，冲击着我可怜的缓存。。。如果把我比作一个运作的很困难的操作系统。那么这篇文章就是我其中的一个页文件再适合不过了。</p>
-
-<p>//////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////</p>
-
-<p>　　哎，也许我的实力太差了。这篇的姊妹篇，初探一已经被博客园从首页上抹去了。这篇也可能和上一篇同样的命运。我可能要创一个记录了，虽然不是那么光彩，10篇文章2篇都被毙掉。如果加上这一篇，就是第三篇了。哈哈。我只知道Matt Pietrek 在2002年的MSJ上写道。</p>
-
-<p>“You might be wondering why you should care about the executable file format. The answer is the same now as it was then: an operating system's executable format and data structures reveal quite a bit about the underlying operating system. By understanding what's in your EXEs and DLLs, you'll find that you've become a better programmer all around.”。</p>
-
-<p>　　当然，我不该提Matt Pietrek，因为我把“我”和他的名字放到一起就是其实就是对他的一种不尊敬。我也不敢扯我懂PE。我甚至只能皮毛都不了解。因为涉及到太多有关操纵系统、编译器、连接器的细节。对于我这个菜鸟来说也的确没有这个资本谈论这个问题。我也不想说别的。只是想发泄下自己的情绪。仅此而已。</p>
-]]></content>
-  </entry>
-  
-  <entry>
-    <title type="html"><![CDATA[PE文件初探一]]></title>
-    <link href="http://studentdeng.github.com/blog/2010/10/06/pe1/"/>
-    <updated>2010-10-06T20:55:00+08:00</updated>
-    <id>http://studentdeng.github.com/blog/2010/10/06/pe1</id>
-    <content type="html"><![CDATA[<p>最近一直在学习PE文件的相关知识。随着了解的增多，我不得不改变之前的学习方式。以前总是再理解更进一步后， 才总结上一层的知识。而且理解知识的时候总是喜欢从难到易得方式去理解知识。因为如果漫无目的的去学习，实在是 一个体力活。如果把一系列相关的知识比作一颗倒置的二叉树的话，我总是喜欢从根节点开始，然后再去遍历每个叶子 节点。只可惜我并没有掌握非递归算法。好吧，再没有处理尾递归的情况下，随着二叉树深度的增加。我的堆栈也果断溢 出。并导致一度中断学习过程。。。。。。。。。虽然我不断地去增加堆栈空间。但是总会有不能再增加的时候。好吧， 就是现在。该让我好好处理这个尾递归的问题。这也就是这篇文章的目的了。</p>
-
-<p>　　闲话扯得太多了。这篇文章主要内容是DLL的载入过程分析。以下部分主要来自《windows核心编程》和一些网上资料。 当然，如果想仔细理解相关内容。那么这3篇文章你是不该错过的。http://msdn.microsoft.com/zh-cn/magazine/cc301727(en-us).aspx， http://msdn.microsoft.com/en-us/magazine/cc301808.aspx ， http://msdn.microsoft.com/en-us/magazine/cc301805.aspx 事实上，你可能 还需要非常非常多的延伸知识需要帮助理解。如果对这部分知识不是很了解。而且英文也不是很好的话，《软件加密 技术内 幕》中的前几章的相关讲解，可能会更加易懂，还有老罗的书《Windows环境下32位汇编语言》，当然。这里讲的是最最基础 的部分。而且事实上，那3篇英文的分量对我来说还是很重的。这也是造成我堆栈溢出的原因。而且我脑子现在还没从错误中 恢复过来。。。。。</p>
-
-<h2>1.1 简短的背景知识</h2>
-
-<p>在操作系统中，执行的代码在载入内存之前，是以文件的方式存放在磁盘中。为了灵活的使用代码，在代码之前增加 一个文件头，在文件头中包括各种数据，文件入口，重定位表等信息。操作系统根据给定的信息，将部分代码载入内存，初始 化必要数据后，最后从指定位置开始执行。</p>
-
-<h2>1.2 开始了解PE</h2>
-
-<p>PE文件基本结构如下图。</p>
-
-<p><img src="/images/pm1.png" alt="alt text" /></p>
-
-<p>在PE文件中，代码、资源，导入表等信息被按照属性（可读，可读写，可执行等）分类放到了不同的节（section）中（上图是段）。每一个section的属性和位置用IMAGE_SECTION_HEADER结构描述。许多的IMAGE_SECTION_HEADER组成一个节表。由于数据是按照属性在节中放置，不同用途的数据可能被放在同一个节中。但是我们更关心数据的用途而属性是操作系统更为关心的。所以又有一个IMAGE_DATA_DIRECTORY来指明这些数据的位置。</p>
-
-<p>PE文件是如何映射到内存的</p>
-
-<p>windows并不在一开始将整个文件读入内存。windows在装载程序时，仅仅建立好虚拟地址和PE文件之前的映射关系，只有执行 到某个内存页中的指令或访问某页数据时，页面才会被提交到物理内存。这个机制类似于内存映射文件。但是不同的是，装载 可执行文件时，有些数据会被重新处理，装入到的数据相对位置也不一样，而且也有些数据是不会载入到内存中。</p>
-
-<p>原因</p>
-
-<p>windows按照节的属性载入，同一个节中所对应的内存页有相同的页属性。而windows对内存属性的设置是以页为单位进行，所以也在内存中的对齐单位至少是一个页的大小。在32位下，为默认为4KB。</p>
-
-<p>磁盘文件并没有这个设置，文件的对齐单位一般为200h。具体数据在IMAGE_OPTIONAL_HEADER32结构体中的SectionAlignment和FileAlignment设定。PE文件中的重要概念RVA（Relative Virtual Address）RVA是相对虚拟地址。由于数据可能发生重定向，所以所有数据都是保存为相对地址，而为了在运行时效率最大化，PE文件中保存的地址都是在内存中的虚拟地址偏移量。如果PE文件装入0x40000000h中的内存，而某个节中的某个数据被装入了0x40001000h，那么这个数据的RVA为1000h。下面了解下DLL的静态信息。</p>
-
-<p>如果需要调用DLL中的函数，那么DLL的imag必须映射到调用线程的进程地址空间中，我们可以通过2种方法处理。</p>
-
-<p>1、在源代码中引入DLL的符号。当应用程序启动运行时，loader会隐式加载链接需要的DLL。</p>
-
-<p>2、在程序运行时显示加载需要的DLL（调用LoadLibraryEx or LoadLibrary 卸载FreeLibrary），并显示链接到需要的输出符</p>
-
-<p>（GetProcAddress）。</p>
-
-<p>3、延迟加载DLL。这部分后面会解释。</p>
-
-<p>另外还有一些了解DLL必须的知识。这里罗列出来。</p>
-
-<h2>2、导入表</h2>
-
-<p>我们在编写程序的时候，几乎全部用到了导入函数的概念。导入函数就是程序执行的这段代码不在程序中，这些程序在</p>
-
-<p>一个或多个DLL中，而调用者仅仅保留一些必要的信息。主要是函数名和DLL名等。</p>
-
-<p>但是对于存储在磁盘上的PE文件来说，是无法得知导入函数会在内存的那个地方。只有PE文件被装入内存的时候，</p>
-
-<p>windows loader将DLL装入，并将执行导入函数的指令和函数真正的地址联系起来。有些抽象。让我们来看下代码真正执行</p>
-
-<p>的情况。</p>
-
-<p>让我们来试下最简单的Win32 HelloWorld，但是很让我“失望”，不得不佩服现在的vs，以前的可能影响效率的问题可能</p>
-
-<p>现在不是很重要了。 不过如果创建的是DLL文件，那么vs不会改变。依然是通过跳转表来实现。这里有一点不同是因为</p>
-
-<pre><code>int symbol(char *);
-__declspec(dllimport) int symbol2(char*);
-.text:10001000                 push    offset aBar     ; "bar"
-.text:10001005                 call    ?symbol@@YAHPAD@Z_0 ; 10001020
-.text:1000100A                 push    offset aBaz     ; "baz"
-.text:1000100F                 call    ds:__imp_?symbol2@@YAHPAD@Z ; symbol2(char *)
-.text:10001020                 jmp     ds:__imp_?symbol@@YAHPAD@Z ; symbol(char *).idata:10002080                 
-extrn __imp_?symbol2@@YAHPAD@Z:dword.idata:10002084                 
-extrn __imp_?symbol@@YAHPAD@Z:dword
-</code></pre>
-
-<p>我们告诉了编译器，symbol2是一个外部的函数调用，那么编译器将不生成跳转，而直接找到函数的入口地址。而symbol并</p>
-
-<p>没有指定是外部定义 函数，那么编译器默认生成一个跳转表，然后再跳转到真正执行的函数入口地址。看来vs还不是无</p>
-
-<p>所不能的。至于为什么.exe和.DLL vs的对待方式不同。没有想明白。不过，在dll中使用__declspec将大大缩短代码量，也</p>
-
-<p>不会降低缓存性能。而且如果我们需要共享一个变量（好吧，我承认这个的确不是一个好的主意）也只能使用__declspec，</p>
-
-<p>因为变量访问是不可能通过jmp来实现的。</p>
-
-<p>注：DLL的理解。为什么DLL默认不被优化。</p>
-
-<p>编译器在编译DLL文件的时候，为了提高效率，遇到调用函数的地方，并不回去查找这个函数是普通的内部函数，</p>
-
-<p>还是外部导入的函数，编译器统一生成一个指令 call xxxxxxx。而xxxxxx指令的地址将被linker修改。而对于外部导入函数</p>
-
-<p>的地址在载入内存的时候添入，而且还有可能要被修改。为了效率，而且linker不能随便修改compiler的数据，所以这些需</p>
-
-<p>要修改的函数入口需要集中放在一起，那么在每个call xxxxx指令下，最快速，简单的方法就是jmp到那个集中在一起的表</p>
-
-<p>的位置。这个位置，就是下面提到的IAT表。如果使用__declspec(dllimport)来标示函数，那么编译器将知道这个函数是由</p>
-
-<p>外部导入，那么生成的代码则是call    ds:<strong>imp_funcname, 而:</strong>imp_funcname在IAT表中也存在一样的函数符号。那么</p>
-
-<pre><code>call    ds:__imp_funcname将直接找到函数的真正入口。由于DLL是可以分开编译的，所以编译器不可能直接生成优化后的
-</code></pre>
-
-<p>代码（再考虑效率的情况下），在不加__declspec(dllimport)标号情况下。</p>
-
-<p>TODO：那么为什么.exe文件编译器会默认直接优化呢？</p>
-
-<p>好在使用一个老的编译器，在写好一段MessageBox(…); 会汇编成如下代码</p>
-
-<pre><code>.text:00401000                 public start
-.text:00401000 start           proc near
-.text:00401000                 push    0               ; uType
-.text:00401002                 push    offset Caption  ; "A MessageBox !"
-.text:00401007                 push    offset Text     ; "Hello, World !"
-.text:0040100C                 push    0               ; hWnd
-.text:0040100E                 call    MessageBoxA     ; 0040101A
-.text:00401013                 push    0               ; uExitCode
-.text:00401015                 call    ExitProcess
-.text:0040101A MessageBoxA     proc near               ; CODE XREF: start
-.text:0040101A                 jmp     ds:__imp_MessageBoxA; jmp 00402008
-.text:0040101A MessageBoxA     endp.idata:00402008                 
-extrn __imp_MessageBoxA:dword ;MessageBoxA
-</code></pre>
-
-<p>在老的编译器下，会生成2步去调用MessageBox。首先跳转到一个“跳转表”中，再根据跳转指令后，才能找到真正的</p>
-
-<p>函数入口。没有优化。</p>
-
-<p>但是现在的vs（我使用的是vs2008），很不好，它把这一部分直接给优化掉了。我们看到的代码是直接</p>
-
-<pre><code>call    ds:__imp__MessageBoxW@16。
-</code></pre>
-
-<p>vs真不是一个用来学习的编译器，太有进取心了。不过用来开发倒是不错。 ：）。</p>
-
-<p>回到正题，虽然这里有些改变，但是核心的东西并没有改变。</p>
-
-<pre><code>#include &lt;windows.h&gt;
-int WINAPI WinMain (HINSTANCE hInstance, HINSTANCE hPrevInstance,PSTR szCmdLine, int iCmdShow) 
-{
-　　TCHAR *t=L"HelloWorld";
-　　TCHAR *t2=L"hello";MessageBox(NULL,t,t2,NULL);
-　　return 0;
-}
-</code></pre>
-
-<p>让我们看下现在编译器的结果</p>
-
-<pre><code>.text:00401000                 push    0               ; uType
-.text:00401002                 push    offset Caption  ; "hello"
-.text:00401007                 push    offset Text     ; "HelloWorld"
-.text:0040100C                 push    0               ; hWnd.text:0040100E                 
-call    ds:__imp__MessageBoxW@16 ; 004020AC.idata:004020AC                 
-extrn __imp__MessageBoxW@16:dword
-很简单的代码，让我们先看看他的二进制文件。自己也可以做一个查看PE文件头信息的小程序。
-
-Machine 0000014C
-SecNum  00000005
-prop    00000102
-ImageBase       00400000
-**********************************************************
-session name            .text
-session size            0000087E
-session VirtualAddress  00001000
-session SizeOfRawData   00000A00
-session Raw_offset      00000400
-session prop            60000020
-**********************************************************
-session name            .rdata
-session size            0000062E
-session VirtualAddress  00002000
-session SizeOfRawData   00000800
-session Raw_offset      00000E00
-session prop            40000040
-**********************************************************
-session name            .data
-session size            00000384
-session VirtualAddress  00003000
-session SizeOfRawData   00000200
-session Raw_offset      00001600
-session prop            C0000040
-**********************************************************
-session name            .rsrc
-session size            000002B0
-session VirtualAddress  00004000
-session SizeOfRawData   00000400
-session Raw_offset      00001800
-session prop            40000040
-**********************************************************
-session name            .reloc
-session size            00000192
-session VirtualAddress  00005000
-session SizeOfRawData   00000200
-session Raw_offset      00001C00
-session prop            42000040
-**********************************************************
-</code></pre>
-
-<p>也可以查看DLL的数据，特别是kernel32.dll user32.dll等信息，会发现这些系统DLL加载的默认位置是不同的。 kernel32.dll 位于0x77DE0000 user32.dll 0x77D10000。定义不同的默认值将不会减慢载入的速度。具体会在重定位节中说明。 默认载入的地址是0x00400000，所以函数004020AC的RVA为AC，查看各节数据后发现，这段数据位于.rdata段， （VirtualAddress  00002000），而Raw_offset      00000E00，那么我们查看下 E00+AC = 0EAC在PE文件中的值是00002330。 这个显然不可能是函数的入口，但是如果把这个数字继续当成RVA来看，那么00002330-00002000=0330，再加上Raw_offset 0E00, 为1130，再跳过2个字节，那么正好是“MessageBoxW”。是个巧合么？当然不是。为什么后面会说明。 但是这里还有一个问题，我们在call   ds:<strong>imp</strong>MessageBoxW@16时，得到的东西是一个跳过2个字节然后是这个函数名。 这个显然不能正确执行。当然我们这里是在硬盘的文件，没有载入内存。在我们这个情况下，在载入内存中的时候， windows loader 会根据这个地址，并找到这个函数名，然后找到这个函数的真正地址，并写入004020AC位置，那么程序 就能正确运行了。那么问题似乎回到原点了，windows loader如何能够根据函数名来找到函数的真正地址呢？ 导入表的作用就体现出来了。</p>
-
-<p>首先找到导入表的信息</p>
-
-<p>PE文件的导入表的位置和大小可以从PE文件头中IMAGE_OPTIONAL_HEADER32结构的数据目录字段中获取，对应的项目是DataDirectory字段的第2个IMAGE_DATA_DIRECTORY结构。</p>
-
-<p>导入表是通过一系列的IMAGE_IMPORT_DESCRIPTOR结构组成。每一个结构描述一个DLL。最后以一个全0为这个结构 数组的结束。</p>
-
-<pre><code>typedef struct _IMAGE_IMPORT_DESCRIPTOR {
-    union {
-        DWORD   Characteristics;            // 0 for terminating null import descriptor
-        DWORD   OriginalFirstThunk;         // RVA to original unbound IAT (PIMAGE_THUNK_DATA)
-    } DUMMYUNIONNAME;
-    DWORD   TimeDateStamp;  // 0 if not bound,
-                                            // -1 if bound, and real date\time stamp
-                                            //     in IMAGE_DIRECTORY_ENTRY_BOUND_IMPORT (new BIND)
-                                            // O.W. date/time stamp of DLL bound to (Old BIND)
-
-    DWORD   ForwarderChain;                 // -1 if no forwarders
-    DWORD   Name;
-    DWORD   FirstThunk;                     // RVA to IAT (if bound this IAT has actual addresses)
-} IMAGE_IMPORT_DESCRIPTOR;
-typedef IMAGE_IMPORT_DESCRIPTOR UNALIGNED *PIMAGE_IMPORT_DESCRIPTOR;
-
-IMAGE_THUNK_DATA 是一个DWORD大小的共用体，包括以下含义。
-
-typedef struct _IMAGE_THUNK_DATA32 {
-    union {
-        DWORD ForwarderString;      // //转发函数字符串的RVA
-        DWORD Function;             //     导入函数的内存地址
-        DWORD Ordinal;              // 导入函数的序数
-        DWORD AddressOfData;        // IMAGE_IMPORT_BY_NAME和导入函数名称的RVA
-
-    } u1;
-} IMAGE_THUNK_DATA32;
-</code></pre>
-
-<p>IMAGE_THUNK_DATA  如何判断是序号还是RVA呢？ 通过IMAGE_THUNK_DATA的最高位来判断，如果为1， 那么就是导入函数的序数否则就是RVA。IAT 指向的IMAGE_THUNK_DATA 有2种。导入函数的序号数和IMAGE_IMPORT_BY_NAME结构的RVA</p>
-
-<pre><code>typedef struct _IMAGE_IMPORT_BY_NAME {
-    WORD    Hint;     //告诉loader带入函数的序号可能是什么。loader会在加载的时候检测这个值。并根据值来做查找
-
-字符串比较。
-    BYTE    Name[1]; //指向DLL名字字符串
-} IMAGE_IMPORT_BY_NAME, *PIMAGE_IMPORT_BY_NAME;
-</code></pre>
-
-<p>INT和IAT的内容一致，当文件没有加载进内存时。当文件加载进内存时(这个其实也不是很准确，后面会解释)，他并不覆盖INT。而IAT则会被覆盖成函数真正的地址。但是程序运行的时候是不需要INT的（我们只关心地址）。这里面涉及到一个绑定的概念，当绑定失败后，则需要根据INT中的信息，重新构建IAT OriginalFirstThunk 和FirstThunk在文件中指向同一地方。但是当载入内存中FirstThunk指向了函数真正的入口地址。</p>
-
-<p><img src="/images/pm2.png" alt="alt text" /></p>
-
-<p>我们看到的FirstThunk指向的位置，其实就是之前看到的jmp指令跳到的位置。是一个个顺序排列的"__impxxxx的函数入口地址，这部分数据也被IMAGE_DIRECTORY_ENTRY_IAT指向。在IMAGE_DIRECTORY的12号索引。</p>
-
-<p>2、导出表</p>
-
-<p><img src="/images/pm3.png" alt="alt text" /></p>
-
-<p>同导入表类似，当PE文件导出函数或变量的时候，这些信息被保存在了导出表中。这里导出的函数和变量统称为“符号”。</p>
-
-<pre><code>typedef struct _IMAGE_EXPORT_DIRECTORY {
-    DWORD   Characteristics;
-    DWORD   TimeDateStamp;
-    WORD    MajorVersion;
-    WORD    MinorVersion;
-    DWORD   Name;                                //RVA to 导出的DLL名字字符串
-    DWORD   Base;                                  //导出符号的起始值
-    DWORD   NumberOfFunctions;           //导出函数的总数
-    DWORD   NumberOfNames;              // 名称导出的函数总数
-    DWORD   AddressOfFunctions;     // RVA to 导出函数EAT    
-    DWORD   AddressOfNames;         // RVA to 导出函数名EAT
-    DWORD   AddressOfNameOrdinals;  // RVA to 导出函数序号表
-} IMAGE_EXPORT_DIRECTORY, *PIMAGE_EXPORT_DIRECTORY;
-</code></pre>
-
-<p>让我们模拟下如何找到函数的入口地址。通过函数名来查找，AddressOfNames遍历的函数名称地址表，并根据字符串找到对应的在AddressOfNames的序数，在根据这个序数，作为AddressOfFunctions的index，然后找到对应函数的RVA，在和dll的基地址相加，就得到了函数的真实地址。当然直接通过函数序数来查找函数将得到最快的性能。但是MS并不推荐这么做。因为函数导出的序数很可能在以后的系统中被改写。那么这个程序就不能在日后的操作系统下运行。导出表中还有一个重要概念是导出转发。 必须在windows 2000 windows XP中，kernel32 的HeapAlloc函数执行是被转发到了NTDLL中的RtlAllocHeap函数上。也就是说当执行HeapAlloc函数是，其实函数的真实地址不在kernel32 中，而是需要再次查找到NTDLL中的RtlAllocHeap，才能找到真正地址。而这实现着一切也很简单。只要把导出函数的RVA位于导出表中就可以。当转发一个符号时，首先找到的RVA指向了一个由DLL和转发的符号名称组成的字符串。比如“NTDLL.RtlAllocateHeap”。然后在通过递归的方式，在NTDLL的导出表中的RtlAllocateHeap找到真实地址。</p>
-
-<p>3、重定位。</p>
-
-<p>在IMAGE_OPTIONAL_HEADER32 结构中，有一个非常重要的字段ImageBase，他指明了可执行文件最希望载入的地址，而且任何涉及到直接操作地址的操作（比如全局变量，函数调用），所涉及到的地址都是根据这个imageBase算出来的。但是如果载入到内存的时候，ImageBase上已经有了其他的映射。那么必须要重新修正这些地址。而重定位表正式为了解决这个问题。它保存了这些需要修正的代码的地址。如果直接存储地址，在32位下。要花费4个字节，n个重定向，需要4n个字节。这将会大大的增加文件的长度，并浪费更多的空间。所以重定位表存储地址做了优化。在一组靠近的代码，32位中的高位地址总是相同，所以可以将高位地址统一标示来节省空间。当按照一个内存页来分隔时，一个页面寻址空间为4K，12位。把这12位凑齐16位并放入一个字类型数据，在加一个双字保存页的起始地址。 另一个双字表示重定位项数，那么大小会是4+4+2*n。</p>
-
-<pre><code>typedef struct _IMAGE_BASE_RELOCATION {
-    DWORD   VirtualAddress; //RVA to页面起始
-    DWORD   SizeOfBlock;    //重定位块长度，包括IMAGE_BASE_RELOCATION自身的大小
-//  WORD    TypeOffset[1];
-} IMAGE_BASE_RELOCATION; 
-</code></pre>
-
-<p>这个结构后面，将是n个重定位项，n可以根据SizeOfBlock算出。当然，根据一贯的设计风格，那高4位，不会被浪费。他被用来描述重定项种类。看过了以上的介绍，那么就初步明白了一个DLL是如何被载入的。而且这里面中有很多降低效率的部分。如，字符串比较，重定位数据，修改数据所引发的copy on write等。所以这引出了下面的部分。（我这里的资料都比较旧，以下的2个部分，MS可能又做了新的优化，所以可能和实际情况有些出入）首先解决重定位数据。可以使用Rebase.exe程序，它将修正多个DLL数据的imageBase。关于更多详细的介绍。MSDN。还剩下一个问题是字符串的比较。而这个处理的原因是在导入表中查到了DLLName，然后再在导出表中找到响应的函数名。最后把地址写入IAT中。好的。如果能找到一个方式在载入之前就把IAT建好，那么就不用载入的时候算这些数据了。而这个过程就是绑定。将.exe和DLL绑定起来，将会大大减少程序载入的时间。当然这也会带来一些问题。如何能够确定是被正确绑定的呢？windows loader载入的时候会判断绑定的合法性，如果不合法，他会根据之前的INT表重新查找那些地址再填入IAT中。而这一切和未绑定数据的情况一样，也就是没有额外的开销。</p>
-
-<pre><code>typedef struct _IMAGE_BOUND_IMPORT_DESCRIPTOR {
-    DWORD   TimeDateStamp;                     //导入dll的时间
-    WORD    OffsetModuleName;                 //指向导入DLL名字字符串偏移地址的值，这个值相对于首个结构体
-    WORD    NumberOfModuleForwarderRefs; //指向转发的DLL信息 //reserved?
-// Array of zero or more IMAGE_BOUND_FORWARDER_REF follows
-} IMAGE_BOUND_IMPORT_DESCRIPTOR,  *PIMAGE_BOUND_IMPORT_DESCRIPTOR;
-
-typedef struct _IMAGE_BOUND_FORWARDER_REF {
-    DWORD   TimeDateStamp;
-    WORD    OffsetModuleName;
-    WORD    Reserved;
-} IMAGE_BOUND_FORWARDER_REF, *PIMAGE_BOUND_FORWARDER_REF;
-</code></pre>
-
-<p>当然，构建一个正确的binding，需要的条件还是相当苛刻的。</p>
-
-<p>1、DLL需要加载到期望加载的基地址上。</p>
-
-<p>2、绑定成功后，DLL的导出表中的符号位置不能变。而且每个DLL的时间也必须和绑定时写入的时间一致。</p>
-
-<p>哦，差点忘记一个重要的话题，延迟加载DLL。这个概念依然是围绕如何加快程序载入速度这个问题上来的。当使用多个DLL的时候，由于loader需要把所有的需要的DLL映射到进程的地址空间中，那么它的初始化时间会变长。当然，我们可以手动控制DLL的装入，当他需要执行的时候。当然这么做会增加程序的复杂度。而延迟加载就是MS提供的一个非常好的方案。而且它的控制也很方便，在DLL载入失败时，可以由自己的选择，而不是想隐式加载而直接down掉。它的思想是，首先在载入的时候，添入一些基本信息，当这个DLL被真正调用时，根据这些添入的代码，去加载DLL。当完毕后将信息保存下来。那么下次加载的时候就可以直接找到函数的地址。而这个整个过程，最有趣的是这个过程是由编译器加入的代码完成。所以操作系统是不会分别出来的。现在，我们可以遍历整个导入表的项目。但这并没结束。这里需要的知识实在是太多了。下一篇一定要好好理解下函数导入的整个过程。我查到的PE文件的资料是在1994年，而直到现在从32位到64位数据执行文件加载，到.net的metadata IL，都有它的身影。能够经得起10多年的变化。真是不得不佩服。</p>
-]]></content>
-  </entry>
-  
-  <entry>
-    <title type="html"><![CDATA[多线程程序设计笔记二]]></title>
-    <link href="http://studentdeng.github.com/blog/2010/04/24/mult-threading2/"/>
-    <updated>2010-04-24T18:46:00+08:00</updated>
-    <id>http://studentdeng.github.com/blog/2010/04/24/mult-threading2</id>
-    <content type="html"><![CDATA[<p>当我们正式开始之前，我想再多说一点，上一篇最后的那个程序可能会给像我一样的菜鸟一个误解，这里解释下。</p>
-
-<p>程序启动后就执行的那个线程称为主线程（也就是那个程序中的执行main函数的线程），而其他线程则成为子线程。主线程和其他线程最大的区别是当主线程返回或是调用一些函数强制退出后，使得程序中的其他子线程强制结束。 在一篇中native code和Manager code 在遇到同样的问题时，.net给我们做了一个好的榜样，其实不管是否是UI子线程，.net 控制台在终止进程结束之前，都会保证所有子线程已经退出。虽然我们无法知道到底它采用的是什么机制（我的理解是在调用结束进程之前调用了WaitForMultipleObjects或是其他wait函数等待所有子线程返回），但是这体现了一个很重要的原则，对产生的子线程负责，无论什么时候，都不应该直接结束程序而不等待子线程结束。因为子线程没有机会做清理工作。这个是一个非常可怕的问题，想这样的一个情况，子线程比如正在申请一个堆空间，而正好锁住了那个区域，然后被强制结束了。那么就很可能产生了内存泄露（产生不了也会增大系统负担）。所以再次提醒自己主线程在退出的时候，必须保证所有的子线程已经退出。</p>
-
-<p>从上一篇《多线程程序设计笔记一》中，我们知道了多线程程序设计的最基础的知识。下面总结下线程之间的通讯和同步问题。不过这个问题实在是太大了，对我来说。这里先只涉及最简单的在同一进程下的用户方式下的同步问题。</p>
-
-<p>以下内容将包括：</p>
-
-<p>互锁函数
-临界区
-互锁函数</p>
-
-<p>互锁函数运行在用户模式。它能保证当一个线程访问一个变量时，其它线程无法访问此变量，以确保变量值的唯一性。</p>
-
-<p>下面是一个简单的例子。</p>
-
-<pre><code>DWORD WINAPI ThreadFunc1(PVOID n)
-{
-  while(InterlockedExchange(&amp;g_bResourceInUse,TRUE) == TRUE)
-    SwitchToThread();
-  printf("thread1 used\n");
-  InterlockedExchange(&amp;g_bResourceInUse,FALSE);
-  return 0;
-}
-DWORD WINAPI ThreadFunc2(PVOID n)
-{
-  while(InterlockedExchange(&amp;g_bResourceInUse,TRUE) == TRUE)
-    SwitchToThread();
-  printf("thread2 used\n");
-  InterlockedExchange(&amp;g_bResourceInUse,FALSE);    
-  return 0;
-}
-</code></pre>
-
-<p>这个例子通过不断地判断bResourceInUse中的信息来确定线程是否能够使用资源。但是使用这个方法必须小心。大量的循环运算会浪费宝贵的CPU时间。而且如果是在单CPU下，线程不可能真正的异步执行，在thread1判断while的时候，thread2并不能做什么（不能修改该值）。所以我们应该避免在单个CPU计算机上使用循环锁。</p>
-
-<p>这里面还有一个需要知道的是必须使用关键字volatile声明g_bResourceInUse。我们需要把循环锁变量和循环锁保护的数据维护在不同的高速缓存行中。通过高速缓存行CPU可以不必访问内存总线而获得数据，但是在多处理器环境中，高速缓存行使得内存更新更加困难。如下：</p>
-
-<p>CPU1读取一个字节，将该字节和相邻字节读入CPU1的高速缓存行。
-CPU2读取同一个字节。从而和第一步相同的内容读入了CPU2的高速缓存行。
-CPU1修改该字节，因为已经在高速缓存行中，所以修改后的内容写入CPU1的高速缓存行，这个信息还没有写入内存。
-CPU2再次入去同一个字节。因为已经放入了CPU2的高速缓存行，所以CPU2不会访问内存。那么问题出现了。这个字节并不是该字节的新值。
-这个问题的确很严重，不过硬件工作者已经给我们解决了这个问题，当一个CPU修改高速缓存行字节时，其他CPU会被告知这个情况，他们的高速缓存行将无效。所以第四步中，CPU1必须将高速缓存行转入内存，而CPU2必须再次访问内存。</p>
-
-<p>原因想说清楚这些我现在还不行，这又涉及到了多核编程（哎，愧对老师啊，《多核程序设计》那课是白学了）。不过这里还是必须解释下volatile。</p>
-
-<p>被定义为volatile的变量，每次从内存中读取，而不能把他放在cache或寄存器中重复使用。
-告知编译器不要对这个变量做优化。
-告知编译器，变量可以被应用程序本身以外的某个东西进行修改，这些东西包括操作系统，硬件或同时执行的线程等。</p>
-
-<p>当必须以原子操作方式修改32为，64位值时，我们可以使用互锁函数。他们很有效率。但是实际工作，我们需要面对更复杂的数据结构。而且他们的效率是不进入内核态而节省下的。如果等待资源时间过长，就变成对CPU极大的浪费了，我们需要一种机制，使线程在等待访问共享资源时不浪费CPU时间。</p>
-
-<p>临界区（Critical Section）又叫做关键代码段</p>
-
-<p>临界区的描述</p>
-
-<p>win32提供的一种轻量级的同步机制，它存在于进程的内存空间中。一次只有一个线程获准进入临界区执行代码段，（其实就是让若干行代码能够以原子操作方式来使用资源）。
-它并不总是执行向内核模式的控制转换，要是获得一个未被占用的临界区时，只需要在用户态内的很少运算就能完成，只有在尝试获得已占用临界区时，它才会跳至内核模式。
-只能在属于同一个进程的线程间同步。
-补充一点，比如当线程A试图进入线程B拥有的临界区时，线程A将被置于等待状态。线程B离开临界区，线程A将处于可调度状态。让线程A立即等待，并不一定立即切换到内核方式。MS为了提高关键代码段的运行性能，将循环锁加入了这些代码段。当调用 EnterCriticalSection 它使用循环锁进行循环，只有当每次尝试获取都失败时才转入内核方式，从而线程A进入等待状态。</p>
-
-<p>这里可能就又糊涂了。之前说的循环锁不是效率很低么？的确，但是如果和转入内核方式比所消耗的资源少的话，就是可行的。比如我们仅仅是想操作一个指针。当然，如果是在单CPU下，循环锁是没有意义的，会直接转入内核方式。</p>
-
-<p>临界区的使用方法</p>
-
-<pre><code>    通过 InitializeCriticalSection 或 InitializeCriticalSectionAndSpinCount 函数初始化一个 CRITICAL_SECTION 结构，使用 SetCriticalSectionSpinCount 函数设置临界区的Spin计数器（可选）。然后使用 EnterCriticalSection 或 TryEnterCriticalSection 获取临界区的所有权；完成需要同步的操作后，使用 LeaveCriticalSection 函数释放临界区。最后使用 DeleteCriticalSection 函数析构临界区结构（只是删除RTL_CRITICAL_SECTION_ DEBUG）。
-</code></pre>
-
-<p>讲了这么多理论，实践一下。</p>
-
-<p>下面是对上一篇List做的多线程改进。</p>
-
-<pre><code>typedef struct _Node
-{
-  struct _Node *next;
-  int data;
-}Node;
-typedef struct _List
-{
-  Node *head;
-  CRITICAL_SECTION sec;
-}List;
-List *CreateList()
-{
-  List *pList = (List *)malloc(sizeof(pList));
-  pList-&gt;head = NULL;
-  InitializeCriticalSection(&amp;pList-&gt;sec);
-  return pList;
-}
-void DeleteList(List *pList)
-{
-  DeleteCriticalSection(&amp;pList-&gt;sec);
-  free(pList);
-  pList = NULL;
-}
-void AddHead(List *pList,Node *node)
-{
-  EnterCriticalSection(&amp;pList-&gt;sec);
-  node-&gt;next = pList-&gt;head;
-  pList-&gt;head = node;
-  LeaveCriticalSection(&amp;pList-&gt;sec);
-}
-</code></pre>
-
-<p>当然事实上没有这么简单。比如当交换两个链表内容的函数</p>
-
-<pre><code>void SwapLists(List *list1,List *List2)
-{
-  List *temp_List;
-  EnterCriticalSection(list1-&gt;sec);
-  EnterCriticalSection(list2-&gt;sec);
-  tmp_List-&gt;list = list1-&gt;head;
-  list1-&gt;head = list2-&gt;head;
-  list2-&gt;head = temp-&gt;list;
-  LeaveCriticalSection(list1-&gt;sec);
-  LeaveCriticalSection(list2-&gt;sec);
-}
-</code></pre>
-
-<p>当threadA: SwapLists(list1,list2);threadB:SwapLists(list2,list1)。两个线程会落入“我等你，你等我”的轮回，这种情况称为死锁。</p>
-
-<p>任何时候当一段代码需要1个以上的资源时，都可能发生死锁。而我们防止死锁通常的做法是保证“all or nothing”，也就是要不全部拥有，要不什么也没有。</p>
-
-<p>其实上面的代码还隐藏了一个问题，SwapList函数在使用的时候无形的需要确保一个资源使用的顺序。也就是说这个函数的运程依赖于代码的执行顺序，这种设计本身就是很脆弱的。</p>
-
-<p>临界区需要注意的</p>
-
-<p>每个共享资源使用一个CRITICAL_SECTION。只有被临界区Enter和Leave“围起来”的资源才能获得保护，临界区维护的只是一段代码（代码中通常有一些资源）。
-当同时访问多个资源的时候，使用临界区非常容易造成死锁， EnterCriticalSection 的顺序是需要认真考虑的但是并不一定十分可靠， LeaveCriticalSection 顺序则没有关系。
-不要长时间运行临界区，也就是不要长时间锁住一个资源。但是时间到底多长很难确定在windows OS中，所以不要在一个CRITICAL_SECTION中调用Sleep或Wait….API函数，SendMessage。当你以一个同步机制保护一份资源时，必须牢记“这项资源被使用频率如何？线程必须多块释放资源，才能确保整个程序运作平顺”。
-无法获知进入临界区的线程状态。由于临界区不是核心对象，如果一个线程进入临界区后，没有Leave，系统没有办法清除临界区。而且如果一个线程在Enter时被等待，那么等待的最长时间也是不能设定的。（也减少了一个处理错误的方式）
-想要了解更多的关于临界区的，参考http://msdn.microsoft.com/zh-cn/magazine/cc164040(en-us).aspx</p>
-
-<p>中文http://www.microsoft.com/china/MSDN/library/enterprisedevelopment/softwaredev/ousCriticalSections.mspx?mfr=true</p>
 ]]></content>
   </entry>
   

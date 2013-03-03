@@ -1,0 +1,390 @@
+
+<!DOCTYPE html>
+<!--[if IEMobile 7 ]><html class="no-js iem7"><![endif]-->
+<!--[if lt IE 9]><html class="no-js lte-ie8"><![endif]-->
+<!--[if (gt IE 8)|(gt IEMobile 7)|!(IEMobile)|!(IE)]><!--><html class="no-js" lang="en"><!--<![endif]-->
+<head>
+  <meta charset="utf-8">
+  <title>objcclass - studentdeng Blog</title>
+  <meta name="author" content="studentdeng">
+
+  
+  <meta name="description" content="之前一直做C++开发，最近2个多月转 Objective-C， 入门的时候，遇到了很多的困惑。现在过节，正是解决他们的好时机。 主要参考来自http://www.sealiesoftware.com/blog/archive/2009/04/14/ &hellip;">
+  
+
+  <!-- http://t.co/dKP3o1e -->
+  <meta name="HandheldFriendly" content="True">
+  <meta name="MobileOptimized" content="320">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+
+  
+  <link rel="canonical" href="http://studentdeng.github.com/blog/2011/10/05/objcclass/">
+  <link href="/favicon.png" rel="icon">
+  <link href="/stylesheets/screen.css" media="screen, projection" rel="stylesheet" type="text/css">
+  <script src="/javascripts/modernizr-2.0.js"></script>
+  <script src="/javascripts/ender.js"></script>
+  <script src="/javascripts/octopress.js" type="text/javascript"></script>
+  <link href="/atom.xml" rel="alternate" title="studentdeng Blog" type="application/atom+xml">
+  <!--Fonts from Google"s Web font directory at http://google.com/webfonts -->
+  
+
+</head>
+
+<body   >
+  <header role="banner"><hgroup>
+  <h1><a href="/">studentdeng Blog</a></h1>
+  
+    <h2>不会开机的男孩</h2>
+  
+</hgroup>
+
+</header>
+  <nav role="navigation"><ul class="subscription" data-subscription="rss">
+  <li><a href="/atom.xml" rel="subscribe-rss" title="subscribe via RSS">RSS</a></li>
+  
+</ul>
+  
+<form action="http://google.com/search" method="get">
+  <fieldset role="search">
+    <input type="hidden" name="q" value="site:studentdeng.github.com" />
+    <input class="search" type="text" name="q" results="0" placeholder="Search"/>
+  </fieldset>
+</form>
+  
+<ul class="main-navigation">
+  <li><a href="/">Blog</a></li>
+  <li><a href="/blog/archives">Archives</a></li>
+  <li><a href="/about">About</a></li>
+</ul>
+
+</nav>
+  <div id="main">
+    <div id="content">
+      <div>
+<article class="hentry" role="article">
+  
+  <header>
+    
+      <h1 class="entry-title">Objcclass</h1>
+    
+    
+      <p class="meta">
+        
+
+
+
+
+
+
+
+
+  
+
+
+<time datetime="2011-10-05T23:31:00+08:00" pubdate data-updated="true">Oct 5<span>th</span>, 2011</time>
+        
+
+        
+      | <a href="#comments">Comments</a>
+        
+
+      </p>
+    
+  </header>
+
+
+<div class="entry-content"><p>之前一直做C++开发，最近2个多月转 Objective-C， 入门的时候，遇到了很多的困惑。现在过节，正是解决他们的好时机。</p>
+
+<p>主要参考来自http://www.sealiesoftware.com/blog/archive/2009/04/14/objc_explain_Classes_and_metaclasses.html</p>
+
+<p> Objective-C 也是面向对象的语言，那么，首先需要知道的就是什么是class。</p>
+
+<p>C++ 的class相对 Objective-C 中的class，就简单明了很多了。C++ 中class简单的说，就是一个大的struct， 绝大部分的class可以在编译时决定好class的布局（通过虚继承来的class成员变量只能动态确定）。当然，最关键的是，你不可能在运行时创建一个class，因为所有的class在运行之前已经确定下来，并保存在二进制文件中。</p>
+
+<p>但是， Objective-C 确不同， Objective-C 可以在运行中创建class，修改class等等。那么，改如何定义 Objective-C 中的class呢。</p>
+
+<p>在这之前，我们先看一个简单的，class的实例对象。</p>
+
+<pre><code>@interface Object 
+{
+
+    //typedef struct objc_class *Class; 
+    Class isa;    /* A pointer to the instance's class structure */ 
+}
+</code></pre>
+
+<p>对象包含一个指向class的指针，而这也就意味着，任何包含class 的指针都可以被看做是对象（object）。</p>
+
+<pre><code>struct objc_class {            
+    struct objc_class *isa;    //这里也有isa指针 
+    struct objc_class *super_class;    //这里还有一个指向基类的指针 
+    const char *name;        
+    long version; 
+    long info; 
+    long instance_size; 
+    struct objc_ivar_list *ivars;
+
+    struct objc_method_list **methodLists;
+
+    struct objc_cache *cache; 
+     struct objc_protocol_list *protocols; 
+};
+
+//新的定义
+typedef struct class_t {
+
+    struct class_t *isa;
+
+    struct class_t *superclass;
+
+    Cache cache;
+
+    IMP *vtable;
+
+    class_rw_t *data;
+
+} class_t;
+</code></pre>
+
+<p>显然，在 Objective-C 眼中，一切都是对象，甚至包括我们的class。而对象就是class的实例，那么，class是什么的实例呢，metaclass。</p>
+
+<p>事实上，我们并没有解决问题。metaclass 事实上又是root metaclass 的实例，而root metaclass 自己又是 root metaclass 的实例，一图胜千言，不做赘述。</p>
+
+<p><img src="/images/objc.png" alt="alt text" /></p>
+</div>
+
+
+  <footer>
+    <p class="meta">
+      
+  
+
+<span class="byline author vcard">Posted by <span class="fn">studentdeng</span></span>
+
+      
+
+
+
+
+
+
+
+
+  
+
+
+<time datetime="2011-10-05T23:31:00+08:00" pubdate data-updated="true">Oct 5<span>th</span>, 2011</time>
+      
+
+<span class="categories">
+  
+    <a class='category' href='/blog/categories/objective-c/'>Objective-C</a>
+  
+</span>
+
+
+    </p>
+    
+      <div class="sharing">
+  
+  
+  
+
+  
+      <!-- JiaThis Button BEGIN -->
+<div class="jiathis_style">
+<span class="jiathis_txt">分享到：</span>
+<a class="jiathis_button_tsina">新浪微博</a>
+<a class="jiathis_button_tqq">腾讯微博</a>
+<a class="jiathis_button_douban">豆瓣</a>
+<a class="jiathis_button_qzone">QQ空间</a>
+<a class="jiathis_button_renren">人人网</a>
+
+<a href="http://www.jiathis.com/share?uid=1737602" class="jiathis jiathis_txt jiathis_separator jtico jtico_jiathis" target="_blank">更多</a>
+<a class="jiathis_counter_style"></a>
+</div>
+<script type="text/javascript" >
+var jiathis_config={
+	data_track_clickback:true,
+	siteNum:5,
+	sm:"renren,douban,tsina,tqq,qzone",
+	summary:"",
+	hideMore:false
+}
+</script>
+<script type="text/javascript" src="http://v3.jiathis.com/code_mini/jia.js?uid=1737602" charset="utf-8">
+</script>
+<!-- JiaThis Button END -->
+
+  
+  
+</div>
+
+    
+    <p class="meta">
+      
+        <a class="basic-alignment left" href="/blog/2011/08/26/hash/" title="Previous Post: hash">&laquo; hash</a>
+      
+      
+        <a class="basic-alignment right" href="/blog/2011/10/06/objcmessage/" title="Next Post: Objective-C Message">Objective-C Message &raquo;</a>
+      
+    </p>
+  </footer>
+</article>
+
+
+
+  <section>
+    <h1>Comments</h1>
+    <div id="comments" aria-live="polite"><!-- Duoshuo Comment BEGIN -->
+<div class="ds-thread"></div>
+<script type="text/javascript">
+  var duoshuoQuery = {short_name:"studentdeng"};
+  (function() {
+    var ds = document.createElement('script');
+    ds.type = 'text/javascript';ds.async = true;
+    ds.src = 'http://static.duoshuo.com/embed.js';
+    ds.charset = 'UTF-8';
+    (document.getElementsByTagName('head')[0] 
+    || document.getElementsByTagName('body')[0]).appendChild(ds);
+  })();
+</script>
+<!-- Duoshuo Comment END -->
+</div>
+  </section>
+
+
+</div>
+
+<aside class="sidebar">
+  
+    <section>
+  <h1>Categories</h1>
+  <ul id="categories">
+    <li class='category'><a href='/blog/categories/ios/'>IOS (1)</a></li>
+<li class='category'><a href='/blog/categories/objective-c/'>Objective-C (6)</a></li>
+<li class='category'><a href='/blog/categories/stl/'>STL (5)</a></li>
+<li class='category'><a href='/blog/categories/wpf-sl/'>WPF/SL (1)</a></li>
+<li class='category'><a href='/blog/categories/algorithms/'>algorithms (8)</a></li>
+<li class='category'><a href='/blog/categories/asm/'>asm (1)</a></li>
+<li class='category'><a href='/blog/categories/c-/'>c++ (6)</a></li>
+<li class='category'><a href='/blog/categories/configure/'>configure (2)</a></li>
+<li class='category'><a href='/blog/categories/emotion/'>emotion (7)</a></li>
+<li class='category'><a href='/blog/categories/operating-system/'>operating_system (3)</a></li>
+<li class='category'><a href='/blog/categories/tips/'>tips (1)</a></li>
+<li class='category'><a href='/blog/categories/windows/'>windows (9)</a></li>
+<li class='category'><a href='/blog/categories/windows-mobile/'>windows_mobile (2)</a></li>
+
+  </ul>
+</section>
+<section>
+  <h1>Recent Posts</h1>
+  <ul id="recent_posts">
+    
+      <li class="post">
+        <a href="/blog/2013/03/03/selfos/">Orange‘s 一个操作系统的实现 配置问题</a>
+      </li>
+    
+      <li class="post">
+        <a href="/blog/2013/03/03/arc/">ARC 1</a>
+      </li>
+    
+      <li class="post">
+        <a href="/blog/2013/01/26/tips/">tips</a>
+      </li>
+    
+      <li class="post">
+        <a href="/blog/2013/01/15/happiness/">哈佛幸福课 杂感一</a>
+      </li>
+    
+      <li class="post">
+        <a href="/blog/2012/02/14/bochs-configure/">bochs-configure</a>
+      </li>
+    
+      <li class="post">
+        <a href="/blog/2012/02/03/objblock/">Objective-C block</a>
+      </li>
+    
+      <li class="post">
+        <a href="/blog/2012/01/13/plan/">plan</a>
+      </li>
+    
+      <li class="post">
+        <a href="/blog/2012/01/13/knownless/">转 从无知到有知</a>
+      </li>
+    
+      <li class="post">
+        <a href="/blog/2012/01/12/objcbase/">Objective-C 一些很基础的总结</a>
+      </li>
+    
+      <li class="post">
+        <a href="/blog/2011/10/16/objcsel/">Objective C SEL</a>
+      </li>
+    
+  </ul>
+</section>
+
+<section>
+  <h1>GitHub Repos</h1>
+  <ul id="gh_repos">
+    <li class="loading">Status updating...</li>
+  </ul>
+  
+  <a href="https://github.com/studentdeng">@studentdeng</a> on GitHub
+  
+  <script type="text/javascript">
+    $.domReady(function(){
+        if (!window.jXHR){
+            var jxhr = document.createElement('script');
+            jxhr.type = 'text/javascript';
+            jxhr.src = '/javascripts/libs/jXHR.js';
+            var s = document.getElementsByTagName('script')[0];
+            s.parentNode.insertBefore(jxhr, s);
+        }
+
+        github.showRepos({
+            user: 'studentdeng',
+            count: 5,
+            skip_forks: true,
+            target: '#gh_repos'
+        });
+    });
+  </script>
+  <script src="/javascripts/github.js" type="text/javascript"> </script>
+</section>
+
+
+
+
+
+<section>
+<h1>Recent Comments</h1>
+<ul class="ds-recent-comments" data-num-items="10" data-show-avatars="0" data-show-time="0" data-show-title="0" data-show-admin="0" data-excerpt-length="18"></ul>
+
+</section>
+  
+</aside>
+
+
+    </div>
+  </div>
+  <footer role="contentinfo"><p>
+  Copyright &copy; 2013 - studentdeng -
+  <span class="credit">Powered by <a href="http://octopress.org">Octopress</a></span>
+</p>
+
+</footer>
+  
+
+
+
+
+
+
+
+
+
+
+
+</body>
+</html>
