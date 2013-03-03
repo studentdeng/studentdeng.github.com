@@ -5,14 +5,11 @@
 <!--[if (gt IE 8)|(gt IEMobile 7)|!(IEMobile)|!(IE)]><!--><html class="no-js" lang="en"><!--<![endif]-->
 <head>
   <meta charset="utf-8">
-  <title>about - studentdeng Blog</title>
+  <title>Win32汇编学习（1） - studentdeng Blog</title>
   <meta name="author" content="studentdeng">
 
   
-  <meta name="description" content="About Mar 3rd, 2013 IT宅男一个, GEEK, 幼稚的一个家伙。
-INTJ
-喜爱游泳, 音乐, 看书, 玩游戏, 懒 喜欢省事，简单
-喜欢改变.正在努力做一个靠谱的爷们 Change is hard. Sometimes we lack information. Other &hellip;">
+  <meta name="description" content="终于把学校里面让人无语的论文搞定了。周末终于有时间干些自己想干的事了。想起了这2周做的关于编译原理的实验，代码优化这部分的确是个难题。哎，我实在是太笨了，其实答案就在自己电脑里。将c程序反汇编后，终于第一次感受到了debug 和release的区别。兴奋之余让我又产生了忧虑，自己汇编的能力太弱了， &hellip;">
   
 
   <!-- http://t.co/dKP3o1e -->
@@ -21,7 +18,7 @@ INTJ
   <meta name="viewport" content="width=device-width, initial-scale=1">
 
   
-  <link rel="canonical" href="http://studentdeng.github.com/about/">
+  <link rel="canonical" href="http://studentdeng.github.com/blog/2010/05/22/asm-win32/">
   <link href="/favicon.png" rel="icon">
   <link href="/stylesheets/screen.css" media="screen, projection" rel="stylesheet" type="text/css">
   <script src="/javascripts/modernizr-2.0.js"></script>
@@ -64,44 +61,15 @@ INTJ
   <div id="main">
     <div id="content">
       <div>
-<article role="article">
+<article class="hentry" role="article">
   
   <header>
-    <h1 class="entry-title">About</h1>
-    <p class="meta">
-
-
-
-
-
-
-
-
-  
-
-
-<time datetime="2013-03-03T16:43:00+08:00" pubdate data-updated="true">Mar 3<span>rd</span>, 2013</time></p>
-  </header>
-  
-  <iframe width="100%" height="80" class="share_self"  frameborder="0" scrolling="no" src="http://widget.weibo.com/weiboshow/index.php?language=zh_cn&width=0&height=550&fansRow=2&ptype=1&speed=50&skin=1&isTitle=0&noborder=0&isWeibo=0&isFans=0&uid=1984671427&verifier=a81cad33&dpc=1"></iframe>
-
-
-<p>IT宅男一个, GEEK, 幼稚的一个家伙。
-INTJ
-喜爱游泳, 音乐, 看书, 玩游戏, 懒 喜欢省事，简单
-喜欢改变.正在努力做一个靠谱的爷们</p>
-
-<p>Change is hard. Sometimes we lack information. Other times, our routines and habits are really persistant, even if we wish they weren&#8217;t</p>
-
-<p>改变很难, 有太多的潜意识在阻挠我, 有时候人就是讨厌, 这种一知半解的状态最让人不安.但是再想想, 没有比遗憾更让我不安的事情.</p>
-
-<p>If I look back on my life so far, my biggest learnings and inspirations have come mostly from my failures and mistakes.  Without those missteps, I fear my life would be too bland&#8230;</p>
-
-  
-    <footer>
+    
+      <h1 class="entry-title">Win32汇编学习（1）</h1>
+    
+    
       <p class="meta">
         
-        
 
 
 
@@ -113,11 +81,102 @@ INTJ
   
 
 
-<time datetime="2013-03-03T16:43:00+08:00" pubdate data-updated="true">Mar 3<span>rd</span>, 2013</time>
+<time datetime="2010-05-22T18:49:00+08:00" pubdate data-updated="true">May 22<span>nd</span>, 2010</time>
         
+
+        
+      | <a href="#comments">Comments</a>
+        
+
       </p>
+    
+  </header>
+
+
+<div class="entry-content"><p>终于把学校里面让人无语的论文搞定了。周末终于有时间干些自己想干的事了。想起了这2周做的关于编译原理的实验，代码优化这部分的确是个难题。哎，我实在是太笨了，其实答案就在自己电脑里。将c程序反汇编后，终于第一次感受到了debug 和release的区别。兴奋之余让我又产生了忧虑，自己汇编的能力太弱了，面对稍微复杂点的算法再加上编译优化后的汇编代码，真是欲哭无泪。痛下决心，准备好好学学汇编了。为了给自己一个动力，准备学习Win32汇编（和学校那个8086再见了）。</p>
+
+<p>　　第一天，不准备上难度了。从最简单的&#8221;HelloWorld&#8221;开始。</p>
+
+<pre><code>; HelloWorld.asm
+
+comment * ----------------------------------------------
+                 The First Assemble Application
+                ---------------------------------------------- *
+
+.386
+.model flat, stdcall
+option casemap:none
+
+include \masm32\include\windows.inc
+
+include \masm32\include\user32.inc
+include \masm32\include\kernel32.inc
+
+includelib \masm32\lib\user32.lib
+includelib \masm32\lib\kernel32.lib
+
+    .data
+szCaption   db 'MessageBox', 0
+szText      db 'Hello, World!', 0
+
+    .code
+start:
+    invoke MessageBox,\     ; 调用函数名
+        NULL,\                      ; 父窗口句柄
+        offset szText,\           ; 文字
+        offset szCaption,\      ; 标题
+        MB_OK                    ; 按钮类型
+
+    invoke ExitProcess, NULL
+end start
+</code></pre>
+
+<p>一个简单的窗口就创建好了。一眼看上去发现和以前的8086还是有很多不同的。</p>
+
+<p>首先8086和80386在寻址方式不同。</p>
+
+<p>8086 通过 段地址*0x10 +偏移地址确定的。只能寻址1M，而80386 32根地址线寻址，空间达到了4G而且80386 通用寄存器大小为32位，所以不需要分段就能访问到地址。</p>
+
+<p>那么.data,.code不是段的意思么？ 不是。因为808386有分页机制，每个页可以自由制定属性，已经和8086代码和数据分段处理完全不同，实际上是把不同类型的数据或代码归类，再放到不同属性的内存页。</p>
+
+<p> 其次，8086的不安全，不方便的调用中断的方式改为了调用系统API的方式。我这里是采用的MASM，所以有invoke伪指令，其实这个指令也没别的，就是为我们编程省去了函数参数入栈的那些push。</p>
+
+<p>最后，发现win32汇编和使用c/c++似乎没有复杂很多。</p>
+</div>
+
+
+  <footer>
+    <p class="meta">
       
-        <div class="sharing">
+  
+
+<span class="byline author vcard">Posted by <span class="fn">studentdeng</span></span>
+
+      
+
+
+
+
+
+
+
+
+  
+
+
+<time datetime="2010-05-22T18:49:00+08:00" pubdate data-updated="true">May 22<span>nd</span>, 2010</time>
+      
+
+<span class="categories">
+  
+    <a class='category' href='/blog/categories/asm/'>asm</a>
+  
+</span>
+
+
+    </p>
+    
+      <div class="sharing">
   
   
   
@@ -152,10 +211,39 @@ var jiathis_config={
   
 </div>
 
+    
+    <p class="meta">
       
-    </footer>
-  
+        <a class="basic-alignment left" href="/blog/2010/04/24/mult-threading2/" title="Previous Post: 多线程程序设计笔记二">&laquo; 多线程程序设计笔记二</a>
+      
+      
+        <a class="basic-alignment right" href="/blog/2013/01/15/happiness/" title="Next Post: 哈佛幸福课 杂感一">哈佛幸福课 杂感一 &raquo;</a>
+      
+    </p>
+  </footer>
 </article>
+
+
+
+  <section>
+    <h1>Comments</h1>
+    <div id="comments" aria-live="polite"><!-- Duoshuo Comment BEGIN -->
+<div class="ds-thread"></div>
+<script type="text/javascript">
+  var duoshuoQuery = {short_name:"studentdeng"};
+  (function() {
+    var ds = document.createElement('script');
+    ds.type = 'text/javascript';ds.async = true;
+    ds.src = 'http://static.duoshuo.com/embed.js';
+    ds.charset = 'UTF-8';
+    (document.getElementsByTagName('head')[0] 
+    || document.getElementsByTagName('body')[0]).appendChild(ds);
+  })();
+</script>
+<!-- Duoshuo Comment END -->
+</div>
+  </section>
+
 
 </div>
 

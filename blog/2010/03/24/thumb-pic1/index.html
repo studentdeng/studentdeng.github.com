@@ -1,0 +1,672 @@
+
+<!DOCTYPE html>
+<!--[if IEMobile 7 ]><html class="no-js iem7"><![endif]-->
+<!--[if lt IE 9]><html class="no-js lte-ie8"><![endif]-->
+<!--[if (gt IE 8)|(gt IEMobile 7)|!(IEMobile)|!(IE)]><!--><html class="no-js" lang="en"><!--<![endif]-->
+<head>
+  <meta charset="utf-8">
+  <title>缩略图设计初探 - studentdeng Blog</title>
+  <meta name="author" content="studentdeng">
+
+  
+  <meta name="description" content="第一部分简介： 最近有幸参加了一个网上的开源项目，需要我设计一个缩略图存储的方法。整个思路主要是模仿XP的实现方式，而对于Win7（或是Vista）里面将所有缩略图统一管理的模式没有采用。主要想法还是一切从简，这也就是初探的来由了。 整个缩略图的核心算法来自《Inside MoPaQ》http &hellip;">
+  
+
+  <!-- http://t.co/dKP3o1e -->
+  <meta name="HandheldFriendly" content="True">
+  <meta name="MobileOptimized" content="320">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+
+  
+  <link rel="canonical" href="http://studentdeng.github.com/blog/2010/03/24/thumb-pic1/">
+  <link href="/favicon.png" rel="icon">
+  <link href="/stylesheets/screen.css" media="screen, projection" rel="stylesheet" type="text/css">
+  <script src="/javascripts/modernizr-2.0.js"></script>
+  <script src="/javascripts/ender.js"></script>
+  <script src="/javascripts/octopress.js" type="text/javascript"></script>
+  <link href="/atom.xml" rel="alternate" title="studentdeng Blog" type="application/atom+xml">
+  <!--Fonts from Google"s Web font directory at http://google.com/webfonts -->
+  
+
+</head>
+
+<body   >
+  <header role="banner"><hgroup>
+  <h1><a href="/">studentdeng Blog</a></h1>
+  
+    <h2>不会开机的男孩</h2>
+  
+</hgroup>
+
+</header>
+  <nav role="navigation"><ul class="subscription" data-subscription="rss">
+  <li><a href="/atom.xml" rel="subscribe-rss" title="subscribe via RSS">RSS</a></li>
+  
+</ul>
+  
+<form action="http://google.com/search" method="get">
+  <fieldset role="search">
+    <input type="hidden" name="q" value="site:studentdeng.github.com" />
+    <input class="search" type="text" name="q" results="0" placeholder="Search"/>
+  </fieldset>
+</form>
+  
+<ul class="main-navigation">
+  <li><a href="/">Blog</a></li>
+  <li><a href="/blog/archives">Archives</a></li>
+  <li><a href="/about">About</a></li>
+</ul>
+
+</nav>
+  <div id="main">
+    <div id="content">
+      <div>
+<article class="hentry" role="article">
+  
+  <header>
+    
+      <h1 class="entry-title">缩略图设计初探</h1>
+    
+    
+      <p class="meta">
+        
+
+
+
+
+
+
+
+
+  
+
+
+<time datetime="2010-03-24T18:35:00+08:00" pubdate data-updated="true">Mar 24<span>th</span>, 2010</time>
+        
+
+        
+      | <a href="#comments">Comments</a>
+        
+
+      </p>
+    
+  </header>
+
+
+<div class="entry-content"><h2>第一部分简介：</h2>
+
+<p>最近有幸参加了一个网上的开源项目，需要我设计一个缩略图存储的方法。整个思路主要是模仿XP的实现方式，而对于Win7（或是Vista）里面将所有缩略图统一管理的模式没有采用。主要想法还是一切从简，这也就是初探的来由了。</p>
+
+<p>整个缩略图的核心算法来自《Inside MoPaQ》http://shadowflare.samods.org/inside_mopaq/</p>
+
+<p>核心是将文件名通过Hash散列到表中，从而达到快速查找的目的。</p>
+
+<p>MPQ文件，对于大部分大学时间沉浸的游戏——War3是非常重要的，每次War3版本的更替都对这个文件做了修改。的确，对于一个计算机系的非常爱玩的我，现在才分析MPQ实在是惭愧。</p>
+
+<p>对于我这个文件名，现在姑且命名为MP(MiniPic)。</p>
+
+<p>这是我第一次用c++来写程序，整个程序很简单，花了差不多1个半月（我这个效率实在不行），和第一篇一样，希望各位大哥能帮忙看看。</p>
+
+<h2>第二部分实现：</h2>
+
+<ol>
+<li>需求</li>
+</ol>
+
+
+<p>1.1          这里实现读取，修改固定大小的文件，即每个缩略图的存储空间大小一致。</p>
+
+<p>1.2          根据文件名添加，查找，删除功能。</p>
+
+<p>1.3          文件存储数目固定，不能动态增长。</p>
+
+<p>1.4          储存文件名，使用ID形式访问。</p>
+
+<p>2.存储方案</p>
+
+<p>2.1          表结构设计</p>
+
+<p>整个文件包括FileHeader，HashTable，BlockTable，DataHeader，Data构成。通过计算文件名的hash值，将文件名散列到HashTable中，然后根据HashTable中查找BlockTable（文件块表），在BlockTable中查找到实际文件data的位置。读入DataHeader和Data。</p>
+
+<p>FileHeader HashTableItem HashTableItem &#8230;&#8230; HashTableItem</p>
+
+<p>BlockTableItem BlockTableItem DataHeader Data DataHeader</p>
+
+<p>Data
+&#8230;</p>
+
+<p>2.2          内存中存储。</p>
+
+<p>内存中存储FileHeader、HashTable、BlockTable、DebrisBlock,dataBuffer。</p>
+
+<p>DebrisBlock是队列结构。存储因删除操作而产生的碎片。</p>
+
+<p>FileHeader，HashTable，BlockTable是数组。dataBuffer数据缓存</p>
+
+<p>3.实现方案</p>
+
+<p>实际还需要增加功能，以下是核心部分。对于每个功能的算法也只写核心部分。</p>
+
+<p>3.1       增加</p>
+
+<p>3.1.1     将文件名转换为数字。这里使用的是MPQ文件算法。</p>
+
+<pre><code>DWORD HashManager::HashString( TCHAR *lpszFileName,DWORD dwHashType )
+{
+    BYTE *key = (BYTE *)lpszFileName;   
+    DWORD seed1 = 0x7FED7FED, seed2 = 0xEEEEEEEE;   
+    int ch;   
+
+    while(*key != 0)   
+    {
+        ch = toupper(*key++);
+        //原来是char，这里处理TCHAR中的0，这里也有小问题，如果要更多的地方使用，还需要做大头小头机数据转换
+         if(!*key)
+        {
+            ++key;
+        }
+        seed1 = cryptTable[(dwHashType &lt;&lt; 8) + ch] ^ (seed1 + seed2);   
+        seed2 = ch + seed1 + seed2 + (seed2 &lt;&lt; 5) + 3;    
+    }   
+    return seed1; 
+}
+</code></pre>
+
+<p>3.1.2     插入HashTable。</p>
+
+<p>在处理冲突的时候，是采用最简单的线性探查法，在判断位置相同的时候，采用增加2个Hash值的方法。虽然不能保证肯定不会出问题。但是3个相同的概率很低，大概是10的22.3次方分之一，这个是在参考《Inside MoPaQ》，中的数据，是否可靠。我无法确定。</p>
+
+<pre><code>BOOL HashManager::InsertHashTable( TCHAR *lpszString, FILETIME FileTime, LONG &amp;HashPos, DWORD dwFlags,
+                                   BOOL &amp;isNew//设置，是否是新文件
+)
+{
+    ASSERT( m_pHashIndexTable!= NULL );
+    isNew = TRUE;
+    const DWORD HASH_OFFSET = 0, HASH_A = 1, HASH_B = 2;   
+    DWORD nHash = HashString(lpszString, HASH_OFFSET);   
+    DWORD nHashA = HashString(lpszString, HASH_A);   
+    DWORD nHashB = HashString(lpszString, HASH_B);   
+    DWORD nHashStart = nHash %m_hashTableLength;   
+    DWORD nHashPos = nHashStart;   
+    DWORD x=m_pHashIndexTable[nHashPos].dwFlag &amp; FILE_EXISTS;
+    DWORD y = m_pHashIndexTable[nHashPos].dwFlag &amp; FILE_DELETED;
+    while( x!=0 )
+    {   
+        if( y==FILE_DELETED )
+        {
+            isNew = FALSE;
+            break;
+        }
+        //如果有同名文件
+         if (m_pHashIndexTable[nHashPos].dwHashValueA == nHashA                &amp;&amp; m_pHashIndexTable[nHashPos].dwHashValueB == nHashB)
+        {
+            if( dwFlags &amp; INSERT_CHECK_FILETIME )
+            {
+                if(m_pHashIndexTable[nHashPos].dwFileLastModiTime.dwHighDateTime == FileTime.dwHighDateTime
+                   &amp;&amp; m_pHashIndexTable[nHashPos].dwFileLastModiTime.dwLowDateTime == FileTime.dwLowDateTime)
+                {
+                  return FALSE;//说明文件真实存在,插入失败
+                  }
+                else
+                {
+                    isNew = FALSE;
+                    break;
+                }
+            }
+            if( dwFlags &amp; INSERT_REPLACE_EXISTING )
+            {
+                isNew = FALSE;
+                break;
+            }
+            else
+            {
+                return FALSE;
+            }
+        }  
+        nHashPos = (nHashPos + 1) % m_hashTableLength;   
+        if(nHashPos == nHashStart)    
+        {   
+            return FALSE;    
+        }   
+        x=m_pHashIndexTable[nHashPos].dwFlag &amp; FILE_EXISTS;
+        y = m_pHashIndexTable[nHashPos].dwFlag &amp; FILE_DELETED;
+    }   
+    m_pHashIndexTable[nHashPos].dwFlag = FILE_EXISTS;  
+    m_pHashIndexTable[nHashPos].dwHashValueA = nHashA;   
+    m_pHashIndexTable[nHashPos].dwHashValueB = nHashB;   
+    m_pHashIndexTable[nHashPos].iBlockIndex=nHashPos;
+    if( dwFlags &amp; INSERT_CHECK_FILETIME )
+    {
+        m_pHashIndexTable[nHashPos].dwFileLastModiTime.dwHighDateTime = FileTime.dwHighDateTime;
+        m_pHashIndexTable[nHashPos].dwFileLastModiTime.dwLowDateTime = FileTime.dwLowDateTime;
+    }
+    HashPos = nHashPos;
+    return TRUE;  
+}
+</code></pre>
+
+<p>3.1.3     插入BlockTable</p>
+
+<p>如果DebrisBlock（空闲表）为空，则将BlockTable中的文件偏移量指向文件最后。</p>
+
+<p>如果DebrisBlock不为空，则将BlockTable中的文件偏移量指向BlockTable头结点，DebrisBlock头结点出列。</p>
+
+<p>3.2          查找</p>
+
+<p>3.2.1     查找HashTable</p>
+
+<pre><code>LONG HashManager::GetHashTablePos( TCHAR *lpszString )
+{
+    const DWORD HASH_OFFSET = 0, HASH_A = 1, HASH_B = 2;   
+    DWORD nHash = HashString(lpszString, HASH_OFFSET);   
+    DWORD nHashA = HashString(lpszString, HASH_A);   
+    DWORD nHashB = HashString(lpszString, HASH_B);   
+    DWORD nHashStart = nHash % m_hashTableLength;   
+    DWORD nHashPos = nHashStart; 
+
+    DWORD x=m_pHashIndexTable[nHashPos].dwFlag &amp; FILE_EXISTS;
+    while( x != 0 )
+    {    
+        if(m_pHashIndexTable[nHashPos].dwHashValueA == nHashA               &amp;&amp; m_pHashIndexTable[nHashPos].dwHashValueB == nHashB)
+        {
+            return nHashPos;  
+        }      
+        else
+        {
+            nHashPos = (nHashPos + 1) % m_hashTableLength; 
+        }  
+        if(nHashPos == nHashStart)    
+             break;    
+        x=m_pHashIndexTable[nHashPos].dwFlag &amp; FILE_EXISTS;
+    }
+    return -1; //没有找到
+}
+</code></pre>
+
+<p>3.3          删除</p>
+
+<p>3.3.1    查找HashTable ：GetHashTablePos；</p>
+
+<p>3.3.2    查找到则DebrisBlock入列文件偏移量，</p>
+
+<p>3.3.3    在HashTable中Flag标记位FILE_DELETED</p>
+
+<p>3.3.4    备注：这里不是真正删除。真正删除在MPFileClose()中的ManagerFileDebris进行。</p>
+
+<pre><code>BOOL    MiniPic::DeleteData(TCHAR *lpszString)
+{
+    ASSERT(m_isInit);
+    ASSERT( m_pHashManager != NULL );
+    ASSERT( lpszString != NULL );
+    LONG hashTablePos;
+    hashTablePos = m_pHashManager-&gt;GetHashTablePos(lpszString);
+    if( hashTablePos == -1 )
+    {
+        return FALSE;
+    }
+    MINIPICDEBRIS debris;
+    debris.dwBlockTableIndex = hashTablePos;
+    debris.dwDebrisStartAt = m_pBlockTableManager-&gt;GetBlockTable()[hashTablePos].FileStartAt;
+    m_pHashManager-&gt;DeleteHashTable(hashTablePos);
+    m_debrisBlock.push_back(debris);
+    DebugPrintString(L"Free data the pos is %d\n",hashTablePos);
+#ifdef TEST
+    if(count1&gt;=testNum)
+    {
+        count1=0;
+    }
+    testIns[count1++]=hashTablePos;
+#endif
+    m_fileHeader.childFileCount--;
+    return TRUE;
+}
+</code></pre>
+
+<p>3.4           回收资源</p>
+
+<p>因为在删除的时候只是在hashTable中做了一个Deleted的标记，并没有真正删除文件。若是长时间使用，则会浪费很多空间。此时需要整理。</p>
+
+<p>收集空闲区域。排序，将文件尾部数据移动至最早空闲处，删除空闲处，更新hashTable。</p>
+
+<pre><code>BOOL MiniPic::ManagerFileDebris( LPVOID lpBuffer, const UINT count )
+{
+    ASSERT( lpBuffer != NULL );
+    ASSERT( m_MPFile != NULL );
+    if( m_debrisBlock.empty() )
+    {
+        return TRUE;
+    }
+    MINIPICDATAITEMHEADER dataItemHeader;
+    m_debrisBlock.sort();
+
+    /*
+首先将比较Debris block末尾，若是处在文件的最后，则将Debris block末尾数据出列。并向前移动fileEndPointer     保证Debris block要小于文件末尾。
+确认Debris block是否为空。
+将末尾文件数据移动到Debris block的首部位置，fileEndPointer--，并将Debris block首部数据出列。
+    在判断条件1，2*/
+    //查找Debris。
+    while( !m_debrisBlock.empty() )
+   {
+        while( m_debrisBlock.back().dwDebrisStartAt + count                   + sizeof(MINIPICDATAITEMHEADER) == m_fileDataEndPointer )//处理文件末尾的空闲区域
+         {
+            m_fileDataEndPointer -= count + sizeof(MINIPICDATAITEMHEADER);
+            m_pHashManager-&gt;ClearHashTable( m_debrisBlock.back().dwBlockTableIndex );//New add
+            m_debrisBlock.pop_back();
+            if( m_debrisBlock.empty() )
+            {
+                break;
+            }
+        }
+        if( !m_debrisBlock.empty() )
+        {
+            if( 0xFFFFFFFF == m_MPFile-&gt;Seek( m_fileDataEndPointer - count - sizeof(MINIPICDATAITEMHEADER), 
+                FILE_BEGIN ))//指向最后文件块开始处
+              {
+                return FALSE;
+            }
+            m_MPFile-&gt;Read( &amp;dataItemHeader, sizeof(MINIPICDATAITEMHEADER) );
+            m_MPFile-&gt;Read( lpBuffer, count );
+            if( 0xFFFFFFFF == m_MPFile-&gt;Seek( m_debrisBlock.front().dwDebrisStartAt, FILE_BEGIN ) )
+            {
+                return FALSE;
+            }
+            m_MPFile-&gt;Write( &amp;dataItemHeader, sizeof(MINIPICDATAITEMHEADER) );
+            m_MPFile-&gt;Write( lpBuffer, count );
+            m_fileDataEndPointer -= count+sizeof(MINIPICDATAITEMHEADER);
+            m_pBlockTableManager-&gt;SetBlockTableFileStartAt( dataItemHeader.dwBlockTableIndex,
+            m_debrisBlock.front().dwDebrisStartAt );
+            //将原来指向空此间的HashTable标记位空。
+              m_pHashManager-&gt;ClearHashTable( m_debrisBlock.front().dwBlockTableIndex );
+            m_debrisBlock.pop_front();
+            DebugPrintString(L"find freedata set in it ,and the pos is %d\n",dataItemHeader.dwBlockTableIndex);
+        }
+    }
+    m_fileHeader.bfSize = m_fileDataEndPointer;
+    return TRUE;
+}
+</code></pre>
+
+<h2>第三部分 使用</h2>
+
+<pre><code>BOOL      MPFileOpen( LPCTSTR lpFileName );
+
+void          MPFileClose();                            
+
+BOOL      MPFileAddFile( LPCVOID lpBuffer, TCHAR *lpszString, const DWORD fileSize,
+
+                 const FILETIME LastModiTime, LONG &amp;lIndex, DWORD dwFlags
+
+);
+
+BOOL       MPFileReadFile( LPVOID lpBuffer, TCHAR *lpszString );
+
+BOOL       MPFileDeleteFile(TCHAR *lpszString);
+
+void           MPFileFlushData();
+
+BOOL       MPFileReadFileByIndex( LPVOID lpBuffer, const DWORD index );
+
+BOOL       MPFileGetFileName( TCHAR *FileNameBuffer, const  size_t count,
+
+                                                        const DWORD index
+
+);
+
+BOOL        MPFileReName( LPCTSTR lpNewFileName, LPCTSTR lpOldFileName);
+</code></pre>
+
+<h2>第四部分 未解决问题</h2>
+
+<p>没有实现动态增长，处理文件的最大值有限。
+没有对文件正确性做足够保证。没有加入CRC or MD5校验。
+没有设定返回的错误码只有TRUE,FALSE，不利于识别错误问题。
+算法的有些地方效率不高。还需改进。
+数据的大小没有做限制，插入过多数据会溢出。</p>
+
+<h2>第五部分 疑问</h2>
+
+<p>在处理非常多的数据时，是否该将文件压缩？
+许多管理文件系统都加入了最近访问文件列表，这些在有大量文件读入时效率高，是否可以设计类似结构？
+如何处理异常，特别是在写入时产生的异常，导致文件写入错误。如何能够更好的解决类似问题？在发生异常的时候，如何能够做到高效的完全释放资源？
+把HashTable，BlockTable放置到文件末尾，方便文件以后动态扩展。但是具体的如何扩容hashTable，可能不好办。
+在文件头部分增加一个Flag，标示文件的状态。（在读入的时候标记位0，最后如果没有异常则标记位1，那么如果在这个文件出现了问题，那么就可以通过检测这个Flag来判断文件异常），若是设计的更好，可以通过这个检测那部分有问题，而对问题修正。
+我之前谈到的异常情况，导致有的文件没有即时更新。我的想法是来自IE浏览器，他会记录上次出错的位置，那么这时候就可以启动恢复程序。要是MP文件的Flag是正常，那么就说明问题不在MP文件处理，可能是别的地方异常导致结束，那么就可以重新查找，根据文件创建的时间来判断是否文件变化过，那么这样就比重新生成要快多了。我这里应该提供用来恢复的接口，这个由外部程序调用它。
+第六部分 写给自己</p>
+
+<p>如果仔细看的话，这个并不是很复杂的东西，只是实现了最基本最简单的内容，但是自己做的依然很不完整。问题依然很多。这也映射出自己学习不仔细，编程依然马虎。很多问题都想的不周全。这也进一步说明自己基础不扎实。</p>
+
+<p>我相信我这里肯定还有不少问题，希望大家有时间给小弟看看，与此同时我也会不断改进，把这个做到自己的极限。</p>
+</div>
+
+
+  <footer>
+    <p class="meta">
+      
+  
+
+<span class="byline author vcard">Posted by <span class="fn">studentdeng</span></span>
+
+      
+
+
+
+
+
+
+
+
+  
+
+
+<time datetime="2010-03-24T18:35:00+08:00" pubdate data-updated="true">Mar 24<span>th</span>, 2010</time>
+      
+
+<span class="categories">
+  
+    <a class='category' href='/blog/categories/algorithms-/'>algorithms,</a>, <a class='category' href='/blog/categories/c-/'>c++]</a>, <a class='category' href='/blog/categories/mobile-/'>mobile,</a>, <a class='category' href='/blog/categories/windows/'>windows</a>
+  
+</span>
+
+
+    </p>
+    
+      <div class="sharing">
+  
+  
+  
+
+  
+      <!-- JiaThis Button BEGIN -->
+<div class="jiathis_style">
+<span class="jiathis_txt">分享到：</span>
+<a class="jiathis_button_tsina">新浪微博</a>
+<a class="jiathis_button_tqq">腾讯微博</a>
+<a class="jiathis_button_douban">豆瓣</a>
+<a class="jiathis_button_qzone">QQ空间</a>
+<a class="jiathis_button_renren">人人网</a>
+
+<a href="http://www.jiathis.com/share?uid=1737602" class="jiathis jiathis_txt jiathis_separator jtico jtico_jiathis" target="_blank">更多</a>
+<a class="jiathis_counter_style"></a>
+</div>
+<script type="text/javascript" >
+var jiathis_config={
+	data_track_clickback:true,
+	siteNum:5,
+	sm:"renren,douban,tsina,tqq,qzone",
+	summary:"",
+	hideMore:false
+}
+</script>
+<script type="text/javascript" src="http://v3.jiathis.com/code_mini/jia.js?uid=1737602" charset="utf-8">
+</script>
+<!-- JiaThis Button END -->
+
+  
+  
+</div>
+
+    
+    <p class="meta">
+      
+        <a class="basic-alignment left" href="/blog/2010/01/10/wpf-sample-game/" title="Previous Post: WPF设计简单游戏初探">&laquo; WPF设计简单游戏初探</a>
+      
+      
+        <a class="basic-alignment right" href="/blog/2010/04/06/thumb-pic2/" title="Next Post: 缩略图设计初探二">缩略图设计初探二 &raquo;</a>
+      
+    </p>
+  </footer>
+</article>
+
+
+
+  <section>
+    <h1>Comments</h1>
+    <div id="comments" aria-live="polite"><!-- Duoshuo Comment BEGIN -->
+<div class="ds-thread"></div>
+<script type="text/javascript">
+  var duoshuoQuery = {short_name:"studentdeng"};
+  (function() {
+    var ds = document.createElement('script');
+    ds.type = 'text/javascript';ds.async = true;
+    ds.src = 'http://static.duoshuo.com/embed.js';
+    ds.charset = 'UTF-8';
+    (document.getElementsByTagName('head')[0] 
+    || document.getElementsByTagName('body')[0]).appendChild(ds);
+  })();
+</script>
+<!-- Duoshuo Comment END -->
+</div>
+  </section>
+
+
+</div>
+
+<aside class="sidebar">
+  
+    <section>
+  <h1>Categories</h1>
+  <ul id="categories">
+    <li class='category'><a href='/blog/categories/ios/'>IOS (1)</a></li>
+<li class='category'><a href='/blog/categories/objective-c/'>Objective-C (1)</a></li>
+<li class='category'><a href='/blog/categories/wpf-sl/'>WPF/SL (1)</a></li>
+<li class='category'><a href='/blog/categories/algorithms/'>algorithms (1)</a></li>
+<li class='category'><a href='/blog/categories/algorithms-/'>algorithms, (1)</a></li>
+<li class='category'><a href='/blog/categories/asm/'>asm (1)</a></li>
+<li class='category'><a href='/blog/categories/c-/'>c++ (3)</a></li>
+<li class='category'><a href='/blog/categories/c-/'>c++] (1)</a></li>
+<li class='category'><a href='/blog/categories/configure/'>configure (1)</a></li>
+<li class='category'><a href='/blog/categories/mobile-/'>mobile, (1)</a></li>
+<li class='category'><a href='/blog/categories/psychology/'>psychology (1)</a></li>
+<li class='category'><a href='/blog/categories/tips/'>tips (1)</a></li>
+<li class='category'><a href='/blog/categories/windows/'>windows (3)</a></li>
+<li class='category'><a href='/blog/categories/windows-mobile/'>windows mobile (1)</a></li>
+
+  </ul>
+</section>
+<section>
+  <h1>Recent Posts</h1>
+  <ul id="recent_posts">
+    
+      <li class="post">
+        <a href="/blog/2013/03/03/arc/">ARC 1</a>
+      </li>
+    
+      <li class="post">
+        <a href="/blog/2013/01/26/tips/">tips</a>
+      </li>
+    
+      <li class="post">
+        <a href="/blog/2013/01/15/happiness/">哈佛幸福课 杂感一</a>
+      </li>
+    
+      <li class="post">
+        <a href="/blog/2010/05/22/asm-win32/">Win32汇编学习（1）</a>
+      </li>
+    
+      <li class="post">
+        <a href="/blog/2010/04/24/mult-threading2/">多线程程序设计笔记二</a>
+      </li>
+    
+      <li class="post">
+        <a href="/blog/2010/04/16/mult-threading/">多线程程序设计笔记一</a>
+      </li>
+    
+      <li class="post">
+        <a href="/blog/2010/04/06/thumb-pic2/">缩略图设计初探二</a>
+      </li>
+    
+      <li class="post">
+        <a href="/blog/2010/03/24/thumb-pic1/">缩略图设计初探</a>
+      </li>
+    
+      <li class="post">
+        <a href="/blog/2010/01/10/wpf-sample-game/">WPF设计简单游戏初探</a>
+      </li>
+    
+  </ul>
+</section>
+
+<section>
+  <h1>GitHub Repos</h1>
+  <ul id="gh_repos">
+    <li class="loading">Status updating...</li>
+  </ul>
+  
+  <a href="https://github.com/studentdeng">@studentdeng</a> on GitHub
+  
+  <script type="text/javascript">
+    $.domReady(function(){
+        if (!window.jXHR){
+            var jxhr = document.createElement('script');
+            jxhr.type = 'text/javascript';
+            jxhr.src = '/javascripts/libs/jXHR.js';
+            var s = document.getElementsByTagName('script')[0];
+            s.parentNode.insertBefore(jxhr, s);
+        }
+
+        github.showRepos({
+            user: 'studentdeng',
+            count: 5,
+            skip_forks: true,
+            target: '#gh_repos'
+        });
+    });
+  </script>
+  <script src="/javascripts/github.js" type="text/javascript"> </script>
+</section>
+
+
+
+
+
+<section>
+<h1>Recent Comments</h1>
+<ul class="ds-recent-comments" data-num-items="10" data-show-avatars="0" data-show-time="0" data-show-title="0" data-show-admin="0" data-excerpt-length="18"></ul>
+
+</section>
+  
+</aside>
+
+
+    </div>
+  </div>
+  <footer role="contentinfo"><p>
+  Copyright &copy; 2013 - studentdeng -
+  <span class="credit">Powered by <a href="http://octopress.org">Octopress</a></span>
+</p>
+
+</footer>
+  
+
+
+
+
+
+
+
+
+
+
+
+</body>
+</html>

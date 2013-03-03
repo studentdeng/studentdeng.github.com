@@ -5,14 +5,11 @@
 <!--[if (gt IE 8)|(gt IEMobile 7)|!(IEMobile)|!(IE)]><!--><html class="no-js" lang="en"><!--<![endif]-->
 <head>
   <meta charset="utf-8">
-  <title>tips - studentdeng Blog</title>
+  <title>缩略图设计初探二 - studentdeng Blog</title>
   <meta name="author" content="studentdeng">
 
   
-  <meta name="description" content="ARC 编译时遇到的相关问题
-install cocoapods 问题
-Adding Unit Tests to an existing iOS project with Xcode 4
-NSDateFormatter 问题 ARC 编译时遇到的相关问题 自己的项目没有使用ARC, &hellip;">
+  <meta name="description" content="之前的问题还是很大的，参考了.net framework Dictionary的思路，保留MPQ的hash算法和判断冲突的思路。重新整理了一下。 第一部分：改进部分 1、处理冲突的方法由原来线性再散列，改为分离链表法。 2、修正了一些因为处理冲突而变化的部分。 3、增加了扩容的部分。 4、 &hellip;">
   
 
   <!-- http://t.co/dKP3o1e -->
@@ -21,7 +18,7 @@ NSDateFormatter 问题 ARC 编译时遇到的相关问题 自己的项目没有�
   <meta name="viewport" content="width=device-width, initial-scale=1">
 
   
-  <link rel="canonical" href="http://studentdeng.github.com/blog/2013/01/26/tips/">
+  <link rel="canonical" href="http://studentdeng.github.com/blog/2010/04/06/thumb-pic2/">
   <link href="/favicon.png" rel="icon">
   <link href="/stylesheets/screen.css" media="screen, projection" rel="stylesheet" type="text/css">
   <script src="/javascripts/modernizr-2.0.js"></script>
@@ -68,7 +65,7 @@ NSDateFormatter 问题 ARC 编译时遇到的相关问题 自己的项目没有�
   
   <header>
     
-      <h1 class="entry-title">Tips</h1>
+      <h1 class="entry-title">缩略图设计初探二</h1>
     
     
       <p class="meta">
@@ -84,7 +81,7 @@ NSDateFormatter 问题 ARC 编译时遇到的相关问题 自己的项目没有�
   
 
 
-<time datetime="2013-01-26T18:05:00+08:00" pubdate data-updated="true">Jan 26<span>th</span>, 2013</time>
+<time datetime="2010-04-06T18:43:00+08:00" pubdate data-updated="true">Apr 6<span>th</span>, 2010</time>
         
 
         
@@ -96,87 +93,130 @@ NSDateFormatter 问题 ARC 编译时遇到的相关问题 自己的项目没有�
   </header>
 
 
-<div class="entry-content"><ol>
-<li><a href="#A1">ARC 编译时遇到的相关问题</a></li>
-<li><a href="#A2">install cocoapods 问题</a></li>
-<li><a href="#A3">Adding Unit Tests to an existing iOS project with Xcode 4</a></li>
-<li><a href="#A4">NSDateFormatter 问题</a></li>
-</ol>
+<div class="entry-content"><p>之前的问题还是很大的，参考了.net framework Dictionary的思路，保留MPQ的hash算法和判断冲突的思路。重新整理了一下。</p>
 
+<p>第一部分：改进部分</p>
 
+<p>1、处理冲突的方法由原来线性再散列，改为分离链表法。</p>
 
+<p>2、修正了一些因为处理冲突而变化的部分。</p>
 
-<div name = "A1" id = "A1"></div>
+<p>3、增加了扩容的部分。</p>
 
+<p>4、增加了CRC校验部分。</p>
 
-<h1>ARC 编译时遇到的相关问题</h1>
+<p>第二部分：疑问</p>
 
-<ol>
-<li>自己的项目没有使用ARC, 其他代码使用ARC</li>
-<li>自己项目使用ARC, 其他代码没有使用ARC</li>
-</ol>
+<p>1、如何保证数据的安全性？Delete操作只是将数据从hashTable中delete，但是文件中依然有图片存在。</p>
 
+<p>要么将每个图片加密储存，但是手机上资源消耗太大。那么最有可能就是delete之后将文件数据格式中关键数据上写一些随机数，从而正常解码失败。</p>
 
-<p>在Xcode Build Phases 里面的 Compile Source 需要特殊处理的文件 增加 COmpiler Flags
-1. 第一种情况 添加 -fobjc-arc
-2. 第二种情况 添加 -fno-objc-arc</p>
+<p>2、如果要统一管理图片，需要建立文件索引。</p>
 
-<div name = "A2" id = "A2"></div>
+<p>3、过多的seek会影响效率，我这里还是保存了文件的偏移量，在读取的时候也必然会seek，因为我觉得使用seek似乎没有在效率产生很大的损失（可能我测试的数据不具有普遍性吧），但是很多资料上都对寻道很讨厌。这里我又参考了一下空间问题，故而保存了文件偏移量。</p>
 
+<p>第三部分：部分代码</p>
 
-<h1>install cocoapods 问题</h1>
+<p>插入</p>
 
-<p>In Preview of OS X Mountain Lion, Xcode has been distributed as X.app. And Commandline Tools are not installed by default. Commandline Tools contains cc/gcc that you must need to build environment.</p>
+<pre><code>BOOL MPFile::InsertData( LPCVOID lpBuffer, TCHAR *lpszString, const UINT fileSize, const FILETIME LastModiTime, 
+        LONG &amp;lindex, DWORD dwFlags )
+{
+    ASSERT( lpBuffer != NULL );
+    ASSERT( lpszString != NULL );
 
-<p>Open Xcode and cmd +, to open Preferences panel where you can install Commandline Tools:</p>
+    if( m_pMPBlockTable == NULL ) Initialize(0);
+    const DWORD HASH_OFFSET = 0, HASH_A = 1, HASH_B = 2;   
+    DWORD hashCode = hash.HashString(lpszString, HASH_OFFSET);   
+    DWORD nHashA = hash.HashString(lpszString, HASH_A);   
+    DWORD nHashB = hash.HashString(lpszString, HASH_B);   
 
-<p><img src="/images/commandline.jpg" alt="alt text" /></p>
+    DWORD targetBucket = hashCode % (m_pMPFileHeader-&gt;nHashTableLength); 
+    for ( LONG i = m_pMPBlucketTable[targetBucket].iBlockIndex; i &gt;= 0; i = m_pMPBlockTable[i].MPEntry.iNext ) 
+    {
+        if( m_pMPBlockTable[i].MPEntry.dwHashCode == hashCode
+    　　　　&amp;&amp;m_pMPBlockTable[i].MPEntry.dwHashValueA == nHashA 
+    　　　　&amp;&amp; m_pMPBlockTable[i].MPEntry.dwHashValueB == nHashB )
+        {
+        if( !(dwFlags &amp; INSERT_REPLACE_EXISTING) ) {return FALSE;}
+            return SetDataToFile(lpBuffer,lpszString,i);
+        }
+    }
+    // add new 
+    LONG index;
+    BOOL isNew=TRUE;
+    if (m_pMPFileHeader-&gt;nFreeCount &gt; 0) 
+    { 
+        index = m_pMPFileHeader-&gt;iFreeList;
+        m_pMPFileHeader-&gt;iFreeList = m_pMPBlockTable[index].MPEntry.iNext;
+        m_pMPFileHeader-&gt;nFreeCount--;
+        isNew = FALSE;
+    } 
+    else 
+    {
+        if (m_pMPFileHeader-&gt;nChildFileCount == m_pMPFileHeader-&gt;nHashTableLength) 
+        {
+            ReSize();
+            targetBucket = hashCode % (m_pMPFileHeader-&gt;nHashTableLength);
+        }
+        index = m_pMPFileHeader-&gt;nChildFileCount;
+        m_pMPFileHeader-&gt;nChildFileCount++;
+    } 
 
-<p>then</p>
+    m_pMPBlockTable[index].MPEntry.dwHashCode= hashCode; 
+    m_pMPBlockTable[index].MPEntry.iNext = m_pMPBlucketTable[targetBucket].iBlockIndex; 
+    m_pMPBlockTable[index].MPEntry.dwHashValueA = nHashA;
+    m_pMPBlockTable[index].MPEntry.dwHashValueB = nHashB;
+    m_pMPBlockTable[index].dwFlag = dwFlags;
+    m_pMPBlockTable[index].nSize = fileSize + sizeof(MINIPICDATAITEMHEADER)+sizeof(DWORD);//size add fileName and crc32
+    m_pMPBlucketTable[targetBucket].iBlockIndex = index;
 
-<pre><code>gem install hpricot
-gem install cocoapods
+    lindex = index;
+
+    //TODO:修改数据
+     if(isNew)
+    {
+        m_pMPBlockTable[index].FileStartAt = m_endOfFileData;
+        if(SetDataToFile(lpBuffer,lpszString,index) )
+        {
+            m_endOfFileData+=m_pMPBlockTable[index].nSize;//TODO:防止溢出
+        　　  return TRUE;
+        }
+        return FALSE;
+    }
+    else
+    {
+        return SetDataToFile( lpBuffer,lpszString, index );
+    }
+}
 </code></pre>
 
-<div name = "A3" id = "A3"></div>
+<p>读取数据</p>
 
+<pre><code>LONG MPFile::FindEntry( TCHAR *lpszString )
+{
+    ASSERT(lpszString!=NULL);
+     if (m_pMPBlucketTable != NULL ) 
+     {
+        const DWORD HASH_OFFSET = 0, HASH_A = 1, HASH_B = 2;   
+        DWORD    hashCode = hash.HashString(lpszString, HASH_OFFSET);   
+        DWORD    nHashA = hash.HashString(lpszString, HASH_A);   
+        DWORD    nHashB = hash.HashString(lpszString, HASH_B);   
+        DWORD    nHashStart = hashCode % (m_pMPFileHeader-&gt;nHashTableLength);   
 
-<h1>Adding Unit Tests to an existing iOS project with Xcode 4</h1>
-
-<p>When you build a new iPhone or iPad app from scratch, you can generate a new project with tests using Xcode’s project templates, and the test dependency is set up correctly.</p>
-
-<p>However, if you add a unit test target to an existing iOS project, there are some manual steps required to set up the target correctly. Following these steps will get you up and running quickly:</p>
-
-<p>Project MyExistingApp -> + Add Target -> iOS -> Other -> Cocoa Unit Testing Bundle
-Name the new target something like “Unit Tests” or “MyAppTests”
-Select your new “Unit Tests” target and click the Build Phases tab, expand Target Dependencies and add MyExistingApp as as a Target Dependency
-Click the Build Settings tab and set the Bundle Loader setting to</p>
-
-<pre><code>$(BUILT_PRODUCTS_DIR)/MyExistingApp.app/MyExistingApp
+        for (LONG i = m_pMPBlucketTable[nHashStart].iBlockIndex; i &gt;= 0; i = m_pMPBlockTable[i].MPEntry.iNext) 
+        {
+            if (m_pMPBlockTable[i].MPEntry.dwHashCode == hashCode 
+                &amp;&amp;m_pMPBlockTable[i].MPEntry.dwHashValueA == nHashA 
+                &amp;&amp; m_pMPBlockTable[i].MPEntry.dwHashValueB == nHashB )
+            return i;
+        }
+     }
+     return -1;
+}
 </code></pre>
 
-<p>Set the Test Host build setting to</p>
-
-<pre><code>$(BUNDLE_LOADER)
-</code></pre>
-
-<p>Go back to your app target (not the test target), set the Symbols Hidden by Default build setting to NO</p>
-
-<p>That should take care of it, and you can now start adding tests for your app. With this configuration, you continue to add application classes only to your app target, and add test classes only to your test target. Since the tests run in the app running in the simulator, the code under test can safely instantiate views and fonts, which would otherwise cause OCunit to crash when running without the Test Host setting.</p>
-
-<div name = "A4" id = "A4"></div>
-
-
-<h1>NSDateFormatter 问题</h1>
-
-<p>最近在使用新版本xcode4.6 或是 因为新版本的sdk6.1 日期转换出现了一个问题. 而且是在模拟器可以, 真机不行的问题.
-问题是 时间格式中的 &#8220;Thu Jan&#8221; 无法被识别出来. 这个挺奇怪的, 可能新版本修改了默认行为. 下面是解决方法</p>
-
-<pre><code>//time format: @"Thu Jan 17 13:59:11 +0000 2013"
-s_format = [[NSDateFormatter alloc] init];
-[s_format setDateFormat:@"eee MMM dd HH:mm:ss ZZZZ yyyy"];
-[s_format setLocale:[[NSLocale alloc] initWithLocaleIdentifier:@"en_US_POSIX"]]; //之前少了设定Locale
-</code></pre>
+<p><a href="http://files.cnblogs.com/studentdeng/MP_v2.rar">MP_v2.rar源码</a></p>
 </div>
 
 
@@ -199,12 +239,12 @@ s_format = [[NSDateFormatter alloc] init];
   
 
 
-<time datetime="2013-01-26T18:05:00+08:00" pubdate data-updated="true">Jan 26<span>th</span>, 2013</time>
+<time datetime="2010-04-06T18:43:00+08:00" pubdate data-updated="true">Apr 6<span>th</span>, 2010</time>
       
 
 <span class="categories">
   
-    <a class='category' href='/blog/categories/ios/'>IOS</a>, <a class='category' href='/blog/categories/configure/'>configure</a>, <a class='category' href='/blog/categories/tips/'>tips</a>
+    <a class='category' href='/blog/categories/algorithms/'>algorithms</a>, <a class='category' href='/blog/categories/c-/'>c++</a>, <a class='category' href='/blog/categories/windows-mobile/'>windows mobile</a>
   
 </span>
 
@@ -249,10 +289,10 @@ var jiathis_config={
     
     <p class="meta">
       
-        <a class="basic-alignment left" href="/blog/2013/01/15/happiness/" title="Previous Post: 哈佛幸福课 杂感一">&laquo; 哈佛幸福课 杂感一</a>
+        <a class="basic-alignment left" href="/blog/2010/03/24/thumb-pic1/" title="Previous Post: 缩略图设计初探">&laquo; 缩略图设计初探</a>
       
       
-        <a class="basic-alignment right" href="/blog/2013/03/03/arc/" title="Next Post: ARC 1">ARC 1 &raquo;</a>
+        <a class="basic-alignment right" href="/blog/2010/04/16/mult-threading/" title="Next Post: 多线程程序设计笔记一">多线程程序设计笔记一 &raquo;</a>
       
     </p>
   </footer>
