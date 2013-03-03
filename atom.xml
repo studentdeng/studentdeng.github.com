@@ -4,7 +4,7 @@
   <title><![CDATA[studentdeng Blog]]></title>
   <link href="http://studentdeng.github.com/atom.xml" rel="self"/>
   <link href="http://studentdeng.github.com/"/>
-  <updated>2013-03-04T00:05:22+08:00</updated>
+  <updated>2013-03-04T00:10:20+08:00</updated>
   <id>http://studentdeng.github.com/</id>
   <author>
     <name><![CDATA[studentdeng]]></name>
@@ -12,42 +12,6 @@
   </author>
   <generator uri="http://octopress.org/">Octopress</generator>
 
-  
-  <entry>
-    <title type="html"><![CDATA[Orange‘s 一个操作系统的实现 配置问题]]></title>
-    <link href="http://studentdeng.github.com/blog/2013/03/03/selfos/"/>
-    <updated>2013-03-03T23:57:00+08:00</updated>
-    <id>http://studentdeng.github.com/blog/2013/03/03/selfos</id>
-    <content type="html"><![CDATA[<p>最近在瞅《Orange‘s 一个操作系统的实现》，个人认为相当好的OS入门实践书籍，配合之前看过的大部分的理论书，容易理解那些抽象的概念（无代码无真相），</p>
-
-<p>和《Linux内核完全注释》都是相当不错的入门书籍。</p>
-
-<p>这里记录一下可能遇到的问题，主要是配置问题，实现逻辑书里面很详细，代码注释也很详细，仔细多想应该没啥问题。</p>
-
-<p>我这里环境是ubuntu 10 64bit， 而书中代码是32bit的。这里在编译链接的时候出了一点小问题。这里记录下。</p>
-
-<p>错误：</p>
-
-<pre><code>ld: i386 architecture of input file `kernel/kernel.o' is incompatible with i386:x86-64 output
-</code></pre>
-
-<p>需要修改makefile</p>
-
-<pre><code>CFLAGS          = -I include/ -c -fno-builtin -m32
-LDFLAGS         = -m elf_i386 -s -Ttext $(ENTRYPOINT)
-</code></pre>
-
-<p>错误：</p>
-
-<pre><code>klib.c:(.text+0xe5): undefined reference to `__stack_chk_fail'
-</code></pre>
-
-<p> 这里应该是少了c的标准库，还是需要修改makefile文件</p>
-
-<pre><code>LDFLAGS         = -m elf_i386 -s -Ttext $(ENTRYPOINT) -lc
-</code></pre>
-]]></content>
-  </entry>
   
   <entry>
     <title type="html"><![CDATA[ARC 1]]></title>
@@ -429,6 +393,42 @@ s_format = [[NSDateFormatter alloc] init];
 <p>举一个我的例子吧, 我很喜欢沉思,但是在对待消极情绪这里就遇到了极大的困难,恩, 算了, 我还是在改变里面讲这个吧.</p>
 
 <p>一个情商高, 内心强大的家伙, 不是没有那些消极的情绪, 就像一个强壮的身体, 不可能永远不得病, 而是因为更有抵抗能力, 在面对病症时,也可以更快的恢复.</p>
+]]></content>
+  </entry>
+  
+  <entry>
+    <title type="html"><![CDATA[Orange‘s 一个操作系统的实现 配置问题]]></title>
+    <link href="http://studentdeng.github.com/blog/2012/02/16/selfos/"/>
+    <updated>2012-02-16T23:57:00+08:00</updated>
+    <id>http://studentdeng.github.com/blog/2012/02/16/selfos</id>
+    <content type="html"><![CDATA[<p>最近在瞅《Orange‘s 一个操作系统的实现》，个人认为相当好的OS入门实践书籍，配合之前看过的大部分的理论书，容易理解那些抽象的概念（无代码无真相），</p>
+
+<p>和《Linux内核完全注释》都是相当不错的入门书籍。</p>
+
+<p>这里记录一下可能遇到的问题，主要是配置问题，实现逻辑书里面很详细，代码注释也很详细，仔细多想应该没啥问题。</p>
+
+<p>我这里环境是ubuntu 10 64bit， 而书中代码是32bit的。这里在编译链接的时候出了一点小问题。这里记录下。</p>
+
+<p>错误：</p>
+
+<pre><code>ld: i386 architecture of input file `kernel/kernel.o' is incompatible with i386:x86-64 output
+</code></pre>
+
+<p>需要修改makefile</p>
+
+<pre><code>CFLAGS          = -I include/ -c -fno-builtin -m32
+LDFLAGS         = -m elf_i386 -s -Ttext $(ENTRYPOINT)
+</code></pre>
+
+<p>错误：</p>
+
+<pre><code>klib.c:(.text+0xe5): undefined reference to `__stack_chk_fail'
+</code></pre>
+
+<p> 这里应该是少了c的标准库，还是需要修改makefile文件</p>
+
+<pre><code>LDFLAGS         = -m elf_i386 -s -Ttext $(ENTRYPOINT) -lc
+</code></pre>
 ]]></content>
   </entry>
   
