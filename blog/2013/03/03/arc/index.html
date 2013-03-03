@@ -100,36 +100,38 @@ ARC 是编译器的技术, 不知道为什么, 我对编译器增加额外代码
 
 <p>先瞅瞅我们的测试函数 test_arc.m</p>
 
-<pre><code>@interface ClassA : NSObject
-@interface ClassA : NSObject
-{
-        NSNumber *_foo;
-}
-@property (nonatomic, retain) NSNumber *foo;
-@end
+<div>
+  <pre><code class='objc'>@interface ClassA : NSObject
+        @interface ClassA : NSObject
+        {
+                NSNumber *_foo;
+        }
+        @property (nonatomic, retain) NSNumber *foo;
+        @end
 
-@implementation ClassA
+        @implementation ClassA
 
-@synthesize foo = _foo;
+        @synthesize foo = _foo;
 
-- (void)changeFooDirect:(NSNumber*)inFoo {
-    _foo = inFoo;
-}
+        - (void)changeFooDirect:(NSNumber*)inFoo {
+            _foo = inFoo;
+        }
 
-- (void)changeFooSetter:(NSNumber*)inFoo {
-    self.foo = inFoo;
-}
+        - (void)changeFooSetter:(NSNumber*)inFoo {
+            self.foo = inFoo;
+        }
 
-- (NSNumber*)newNumber {
-    return [[NSNumber alloc] initWithInt:10];
-}
+        - (NSNumber*)newNumber {
+            return [[NSNumber alloc] initWithInt:10];
+        }
 
-- (NSNumber*)getNumber {
-    return [[NSNumber alloc] initWithInt:10];
-}
+        - (NSNumber*)getNumber {
+            return [[NSNumber alloc] initWithInt:10];
+        }
 
-@end
-</code></pre>
+        @end</code></pre>
+</div>
+
 
 <p>Mac 环境比较让人dt, 安装Xcode 后 安装Command Line Tools 否则, 会遇到各种各样的问题. 首先关闭ARC</p>
 
