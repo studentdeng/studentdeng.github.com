@@ -1,0 +1,395 @@
+
+<!DOCTYPE html>
+<!--[if IEMobile 7 ]><html class="no-js iem7"><![endif]-->
+<!--[if lt IE 9]><html class="no-js lte-ie8"><![endif]-->
+<!--[if (gt IE 8)|(gt IEMobile 7)|!(IEMobile)|!(IE)]><!--><html class="no-js" lang="en"><!--<![endif]-->
+<head>
+  <meta charset="utf-8">
+  <title>Theme Testing - studentdeng Blog</title>
+  <meta name="author" content="studentdeng">
+
+  
+  <meta name="description" content="Included file &#8216;JB/setup&#8217; not found in _includes directory This is just a simple post to help me test personal customizations of Yuya &hellip;">
+  
+
+  <!-- http://t.co/dKP3o1e -->
+  <meta name="HandheldFriendly" content="True">
+  <meta name="MobileOptimized" content="320">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+
+  
+  <link rel="canonical" href="http://studentdeng.github.com/blog/2012/02/29/theme-testing/">
+  <link href="/favicon.png" rel="icon">
+  <link href="/stylesheets/screen.css" media="screen, projection" rel="stylesheet" type="text/css">
+  <script src="/javascripts/modernizr-2.0.js"></script>
+  <script src="/javascripts/ender.js"></script>
+  <script src="/javascripts/octopress.js" type="text/javascript"></script>
+  <link href="/atom.xml" rel="alternate" title="studentdeng Blog" type="application/atom+xml">
+  <!--Fonts from Google"s Web font directory at http://google.com/webfonts -->
+<link href="http://fonts.googleapis.com/css?family=PT+Serif:regular,italic,bold,bolditalic" rel="stylesheet" type="text/css">
+<link href="http://fonts.googleapis.com/css?family=PT+Sans:regular,italic,bold,bolditalic" rel="stylesheet" type="text/css">
+
+  
+
+</head>
+
+<body   >
+  <header role="banner"><hgroup>
+  <h1><a href="/">studentdeng Blog</a></h1>
+  
+    <h2>A blogging framework for hackers.</h2>
+  
+</hgroup>
+
+</header>
+  <nav role="navigation"><ul class="subscription" data-subscription="rss">
+  <li><a href="/atom.xml" rel="subscribe-rss" title="subscribe via RSS">RSS</a></li>
+  
+</ul>
+  
+<form action="http://google.com/search" method="get">
+  <fieldset role="search">
+    <input type="hidden" name="q" value="site:studentdeng.github.com" />
+    <input class="search" type="text" name="q" results="0" placeholder="Search"/>
+  </fieldset>
+</form>
+  
+<ul class="main-navigation">
+  <li><a href="/">Blog</a></li>
+  <li><a href="/blog/archives">Archives</a></li>
+</ul>
+
+</nav>
+  <div id="main">
+    <div id="content">
+      <div>
+<article class="hentry" role="article">
+  
+  <header>
+    
+      <h1 class="entry-title">Theme Testing</h1>
+    
+    
+      <p class="meta">
+        
+
+
+
+
+
+
+
+
+  
+
+
+<time datetime="2012-02-29T00:00:00+08:00" pubdate data-updated="true">Feb 29<span>th</span>, 2012</time>
+        
+      </p>
+    
+  </header>
+
+
+<div class="entry-content"><p>Included file &#8216;JB/setup&#8217; not found in _includes directory</p>
+
+<p>This is just a simple post to help me test personal customizations of Yuya
+Saito&#8217;s <a href="https://github.com/studiomohawk/jekyll-theme-the_minimum">the-minimum</a> theme.</p>
+
+<h1>h1 heading</h1>
+
+<h2>h2 heading</h2>
+
+<h3>h3 heading</h3>
+
+<h4>h4 heading</h4>
+
+<h5>h5 heading</h5>
+
+<h6>h6 heading</h6>
+
+<h2>Paragraph, Link, Bold, Italics</h2>
+
+<p><em>Vivamus</em> id dolor <a href="http://www.lipsum.com/">ipsum</a>. Nullam tellus <strong>libero</strong>,
+pretium at interdum non, ullamcorper mollis lorem. Vestibulum eu tortor mauris,
+id fringilla dolor.  Cras venenatis eleifend arcu, dapibus auctor felis feugiat
+nec. Aliquam vel quam turpis. Aenean congue, quam at dignissim molestie, nisi
+enim semper dolor, id dapibus nulla diam vel lorem. Nunc sit amet lorem purus, a
+scelerisque lorem.</p>
+
+<h2>Code</h2>
+
+<h3>C++ (example 1)</h3>
+
+<div>
+  <pre><code class='cpp'>// sequence template
+    #include &lt;iostream&gt;
+    using namespace std;
+
+    template &lt;class T, int N&gt;
+    class mysequence {
+        T memblock [N];
+      public:
+        void setmember (int x, T value);
+        T getmember (int x);
+    };
+
+    template &lt;class T, int N&gt;
+    void mysequence&lt;T,N&gt;::setmember (int x, T value) {
+      memblock[x]=value;
+    }
+
+    template &lt;class T, int N&gt;
+    T mysequence&lt;T,N&gt;::getmember (int x) {
+      return memblock[x];
+    }
+
+    int main () {
+      mysequence &lt;int,5&gt; myints;
+      mysequence &lt;double,5&gt; myfloats;
+      myints.setmember (0,100);
+      myfloats.setmember (3,3.1416);
+      cout &lt;&lt; myints.getmember(0) &lt;&lt; '\n';
+      cout &lt;&lt; myfloats.getmember(3) &lt;&lt; '\n';
+      cout &lt;&lt; &quot;Example Post&quot; &lt;&lt; endl;
+      return 0;
+    }</code></pre>
+</div>
+
+
+<h3>C++ (example 2)</h3>
+
+<div>
+  <pre><code class='cpp'>/*
+     * Multi-line comment block
+     */
+
+    #include &lt;iostream&gt;
+    #include &lt;vector&gt;
+    #include &lt;string&gt;
+    #include &lt;algorithm&gt;
+    #include &lt;functional&gt;
+
+    class Person {
+      private:
+        std::string name;
+      public:
+        //...
+        void print () const {
+            std::cout &lt;&lt; name &lt;&lt; std::endl;
+        }
+        void printWithPrefix (std::string prefix) const {
+            std::cout &lt;&lt; prefix &lt;&lt; name &lt;&lt; std::endl;
+        }
+    };
+
+    void foo (const std::vector&lt;Person&gt;&amp; coll)
+    {
+        using std::for_each;
+        using std::bind2nd;
+        using std::mem_fun_ref;
+
+        // call member function print() for each element
+        for_each (coll.begin(), coll.end(),
+                  mem_fun_ref(&amp;Person::print));
+
+        // call member function printWithPrefix() for each element
+        // - &quot;person: &quot; is passed as an argument to the member function
+        for_each (coll.begin(), coll.end(),
+                  bind2nd(mem_fun_ref(&amp;Person::printWithPrefix),
+                          &quot;person: &quot;));
+    }
+
+
+    void ptrfoo (const std::vector&lt;Person*&gt;&amp; coll)
+                                      // ^^^ pointer !
+    {
+        using std::for_each;
+        using std::bind2nd;
+        using std::mem_fun;
+
+        // call member function print() for each referred object
+        for_each (coll.begin(), coll.end(),
+                  mem_fun(&amp;Person::print));
+
+        // call member function printWithPrefix() for each referred object
+        // - &quot;person: &quot; is passed as an argument to the member function
+        for_each (coll.begin(), coll.end(),
+                  bind2nd(mem_fun(&amp;Person::printWithPrefix),
+                          &quot;person: &quot;));
+    }
+
+    int main()
+    {
+        std::vector&lt;Person&gt; coll(5);
+        foo(coll);
+
+        std::vector&lt;Person*&gt; coll2;
+        coll2.push_back(new Person);
+        ptrfoo(coll2);
+    }</code></pre>
+</div>
+
+
+<h3>Python</h3>
+
+<div>
+  <pre><code class='python'>import re
+    for test_string in ['555-1212', 'ILL-EGAL']:
+        if re.match(r'^\d{3}-\d{4}$', test_string):
+            print test_string, 'is a valid US local phone number'
+        else:
+            print test_string, 'rejected'</code></pre>
+</div>
+
+
+<h3>Javascript</h3>
+
+<div>
+  <pre><code class='javascript'>$(&quot;#foo&quot;).css(&quot;background-color&quot;, &quot;red&quot;);
+    $(&quot;#foo&quot;).css(&quot;font-weight&quot;, &quot;bold&quot;);
+
+    // becomes:
+
+    $(&quot;#foo&quot;).css({
+        &quot;background-color&quot;: &quot;red&quot;,
+        &quot;font-weight&quot;: &quot;bold&quot;
+    });</code></pre>
+</div>
+
+
+<h2>List</h2>
+
+<ul>
+<li>alpha</li>
+<li>bravo</li>
+<li><p>charlie</p></li>
+<li><p>apple</p></li>
+<li>banana</li>
+<li>coconut</li>
+</ul>
+
+
+<h2>Quotes</h2>
+
+<blockquote><p>Allow the president to invade a neighboring nation, whenever he shall deem it
+necessary to repel an invasion, and you allow him to do so whenever he may
+choose to say he deems it necessary for such a purpose - and you allow him to
+make war at pleasure.</p>
+
+<p>&#8211; Abraham Lincoln</p></blockquote>
+
+<h2>Reddit Disapproval Face <strong>ಠ_ಠ</strong></h2>
+
+<p>jekyll &#8211;server &#8211;auto to run local server</p>
+
+<p>eee</p>
+
+<p>That&#8217;s all folks!</p>
+</div>
+
+
+  <footer>
+    <p class="meta">
+      
+  
+
+<span class="byline author vcard">Posted by <span class="fn">studentdeng</span></span>
+
+      
+
+
+
+
+
+
+
+
+  
+
+
+<time datetime="2012-02-29T00:00:00+08:00" pubdate data-updated="true">Feb 29<span>th</span>, 2012</time>
+      
+
+
+    </p>
+    
+      <div class="sharing">
+  
+  
+  
+</div>
+
+    
+    <p class="meta">
+      
+        <a class="basic-alignment left" href="/blog/2010/04/16/mult-threading/" title="Previous Post: 多线程程序设计笔记一">&laquo; 多线程程序设计笔记一</a>
+      
+      
+        <a class="basic-alignment right" href="/blog/2013/01/15/happness_1/" title="Next Post: 哈佛幸福课 杂感一">哈佛幸福课 杂感一 &raquo;</a>
+      
+    </p>
+  </footer>
+</article>
+
+</div>
+
+<aside class="sidebar">
+  
+    <section>
+  <h1>Recent Posts</h1>
+  <ul id="recent_posts">
+    
+      <li class="post">
+        <a href="/blog/2013/03/03/arc/">arc</a>
+      </li>
+    
+      <li class="post">
+        <a href="/blog/2013/01/26/tips/">IOS 中的编程小tips</a>
+      </li>
+    
+      <li class="post">
+        <a href="/blog/2013/01/15/happness_1/">哈佛幸福课 杂感一</a>
+      </li>
+    
+      <li class="post">
+        <a href="/blog/2012/02/29/theme-testing/">Theme Testing</a>
+      </li>
+    
+      <li class="post">
+        <a href="/blog/2010/04/16/mult-threading/">多线程程序设计笔记一</a>
+      </li>
+    
+  </ul>
+</section>
+
+
+
+
+
+
+  
+</aside>
+
+
+    </div>
+  </div>
+  <footer role="contentinfo"><p>
+  Copyright &copy; 2013 - studentdeng -
+  <span class="credit">Powered by <a href="http://octopress.org">Octopress</a></span>
+</p>
+
+</footer>
+  
+
+
+
+
+
+
+
+
+
+
+
+</body>
+</html>

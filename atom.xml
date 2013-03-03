@@ -4,7 +4,7 @@
   <title><![CDATA[studentdeng Blog]]></title>
   <link href="http://studentdeng.github.com/atom.xml" rel="self"/>
   <link href="http://studentdeng.github.com/"/>
-  <updated>2013-03-03T16:29:42+08:00</updated>
+  <updated>2013-03-03T16:38:22+08:00</updated>
   <id>http://studentdeng.github.com/</id>
   <author>
     <name><![CDATA[studentdeng]]></name>
@@ -27,38 +27,36 @@ ARC 是编译器的技术, 不知道为什么, 我对编译器增加额外代码
 
 <p>先瞅瞅我们的测试函数 test_arc.m</p>
 
-<div>
-  <pre><code class='objc'>@interface ClassA : NSObject
-        @interface ClassA : NSObject
-        {
-                NSNumber *_foo;
-        }
-        @property (nonatomic, retain) NSNumber *foo;
-        @end
+<pre><code>    @interface ClassA : NSObject
+    @interface ClassA : NSObject
+    {
+            NSNumber *_foo;
+    }
+    @property (nonatomic, retain) NSNumber *foo;
+    @end
 
-        @implementation ClassA
+    @implementation ClassA
 
-        @synthesize foo = _foo;
+    @synthesize foo = _foo;
 
-        - (void)changeFooDirect:(NSNumber*)inFoo {
-            _foo = inFoo;
-        }
+    - (void)changeFooDirect:(NSNumber*)inFoo {
+        _foo = inFoo;
+    }
 
-        - (void)changeFooSetter:(NSNumber*)inFoo {
-            self.foo = inFoo;
-        }
+    - (void)changeFooSetter:(NSNumber*)inFoo {
+        self.foo = inFoo;
+    }
 
-        - (NSNumber*)newNumber {
-            return [[NSNumber alloc] initWithInt:10];
-        }
+    - (NSNumber*)newNumber {
+        return [[NSNumber alloc] initWithInt:10];
+    }
 
-        - (NSNumber*)getNumber {
-            return [[NSNumber alloc] initWithInt:10];
-        }
+    - (NSNumber*)getNumber {
+        return [[NSNumber alloc] initWithInt:10];
+    }
 
-        @end</code></pre>
-</div>
-
+    @end
+</code></pre>
 
 <p>Mac 环境比较让人dt, 安装Xcode 后 安装Command Line Tools 否则, 会遇到各种各样的问题. 首先关闭ARC</p>
 
@@ -215,6 +213,607 @@ b.w _objc_release           // 这里我们看出release 掉了 test 变量 也�
 </code></pre>
 
 <p>寄存器变量在第一个例子中已经列举了一点, 这个就不赘述啦.</p>
+]]></content>
+  </entry>
+  
+  <entry>
+    <title type="html"><![CDATA[IOS 中的编程小tips]]></title>
+    <link href="http://studentdeng.github.com/blog/2013/01/26/tips/"/>
+    <updated>2013-01-26T00:00:00+08:00</updated>
+    <id>http://studentdeng.github.com/blog/2013/01/26/tips</id>
+    <content type="html"><![CDATA[<p>Included file &#8216;JB/setup&#8217; not found in _includes directory</p>
+
+<ol>
+<li><a href="#A1">ARC 编译时遇到的相关问题</a></li>
+<li><a href="#A2">install cocoapods 问题</a></li>
+<li><a href="#A3">Adding Unit Tests to an existing iOS project with Xcode 4</a></li>
+<li><a href="#A4">NSDateFormatter 问题</a></li>
+</ol>
+
+
+
+
+<div name = "A1" id = "A1"></div>
+
+
+<h1>ARC 编译时遇到的相关问题</h1>
+
+<ol>
+<li>自己的项目没有使用ARC, 其他代码使用ARC</li>
+<li>自己项目使用ARC, 其他代码没有使用ARC</li>
+</ol>
+
+
+<p>在Xcode Build Phases 里面的 Compile Source 需要特殊处理的文件 增加 COmpiler Flags
+1. 第一种情况 添加 -fobjc-arc
+2. 第二种情况 添加 -fno-objc-arc</p>
+
+<div name = "A2" id = "A2"></div>
+
+
+<h1>install cocoapods 问题</h1>
+
+<p>In Preview of OS X Mountain Lion, Xcode has been distributed as X.app. And Commandline Tools are not installed by default. Commandline Tools contains cc/gcc that you must need to build environment.</p>
+
+<p>Open Xcode and cmd +, to open Preferences panel where you can install Commandline Tools:</p>
+
+<p><img src="http://studentdeng.github.com/images/commandline.jpg" alt="alt text" /></p>
+
+<p>then</p>
+
+<pre><code>gem install hpricot
+gem install cocoapods
+</code></pre>
+
+<div name = "A3" id = "A3"></div>
+
+
+<h1>Adding Unit Tests to an existing iOS project with Xcode 4</h1>
+
+<p>When you build a new iPhone or iPad app from scratch, you can generate a new project with tests using Xcode’s project templates, and the test dependency is set up correctly.</p>
+
+<p>However, if you add a unit test target to an existing iOS project, there are some manual steps required to set up the target correctly. Following these steps will get you up and running quickly:</p>
+
+<p>Project MyExistingApp -> + Add Target -> iOS -> Other -> Cocoa Unit Testing Bundle
+Name the new target something like “Unit Tests” or “MyAppTests”
+Select your new “Unit Tests” target and click the Build Phases tab, expand Target Dependencies and add MyExistingApp as as a Target Dependency
+Click the Build Settings tab and set the Bundle Loader setting to</p>
+
+<pre><code>$(BUILT_PRODUCTS_DIR)/MyExistingApp.app/MyExistingApp
+</code></pre>
+
+<p>Set the Test Host build setting to</p>
+
+<pre><code>$(BUNDLE_LOADER)
+</code></pre>
+
+<p>Go back to your app target (not the test target), set the Symbols Hidden by Default build setting to NO</p>
+
+<p>That should take care of it, and you can now start adding tests for your app. With this configuration, you continue to add application classes only to your app target, and add test classes only to your test target. Since the tests run in the app running in the simulator, the code under test can safely instantiate views and fonts, which would otherwise cause OCunit to crash when running without the Test Host setting.</p>
+
+<div name = "A4" id = "A4"></div>
+
+
+<h1>NSDateFormatter 问题</h1>
+
+<p>最近在使用新版本xcode4.6 或是 因为新版本的sdk6.1 日期转换出现了一个问题. 而且是在模拟器可以, 真机不行的问题.
+问题是 时间格式中的 &#8220;Thu Jan&#8221; 无法被识别出来. 这个挺奇怪的, 可能新版本修改了默认行为. 下面是解决方法</p>
+
+<pre><code>//time format: @"Thu Jan 17 13:59:11 +0000 2013"
+s_format = [[NSDateFormatter alloc] init];
+[s_format setDateFormat:@"eee MMM dd HH:mm:ss ZZZZ yyyy"];
+[s_format setLocale:[[NSLocale alloc] initWithLocaleIdentifier:@"en_US_POSIX"]]; //之前少了设定Locale
+</code></pre>
+]]></content>
+  </entry>
+  
+  <entry>
+    <title type="html"><![CDATA[哈佛幸福课 杂感一]]></title>
+    <link href="http://studentdeng.github.com/blog/2013/01/15/happness_1/"/>
+    <updated>2013-01-15T00:00:00+08:00</updated>
+    <id>http://studentdeng.github.com/blog/2013/01/15/happness_1</id>
+    <content type="html"><![CDATA[<p>Included file &#8216;JB/setup&#8217; not found in _includes directory</p>
+
+<p>好长时间不写博客了, 可以说将近一年的时间里面,并没有多少技术上的积累, 甚至有点倒退的痕迹, 不管是从心气还是态度, 还是毅力上面.我曾经是<em><a href="http://mindhacks.cn/">刘未鹏</a></em>的粉丝,哈,当然现在也一样. 我一直好奇为什么会他会那么的专心在思维这部分.其实在1年前,我也无法想象我会放下我心爱的计算机的书籍而拿起这些曾经我看不上的东西.有些东西的确只有经历过,才会明白.好消息是,一切还来得及.文本和技术类文章毫无瓜葛, 只是我觉得对于Geek们来说,有些其他东西还是很重要的.</p>
+
+<p><em><a href="http://v.163.com/special/positivepsychology/">幸福课</a></em>来自豆瓣小组的推荐, 一开始觉得这个只是一个练习英文听力的一个好的途径, 因为相对电影来说,我觉得对时间的利用率更高, 但事实上, 却是我听过的最好的公开课, 没有之一</p>
+
+<h2>为什么要看这门课</h2>
+
+<p>Tal 也就是这门课的老师, 第一句话就深深的吸引了我, &#8220;我来这里讲这门课, 因为我在本科的时候非常希望能学习这样的一门课程&#8221;.Tal本科在哈佛大学读计算机, 学习成绩优秀 社交优秀, 运动优秀, 但还是有一种说不出来的压抑, 不幸福的感觉,然后他寻找问题的根源, 最后居然转向了哲学和心理学. 看到这里, 我就有一种特别的冲动, 想继续看下去, 想去了解Tal的动机. 我特别好奇的在于, 如何将一个理科思维转向哲学和心理学呢? 当然, 这是我当时的想法,科学本来就是理性,严谨的, 只是我当时对心理学,哲学这些有很多的偏见. 后面我才知道了这门课程讲的是积极心理学.</p>
+
+<p>积极心理学啊, 可能是涉及到一些积极的心理暗示的某些东西, 这是我当时的想法, 不过相比占卜啊,星座啊, 这些扯淡的东西,我还是比较有好感的, 因为我当初在高考前, 学校组织过一次考试时的减压方法的交流会,有一个专家说过, 在做题没有思路的时候, 深呼吸3次, 然后心理默念&#8221;我能行&#8221;, 3次, 然后再读题, 效果会很不错. 然后我当年在考理综的时候, 最后一道物理题,纠结了我挺长时间, 最后就是通过这个心理暗示搞定的.从那之后,从不信到半信半疑.</p>
+
+<p>为什么想学心理学, 主要原因还是,当自己的外部空间拓展收到阻碍, 这个包括 工作, 学习, 人际交往,各种都不顺利, 到达瓶颈, 突然觉得可以向自己内部空间探索.而这些正好和Tal第一节课讲的内容吻合, 我觉得这就是缘分, 一种在正确的时间学正确的东西的缘分.而且Tal是一个内向的心理学老师, 他自己也承认, 而且Tal很风趣幽默.他里面讲了很多自己的故事, 包括很多让自己很尴尬的事情, 感觉很真实, 而不是我看到的其他的那种特别热情, 有力量, 感觉就像江湖卖艺的那种老师.</p>
+
+<h2>什么是幸福</h2>
+
+<p>大家都知道现在社会充斥着浮躁的概念, 不仅在中国, 美国, 全世界都是, 各种各样的秘籍, 捷径, 只要就类似的语句, 还有那句经典的&#8221;移动互联网唯快不破&#8221;, 等等. 尽是些夸大其词, 效果甚微的言论.而这些言论却成了媒体追逐的主要理念, 追求快节奏, 什么都要快.一个个就像兴奋剂一样, 给我们短暂的快感, 但对长远收获来说, 都是弊大于利的.而这些也就是我们不断的感到焦虑,压抑的原因,那么应该如何看待这些信息呢.</p>
+
+<p>Tal 讲得最多的一句话,就是chip away 我们身上的限制, 消除掉我们心理的枷锁.很多人都没有做到permission to be human. 很多时候不能面对自己, 面对自己的情绪, 更别说控制情绪.疏导情绪. 不能合理的理解情绪, 则极大的影响到自己的个人成长, 不论是生活, 工作, 学习, 还是人际交往, 而且我也确确实实的遇到了这方面的困难.</p>
+
+<p>生活包括了起起落落, 这是一件说起来容易, 做起来难的事情, 大家都知道生活包括了失败, 振作, 成功, 迎接新的挑战. 但是人们往往给自己的预期则是和这个道理背驰的. 甚至很多家长自己的心理不成熟而导致孩子心理也不成熟, 比如一个经典的例子, 考上一个好的初中, 高中, 大学, 找到好的工作, 成家就怎怎怎么了, 这个好像一个充分必要条件似的强加在孩子心理上. 幸福没有那么容易获得,也不是一个等式可以解决的.</p>
+
+<p>说到幸福,呵呵,这门课的名字可是讲happiness的, 这里我想到了一个特别搞笑的段子, &#8220;你幸福么?&#8221; 我不在这里重复了, 我在这里其实一直很困惑这个问题. Tal 讲到, 幸福不是一个简单的比较, 0 或1 .要么幸福, 要不不幸福.幸福存在于一个连续的状态,这个很像物理中能量的概念, 我们更关注与能量的转化, 多了还是少了, 而不是在乎我到底具有多少能量.更准确的描述应该是,我们如何才能变得更幸福.</p>
+
+<p>Tal 讲述了一个这样子的观点. 是这样子的一个调查, 调查那些参加终身职位的教授们的心理, 这些教授们只能申请一次一所大学, 要么得到,也么没有. 调查的内容就是, &#8220;如果得到了终身职位,那么会有多开心?&#8221;, 教授们的绝大多数都是回答&#8221;会非常非常高兴, 这实现了很多很多很多年努力的目标, 梦想成真的一刻, 我余生都会非常快乐, 一切都会变得简单, 停止不成功变成仁的竞争, 他将改变我的人生云云&#8221;, 另一个调查是,&#8221;如果得不到终身职位会怎么样?&#8221;, 教授们绝大多数回答&#8221;我们会非常非常难过, 这是很多很多年奋斗的目标, 因为如果在一所学校无法获得终身职位, 就没有可能在更高的学府获得, 只能在低一等的学校获得,所以会难过很长很长时间&#8221;</p>
+
+<p>而在一段时间时候,再次调查教授们的感受, 其中有人得到了, 有人没有得到.&#8221;得到的说非常开心,余生都会非常开心&#8221;, 而那些没有得到的, 则是&#8221;我们很确认我们会难过很长时间&#8221;. 三个月后, 六个月后不管是得到职位的,还是没有得到职位的都恢复到之前的幸福水平.</p>
+
+<p>也就是说, 在得到职位 对他们的幸福感觉, 没有任何帮助, 在长久的角度来看.这既是一个好消息也是一个坏消息.坏消息是似乎无论我们怎么做,都无关紧要, 好消息是,无论这是一个多么糟糕的经历, 最后都会过去.</p>
+
+<p>但这就带来一个问题,为什么我们还要不断地设立目标,努力实现呢?</p>
+
+<p>很多时候我们通过降低我们的心理预期,降低自己的压力,去享受生活, 比如考试只是考了B, 然后我们不去想为什么不是A, A+, 而是想,恩,可以了,及格了,我不在乎成绩;我们的工作不好, 我不在乎我工作什么, 我只想快乐.有些时候,的确降低期望水平,会感到快乐一点.但长远来看却不行.</p>
+
+<p>真正的问题不是在于降低期望, 而是在于区分正确的和错误的期望.一个错误的期望例子,就是我之前提到的,&#8221;考上好大学, 找到好工作, 升职, 找到理想的伴侣,就能让自己更快乐&#8221;. 而让我们更快乐,是通过改变我们对问题,事物的看法,内在的认知,心境来做到的,而不是这些外部条件.(当然,外部条件肯定重要,如果每天都吃不饱, 没有住的地方, 外部条件的改善当然能提升幸福, 这里不考虑这种极端情况).</p>
+
+<p>一个自己的例子吧, 之前很很用心的喜欢过一个女孩子, 但是知道的, 对于我这样的低情商Geek们来说, 结局大多都是悲剧的,觉得自己真的迈不过这个坎, 没法在面对以后的生活了, 没法在北京待下去了, 要逃避. 但现在看来, 当时自己的想法就是哈哈一笑带过了. 现在不是好好的么, 还有一个例子, 当时做IOS开发, AppStore排名是相当的低, 一度AppStore都无法找到了, 当时过年的时候,就定下一个目标, 丫的一定能冲到第一, 而且, 最后的确到第一了, 但也没有觉得特别开心, 觉得自己很厉害什么的.</p>
+
+<h2>Give ourselves the permission to be human</h2>
+
+<p>学积极心理学,主要就是想让自己能够变得阳光, 积极, 不消极. 那么就吧思路聚焦在那些痛苦的,不愉快的经历上面.</p>
+
+<p>很多情绪是与生俱来的, 但是我却在内心里不断得在抵触, 在抗拒那种情绪.有一个简单的例子,就是 &#8220;现在开始,我们脑子里面不要想一个粉色的大象, 恩, 不要想一个粉色的大象, 一定不要想一个粉色的大象&#8221;.</p>
+
+<p>我自己的感受吧, 对于一个低情商男孩来说和一个女孩交往往往会有各种各样神奇的情绪产生, 而且我自己也却觉得不可思议, 不管是嫉妒,羡慕, 负罪感, 等等的情绪. 或是对于一个初步进入社会的男孩, 在工作中也会遇到各种各样的困难,不管是大目标,还是小目标,总是会各种各样的问题, 特别是对我这种有这强大的信心,自我,自恋, 把自己看得很重, 但实际上,别人根本不这么想, 没有那么在意自己.而有时候,发现自己能力的确不够,无力改变一些事情,而陷入一种挣扎.</p>
+
+<p>而且事实上,在现在的社会, 不管是西方还是东方的, 男人们往往不能想女人们一样去向别人倾诉自己的内心真实想法.而随着压力越来越大,而变得焦躁.</p>
+
+<p>Tal 讲述了一个自己的例子, 是当他和她的妻子有第一个孩子的情景. Tal在一个月的时候, 突然发现自己有一种嫉妒的情绪,他很嫉妒她的妻子和医生之间的关系, 因为在他的角度来看, 突然有个另一个人在Tal的妻子心中比Tal获得更多的关注,不管Tal怎么哭…..Tal感到非常的嫉妒.</p>
+
+<p>在看到这个例子的时候, 给我非常大的震惊, 因为看到很多表面现象, 很多人都是永远的宠辱不惊, 在大的压力也面不改色, 遇到再困难的事情都不会害怕,以至于我认为那些家伙们没有这些消极情绪, 而作为情商极高的Tal来说, 肯定不会有这种消极情绪存在,不会这么敏感.</p>
+
+<p>但事实上, 的确有, 那后来的故事是这样子的. Tal说, 在5分钟后,他就想通了这件事情,&#8221;这个医生真的好棒,让我体会到这种以前从来没有过的情绪&#8221; 额, 听到这个, 真的觉得好假. 这也太假了, 我反正是不信, 几分钟钱还充满嫉妒, 几分钟后就感谢他么,太扯了.但是Tal说, 完全正确, 各种各样的情绪就是作为一个human的一部分. 有人的确比另一部分人敏感, 几分钟就能够产生很多各种各样的情绪.Tal说, 我完全接受了我对医生的嫉妒这个情绪, 然后give myself the permission to be human, 然后自然而然的对医生产生了积极的情绪.</p>
+
+<p>这里边会有一种自相矛盾的感觉, 是一个反语的自然现象,就像我之前说过的粉色大象, 我相信大多数人脑子里面都会有一个粉色大象出来.因为当我们企图压抑一种自然现象时, 只会加强它.就像失恋后, 想忘记那个人, 然后不停得对自己说,忘掉,忘掉,但却越来越清晰是一个道理.</p>
+
+<p>在控制自己消极情绪出现的时候, 首先做的,不是压抑他, 而是学会接受他.<em><a href="http://book.douban.com/subject/4194978/">完整的成长</a></em>这本书里面也提到了类似的经历, 让情绪自然而然的流动.</p>
+
+<p>这是一件说起来容易, 做起来非常难的一件事情. 因为我们很多人对心理学有着很大的偏见, 总觉得我们可以控制自己很棒, 因为我们总认为自己很了解自己,但事实上, 我们对自己的理解, 对大脑是如何思维, 决断, 我们的潜意识,我们的基因等等的了解, 相对而来不会比宇宙多多少.</p>
+
+<p>我们不会有一天起来说, OK, 我拒绝万有引力,我不想每天爬楼梯, 我想直接飞过去.这样多简单, 多容易.相对其他科学,比如物理, 我们总是能够很容易的承认物理的基本定理并欣然接受, 而且还能接受他的不足, 比如在量子物理等等很多领域.</p>
+
+<p>但在心理学这里,却有了双重标准. <em><a href="http://book.douban.com/subject/1221479/">与“众”不同的心理学</a></em>这里面也提到了这个基本的道理.</p>
+
+<p>一个简单的例子,就是很多媒体鼓吹的东西,什么占星, 星座, 一些通过特别简单的一些tips, 就可以把一个人了解彻底.多容易,多么简单的捷径, 不需要花费很多时间就可以了解一个人的性格.心理学家似乎就可以通过一眼就可以把这个人了解明白.网上我记得看过一个笑话, 是一个学心理的男孩,在吐槽她的女朋友, 她女朋友有天突然问他, 你知道我现在在想什么, 他说不知道,然后她女朋友说, 你真没用,学心理的居然不知道我想什么.然后他就瞎了.</p>
+
+<p>拒绝自己内心的情绪, 就像不遵守物理中的万有引力定律一样, 会让自己到处碰壁, 而事实上, 我们可以利用万有引力做出很多好玩的游戏, 刺激精彩的运动.但在面对自己的情绪时, 我们却很难做到,甚至面对都很难, 而这里,我真的好佩服Tal的情商了.因为当我有这样的消极情绪,我会觉得一定是那里出了问题, 那里做的不对,然后陷入一大段无意义的思考中, 最后因疲倦而逃避,而不是面对它, 接受它, 甚至是改变它.时间一长,则变的更加焦虑, 抑郁.</p>
+
+<p>而学到这里, 我又有了新的疑惑, 那么就是,如何接受, 被动的接受么?就没有什么可以主动做的么.而事实上,Tal说出了一个非常重要的观点, 就是, 在改变自己, 改造自己之前, 我们需要先知道, 我们可以改变什么, 不可以改变什么.</p>
+
+<p>这里Tal 提出了一个很犀利的观点.心理学的A B C</p>
+
+<p>A: affect           情绪</p>
+
+<p>B: behavior       行为</p>
+
+<p>C: cognition      思想,认知</p>
+
+<p>permission to be human 主要是和情绪相关的. 比如,我们有愤怒的情绪,接受它但并不是意味着, 我们也要接受那些因为愤怒而做出伤害他人的行为.Tal嫉妒医生, 并不代表Tal是一个坏人, 这个没有好坏之分.很多时候,我们应该采用什么样的行为去表达情感, 这个才是问题的关键. 就像之前发生的一名男子失恋后, 在地铁里面划女孩脸. 我们承认失恋的确很难过, 但是通过这种行为表达自己的难过, 就是不能接受的.</p>
+
+<p>对于认知这部分同样. 我们可以有消极的情绪,但并不意味着我们必须屈从于消极情绪带来的消极的想法.而且事实上沉思,下功夫琢磨对消极情绪这里,并没有多大帮助, 通常会越来越糟. 比如一直在想,哦,我被女朋友甩了,这有多么的惨.</p>
+
+<p>举一个我的例子吧, 我很喜欢沉思,但是在对待消极情绪这里就遇到了极大的困难,恩, 算了, 我还是在改变里面讲这个吧.</p>
+
+<p>一个情商高, 内心强大的家伙, 不是没有那些消极的情绪, 就像一个强壮的身体, 不可能永远不得病, 而是因为更有抵抗能力, 在面对病症时,也可以更快的恢复.</p>
+]]></content>
+  </entry>
+  
+  <entry>
+    <title type="html"><![CDATA[Theme Testing]]></title>
+    <link href="http://studentdeng.github.com/blog/2012/02/29/theme-testing/"/>
+    <updated>2012-02-29T00:00:00+08:00</updated>
+    <id>http://studentdeng.github.com/blog/2012/02/29/theme-testing</id>
+    <content type="html"><![CDATA[<p>Included file &#8216;JB/setup&#8217; not found in _includes directory</p>
+
+<p>This is just a simple post to help me test personal customizations of Yuya
+Saito&#8217;s <a href="https://github.com/studiomohawk/jekyll-theme-the_minimum">the-minimum</a> theme.</p>
+
+<h1>h1 heading</h1>
+
+<h2>h2 heading</h2>
+
+<h3>h3 heading</h3>
+
+<h4>h4 heading</h4>
+
+<h5>h5 heading</h5>
+
+<h6>h6 heading</h6>
+
+<h2>Paragraph, Link, Bold, Italics</h2>
+
+<p><em>Vivamus</em> id dolor <a href="http://www.lipsum.com/">ipsum</a>. Nullam tellus <strong>libero</strong>,
+pretium at interdum non, ullamcorper mollis lorem. Vestibulum eu tortor mauris,
+id fringilla dolor.  Cras venenatis eleifend arcu, dapibus auctor felis feugiat
+nec. Aliquam vel quam turpis. Aenean congue, quam at dignissim molestie, nisi
+enim semper dolor, id dapibus nulla diam vel lorem. Nunc sit amet lorem purus, a
+scelerisque lorem.</p>
+
+<h2>Code</h2>
+
+<h3>C++ (example 1)</h3>
+
+<div>
+  <pre><code class='cpp'>// sequence template
+    #include &lt;iostream&gt;
+    using namespace std;
+
+    template &lt;class T, int N&gt;
+    class mysequence {
+        T memblock [N];
+      public:
+        void setmember (int x, T value);
+        T getmember (int x);
+    };
+
+    template &lt;class T, int N&gt;
+    void mysequence&lt;T,N&gt;::setmember (int x, T value) {
+      memblock[x]=value;
+    }
+
+    template &lt;class T, int N&gt;
+    T mysequence&lt;T,N&gt;::getmember (int x) {
+      return memblock[x];
+    }
+
+    int main () {
+      mysequence &lt;int,5&gt; myints;
+      mysequence &lt;double,5&gt; myfloats;
+      myints.setmember (0,100);
+      myfloats.setmember (3,3.1416);
+      cout &lt;&lt; myints.getmember(0) &lt;&lt; '\n';
+      cout &lt;&lt; myfloats.getmember(3) &lt;&lt; '\n';
+      cout &lt;&lt; &quot;Example Post&quot; &lt;&lt; endl;
+      return 0;
+    }</code></pre>
+</div>
+
+
+<h3>C++ (example 2)</h3>
+
+<div>
+  <pre><code class='cpp'>/*
+     * Multi-line comment block
+     */
+
+    #include &lt;iostream&gt;
+    #include &lt;vector&gt;
+    #include &lt;string&gt;
+    #include &lt;algorithm&gt;
+    #include &lt;functional&gt;
+
+    class Person {
+      private:
+        std::string name;
+      public:
+        //...
+        void print () const {
+            std::cout &lt;&lt; name &lt;&lt; std::endl;
+        }
+        void printWithPrefix (std::string prefix) const {
+            std::cout &lt;&lt; prefix &lt;&lt; name &lt;&lt; std::endl;
+        }
+    };
+
+    void foo (const std::vector&lt;Person&gt;&amp; coll)
+    {
+        using std::for_each;
+        using std::bind2nd;
+        using std::mem_fun_ref;
+
+        // call member function print() for each element
+        for_each (coll.begin(), coll.end(),
+                  mem_fun_ref(&amp;Person::print));
+
+        // call member function printWithPrefix() for each element
+        // - &quot;person: &quot; is passed as an argument to the member function
+        for_each (coll.begin(), coll.end(),
+                  bind2nd(mem_fun_ref(&amp;Person::printWithPrefix),
+                          &quot;person: &quot;));
+    }
+
+
+    void ptrfoo (const std::vector&lt;Person*&gt;&amp; coll)
+                                      // ^^^ pointer !
+    {
+        using std::for_each;
+        using std::bind2nd;
+        using std::mem_fun;
+
+        // call member function print() for each referred object
+        for_each (coll.begin(), coll.end(),
+                  mem_fun(&amp;Person::print));
+
+        // call member function printWithPrefix() for each referred object
+        // - &quot;person: &quot; is passed as an argument to the member function
+        for_each (coll.begin(), coll.end(),
+                  bind2nd(mem_fun(&amp;Person::printWithPrefix),
+                          &quot;person: &quot;));
+    }
+
+    int main()
+    {
+        std::vector&lt;Person&gt; coll(5);
+        foo(coll);
+
+        std::vector&lt;Person*&gt; coll2;
+        coll2.push_back(new Person);
+        ptrfoo(coll2);
+    }</code></pre>
+</div>
+
+
+<h3>Python</h3>
+
+<div>
+  <pre><code class='python'>import re
+    for test_string in ['555-1212', 'ILL-EGAL']:
+        if re.match(r'^\d{3}-\d{4}$', test_string):
+            print test_string, 'is a valid US local phone number'
+        else:
+            print test_string, 'rejected'</code></pre>
+</div>
+
+
+<h3>Javascript</h3>
+
+<div>
+  <pre><code class='javascript'>$(&quot;#foo&quot;).css(&quot;background-color&quot;, &quot;red&quot;);
+    $(&quot;#foo&quot;).css(&quot;font-weight&quot;, &quot;bold&quot;);
+
+    // becomes:
+
+    $(&quot;#foo&quot;).css({
+        &quot;background-color&quot;: &quot;red&quot;,
+        &quot;font-weight&quot;: &quot;bold&quot;
+    });</code></pre>
+</div>
+
+
+<h2>List</h2>
+
+<ul>
+<li>alpha</li>
+<li>bravo</li>
+<li><p>charlie</p></li>
+<li><p>apple</p></li>
+<li>banana</li>
+<li>coconut</li>
+</ul>
+
+
+<h2>Quotes</h2>
+
+<blockquote><p>Allow the president to invade a neighboring nation, whenever he shall deem it
+necessary to repel an invasion, and you allow him to do so whenever he may
+choose to say he deems it necessary for such a purpose - and you allow him to
+make war at pleasure.</p>
+
+<p>&#8211; Abraham Lincoln</p></blockquote>
+
+<h2>Reddit Disapproval Face <strong>ಠ_ಠ</strong></h2>
+
+<p>jekyll &#8211;server &#8211;auto to run local server</p>
+
+<p>eee</p>
+
+<p>That&#8217;s all folks!</p>
+]]></content>
+  </entry>
+  
+  <entry>
+    <title type="html"><![CDATA[多线程程序设计笔记一]]></title>
+    <link href="http://studentdeng.github.com/blog/2010/04/16/mult-threading/"/>
+    <updated>2010-04-16T00:00:00+08:00</updated>
+    <id>http://studentdeng.github.com/blog/2010/04/16/mult-threading</id>
+    <content type="html"><![CDATA[<p>Included file &#8216;JB/setup&#8217; not found in _includes directory</p>
+
+<p>多线程编程，学习了一个星期，总结一下。以下内容全部基于windows操作系统。  由于实力有限，对操作系统没有深入了解（或是根本不了解吧），一下内容主要来自《windows核心编程》、《win32多线程程序设计》、一些网上高人的见解和自己的理解而自己的认识难免有些偏差，希望大家挑挑毛病。谢谢。</p>
+
+<h1>进程和线程的区别。</h1>
+
+<p>进程通常被定义为一个正在运行的程序实例，它由两个部分组成</p>
+
+<p>1.操作系统用来管理进程的内核对象。内核对象也是系统用来存放关于进程的统计信息的地方。
+2.地址空间，它饱含所有可执行模块或DLL模块的代码和数据。它还包含动态内存分配的空间。如线程堆栈和堆分配空间。</p>
+
+<p>线程是CPU调度的基本单位。由两个部分组成的</p>
+
+<ol>
+<li>一个是线程的内核对象，操作系统用它来对线程实施管理。内核对象是系统用来存放线程统计信息的地方。</li>
+<li>线程堆栈，它用于维护线程在执行代码时需要的所有函数参数和局部变量。</li>
+</ol>
+
+
+<p>单个进程可能包含多个线程，而线程都“同时”执行进程地址空间中的代码，为此每个线程都有它自己的一组CPU寄存器（称为线程的上下文）和它自己的堆栈。进程是不活泼的，从不执行任何东西，它只是线程的容器。操作系统为每个线程安排一定的CPU时间片，仿佛所有线程都是同时运行一样。在同一个进程下的多个线程，能够执行相同的代码，对相同的数据进行操作，共享内核对象句柄。</p>
+
+<h1>Context Switch</h1>
+
+<p>在一个抢占式多任务操作系统中，操作系统确保每个线程都有机会执行，它依赖硬件的协助以及其他的工作。当硬件计时器认为某个线程已经执行够久了，就会发出一个中断，与之CPU保存线程的当前状态，把所有寄存器内容复制到堆栈中，再把它从堆栈中复制到CONTEXT结构中。操作系统通过恢复CONTEXT结构中的寄存器值来切换不同的线程。（当然得先切换到该线程隶属的进程内存）。这个过程为Context Switch 。当然如果有非常多的CPU，也就不需要进行Context Switch。</p>
+
+<h1>使用多线程的原因。</h1>
+
+<ol>
+<li>和进程相比，它是一种非常&#8221;节俭&#8221;的操作方式。启动一个线程所花费的空间远远小于启动一个进程所花费的空间，而且，线程间彼此切换所需的时间也远远小于进程间切换所需要的时间。</li>
+<li>线程间方便的通信机制。同一进程下的线程之间共享数据空间，所以一个线程的数据可以直接为其它线程所用。</li>
+<li>提高应用程序响应。这对图形界面的程序尤其有意义，当一个操作耗时很长时，整个系统都会等待这个操作，此时程序不会响应键盘、鼠标、菜单的操作，而使用多线程技术，将耗时长的操作和UI线程工作分开。</li>
+<li>线程彼此分享了大部分核心对象的拥有权。</li>
+<li>在多CPU下，多个线程可以真正的同时运行，提高了CPU的利用率。</li>
+</ol>
+
+
+<h1>多线程所带来的问题</h1>
+
+<ol>
+<li>多线程在单CPU上实际上是一个假象，CPU的时间总是有限的，如果用的不好，反而增加了CPU的负担，降低了系统性能。</li>
+<li>多线程发生共享数据空间，在这个抢占式环境下线程运行次序无法预期，容易产生竞争，导致程序效率降低，出错，甚至死锁。</li>
+<li>过多的线程导致过多的Context Switch，也会降低运行效率。</li>
+</ol>
+
+
+<p>讲了这么多，可见多线程程序设计给程序员带来了更高的要求。再查MSDN的时候，有的API会附上线程安全而有的却没有。下面我们开始进入多线程编程世界。</p>
+
+<p>在进入多线程世界之前，先想一个问题。</p>
+
+<p>设想一下，假如有一个简单的增添链表的操作</p>
+
+<pre><code>AddHead(struct List *list,struct Node *node)
+{
+   node -&gt; next = List-&gt;head;
+   List-&gt;head = node;
+}
+</code></pre>
+
+<p>这个程序若是在多线程下进行的话，会出问题。 比如当thread1 正在执行 AddHead，而Context Switch发生在node->next = List->head 和 List->head = node语句之间，而thread2也要执行AddHead，而且正确执行之后，并把一个节点添加到List中，那么当Context Switch发生，而thread1执行List->head = node后，那么thread2添加的节点就不在List中了，造成了内存泄露，而且的确，你可以想到很多出错的可能性。你可能说这个问题出现的概率很低，但是多想一下，若是这个程序是在一个搜索引擎中，每天有多少人去运行这个程序？而且CPU是以每秒千万级（我的YY，反正是很快）运行，那么程序的问题就不可避免。而之所以产生了问题，就是因为thread1和thread2产生了竞争（race condition）。</p>
+
+<p>当然可能你一下子就有了思路，产生这个问题的关键是在于在发生race 的地方设置变量，来“保护”AddHead的操作正确。</p>
+
+<pre><code>AddHead(struct List *list,struct Node *node)
+{
+   while(flag !=0)
+   flag = 1;
+   node -&gt; next = List-&gt;head;
+   List-&gt;head = node;
+   flag = 0;
+}
+</code></pre>
+
+<p>这个代码似乎可以正确运行，但是很遗憾，还是不行。好吧让我们先来明确一个知识。<strong>Atomic Operations(原子操作)</strong>。
+一下是AddHead的汇编代码</p>
+
+<pre><code>AddHead(struct List *list,struct Node *node)
+{
+  xor eax,eax 
+  s: 
+  ;while(flag !=0) 
+  cmp DWORD PTR _flag,eax 7   
+  jne short s 
+  ;flag = 1; 
+  mov eax,DWORD PTR _list$[esp-4]
+  mov ecx,DWORD PTR _node$[esp-4]
+  mov DWORD PTR _flag,1
+  ;node -&gt; next = List-&gt;head;
+  mov edx,DWORD PTR [eax]
+  mov DWORD PTR [ecx],edxx
+  ;List-&gt;head = node;
+  mov DWORD PTR [eax],ecx
+  ;flag = 0;
+  mov DWORD PTR _flag,0
+  ret 0
+   ;小弟还没学习完汇编，有一些操作码还是不知道，只能是理解意思，不能保证
+  ;肯定能执行，例子来自《Win32多线程程序设计》
+;}
+
+# Atomic Operations(原子操作)
+
+简单的几行代码在执行时会转换成这么多代码，不能指望C，C++这种高级语言的语句可以一次执行完毕而不发生Context Switch。
+</code></pre>
+
+<p>而且还存在编译器优化（比如一些循环语句等等）真实在机器上执行的代码可能和你所希望的是不同的。</p>
+
+<p>原子操作（Atomic Operation ）指一个操作如果能够不受中断的完成。</p>
+
+<p>所以上例的检查标记和设立标记的动作必须是一个Atomic Operation，如果中断了，就不能避免竞争。</p>
+
+<p>好吧让我们真正的开始多线程编程旅行吧，我们和学习其他任何知识一样，来一个HelloWorld。</p>
+
+<pre><code>#include &lt;stdio.h&gt;
+#include &lt;stdlib.h&gt;
+#include &lt;windows.h&gt;
+
+DWORD WINAPI ThreadFunc(LPVOID);
+
+int main()
+{
+    HANDLE hThrd;
+    DWORD threadId;
+    hThrd = CreateThread(NULL,
+,
+            ThreadFunc,
+,//(LPVOID)i,
+,
+            &amp;threadId );
+    if (hThrd)
+    {
+      printf("Thread launched\n");
+      CloseHandle(hThrd);
+    }
+    //Sleep(2000);
+    return 0;
+}
+
+DWORD WINAPI ThreadFunc(LPVOID n)
+{
+  printf("HelloWorld\n");
+  return 0;
+}
+</code></pre>
+
+<p>运行后发现悲剧了,Thread launched有了,但是没有我们的熟悉HelloWorld(对大部分人来说是没机会看到HelloWorld的),那么我们又遇到什么问题了?</p>
+
+<p>加上Sleep后,HelloWorld出现了,好吧,我们又发现了,创建一个线程,并写一个调用函数,和我们在main函数中写一个子程序不是一回事。</p>
+
+<p>一个函数调用操作，程序的控制权转移到被调函数中，执行完毕后在返回原调用处。</p>
+
+<p>产生一个线程，情况也十分类似，但是有些曲折，线程函数中我们是通过CreateThread，并传给ThreadFunc的地址。CreateThread开启一个新的线程，该线程调用ThreadFunc而原来的线程继续前进。好吧。ThreadFunc相对main来说异步执行了。那么ThreadFunc不需要在main结束之前返回，所以，main函数返回了，ThreadFunc还没来得及返回，所以没有显示HelloWorld，而Sleep之后，那么ThreadFunc返回了，那么也就显示HelloWorld。</p>
+
+<p>当main函数返回后，操作系统中止整个进程，收回大部分或全部资源，而你的thread就还没工作完就被“干”掉了。</p>
+
+<p><strong>当然你也可能会产生另一个疑问，main函数返回了，进程结束了，thread就直接悲剧了，能不能让main函数返回，进程不结束，thread不悲剧呢？</strong></p>
+
+<pre><code> static void Main(string[] args)
+ {
+   Thread th = new Thread(ShowWindow);
+   th.Start();
+   Console.WriteLine("窗体已创建,敲任意键退出...");
+   Console.ReadKey();
+   Console.WriteLine("Main thread End");
+ }
+  static void ShowWindow()
+ {
+   MessageBox.Show("test");
+ }
+</code></pre>
+
+<p>这是一段C#代码，主要来自<a href="http://blog.csdn.net/bitfan/archive/2010/01/14/5191299.aspx">ref</a>我稍微改动了一点点，这段代码可以保证即使主线程退出了，只要窗体没有关闭，操作系统会认为“进程”仍在执行，因此，控制台窗口会保持显示，直到窗体关闭，整个进程才结束。在这种情况下，本示例程序中有两个UI线程，一个是控制台窗口，另一个创建应用程序窗体的那个线程。</p>
+
+<p>如下是我模仿上边代码，写的c++的例子</p>
+
+<pre><code> int main()
+ {
+   HANDLE hThrd;
+   DWORD threadId;
+   HANDLE handle;
+   hThrd = CreateThread(NULL,
+           0,
+           ThreadFunc,
+           0,//(LPVOID)i,
+            0,
+           &amp;threadId );
+   if(hThrd)
+   {
+     printf("Thread launched\n");
+     CloseHandle(hThrd);
+   }
+   Sleep(5000);
+   printf("Main Thread End\n");
+   return 0;
+ }
+ DWORD WINAPI ThreadFunc(LPVOID n)
+ {
+   MessageBox(NULL,"test","test",MB_OK);
+   printf("thread1 End\n");
+   return 0;
+ }
+</code></pre>
+
+<p>令人遗憾的是，我写的这个，在main函数返回后，整个进程也随之结束了。。。。。。</p>
+
+<p>好吧。我承认我错了，到底哪里出了问题。我是搞不定了。这个花了我大概2天的时间，曾经我一度以为UI线程和Message queue之间有某种必然的联系，但是上例完全证明了我之前的想法是可笑的或是我整个思考出发点就是错误的。在thread1中不仅调用了GDI函数，而且能够响应消息（说明已经有了Message queue和Message loop）。</p>
+
+<p>看来我得继续学习才能搞定这个了。</p>
 ]]></content>
   </entry>
   
