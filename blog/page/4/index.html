@@ -9,7 +9,7 @@
   <meta name="author" content="studentdeng">
 
   
-  <meta name="description" content="当我们正式开始之前，我想再多说一点，上一篇最后的那个程序可能会给像我一样的菜鸟一个误解，这里解释下。 程序启动后就执行的那个线程称为主线程（也就是那个程序中的执行main函数的线程），而其他线程则成为子线程。主线程和其他线程最大的区别是当主线程返回或是调用一些函数强制退出后， &hellip;">
+  <meta name="description" content="终于把学校里面让人无语的论文搞定了。周末终于有时间干些自己想干的事了。想起了这2周做的关于编译原理的实验，代码优化这部分的确是个难题。哎，我实在是太笨了，其实答案就在自己电脑里。将c程序反汇编后，终于第一次感受到了debug 和release的区别。兴奋之余让我又产生了忧虑，自己汇编的能力太弱了， &hellip;">
   
 
   <!-- http://t.co/dKP3o1e -->
@@ -62,6 +62,95 @@
     <div id="content">
       <div class="blog-index">
   
+  
+  
+    <article>
+      
+  <header>
+    
+      <h1 class="entry-title"><a href="/blog/2010/05/22/asm-win32/">Win32汇编学习（1）</a></h1>
+    
+    
+      <p class="meta">
+        
+
+
+
+
+
+
+
+
+  
+
+
+<time datetime="2010-05-22T18:49:00+08:00" pubdate data-updated="true">May 22<span>nd</span>, 2010</time>
+        
+
+        
+      | <a href="/blog/2010/05/22/asm-win32/#comments">Comments</a>
+        
+
+      </p>
+    
+  </header>
+
+
+  <div class="entry-content"><p>终于把学校里面让人无语的论文搞定了。周末终于有时间干些自己想干的事了。想起了这2周做的关于编译原理的实验，代码优化这部分的确是个难题。哎，我实在是太笨了，其实答案就在自己电脑里。将c程序反汇编后，终于第一次感受到了debug 和release的区别。兴奋之余让我又产生了忧虑，自己汇编的能力太弱了，面对稍微复杂点的算法再加上编译优化后的汇编代码，真是欲哭无泪。痛下决心，准备好好学学汇编了。为了给自己一个动力，准备学习Win32汇编（和学校那个8086再见了）。</p>
+
+<p>　　第一天，不准备上难度了。从最简单的&#8221;HelloWorld&#8221;开始。</p>
+
+<pre><code>; HelloWorld.asm
+
+comment * ----------------------------------------------
+                 The First Assemble Application
+                ---------------------------------------------- *
+
+.386
+.model flat, stdcall
+option casemap:none
+
+include \masm32\include\windows.inc
+
+include \masm32\include\user32.inc
+include \masm32\include\kernel32.inc
+
+includelib \masm32\lib\user32.lib
+includelib \masm32\lib\kernel32.lib
+
+    .data
+szCaption   db 'MessageBox', 0
+szText      db 'Hello, World!', 0
+
+    .code
+start:
+    invoke MessageBox,\     ; 调用函数名
+        NULL,\                      ; 父窗口句柄
+        offset szText,\           ; 文字
+        offset szCaption,\      ; 标题
+        MB_OK                    ; 按钮类型
+
+    invoke ExitProcess, NULL
+end start
+</code></pre>
+
+<p>一个简单的窗口就创建好了。一眼看上去发现和以前的8086还是有很多不同的。</p>
+
+<p>首先8086和80386在寻址方式不同。</p>
+
+<p>8086 通过 段地址*0x10 +偏移地址确定的。只能寻址1M，而80386 32根地址线寻址，空间达到了4G而且80386 通用寄存器大小为32位，所以不需要分段就能访问到地址。</p>
+
+<p>那么.data,.code不是段的意思么？ 不是。因为808386有分页机制，每个页可以自由制定属性，已经和8086代码和数据分段处理完全不同，实际上是把不同类型的数据或代码归类，再放到不同属性的内存页。</p>
+
+<p> 其次，8086的不安全，不方便的调用中断的方式改为了调用系统API的方式。我这里是采用的MASM，所以有invoke伪指令，其实这个指令也没别的，就是为我们编程省去了函数参数入栈的那些push。</p>
+
+<p>最后，发现win32汇编和使用c/c++似乎没有复杂很多。</p>
+</div>
+  
+  
+
+
+    </article>
   
   
     <article>
@@ -1137,7 +1226,7 @@ DispatcherTimer被称为生命线程，用来控制该类对象的状态和在UI
 <li class='category'><a href='/blog/categories/asm/'>asm (1)</a></li>
 <li class='category'><a href='/blog/categories/c-/'>c++ (6)</a></li>
 <li class='category'><a href='/blog/categories/configure/'>configure (2)</a></li>
-<li class='category'><a href='/blog/categories/emotion/'>emotion (7)</a></li>
+<li class='category'><a href='/blog/categories/emotion/'>emotion (8)</a></li>
 <li class='category'><a href='/blog/categories/operating-system/'>operating_system (3)</a></li>
 <li class='category'><a href='/blog/categories/tips/'>tips (1)</a></li>
 <li class='category'><a href='/blog/categories/windows/'>windows (9)</a></li>
@@ -1148,6 +1237,10 @@ DispatcherTimer被称为生命线程，用来控制该类对象的状态和在UI
 <section>
   <h1>Recent Posts</h1>
   <ul id="recent_posts">
+    
+      <li class="post">
+        <a href="/blog/2013/03/05/emotion-unknown/">情商太低, 伤不起</a>
+      </li>
     
       <li class="post">
         <a href="/blog/2013/03/03/arc/">ARC 1</a>
@@ -1183,10 +1276,6 @@ DispatcherTimer被称为生命线程，用来控制该类对象的状态和在UI
     
       <li class="post">
         <a href="/blog/2012/01/12/objcbase/">Objective-C 一些很基础的总结</a>
-      </li>
-    
-      <li class="post">
-        <a href="/blog/2011/10/16/objcsel/">Objective C SEL</a>
       </li>
     
   </ul>
