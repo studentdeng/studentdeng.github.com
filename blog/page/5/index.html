@@ -1,0 +1,2041 @@
+
+<!DOCTYPE html>
+<!--[if IEMobile 7 ]><html class="no-js iem7"><![endif]-->
+<!--[if lt IE 9]><html class="no-js lte-ie8"><![endif]-->
+<!--[if (gt IE 8)|(gt IEMobile 7)|!(IEMobile)|!(IE)]><!--><html class="no-js" lang="en"><!--<![endif]-->
+<head>
+  <meta charset="utf-8">
+  <title>studentdeng Blog</title>
+  <meta name="author" content="studentdeng">
+
+  
+  <meta name="description" content="heap，大家都非常了解。大学学的时候必须会的内容，要不考试很难过关。只是当时并没有学习明白。只是被老师和考试强了。完全是机械的记忆。觉得真是太对不起自己这个专业了。最近再看STL，也就有了这一篇老生重弹。 在很多情况下，我们非常关心一个集合中的最大元素。并希望能够从集合中最快速度找到并删除。 &hellip;">
+  
+
+  <!-- http://t.co/dKP3o1e -->
+  <meta name="HandheldFriendly" content="True">
+  <meta name="MobileOptimized" content="320">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+
+  
+  <link rel="canonical" href="http://studentdeng.github.com/blog/page/5/">
+  <link href="/favicon.png" rel="icon">
+  <link href="/stylesheets/screen.css" media="screen, projection" rel="stylesheet" type="text/css">
+  <script src="/javascripts/modernizr-2.0.js"></script>
+  <script src="/javascripts/ender.js"></script>
+  <script src="/javascripts/octopress.js" type="text/javascript"></script>
+  <link href="/atom.xml" rel="alternate" title="studentdeng Blog" type="application/atom+xml">
+  <!--Fonts from Google"s Web font directory at http://google.com/webfonts -->
+  
+
+</head>
+
+<body   >
+  <header role="banner"><hgroup>
+  <h1><a href="/">studentdeng Blog</a></h1>
+  
+    <h2>不会开机的男孩</h2>
+  
+</hgroup>
+
+</header>
+  <nav role="navigation"><ul class="subscription" data-subscription="rss">
+  <li><a href="/atom.xml" rel="subscribe-rss" title="subscribe via RSS">RSS</a></li>
+  
+</ul>
+  
+<form action="http://google.com/search" method="get">
+  <fieldset role="search">
+    <input type="hidden" name="q" value="site:studentdeng.github.com" />
+    <input class="search" type="text" name="q" results="0" placeholder="Search"/>
+  </fieldset>
+</form>
+  
+<ul class="main-navigation">
+  <li><a href="/">Blog</a></li>
+  <li><a href="/blog/archives">Archives</a></li>
+  <li><a href="/about">About</a></li>
+</ul>
+
+</nav>
+  <div id="main">
+    <div id="content">
+      <div class="blog-index">
+  
+  
+  
+    <article>
+      
+  <header>
+    
+      <h1 class="entry-title"><a href="/blog/2011/01/08/sgi-stl-heap/">SGI STL 学习笔记三 Heap</a></h1>
+    
+    
+      <p class="meta">
+        
+
+
+
+
+
+
+
+
+  
+
+
+<time datetime="2011-01-08T21:44:00+08:00" pubdate data-updated="true">Jan 8<span>th</span>, 2011</time>
+        
+
+        
+      | <a href="/blog/2011/01/08/sgi-stl-heap/#comments">Comments</a>
+        
+
+      </p>
+    
+  </header>
+
+
+  <div class="entry-content"><p>heap，大家都非常了解。大学学的时候必须会的内容，要不考试很难过关。只是当时并没有学习明白。只是被老师和考试强了。完全是机械的记忆。觉得真是太对不起自己这个专业了。最近再看STL，也就有了这一篇老生重弹。</p>
+
+<p>在很多情况下，我们非常关心一个集合中的最大元素。并希望能够从集合中最快速度找到并删除。为了整体的效率，我们需要在这个集合中插入元素，查找最大元素，删除最大元素能够综合最快。使用binary heap便是一种不错的选择之一。而且能够在O(logN)插入，删除元素，查找最大元素在常数时间下。</p>
+
+<p>　　Binary heap 是一种complete binary tree（完全二叉树）。所以我们可以放心的使用简单的数组来保存数据而不需要担心浪费空间。维持树的父子关系也简单快速,而且整个过程都在原地进行。</p>
+
+<p>　　Heap 可以按照排列顺序分为大顶堆，小顶堆。 这里讨论的堆默认为大顶堆。每个节点的值大于等于其子节点的值。</p>
+
+<p>一个典型的大顶堆。</p>
+
+<p><img src="/images/stl-heap-1.png" alt="alt text" /></p>
+
+<p>了解heap，让我们从最简单的插入开始。</p>
+
+<p>push_heap
+　　在插入之前，首先确定的是，我们已经构成了一个完整的堆，为了保证完全二叉树的要求，我们只能在数组最后一个元素位置后增加元素。这个新家伙，显然有可能破坏了我们整个堆的结构。那么我们需要给这个新来的找到他的位置。</p>
+
+<p><img src="/images/stl-heap-2.png" alt="alt text" />
+<img src="/images/stl-heap-3.png" alt="alt text" />
+<img src="/images/stl-heap-4.png" alt="alt text" /></p>
+
+<p>　　总结这个过程。其实就是在整个树中增加一个叶子节点，然后，一直到比较到跟或是比父节点小为止。可以看出，整个这次比较最大次数为树的深度，O(logN)。</p>
+
+<pre><code>template &lt;class _RandomAccessIterator&gt;
+inline void
+push_heap(_RandomAccessIterator __first, _RandomAccessIterator __last)
+{
+  __push_heap_aux(__first, __last,
+                  __DISTANCE_TYPE(__first), __VALUE_TYPE(__first));
+}
+
+template &lt;class _RandomAccessIterator, class _Distance, class _Tp&gt;
+inline void
+__push_heap_aux(_RandomAccessIterator __first,
+                _RandomAccessIterator __last, _Distance*, _Tp*)
+{
+  __push_heap(__first, _Distance((__last - __first) - 1), _Distance(0), 
+              _Tp(*(__last - 1)));
+    //这里将最后一个元素设定为holeIndex。也就是说，这时新数据已经在底部的数组中了。
+}
+
+template &lt;class _RandomAccessIterator, class _Distance, class _Tp&gt;
+void
+__push_heap(_RandomAccessIterator __first,
+            _Distance __holeIndex, _Distance __topIndex, _Tp __value)
+{
+  _Distance __parent = (__holeIndex - 1) / 2;
+   //不断移动holeIndex，直到大于等于父节点或到达根。
+  while (__holeIndex &gt; __topIndex &amp;&amp; *(__first + __parent) &lt; __value) {
+    *(__first + __holeIndex) = *(__first + __parent);
+    __holeIndex = __parent;
+    __parent = (__holeIndex - 1) / 2;
+  }    
+  *(__first + __holeIndex) = __value;
+}
+</code></pre>
+
+<p>Pop_heap
+　　Pop_heap用来将最大值从堆中取走，当将顶部元素移动走之后，在根部就产生了一个hole。我们需要找到合适的数据将这个hole添上，而且我们还要尽可能的保存堆的性质（大小关系，和完全二叉树），所以，我们将顶部元素和最后一个元素交换。并将堆的大小减一。那么我们的新的根元素，显然违反了堆中大小关系的约定。所以，我们需要重新调整堆。而且，我们更爽的是，这个错误的堆的左右二个子树分别满足堆的性质，那么我需要找到hole节点的2个子节点中最大的和我们的hole 比较，并沿着大的子节点方向，直到叶子或是我们的这个hole满足大小关系。</p>
+
+<p><img src="/images/stl-heap-5.png" alt="alt text" />
+<img src="/images/stl-heap-6.png" alt="alt text" />
+<img src="/images/stl-heap-7.png" alt="alt text" />
+<img src="/images/stl-heap-8.png" alt="alt text" /></p>
+
+<pre><code>template &lt;class _RandomAccessIterator&gt;
+inline void pop_heap(_RandomAccessIterator __first, 
+                     _RandomAccessIterator __last)
+{
+  __pop_heap_aux(__first, __last, __VALUE_TYPE(__first));
+}
+
+template &lt;class _RandomAccessIterator, class _Tp&gt;
+inline void
+__pop_heap_aux(_RandomAccessIterator __first, _RandomAccessIterator __last,
+               _Tp*)
+{
+  __pop_heap(__first, __last - 1, __last - 1, 
+             _Tp(*(__last - 1)), __DISTANCE_TYPE(__first));
+}
+
+template &lt;class _RandomAccessIterator, class _Tp, class _Distance&gt;
+inline void
+__pop_heap(_RandomAccessIterator __first, _RandomAccessIterator __last,
+           _RandomAccessIterator __result, _Tp __value, _Distance*)
+{
+  *__result = *__first;
+   //这里将之前堆中最后一个元素的值保存在__value，并将根元素的值移动到最后一个元素
+  //然后将--last，也就是说，我们这里构造了一个更小的堆，并且只是根元素有问题。
+  //那么我们剩下的就是调整这个小堆。
+  __adjust_heap(__first, _Distance(0), _Distance(__last - __first), __value);
+}
+
+template &lt;class _RandomAccessIterator, class _Distance, class _Tp&gt;
+void
+__adjust_heap(_RandomAccessIterator __first, _Distance __holeIndex,
+              _Distance __len, _Tp __value)
+{
+  _Distance __topIndex = __holeIndex;
+  _Distance __secondChild = 2 * __holeIndex + 2; //找到hole节点的右子节点
+  while (__secondChild &lt; __len) {
+    if (*(__first + __secondChild) &lt; *(__first + (__secondChild - 1)))
+      __secondChild--;// __secondChild指向最大的子节点。
+    *(__first + __holeIndex) = *(__first + __secondChild);
+    //这里SGI STL并没有和我们的__value比较大小，所以，我们这里得到的holeIndex可能是错误的。或者说只是一
+    //个大概的位置。（很多优化的算法，并不是一次性完成的，而是去分情况或是其他什么的多种复合）。
+    //这里可能是SGI STL在这里优化，侯捷大师，似乎在这里打个一个盹。
+    __holeIndex = __secondChild;
+    __secondChild = 2 * (__secondChild + 1);
+  }
+  if (__secondChild == __len) {//当我们的根节点没有右节点时，就搞他左边的兄弟。
+    *(__first + __holeIndex) = *(__first + (__secondChild - 1));
+    __holeIndex = __secondChild - 1;
+  }
+  //侯捷大师注 ："将与调整值添入目前洞号内，注意，此时肯定满足次序特性"
+  //“依侯捷之见，下面直接改为 *(__first + __holeIndex) = value;应该可以”
+  //我这里认为侯捷大师在这里打盹了，这句话如果改了的话，整个过程就出错了。
+  //之前的优化，可以减少一些不必要的比较次数。但是如果把这个也省了。结果不能保证正确。
+  //我们的结果不一定满足次序特性。
+  __push_heap(__first, __holeIndex, __topIndex, __value);
+}
+</code></pre>
+
+<p>比如如下例子。</p>
+
+<p><img src="/images/stl-heap-9.png" alt="alt text" /></p>
+
+<p>当push_heap的时候，如果直接*(<strong>first + </strong>holeIndex) = VALUE,那么就会成为这个样子。</p>
+
+<p><img src="/images/stl-heap-10.png" alt="alt text" /></p>
+
+<p> 　　所以，必须要再一次经过__push_heap，再一次修正 24->16->65这条路径。保证真正的顺序。</p>
+
+<p>而SGI这样实现是为了减少一些不必要的比较。</p>
+
+<p>Sort_heap
+　　在搞定这些基本操作之后，我们发现，我们只需要执行一次次的pop_heap，我们就可以把数据按照一定的顺序跑列出来。而这也就是堆排序。</p>
+
+<pre><code>template &lt;class _RandomAccessIterator&gt;
+
+void sort_heap(_RandomAccessIterator __first, _RandomAccessIterator __last)
+
+{
+
+while (__last - __first &gt; 1)
+
+pop_heap(__first, __last--);
+
+}
+</code></pre>
+
+<p>　　我们发现，每一次pop_heap操作是O(logN)。整个数列排序结果是O(n*logN)。这已经达到比较方法的极限。而且是原地排序，而且最坏情况依然不变。heap sort的确是一个非常出色的算法。</p>
+
+<p>哦，扯了这么多，我们heap的好处不少，可是如何构造heap呢？</p>
+
+<p>Make_heap
+　　还记得<strong>adjust_heap， 这个函数，可以在左右子树满足条件情况下调整树，那么我们完全可以从下到上逐渐构造成一个符合我们要求的树。而且，树的叶子节点是没有孩子的。所以，我们可以更快的只是从中间开始。 初略的估算下，每一次</strong>adjust_heap，O(logN)，一半的节点，O(n*logN)，但其实我们可以做的更快。 建堆的复杂度可以达到O(n)的线性。</p>
+
+<pre><code>template &lt;class _RandomAccessIterator&gt;
+inline void
+make_heap(_RandomAccessIterator __first, _RandomAccessIterator __last)
+{
+  __make_heap(__first, __last,
+              __VALUE_TYPE(__first), __DISTANCE_TYPE(__first));
+}
+
+template &lt;class _RandomAccessIterator, class _Tp, class _Distance&gt;
+void
+__make_heap(_RandomAccessIterator __first,
+            _RandomAccessIterator __last, _Tp*, _Distance*)
+{
+  if (__last - __first &lt; 2) return;//当长度小于等于1时，我们就不需要排序了。
+  _Distance __len = __last - __first;
+  _Distance __parent = (__len - 2)/2;//找到第一个非叶子节点。
+
+  while (true) {
+    __adjust_heap(__first, __parent, __len, _Tp(*(__first + __parent)));
+    if (__parent == 0) return;
+    __parent--;
+  }
+}
+</code></pre>
+</div>
+  
+  
+
+
+    </article>
+  
+  
+    <article>
+      
+  <header>
+    
+      <h1 class="entry-title"><a href="/blog/2011/01/01/sgi-stl-vector/">SGI STL 学习笔记二 Vector</a></h1>
+    
+    
+      <p class="meta">
+        
+
+
+
+
+
+
+
+
+  
+
+
+<time datetime="2011-01-01T21:39:00+08:00" pubdate data-updated="true">Jan 1<span>st</span>, 2011</time>
+        
+
+        
+      | <a href="/blog/2011/01/01/sgi-stl-vector/#comments">Comments</a>
+        
+
+      </p>
+    
+  </header>
+
+
+  <div class="entry-content"><p>sequence containers</p>
+
+<pre><code>Array
+Vector
+Heap
+Priority_queue
+List
+sList（not in standard）
+Deque
+Stack
+Queue
+</code></pre>
+
+<p>Sequence Containers 其中的元素 都是可序的（ordered），但并不一定有序（sorted）。STL 中有vector ，list ，deque，stack，queue，priority_queue等序列容器。Stack queue 由于只是将deque重新封装而成，在技术上被归类为一种配接器(adapter)。</p>
+
+<p>Vector
+Vector 的数据为动态空间，随着元素的加入。内部会通过机制自行扩充空间，以容纳新元素。
+Vector 的效率，在于对大小的控制，重新分配时数据移动效率。当空间不足时，vector会选择策略扩充容量。
+Vector resize之后，很可能使所有迭代器均失效。 插入后，插入点之前的Iterator 有效，其他则无效。eraser迭代器失效。
+Vector实现
+Vector 实现比较简单。这里仅仅作为打开SGI STL的敲门砖。</p>
+
+<p>我这里的SGI STL 对vector有进行了进一步封装。在头文件中，也给出了我们的解释。</p>
+
+<p>// The vector base class serves two purposes. First, its constructor</p>
+
+<p>// and destructor allocate (but don&#8217;t initialize) storage. This makes</p>
+
+<p>// exception safety easier. Second, the base class encapsulates all of</p>
+
+<p>// the differences between SGI-style allocators and standard-conforming</p>
+
+<p>// allocators.</p>
+
+<p>这里根据 宏 <strong>STL_USE_STD_ALLOCATORS 来决定是否资源分配器。如果定义了</strong>STL_USE_STD_ALLOCATORS， 则使用allocator&lt; _Tp >，否则为alloc</p>
+
+<pre><code>//这里的 _Vector_base 为我们隐藏了 使用STL 标准分配器，和SGI 自己特有的分配器之间的不同
+//我们现在先把这里具体的分配细节透明。
+//这是，使用SGI 自己的分配器
+template &lt;class _Tp, class _Alloc&gt; 
+class _Vector_base {
+public:
+  typedef _Alloc allocator_type;
+  allocator_type get_allocator() const { return allocator_type(); }
+
+  _Vector_base(const _Alloc&amp;)
+    : _M_start(0), _M_finish(0), _M_end_of_storage(0) {}
+  _Vector_base(size_t __n, const _Alloc&amp;)
+    : _M_start(0), _M_finish(0), _M_end_of_storage(0) 
+  {
+    _M_start = _M_allocate(__n);
+    _M_finish = _M_start;
+    _M_end_of_storage = _M_start + __n;
+  }
+
+  ~_Vector_base() { _M_deallocate(_M_start, _M_end_of_storage - _M_start); }
+
+protected:
+  _Tp* _M_start;
+  _Tp* _M_finish;
+  _Tp* _M_end_of_storage;
+
+  typedef simple_alloc&lt;_Tp, _Alloc&gt; _M_data_allocator;
+  _Tp* _M_allocate(size_t __n)
+    { return _M_data_allocator::allocate(__n); }
+  void _M_deallocate(_Tp* __p, size_t __n) 
+    { _M_data_allocator::deallocate(__p, __n); }
+};
+
+
+template &lt;class _Tp, class _Alloc = __STL_DEFAULT_ALLOCATOR(_Tp) &gt;
+class vector : protected _Vector_base&lt;_Tp, _Alloc&gt; 
+{
+private:
+  typedef _Vector_base&lt;_Tp, _Alloc&gt; _Base;
+public:
+  typedef _Tp value_type;
+  typedef value_type* pointer;
+  typedef const value_type* const_pointer;
+  typedef value_type* iterator;
+  typedef const value_type* const_iterator;
+  typedef value_type&amp; reference;
+  typedef const value_type&amp; const_reference;
+  typedef size_t size_type;
+  typedef ptrdiff_t difference_type;
+
+  typedef typename _Base::allocator_type allocator_type;
+  allocator_type get_allocator() const { return _Base::get_allocator(); }
+…
+...
+};
+</code></pre>
+
+<p>分析vector，首先看他的Iterator。</p>
+
+<p>typedef value_type* iterator;</p>
+
+<p>typedef const value_type* const_iterator;</p>
+
+<p>我们可以看出，vector的Iterator 就是一个指针。若是定义</p>
+
+<p>vector<int>:: iterator iter1;</p>
+
+<p>vector<RECT>:: iterator iter2;</p>
+
+<p>那么，Iter1 其实，就是int *， iter2其实就是RECT * 。</p>
+
+<p>看一下，部分的vector 函数，也是我们常常使用的。</p>
+
+<p>Vector 的数据，什么时候被释放。我们需要看析构函数。</p>
+
+<pre><code>~vector() { destroy(_M_start, _M_finish); }
+
+template &lt;class _ForwardIterator&gt;
+inline void destroy(_ForwardIterator __first, _ForwardIterator __last) {
+  __destroy(__first, __last, __VALUE_TYPE(__first));
+}
+
+#define __VALUE_TYPE(__i)        __value_type(__i)
+</code></pre>
+
+<p>下面是2个偏特化版本。可以看出，在一些特殊情况下，我们找到了最快速的方法。什么也不干。</p>
+
+<pre><code>inline void destroy(char*, char*) {}
+inline void destroy(wchar_t*, wchar_t*) {}
+
+template &lt;class _Iter&gt;
+inline typename iterator_traits&lt;_Iter&gt;::value_type*
+__value_type(const _Iter&amp;)
+{
+   //这里，仅仅构造一个临时对象（准确说是指针）来做返回值，事实上，我们不关心他到底是个什么，只是关心她的类型。
+    //用这个类型来激发函数重载，所以，用0来构造也无妨。
+  return static_cast&lt;typename iterator_traits&lt;_Iter&gt;::value_type*&gt;(0);
+}
+
+template &lt;class _ForwardIterator, class _Tp&gt;
+inline void
+__destroy(_ForwardIterator __first, _ForwardIterator __last, _Tp*)//这里多了一个接受这个类型对象参数
+{
+    //根据这个类型_Tp，我们根据__type_traits&lt;_Tp&gt;，找到了这个类型是否有has_trivial_destructor。
+  typedef typename __type_traits&lt;_Tp&gt;::has_trivial_destructor _Trivial_destructor;
+    //然后构造一个临时的对象来激发函数重载。
+  __destroy_aux(__first, __last, _Trivial_destructor());
+}
+
+//下面2个便是特化后的结果。
+//__false_type,我们老老实实的该干什么干什么。
+template &lt;class _ForwardIterator&gt;
+inline void
+__destroy_aux(_ForwardIterator __first, _ForwardIterator __last, __false_type)
+{
+  for ( ; __first != __last; ++__first)
+    destroy(&amp;*__first);
+}
+
+//__true_type 我们实在是没有这个必要和他纠结了。
+template &lt;class _ForwardIterator&gt;
+inline void __destroy_aux(_ForwardIterator, _ForwardIterator, __true_type) {}
+</code></pre>
+
+<p>这是可能怀疑，内存到那里释放呢？ 别忘了，我们的vector 是继承自_Vector_base，内存释放，管理都隐藏在他那里。</p>
+
+<p>~<em>Vector_base() { </em>M_deallocate(<em>M_start, </em>M_end_of_storage - _M_start); }</p>
+
+<p>这里才真正的执行内存的回收。但是这里又涉及到了SGI STL 的内存管理，这部分是给操作系统，还是给内存池呢？</p>
+
+<p>在没有研究过细致的内存管理之前。我们还是将这里透明吧。</p>
+
+<p>基本操作</p>
+
+<pre><code>iterator begin() { return _M_start; }
+const_iterator begin() const { return _M_start; }
+iterator end() { return _M_finish; }
+const_iterator end() const { return _M_finish; }
+size_type size() const { return size_type(end() - begin()); }
+size_type capacity() const { return size_type(_M_end_of_storage - begin()); }
+bool empty() const { return begin() == end(); }
+
+void push_back(const _Tp&amp; __x) {
+    if (_M_finish != _M_end_of_storage) {
+      construct(_M_finish, __x);
+      ++_M_finish;
+    }
+    else
+      _M_insert_aux(end(), __x);
+  }
+
+  void push_back() {
+    if (_M_finish != _M_end_of_storage) {
+      construct(_M_finish);
+      ++_M_finish;
+    }
+    else
+      _M_insert_aux(end());
+  }
+
+void resize(size_type __new_size, const _Tp&amp; __x) {
+    if (__new_size &lt; size()) 
+      erase(begin() + __new_size, end());
+    else
+      insert(end(), __new_size - size(), __x);
+  }
+
+  void resize(size_type __new_size) { resize(__new_size, _Tp()); }
+</code></pre>
+
+<p>删除 erase</p>
+
+<pre><code>iterator erase(iterator __position) {
+    if (__position + 1 != end())
+      copy(__position + 1, _M_finish, __position);
+    --_M_finish;
+    destroy(_M_finish);
+    return __position;
+  }
+  iterator erase(iterator __first, iterator __last) {
+    iterator __i = copy(__last, _M_finish, __first);
+    destroy(__i, _M_finish);
+    _M_finish = _M_finish - (__last - __first);
+    return __first;
+  }
+</code></pre>
+
+<p>Copy 是全局函数，操作简单，同样有多个特化版本。Vector 和一般数组的删除动作一样，将后面元素一个个往前搬。最后修改个数。</p>
+
+<p>插入 insert</p>
+
+<pre><code>iterator insert(iterator __position, const _Tp&amp; __x) {
+    size_type __n = __position - begin();
+    if (_M_finish != _M_end_of_storage &amp;&amp; __position == end()) {
+      construct(_M_finish, __x);
+      ++_M_finish;
+    }
+    else
+      _M_insert_aux(__position, __x);
+    return begin() + __n;
+  }
+  iterator insert(iterator __position) {
+    size_type __n = __position - begin();
+    if (_M_finish != _M_end_of_storage &amp;&amp; __position == end()) {
+      construct(_M_finish);
+      ++_M_finish;
+    }
+    else
+      _M_insert_aux(__position);
+    return begin() + __n;
+  }
+
+
+template &lt;class _Tp, class _Alloc&gt;
+void
+vector&lt;_Tp, _Alloc&gt;::_M_insert_aux(iterator __position)
+{
+  if (_M_finish != _M_end_of_storage) {
+    construct(_M_finish, *(_M_finish - 1));
+    ++_M_finish;
+    copy_backward(__position, _M_finish - 2, _M_finish - 1);
+    *__position = _Tp();
+  }
+  else {
+    const size_type __old_size = size();
+    const size_type __len = __old_size != 0 ? 2 * __old_size : 1;
+    iterator __new_start = _M_allocate(__len);
+    iterator __new_finish = __new_start;
+    __STL_TRY {
+      __new_finish = uninitialized_copy(_M_start, __position, __new_start);
+      construct(__new_finish);
+      ++__new_finish;
+      __new_finish = uninitialized_copy(__position, _M_finish, __new_finish);
+    }
+    __STL_UNWIND((destroy(__new_start,__new_finish), 
+                  _M_deallocate(__new_start,__len)));
+    destroy(begin(), end());
+    _M_deallocate(_M_start, _M_end_of_storage - _M_start);
+    _M_start = __new_start;
+    _M_finish = __new_finish;
+    _M_end_of_storage = __new_start + __len;
+  }
+}
+</code></pre>
+
+<p>的确很简单，和我们在学校学的并没有什么大的不同，只是在对新增元素的构造上不同。</p>
+
+<pre><code>construct(__new_finish)，
+
+construct(_M_finish, *(_M_finish - 1));
+
+以上construct是全局函数，同样有特化版本。将类的构造分成，资源分配 + 构造函数，来做到提高效率。这样在大量数据上效果应该很明显，并没有具体测试。
+
+对一次插入大量元素时，vector 的策略是。
+if (插入元素个数 == 0 ) return
+if (判断容量是否足够)
+{
+    if (插入点后的元素个数 &gt; 待插入元素个数)
+    {
+       按照最后一个元素，构造插入元素个数个元素。
+         向插入点数据向后搬运。
+         移动指针。
+         将待插入元素顺次插入。
+    }
+    else
+    {
+       先以__x构造元素，在不需要移动位置的地方。
+         将原来的元素，移动到最后。
+         在插入位置处，以__x构造元素。
+    }
+}
+else
+{
+    根据策略分配空间（这里至少PJ 和SGI的策略不同，这里应该和不同的内存管理策略有关）
+    将插入点之前的原有的数据复制到新空间
+    依次复制新元素到新空间。
+    依次复制原来数据到新空间
+}
+
+
+template &lt;class _Tp, class _Alloc&gt;
+void vector&lt;_Tp, _Alloc&gt;::insert(iterator __position, size_type __n, const _Tp&amp; __x)
+{
+  if (__n != 0) {
+    if (size_type(_M_end_of_storage - _M_finish) &gt;= __n) {
+      _Tp __x_copy = __x;
+      const size_type __elems_after = _M_finish - __position;
+      iterator __old_finish = _M_finish;
+      if (__elems_after &gt; __n) {
+        uninitialized_copy(_M_finish - __n, _M_finish, _M_finish);
+        _M_finish += __n;
+        copy_backward(__position, __old_finish - __n, __old_finish);
+        fill(__position, __position + __n, __x_copy);
+      }
+      else {
+        uninitialized_fill_n(_M_finish, __n - __elems_after, __x_copy);
+        _M_finish += __n - __elems_after;
+        uninitialized_copy(__position, __old_finish, _M_finish);
+        _M_finish += __elems_after;
+        fill(__position, __old_finish, __x_copy);
+      }
+    }
+    else {
+      const size_type __old_size = size();        
+      const size_type __len = __old_size + max(__old_size, __n);
+      iterator __new_start = _M_allocate(__len);
+      iterator __new_finish = __new_start;
+      __STL_TRY {
+        __new_finish = uninitialized_copy(_M_start, __position, __new_start);
+        __new_finish = uninitialized_fill_n(__new_finish, __n, __x);
+        __new_finish
+          = uninitialized_copy(__position, _M_finish, __new_finish);
+      }
+      __STL_UNWIND((destroy(__new_start,__new_finish), 
+                    _M_deallocate(__new_start,__len)));
+      destroy(_M_start, _M_finish);
+      _M_deallocate(_M_start, _M_end_of_storage - _M_start);
+      _M_start = __new_start;
+      _M_finish = __new_finish;
+      _M_end_of_storage = __new_start + __len;
+    }
+  }
+}
+</code></pre>
+</div>
+  
+  
+
+
+    </article>
+  
+  
+    <article>
+      
+  <header>
+    
+      <h1 class="entry-title"><a href="/blog/2010/12/31/sgi-stl-iterator/">SGI STL 学习笔记一 Iterator</a></h1>
+    
+    
+      <p class="meta">
+        
+
+
+
+
+
+
+
+
+  
+
+
+<time datetime="2010-12-31T21:33:00+08:00" pubdate data-updated="true">Dec 31<span>st</span>, 2010</time>
+        
+
+        
+      | <a href="/blog/2010/12/31/sgi-stl-iterator/#comments">Comments</a>
+        
+
+      </p>
+    
+  </header>
+
+
+  <div class="entry-content"><p>之前一直希望能够看STL源代码，因为他一直存放在我的硬盘深处。但是由于复杂性，我一直再绕。而且纠结的是，我一直推荐我的学弟去研读STL。由于最近的工作需要，使我不得不一看STL的究竟。当然，STL对我来说依然是太庞大了，有相当多的相关的基础知识的缺乏导致整个过程实在是太艰难了，直到我看到了《SGI STL 源码剖析》。之后我的很多例子其实就是这本书的源代码。真的，这又是一本经典的著作。这本书贯穿了我整个STL的学习。当然，如果你之前研读过《inside c++ object model》等经典C++教材。你会发现。整个知识开始网罗了。</p>
+
+<p>　　按照道理来讲，学习STL，实在是不能不从总图开始。但是STL太庞大了。这个总图只是一个残缺的部分。按照常规的思路，的确是需要从总纲学，但是，真的，我不能在这里胡扯。为了更方便自己理解。我从Iterator开始。</p>
+
+<p>　　从这个图中可以看出，Algorithm 通过 Iterator 访问 Container，而我们很多面向container的操作同样是有Iterator出发的。所以，我也准备从这里入手。</p>
+
+<p><img src="/images/stl-it-1.png" alt="alt text" /></p>
+
+<p>制作一个Iterator，我们首先遇到的一个问题，就是如何找到这个Iterator 指向的类型。</p>
+
+<p>1、根据参数推导，我们可以找出参数类型，但是，如果是返回值，我们则无能为力。</p>
+
+<pre><code>#include &lt;iostream&gt;
+using namespace std;
+
+template &lt;class I, class T&gt;
+void func_impl(I iter, T t)
+{
+    T tmp = t;
+    cout&lt;&lt;tmp&lt;&lt;endl;
+}
+template &lt;class I&gt;
+inline
+void func(I iter)
+{
+    func_impl(iter, *iter);
+}
+
+int main()
+{
+    int i = 9;
+    func(&amp;i);
+}
+</code></pre>
+
+<p>2、通过声明内嵌类型。我们可以找到这个Iterator的类型</p>
+
+<pre><code>#include &lt;iostream&gt;
+using namespace std;
+
+template &lt;class T&gt;
+struct MyIter
+{
+    typedef T value_type;
+    T* ptr;
+    MyIter(T* p = 0):ptr(p){}
+    T&amp; operator*()const {return *ptr;}
+};
+template &lt;class I&gt;
+typename I::value_type
+func(I ite){return *ite;}
+
+int main()
+{
+    MyIter&lt;int&gt; iter(new int(8));
+    cout&lt;&lt;func(iter)&lt;&lt;endl;
+    delete iter.ptr;
+    iter.ptr = NULL;
+}
+</code></pre>
+
+<p>但是，我们并没有解决问题，如果这个Iterator 指向的地方，不是一个class type。原生指针不是，所以，我们必须找到一个方式这个就是 template partial specialization。</p>
+
+<pre><code>#include &lt;iostream&gt;
+using namespace std;
+
+template &lt;class I&gt;
+struct iterator_traits
+{
+    typedef typename I::value_type value_type;
+};
+
+template &lt;class T&gt;
+struct iterator_traits&lt;T*&gt;
+{
+    typedef T value_type;
+};
+template &lt;class T&gt;
+struct iterator_traits&lt;const T*&gt;
+{
+    typedef T value_type;
+};
+
+template &lt;class I&gt;
+typename iterator_traits&lt;I&gt;::value_type
+func(I iter){return *iter;}
+
+int main()
+{
+    int i = 50;
+    cout&lt;&lt;func(&amp;i)&lt;&lt;endl;
+}
+</code></pre>
+
+<p>构造一个Iterator，我们必须有的部分。</p>
+
+<pre><code>struct iterator {
+
+typedef _Category iterator_category;//Iterator种类
+
+typedef _Tp value_type; //iterator 所指对象类型
+
+typedef _Distance difference_type; //2个Iterator之间的距离
+
+typedef _Pointer pointer; //iterator 所指对象的地址
+
+typedef _Reference reference; //Iterator 所指对象引用类型
+
+};
+
+template &lt;class _Iterator&gt;
+
+struct iterator_traits {
+
+typedef typename _Iterator::iterator_category iterator_category;
+
+typedef typename _Iterator::value_type value_type;
+
+typedef typename _Iterator::difference_type difference_type;
+
+typedef typename _Iterator::pointer pointer;
+
+typedef typename _Iterator::reference reference;
+
+};
+</code></pre>
+
+<p>对于原生指针，需要适应特化版本。这里从略。</p>
+
+<p><img src="/images/stl-it-2.png" alt="alt text" /></p>
+
+<p>SGI STL 增加元素之一 __type_traits</p>
+
+<p>从字面上看，这里是类型萃取。的确。这里是对 trivial default constructor 和 none trivial defaultconstructor 的区别。 以及 none-trivial assignment operator 。 non-trivial-dtor。相关的知识可以在《inside c++ object model》中找到。在面对拥有&#8221;无用&#8221;的构造,拷贝，复制等类时，通过萃取机制，可以在编译时完成函数绑定。会直接采用最有效的策略。采用更为高效的memcpy等。 为了构造能够在编译时完成函数绑定，我们只能利用重载机制，那么，我们也就必须构造类型，作为函数参数</p>
+
+<pre><code>struct __true_type {
+};
+
+struct __false_type {
+};
+
+
+template &lt;class _Tp&gt;
+struct __type_traits { 
+   typedef __true_type     this_dummy_member_must_be_first;
+                   /* Do not remove this member. It informs a compiler which
+                      automatically specializes __type_traits that this
+                      __type_traits template is special. It just makes sure that
+                      things work if an implementation is using a template
+                      called __type_traits for something unrelated. */
+
+   /* The following restrictions should be observed for the sake of
+      compilers which automatically produce type specific specializations 
+      of this class:
+          - You may reorder the members below if you wish
+          - You may remove any of the members below if you wish
+          - You must not rename members without making the corresponding
+            name change in the compiler
+          - Members you add will be treated like regular members unless
+            you add the appropriate support in the compiler. */
+
+
+   typedef __false_type    has_trivial_default_constructor;
+   typedef __false_type    has_trivial_copy_constructor;
+   typedef __false_type    has_trivial_assignment_operator;
+   typedef __false_type    has_trivial_destructor;
+   typedef __false_type    is_POD_type;
+
+};
+</code></pre>
+
+<p>SGI 为每一个内嵌类型都定义为默认__false_type。这样来保证最底线的正确。因为如果判断错误则会有致命的错误。</p>
+
+<p>然后为每一个标准类型设计特化版本。从而里引用偏特化机制来保证整个机制运行。比如</p>
+
+<pre><code>__STL_TEMPLATE_NULL struct __type_traits&lt;char&gt; {
+   typedef __true_type    has_trivial_default_constructor;
+   typedef __true_type    has_trivial_copy_constructor;
+   typedef __true_type    has_trivial_assignment_operator;
+   typedef __true_type    has_trivial_destructor;
+   typedef __true_type    is_POD_type; // plain old data
+};
+
+template &lt;class _ForwardIter, class _Size, class _Tp&gt;
+inline _ForwardIter 
+uninitialized_fill_n(_ForwardIter __first, _Size __n, const _Tp&amp; __x)
+{
+  return __uninitialized_fill_n(__first, __n, __x, __VALUE_TYPE(__first));
+}
+
+
+template &lt;class _ForwardIter, class _Size, class _Tp, class _Tp1&gt;
+inline _ForwardIter 
+__uninitialized_fill_n(_ForwardIter __first, _Size __n, const _Tp&amp; __x, _Tp1*)
+{
+    //这里根据传入的类型_Tp1，得到了is_POD_type 类型。并定义了一个类型_Is_POD
+    //通过_Is_POD()构造一个临时对象，并传入函数参数。
+  typedef typename __type_traits&lt;_Tp1&gt;::is_POD_type _Is_POD;
+  return __uninitialized_fill_n_aux(__first, __n, __x, _Is_POD());
+}
+
+//_Is_POD 类型 == __true_type 执行
+//这里其实，并没有调用构造函数。
+template &lt;class _ForwardIter, class _Size, class _Tp&gt;
+inline _ForwardIter
+__uninitialized_fill_n_aux(_ForwardIter __first, _Size __n,
+                           const _Tp&amp; __x, __true_type)
+{
+  return fill_n(__first, __n, __x);
+}
+
+//_Is_POD 类型 == __false_type 执行
+//这里，我们可以看出，在构造多个函数的时候，这里采用了c++的异常处理，保证如果有异常出现，
+//构造过的对象能够被析构掉。当然，那个被构造了一半的对象是不会被析构的，也可能会造成memory leak，所以，切忌不要
+//在构造函数中抛出异常。
+template &lt;class _ForwardIter, class _Size, class _Tp&gt;
+_ForwardIter
+__uninitialized_fill_n_aux(_ForwardIter __first, _Size __n,
+                           const _Tp&amp; __x, __false_type)
+{
+  _ForwardIter __cur = __first;
+  __STL_TRY {
+    for ( ; __n &gt; 0; --__n, ++__cur)
+      construct(&amp;*__cur, __x);
+    return __cur;
+  }
+  __STL_UNWIND(destroy(__first, __cur));
+}
+//类似的这样的，还有许多特化后的版本。这里从略。
+</code></pre>
+
+<p>类似这样的设计，充斥在SGI STL中，在这里，任何一个小小的开销都被认为是无法接受的。的确。这里给人一种真实的理想的世界。如果你对code 有洁癖，SGI STL，是不能错过的。</p>
+</div>
+  
+  
+
+
+    </article>
+  
+  
+    <article>
+      
+  <header>
+    
+      <h1 class="entry-title"><a href="/blog/2010/12/25/plan/">又是一年过去了</a></h1>
+    
+    
+      <p class="meta">
+        
+
+
+
+
+
+
+
+
+  
+
+
+<time datetime="2010-12-25T21:31:00+08:00" pubdate data-updated="true">Dec 25<span>th</span>, 2010</time>
+        
+
+        
+      | <a href="/blog/2010/12/25/plan/#comments">Comments</a>
+        
+
+      </p>
+    
+  </header>
+
+
+  <div class="entry-content"><p>又是一年过去了。转眼已经大四。活了这么多年，终于要开始走向社会了。也不得不面对人生n个第一次。 第一次一个人做火车。第一次一个人出远门。第一次和别人合租。第一次正经工作……</p>
+
+<p>　　看了一眼，发现自己的第一篇博客是2010-01-10 11:54。完成的。不知不觉在园子里面也混了将近一年了。看这这些文章，不禁又想总结这一年来的得与失。</p>
+
+<p>　　我一直以来有一个很坏的习惯。不喜欢去那笔记录一下自己。但是当我看到这篇文章之后，永远改变了我的看法。http://mindhacks.cn/2009/02/15/why-you-should-start-blogging-now。的确。写这一年的博客，真的让我收获颇丰，是的，如果没有写博客，那么就从现在开始吧。</p>
+
+<p>第一篇博客，WPF设计简单游戏初探。
+　　是我第一次看到深蓝大哥的博客之后，有感而写的。是WPF下的一个简易《弹弹堂》的实现。当第一次看到深蓝的博客之后，一股做游戏的冲动就无法遏制。的确。WPF/SL的强大的动画能力。给了想我这样的小白一个非常好的机会。一个月。从0到这个小游戏。真的。除了WPF/SL,世上真的没有其他能够比这个再快了，而且界面效率也在可接受范围之内。当然。这些的背后，必然是游戏的粗糙。但这不是最重要的。最重要的则是，自己完全对程序执行流程没有把握。我在完全不知道的情况下，都能写一个demo，说明了MS的强大和自己的无知，愚昧。.net的机制的完全陌生。使得我在这一个月看了大量的有关.net的资料。其中收获最大的就是http://www.cnblogs.com/anytao/。《你必须知道的.net》。可以说是深刻的点醒了我对.net的兴趣。后面的一个月也沉浸在这里学习。但是越学越迷茫。越来越多的东西，使我把c# 和c++彻底混乱了（当时也不懂c++）。最终，由于个人兴趣爱好，我放弃的C#(或是C# 放弃了我)。但是.net所给我带来的冲击直到现在也没有退去。真的，我从没有感觉到一个完全无知的coder。可以将一个程序跑成那样。</p>
+
+<p>　　虽然结果不很让人满意。但是再深蓝大哥的鼓励下。我发布了个人第一篇博客。这里万分感谢，万事开头难。</p>
+
+<pre><code>每一个
+从小在游戏中长大的孩子
+都有一个梦
+
+
+希望
+有天能玩到自己的游戏
+但是
+面对OpenGL、D3D
+面对动辄上万的代码
+有的只是无尽的
+遗憾!
+
+
+当第一次遇到WPF/SL时
+梦想的大门似乎再次打开
+一个个不眠之夜
+体会到了理想与现实是如此的
+接近!
+
+
+理想与现实总是和残酷对等
+想到丑陋的代码
+想到运行性能的低下
+想到GC，IL，CLR
+。。。
+
+
+面对自己
+笑!
+
+
+
+谨以此勉励自己最近一个月的努力
+</code></pre>
+
+<p>第二篇博客，第三篇博客，缩略图设计初探， 缩略图设计初探二
+　　这个可以说是我程序人生的第一次转折吧。这里感谢王克伟，Jake Li等大牛。能够加入itoday。应该是我真正开始接触编程吧。从一开始的写一个简单的写日志程序，到最后研究暴雪的MPQ文件格式，.net framework Dictionary。开始真正的体会到编程的乐趣。整个程序，现在看来也没有什么亮点。只是又重新复习了一遍hash table的相关知识。只是现在看来终于明白了为什么暴雪处理冲突的时候没有采用分离链表法，而是仅仅是很简单的线性再散列。分离链表法带来的空间的节省。但是带来了硬盘的多次seek。在面对600M的文件来说。真是不得不考虑的问题。同样，也是为什么像SQLite的文件型数据库，删除数据，文件也不会变小的原因之一。没有考虑seek，是我当时设计的最大缺憾。只是我的文件数据量小。问题不突出。</p>
+
+<p>2010-04-16 多线程程序设计笔记一 ，多线程程序设计笔记二
+　　开始学习几本windows 开发的核心书籍，《windows 核心编程》，《win32多线程程序设计》，《windows 程序设计》。写的一篇总结。同大部分初学者一样。对windows 的消息事件模型很不明白，在加上当时的对.net更糊涂。随之也冒出了各种各样的疑惑，现在看来真是小儿科的问题。但是多线程问题，可以说是又复杂又简单的问题。需要深入的理解判断。《win32多线程程序设计》当时就没有看明白。我还是需要从最基Critical Section开始理解，当时没有能力深入的理解Critical Section的机制。这次不能再错过了。</p>
+
+<p>2010-06-07 C++虚继承初探, 再谈C++虚继承
+　　2个月，第一次看到这本书《inside c++ object model》。这本书可以说是最最经典的c++书籍。其内容之深，内容之广，对我来说真是有如一个板砖拍在自己头上。读完这本书后，我的第一个感受就是，我恨死我在学校的c++老师了。她虽然交的东西很少，但是她连构造函数都教错我了，无语。也让我意识到了，学校学的那点c++，基本就是负的。还不如啥也没学，知道错的还不如不知道。了解C++虚函数，才能了解二进制复用，而这又是理解COM的基础基础，理解COM同样是理解.net的基础。想了解虚函数，必须通过了解类的构成，以及为什么这样构成。真的。在没有写过这门语言的编译器之前，真的没有资格对这门语言评头论足。天啊，我还是想说，C++，你太难了，太复杂了。</p>
+
+<p>　　有趣的是，我现在对c++的理解也仅仅在那个程度上。 在我眼里，c++ 就是一个加了函数指针的c（这个是一个很不恰当的比喻，但是请原谅我实在没有想出其他恰当比喻）。模板，构造函数，析构函数。以及泛型一无所知。</p>
+
+<p>2010-10-06 PE文件初探一, PE文件初探二
+　　之前的学习，让我完全迷茫了。真是学啥啥不会，问啥啥不会。这会终于清醒了。因为我终于找到了，我到底该怎么学。MSJ，绝对是最适合我的资料。under the hood 这一系列绝对是经典中的经典。如何了解编程。从了解程序是如何保存在计算机开始是最好不过的。《csapp》同样也是和《inside c++ object model》，给人一种板砖拍的感觉，同样也是这样的顺序。从机器的角度理解程序的编译，链接，以及中间的符号等等问题。将是学习编程最好的开始。PE文件，同样是一个非常古老的东东，虽然至少也有20年了。但是依然值得学，即使在.net平台开发。真的了解.net的程序是如何执行的么？先搞定win32程序的启动过程吧。这里面的遗憾，是没有总结资源类型数据。的确。一下次都搞定，真的需要毅力和强大的知识储备。</p>
+
+<p>　　我相信有很多和我一样的同学同样会遇到这样的问题。知道要学习的知识非常多，但是却无法下手。真的，有时候真想从95甚至dos开始理解OS，理解从无到有，才能理解nt存在的原因。但是这个真是不是一般人可以做到的，强大的知识储备是在是太必要了。而对像我这样的小白，真的无法想象。但是《csapp》+ under the hood 绝对能够给你指出学习的路径。一开始的确十分枯燥，就像练功的基本功，无聊，重复，看不到希望，需要放下浮躁、急功近利的心态，慢慢积累。好的基础，越学到最后，学习效率越快。就像动态规划，这些基础就是那张表，用来降低日后运算的复杂度。同样的智商，你才能学的更深，学的更快。当然，你也会遇到风险。谁能保证那张表的所有内容都会在日后的计算中用到？谁能保证你还没把表算完，便已经程序溢出了？而《csapp》+ under the hood就是那张表，在我的角度看。</p>
+
+<p>2010-12-15 SEH学习笔记一，SEH 学习笔记二
+　　SEH 给我们提供了一个如此出色的异常处理，但我们却对这个知之甚少。这2篇理解了SEH的编译器级的很基础的实现。我觉得真的非常值得一看。同样SEH背后的，安全漏洞，包括MS提供的各种安全机制保证OS安全。以及背后的有关编译器OS之前的“互动”。的确是非常的有意思，里面的水也不浅。如果你也对代码安全感兴趣，SEH的基本知识，不能只停留在几个key word上。</p>
+
+<p>　　回头看来，发现，自己学的太杂了。而且真是觉得太快了，很多东西都没有经过时间的沉淀变已经成为了一种习惯。如果一开始就是错的，那么该怎么办？</p>
+
+<p>　　最近由于项目实践，不得不看一些STL代码。挑战自己对模板的恐惧。但是，我真的后悔了。在STL面前，我之前的所有认识，都是shit。我连一个简单的快排，甚至一个简单的资源分配，释放都不会。真的，我还没有关闭盒子的情况下又打开了另一个盒子，我怕我的好奇心会驱使我陷入茫茫的细节而忽视了对知识的整体把握。真的。也许我离再次迷茫，已经不远了。</p>
+</div>
+  
+  
+
+
+    </article>
+  
+  
+    <article>
+      
+  <header>
+    
+      <h1 class="entry-title"><a href="/blog/2010/12/21/seh2/">SEH 学习笔记二</a></h1>
+    
+    
+      <p class="meta">
+        
+
+
+
+
+
+
+
+
+  
+
+
+<time datetime="2010-12-21T21:25:00+08:00" pubdate data-updated="true">Dec 21<span>st</span>, 2010</time>
+        
+
+        
+      | <a href="/blog/2010/12/21/seh2/#comments">Comments</a>
+        
+
+      </p>
+    
+  </header>
+
+
+  <div class="entry-content"><p>之前我们知道了异常是什么样的，以及我们写好了出现异常时执行的代码。那么windows是如何调用我们的代码呢？在了解这个之后，global unwind，异常嵌套也就容易了解了。不得不说，如果之前没有了解SEH，这的确是一件非常有挑战的事情。当然，如果从根上，也就是从硬件到os kernel再到user mode这个就不是挑战，而是不可能一下子完成的任务了。我们还是一步步来，从异常跑到user mode开始。准备好了么？</p>
+
+<p>　　首先想一个问题，上一篇我们的第一个例子，我们保护了一段代码，但是同时，为了修正这段代码，我们又引入了一段代码。事实上，我们的确没有解决问题，谁能保证我们又引入的代码本身不会再产生异常呢？而且，这次是在发生异常的“拯救”过程中又产生异常。让我们先看一个简单的例子，我对上一篇的第一个例子，加了一点点修饰。</p>
+
+<pre><code>EXCEPTION_DISPOSITION
+__cdecl
+_except_handler(
+struct _EXCEPTION_RECORD *ExceptionRecord,
+    void * EstablisherFrame,
+struct _CONTEXT *ContextRecord,
+    void * DispatcherContext )
+{
+    unsigned i;
+
+    // Indicate that we made it to our exception handler
+    printf( "Hello from an exception handler\n" );
+
+    if (ExceptionRecord-&gt;ExceptionFlags &amp; 0x10)
+    {
+        printf( "bad except\n" );
+    }
+    else
+    {
+        //  bad happen
+        __asm
+        {
+            mov     eax,   0
+            mov     [eax], 1
+        }
+    }
+
+    //
+    // Change EAX in the context record so that it points to someplace
+    // where we can successfully write
+    ContextRecord-&gt;Eax = (DWORD)&amp;scratch;
+
+    // Tell the OS to restart the faulting instruction
+    return ExceptionContinueExecution;
+}
+</code></pre>
+
+<p>结果</p>
+
+<pre><code>Hello from an exception handler
+Hello from an exception handler
+bad except
+After writing!
+</code></pre>
+
+<p>　　如果我们把ExceptionRecord->ExceptionFlags &amp; 0x10 判断去掉，无条件的执行 bad ，那么我们好像陷入了死循环中，不停的输出Hello from an exception handler，而整个线程也死在了栈溢出，栈溢出是一个非常严重的异常，他会导致我们的finally block 无法执行，我们获得的同步变量没有被释放掉，即使我们填入了finally block。 我们一切的梦似乎还没有开始就结束了，而原因仅仅是因为我们在异常中又产生了一个异常。异常本身已经很让人头痛了，现在又来了一个。为了彻底了解，我们必须从了解OS是如何调用我们的代码，如何分配异常开始。</p>
+
+<p>异常user mode 从KiUserExceptionDispatcher 开始。</p>
+
+<pre><code>VOID KiUserExceptionDispatcher( PEXCEPTION_RECORD pExcptRec, CONTEXT * pContext )
+ {
+     DWORD retValue;
+
+     // Note: If the exception is handled, RtlDispatchException() never returns
+     if ( RtlDispatchException( pExceptRec, pContext ) )
+         retValue = NtContinue( pContext, 0 );
+     else
+         retValue = NtRaiseException( pExceptRec, pContext, 0 );
+
+     EXCEPTION_RECORD excptRec2;
+
+     excptRec2.ExceptionCode = retValue;
+     excptRec2.ExceptionFlags = EXCEPTION_NONCONTINUABLE;
+     excptRec2.ExceptionRecord = pExcptRec;
+     excptRec2.NumberParameters = 0;
+
+     RtlRaiseException( &amp;excptRec2 );
+ }
+
+
+BOOLEAN
+NTAPI
+RtlDispatchException(IN PEXCEPTION_RECORD ExceptionRecord,
+                     IN PCONTEXT Context)
+{
+    PEXCEPTION_REGISTRATION_RECORD RegistrationFrame, NestedFrame = NULL;
+    DISPATCHER_CONTEXT DispatcherContext;
+    EXCEPTION_RECORD ExceptionRecord2;
+    EXCEPTION_DISPOSITION Disposition;
+    ULONG_PTR StackLow, StackHigh;
+    ULONG_PTR RegistrationFrameEnd;
+
+    /* Perform vectored exception handling if we are in user mode */
+    if (RtlpGetMode() != KernelMode)
+    {
+        /* Call any registered vectored handlers */
+        if (RtlCallVectoredExceptionHandlers(ExceptionRecord, Context))
+        {
+            /* Exception handled, continue execution */
+            return TRUE;
+        }
+    }
+
+    /* Get the current stack limits and registration frame */
+    RtlpGetStackLimits(&amp;StackLow, &amp;StackHigh);
+    RegistrationFrame = RtlpGetExceptionList();
+
+    /* Now loop every frame */
+    while (RegistrationFrame != EXCEPTION_CHAIN_END)//#define EXCEPTION_CHAIN_END  -1
+    {
+        /* Find out where it ends */
+        RegistrationFrameEnd = (ULONG_PTR)RegistrationFrame +
+                                sizeof(EXCEPTION_REGISTRATION_RECORD);
+
+        /* Make sure the registration frame is located within the stack */
+        if ((RegistrationFrameEnd &gt; StackHigh) ||
+            ((ULONG_PTR)RegistrationFrame &lt; StackLow) ||
+            ((ULONG_PTR)RegistrationFrame &amp; 0x3))
+        {
+            /* Check if this happened in the DPC Stack */
+            if (RtlpHandleDpcStackException(RegistrationFrame,
+                                            RegistrationFrameEnd,
+                                            &amp;StackLow,
+                                            &amp;StackHigh))
+            {
+                /* Use DPC Stack Limits and restart */
+                continue;
+            }
+
+            /* Set invalid stack and return false */
+            ExceptionRecord-&gt;ExceptionFlags |= EXCEPTION_STACK_INVALID;
+            return FALSE;
+        }
+
+        /* Check if logging is enabled */
+        RtlpCheckLogException(ExceptionRecord,
+                              Context,
+                              RegistrationFrame,
+                              sizeof(*RegistrationFrame));
+
+        //这里应该有判断SEH是否有效，reactos这里并没有检查。
+
+
+/* Call the handler */
+        Disposition = RtlpExecuteHandlerForException(ExceptionRecord,
+                                                     RegistrationFrame,
+                                                     Context,
+                                                     &amp;DispatcherContext,
+                                                     RegistrationFrame-&gt;
+                                                     Handler);
+
+        /* Check if this is a nested frame */
+        if (RegistrationFrame == NestedFrame)
+        {
+            /* Mask out the flag and the nested frame */
+            ExceptionRecord-&gt;ExceptionFlags &amp;= ~EXCEPTION_NESTED_CALL;
+            NestedFrame = NULL;
+        }
+
+        /* Handle the dispositions */
+        switch (Disposition)
+        {
+            /* Continue searching */
+            case ExceptionContinueExecution:
+
+                /* Check if it was non-continuable */
+                if (ExceptionRecord-&gt;ExceptionFlags &amp; EXCEPTION_NONCONTINUABLE)
+                {
+                    /* Set up the exception record */
+                    ExceptionRecord2.ExceptionRecord = ExceptionRecord;
+                    ExceptionRecord2.ExceptionCode =
+                        STATUS_NONCONTINUABLE_EXCEPTION;
+                    ExceptionRecord2.ExceptionFlags = EXCEPTION_NONCONTINUABLE;
+                    ExceptionRecord2.NumberParameters = 0;
+
+                    /* Raise the exception */
+                    RtlRaiseException(&amp;ExceptionRecord2);
+                }
+                else
+                {
+                    /* Return to caller */
+                    return TRUE;
+                }
+
+            /* Continue searching */
+            case ExceptionContinueSearch:
+                break;
+
+            /* Nested exception */
+            case ExceptionNestedException:
+
+                /* Turn the nested flag on */
+                ExceptionRecord-&gt;ExceptionFlags |= EXCEPTION_NESTED_CALL;
+
+                /* Update the current nested frame */
+                if (DispatcherContext.RegistrationPointer &gt; NestedFrame)
+                {
+                    /* Get the frame from the dispatcher context */
+                    NestedFrame = DispatcherContext.RegistrationPointer;
+                }
+                break;
+
+            /* Anything else */
+            default:
+
+                /* Set up the exception record */
+                ExceptionRecord2.ExceptionRecord = ExceptionRecord;
+                ExceptionRecord2.ExceptionCode = STATUS_INVALID_DISPOSITION;
+                ExceptionRecord2.ExceptionFlags = EXCEPTION_NONCONTINUABLE;
+                ExceptionRecord2.NumberParameters = 0;
+
+                /* Raise the exception */
+                RtlRaiseException(&amp;ExceptionRecord2);
+                break;
+        }
+
+        /* Go to the next frame */
+        RegistrationFrame = RegistrationFrame-&gt;Next;
+    }
+
+    /* Unhandled, return false */
+    return FALSE;
+}
+</code></pre>
+
+<p>　　上面的代码来自ReactOS，和我们xp2上的代码已经很接近了（除了SEH的安全机制）,RtlDispatchException将处理异常的部分交给了RtlpExecuteHandlerForException。</p>
+
+<p>　　看一下RtlUnwind，同样来自ReactOS。同样把脏活给了RtlpExecuteHandlerForUnwind来做。</p>
+
+<pre><code>VOID
+NTAPI
+RtlUnwind(IN PVOID TargetFrame OPTIONAL,
+          IN PVOID TargetIp OPTIONAL,
+          IN PEXCEPTION_RECORD ExceptionRecord OPTIONAL,
+          IN PVOID ReturnValue)
+{
+    PEXCEPTION_REGISTRATION_RECORD RegistrationFrame, OldFrame;
+    DISPATCHER_CONTEXT DispatcherContext;
+    EXCEPTION_RECORD ExceptionRecord2, ExceptionRecord3;
+    EXCEPTION_DISPOSITION Disposition;
+    ULONG_PTR StackLow, StackHigh;
+    ULONG_PTR RegistrationFrameEnd;
+    CONTEXT LocalContext;
+    PCONTEXT Context;
+
+    /* Get the current stack limits */
+    RtlpGetStackLimits(&amp;StackLow, &amp;StackHigh);
+
+    /* Check if we don't have an exception record */
+    if (!ExceptionRecord)
+    {
+        /* Overwrite the argument */
+        ExceptionRecord = &amp;ExceptionRecord3;
+
+        /* Setup a local one */
+        ExceptionRecord3.ExceptionFlags = 0;
+        ExceptionRecord3.ExceptionCode = STATUS_UNWIND;
+        ExceptionRecord3.ExceptionRecord = NULL;
+        ExceptionRecord3.ExceptionAddress = _ReturnAddress();
+        ExceptionRecord3.NumberParameters = 0;
+    }
+
+    /* Check if we have a frame */
+    if (TargetFrame)
+    {
+        /* Set it as unwinding */
+        ExceptionRecord-&gt;ExceptionFlags |= EXCEPTION_UNWINDING;
+    }
+    else
+    {
+        /* Set the Exit Unwind flag as well */
+        ExceptionRecord-&gt;ExceptionFlags |= (EXCEPTION_UNWINDING |
+                                            EXCEPTION_EXIT_UNWIND);
+    }
+
+    /* Now capture the context */
+    Context = &amp;LocalContext;
+    LocalContext.ContextFlags = CONTEXT_INTEGER |
+                                CONTEXT_CONTROL |
+                                CONTEXT_SEGMENTS;
+    RtlpCaptureContext(Context);
+
+    /* Pop the current arguments off */
+    Context-&gt;Esp += sizeof(TargetFrame) +
+                    sizeof(TargetIp) +
+                    sizeof(ExceptionRecord) +
+                    sizeof(ReturnValue);
+
+    /* Set the new value for EAX */
+    Context-&gt;Eax = (ULONG)ReturnValue;
+
+    /* Get the current frame */
+    RegistrationFrame = RtlpGetExceptionList();
+
+    /* Now loop every frame */
+    while (RegistrationFrame != EXCEPTION_CHAIN_END)
+    {
+        /* If this is the target */
+        if (RegistrationFrame == TargetFrame) ZwContinue(Context, FALSE);
+
+        /* Check if the frame is too low */
+        if ((TargetFrame) &amp;&amp;
+            ((ULONG_PTR)TargetFrame &lt; (ULONG_PTR)RegistrationFrame))
+        {
+            /* Create an invalid unwind exception */
+            ExceptionRecord2.ExceptionCode = STATUS_INVALID_UNWIND_TARGET;
+            ExceptionRecord2.ExceptionFlags = EXCEPTION_NONCONTINUABLE;
+            ExceptionRecord2.ExceptionRecord = ExceptionRecord;
+            ExceptionRecord2.NumberParameters = 0;
+
+            /* Raise the exception */
+            RtlRaiseException(&amp;ExceptionRecord2);
+        }
+
+        /* Find out where it ends */
+        RegistrationFrameEnd = (ULONG_PTR)RegistrationFrame +
+                               sizeof(EXCEPTION_REGISTRATION_RECORD);
+
+        /* Make sure the registration frame is located within the stack */
+        if ((RegistrationFrameEnd &gt; StackHigh) ||
+            ((ULONG_PTR)RegistrationFrame &lt; StackLow) ||
+            ((ULONG_PTR)RegistrationFrame &amp; 0x3))
+        {
+            /* Check if this happened in the DPC Stack */
+            if (RtlpHandleDpcStackException(RegistrationFrame,
+                                            RegistrationFrameEnd,
+                                            &amp;StackLow,
+                                            &amp;StackHigh))
+            {
+                /* Use DPC Stack Limits and restart */
+                continue;
+            }
+
+            /* Create an invalid stack exception */
+            ExceptionRecord2.ExceptionCode = STATUS_BAD_STACK;
+            ExceptionRecord2.ExceptionFlags = EXCEPTION_NONCONTINUABLE;
+            ExceptionRecord2.ExceptionRecord = ExceptionRecord;
+            ExceptionRecord2.NumberParameters = 0;
+
+            /* Raise the exception */
+            RtlRaiseException(&amp;ExceptionRecord2);
+        }
+        else
+        {
+            /* Call the handler */
+            Disposition = RtlpExecuteHandlerForUnwind(ExceptionRecord,
+                                                      RegistrationFrame,
+                                                      Context,
+                                                      &amp;DispatcherContext,
+                                                      RegistrationFrame-&gt;
+                                                      Handler);
+            switch(Disposition)
+            {
+                /* Continue searching */
+                case ExceptionContinueSearch:
+                    break;
+
+                /* Collission */
+                case ExceptionCollidedUnwind :
+
+                    /* Get the original frame */
+                    RegistrationFrame = DispatcherContext.RegistrationPointer;
+                    break;
+
+                /* Anything else */
+                default:
+
+                    /* Set up the exception record */
+                    ExceptionRecord2.ExceptionRecord = ExceptionRecord;
+                    ExceptionRecord2.ExceptionCode = STATUS_INVALID_DISPOSITION;
+                    ExceptionRecord2.ExceptionFlags = EXCEPTION_NONCONTINUABLE;
+                    ExceptionRecord2.NumberParameters = 0;
+
+                    /* Raise the exception */
+                    RtlRaiseException(&amp;ExceptionRecord2);
+                    break;
+            }
+
+            /* Go to the next frame */
+            OldFrame = RegistrationFrame;
+            RegistrationFrame = RegistrationFrame-&gt;Next;
+
+            /* Remove this handler */
+            RtlpSetExceptionList(OldFrame);
+        }
+    }
+
+    /* Check if we reached the end */
+    if (TargetFrame == EXCEPTION_CHAIN_END)
+    {
+        /* Unwind completed, so we don't exit */
+        ZwContinue(Context, FALSE);
+    }
+    else
+    {
+        /* This is an exit_unwind or the frame wasn't present in the list */
+        ZwRaiseException(ExceptionRecord, Context, FALSE);
+    }
+}
+</code></pre>
+
+<p>RtlpExecuteHandlerForUnwind 和RtlpExecuteHandlerForException 是汇编写的代码，这个函数的尾部会跳转到ExecuteHandler。</p>
+
+<pre><code>PUBLIC _RtlpExecuteHandlerForException@20
+_RtlpExecuteHandlerForException@20:
+
+    /* Copy the routine in EDX */
+    mov edx, offset _RtlpExceptionProtector
+
+    /* Jump to common routine */
+    jmp _RtlpExecuteHandler@20
+
+
+PUBLIC _RtlpExecuteHandlerForUnwind@20
+_RtlpExecuteHandlerForUnwind@20:
+    /* Copy the routine in EDX */
+    mov edx, offset _RtlpUnwindProtector
+
+
+_RtlpExecuteHandler@20:
+
+    /* Save non-volatile */
+    push ebx
+    push esi
+    push edi
+
+    /* Clear registers */
+    xor eax, eax
+    xor ebx, ebx
+    xor esi, esi
+    xor edi, edi
+
+    /* Call the 2nd-stage executer */
+    push [esp+32]
+    push [esp+32]
+    push [esp+32]
+    push [esp+32]
+    push [esp+32]
+    call _RtlpExecuteHandler2@20
+
+    /* Restore non-volatile */
+    pop edi
+    pop esi
+    pop ebx
+    ret 20
+
+
+PUBLIC _RtlpExecuteHandler2@20
+_RtlpExecuteHandler2@20:
+
+    /* Set up stack frame */
+    push ebp
+    mov ebp, esp
+
+    /* Save the Frame */
+    push [ebp+12]
+
+    /* Push handler address */
+    push edx
+
+    /* Push the exception list */
+    push [fs:TEB_EXCEPTION_LIST]
+
+    /* Link us to it */
+    mov [fs:TEB_EXCEPTION_LIST], esp //这里我们构造了一个nt_EXCEPTION_REGISTRATION
+
+    /* Call the handler */
+    push [ebp+20]
+    push [ebp+16]
+    push [ebp+12]
+    push [ebp+8]
+    mov ecx, [ebp+24]
+    call ecx
+
+    /* Unlink us */
+    mov esp, [fs:TEB_EXCEPTION_LIST]
+
+    /* Restore it */
+    pop [fs:TEB_EXCEPTION_LIST]
+
+    /* Undo stack frame and return */
+    mov esp, ebp
+    pop ebp
+    ret 20
+</code></pre>
+
+<p>　　我们看到了，其实，当我们真正执行filter（其实是vc的运行时库函数<em>except_handler）之前，windows 已经为我们提前构造了一个nt_EXCEPTION_REGISTRATION, 和我们之前的vc_EXCEPTION_REGISTRATION,不同的是，在基本的EXCEPTION_REGISTRATION结构体之后，只是加了一个成员PEXCEPTION_REGISTRATION_RECORD  RegistrationFrame，这个成员的意义则就是判断异常嵌套。当然，这依然没有解决问题（异常再产生异常），我们需要知道</em>RtlpExceptionProtector，_RtlpUnwindProtector。不过，我们这个担心有点多余，因为这个是os本身的代码，如果他自己还不能保证正确，那么后面还有什么意义呢？</p>
+
+<pre><code>_RtlpExceptionProtector:
+
+    /* Assume we'll continue */
+    mov eax, ExceptionContinueSearch
+
+    /* Put the exception record in ECX and check the Flags */
+    mov ecx, [esp+4]
+    test dword ptr [ecx+EXCEPTION_RECORD_EXCEPTION_FLAGS], EXCEPTION_UNWINDING + EXCEPTION_EXIT_UNWIND
+    jnz return
+
+    /* Save the frame in ECX and Context in EDX */
+    mov ecx, [esp+8]
+    mov edx, [esp+16]
+
+    /* Get the nested frame */
+    mov eax, [ecx+8]
+
+    /* Set it as the dispatcher context */
+    mov [edx], eax
+
+    /* Return nested exception */
+    mov eax, ExceptionNestedException
+
+return:
+    ret 16
+
+
+_RtlpUnwindProtector:
+
+    /* Assume we'll continue */
+    mov eax, ExceptionContinueSearch
+
+    /* Put the exception record in ECX and check the Flags */
+    mov ecx, [esp+4]
+    test dword ptr [ecx+EXCEPTION_RECORD_EXCEPTION_FLAGS], EXCEPTION_UNWINDING + EXCEPTION_EXIT_UNWIND
+    jz .return
+
+    /* Save the frame in ECX and Context in EDX */
+    mov ecx, [esp+8]
+    mov edx, [esp+16]
+
+    /* Get the nested frame */
+    mov eax, [ecx+8]
+
+    /* Set it as the dispatcher context */
+    mov [edx], eax
+
+    /* Return collided unwind */
+    mov eax, ExceptionCollidedUnwind
+
+.return:
+    ret 16
+</code></pre>
+
+<p>　　我们看到了，当异常嵌套发生时，windows和处理之前的异常一样，依然会走这个流程。来自Matt Pietrek，之前介绍的文章。</p>
+
+<pre><code>KiUserExceptionDispatcher()
+     RtlDispatchException()
+         RtlpExecuteHandlerForException()
+             ExecuteHandler() // Normally goes to __except_handler3
+ ---------
+ __except_handler3()
+     scopetable filter-expression()
+     __global_unwind2() 
+         RtlUnwind()
+             RtlpExecuteHandlerForUnwind() 
+     scopetable __except block()
+</code></pre>
+
+<p>　　只是不同的是，嵌套发生时，fs:[0]上的frame，已经不是我们的代码，而是nt_frame，回调函数的事情也很简单，判断异常时候是在unwind或是unwind_exit，如果不是，那么我们知道了这个是异常传递的第一次，而这个是在正常情况下，不可能发生的（正常情况指的是异常没有嵌套，执行nt_frame的只可能是第二次，也就是unwind 或是 exit_unwind，nt_frame返回ExceptionContinueSearch，让异常继续传递给我们的代码）。那么很显然，现在遇到了异常嵌套，nt_frame返回了 ExceptionNestedException，并且将frame 保存在了edx中，也就是修改了DispatcherContext，RtlpExecuteHandlerForException的第四个参数。那么当返回时，windows 就可以知道是那个frame 在处理异常的时候，干了坏事（又产生了异常）。好吧。流程又恢复一样，继续的去遍历 fs:[0],直到我们发现了这个干坏事的frame，然后我们把异常嵌套标志位去掉，ExceptionRecord->ExceptionFlags &amp;= ~EXCEPTION_NESTED_CALL; NestedFrame = NULL。</p>
+
+<p>让我们看一个简单的例子。对上一篇的Matt Pietrek的例子做了些修改。</p>
+
+<pre><code>void WalkSEHFrames( void )
+{
+    VC_EXCEPTION_REGISTRATION * pVCExcRec;
+    printf( "\n" );
+
+    // Get a pointer to the head of the chain at FS:[0]
+    __asm   mov eax, FS:[0]
+    __asm   mov [pVCExcRec], EAX
+
+    // Walk the linked list of frames.  0xFFFFFFFF indicates the end of list
+    while (  0xFFFFFFFF != (unsigned)pVCExcRec )
+    {
+        ShowSEHFrame( pVCExcRec );
+        pVCExcRec = (VC_EXCEPTION_REGISTRATION *)(pVCExcRec-&gt;prev);
+    }       
+}
+
+EXCEPTION_DISPOSITION
+__cdecl
+_except_handler(
+struct _EXCEPTION_RECORD *ExceptionRecord,
+    void * EstablisherFrame,
+struct _CONTEXT *ContextRecord,
+    void * DispatcherContext )
+{
+    unsigned i;
+
+    // Indicate that we made it to our exception handler
+    printf( "Hello from an exception handler\n" );
+
+    WalkSEHFrames();
+
+     if (ExceptionRecord-&gt;ExceptionFlags &amp; 0x10)
+     {
+         printf( "bad except\n" );
+     }
+     else
+     {
+         //  bad happen
+         __asm
+         {
+             mov     eax,   0
+             mov     [eax], 1
+         }
+     }
+     //
+     // Change EAX in the context record so that it points to someplace
+     // where we can successfully write
+     ContextRecord-&gt;Eax = (DWORD)&amp;scratch;
+
+     // Tell the OS to restart the faulting instruction
+     return ExceptionContinueExecution;
+}
+
+int _tmain(int argc, _TCHAR* argv[])
+{
+    DWORD handler = (DWORD)_except_handler;
+
+    __try
+    {
+        __asm
+        {                           // Build EXCEPTION_REGISTRATION record:
+            push    handler         // Address of handler function
+            push    FS:[0]          // Address of previous handler
+            mov     FS:[0],ESP      // Install new EXECEPTION_REGISTRATION
+        }
+
+        WalkSEHFrames();
+
+        __asm
+        {
+            mov     eax,0           // Zero out EAX
+            mov     [eax], 1        // Write to EAX to deliberately cause a fault
+        }
+
+        printf( "After writing!\n" );
+
+        __asm
+        {                           // Remove our EXECEPTION_REGISTRATION record
+            mov     eax,[ESP]       // Get pointer to previous record
+            mov     FS:[0], EAX     // Install previous record
+            add     esp, 8          // Clean our EXECEPTION_REGISTRATION off stack
+        }
+
+        WalkSEHFrames();
+
+    }
+    __except(EXCEPTION_EXECUTE_HANDLER)
+    {
+        printf("never happen\n");
+    }
+
+
+    return 0;
+}
+</code></pre>
+
+<p>产生的结果</p>
+
+<pre><code>Frame: 0022FDD8  Handler: 0118110E  Prev: 0022FEC0  Scopetable: 00000000
+
+Frame: 0022FEC0  Handler: 01181091  Prev: 0022FF10  Scopetable: 01186C80
+
+Frame: 0022FF10  Handler: 01181096  Prev: 0022FF64  Scopetable: 81F63D92
+
+Frame: 0022FF64  Handler: 7712D74D  Prev: FFFFFFFF  Scopetable: 021DFE40
+
+Hello from an exception handler
+
+Frame: 0022FA04  Handler: 7715660D  Prev: 0022FDD8  Scopetable: 0022FDD8
+
+Frame: 0022FDD8  Handler: 0118110E  Prev: 0022FEC0  Scopetable: 00000000
+
+Frame: 0022FEC0  Handler: 01181091  Prev: 0022FF10  Scopetable: 01186C80
+
+Frame: 0022FF10  Handler: 01181096  Prev: 0022FF64  Scopetable: 81F63D92
+
+Frame: 0022FF64  Handler: 7712D74D  Prev: FFFFFFFF  Scopetable: 021DFE40
+
+Hello from an exception handler
+
+Frame: 0022F540  Handler: 7715660D  Prev: 0022FA04  Scopetable: 0022FDD8
+
+Frame: 0022FA04  Handler: 7715660D  Prev: 0022FDD8  Scopetable: 0022FDD8
+
+Frame: 0022FDD8  Handler: 0118110E  Prev: 0022FEC0  Scopetable: 00000000
+
+Frame: 0022FEC0  Handler: 01181091  Prev: 0022FF10  Scopetable: 01186C80
+
+Frame: 0022FF10  Handler: 01181096  Prev: 0022FF64  Scopetable: 81F63D92
+
+Frame: 0022FF64  Handler: 7712D74D  Prev: FFFFFFFF  Scopetable: 021DFE40
+
+bad except
+After writing!
+
+Frame: 0022FEC0  Handler: 01181091  Prev: 0022FF10  Scopetable: 01186C80
+
+Frame: 0022FF10  Handler: 01181096  Prev: 0022FF64  Scopetable: 81F63D92
+
+Frame: 0022FF64  Handler: 7712D74D  Prev: FFFFFFFF  Scopetable: 021DFE40
+</code></pre>
+
+<p>　　0x0118110E这个是我们自己的handler地址，也就是handler。0x01181091则是vc_handler的地址，  0x7715660D, 这个地址，就是我们的nt_frame的地址。0x01181096是CRT main函数时加的， 0x7712D74D 地址是KERNEL32.DLL 的 BaseProcessStart加的。</p>
+
+<p>　　在发生异常之后，windows为了保证vc_exception_hander抛出异常可以处理，加了nt_frame，但是运行时，再次引发异常，那么则会继续走KiUserExceptionDispatcher…那么则会再加入一个nt_frame在stack上。这时异常没有继续抛出，最后，windows 会逐个卸载掉那些frame。</p>
+
+<p>再搞明白这些之后，就很容易理解一开始的例子了，为什么死在栈溢出，如果我们在异常嵌套的时候，继续产生异常，那么windows会不断的去走KiUserExceptionDispatcher…而SEH的frame是建立在stack上的，那么stack overflow 实在是不可避免的事情了。所以，我们最好按照msdn上的建议，filter的代码一定要简洁(我们在遍历和unwind的时候，执行2次)，而且一定不能产生任何异常，否则，后果十分严重（可能死在stack overflow）。</p>
+
+<p>　　但是，事实上，我们却很难写出不再产生异常的代码，即使代码很简洁，而且逻辑上看上去并没有问题。那时因为我们的惯性思维停留在了像，c，c++这些高级语言上了（相对汇编）。比如下面的例子。来自《windows 核心编程》。</p>
+
+<pre><code>char g_szBuffer[100];
+
+void FunclinRoosevelt1() 
+{
+   int x = 0;
+   char *pchBuffer = NULL;
+
+   __try
+   {
+      *pchBuffer = 'J';
+      x = 5 / x;
+   }
+   __except(OilFilter1(&amp;pchBuffer)) 
+   {
+      MessageBox(NULL, "An exception occurred", NULL, MB_OK);
+   }
+   MessageBox(NULL, "Function completed", NULL, MB_OK);
+}
+
+LONG OilFilter1(char **ppchBuffer)
+{
+   if(*ppchBuffer == NULL) 
+   {
+      *ppchBuffer = g_szBuffer;
+      return(EXCEPTION_CONTINUE_EXECUTION);
+   }
+   return(EXCEPTION_EXECUTE_HANDLER);
+}
+</code></pre>
+
+<p>　　一段看似，没有问题的代码。但是这个确实是一个问题很隐晦的代码。我们看似修改了pchBuffer，使得pchBuffer 指向一个合法的地址，但是继续执行依然会有可能产生异常。原因在于，编译器有可能给我们产生如下代码，对*pchBuffer = &#8216;J&#8217;; 来说。</p>
+
+<pre><code>MOV EAX, [pchBuffer]  // Move the address into a register
+MOV [EAX], 'J'        // Move 'J' into the address
+</code></pre>
+
+<p>　　我们只是修改了pchBuffer，并没有修改eax的值，程序并不能真正的继续执行。所以，如果想使用EXCEPTION_CONTINUE_EXECUTION，Jeffrey Richter告诉我们一定要小心，小心。但是我相信，即使这个功能很cool，没有人会愿意每次编译之后，查看下汇编代码，看看是否生成了我们想要的代码。所以，我大胆的说，想使用EXCEPTION_CONTINUE_EXECUTION，最简单的方法就是在汇编下跑，c，c++下，就不用想了。而Jeffrey Richter 告诉我们系统在处理访问违规的时候，有类似的使用，那么系统那部分的代码，也很有可能是汇编直接写的。</p>
+
+<p>所以，在c++下，MS自己都劝开发者使用c++自己的异常语法，而不是直接使用SEH。这个不仅能使代码有强的移植性，而且也能避免EXCEPTION_CONTINUE_EXECUTION。</p>
+
+<p>SEH就像ReactOS上写的一样，“SEH is a game which is played between OS and Compiler (Keywords: <strong>try, </strong>except, __finally)”。vc通过这些关键字，使得开发者只需要了解一点点知识，便可以体验到SEH的强大。当然，强大的封装之后，必然会给我们理解带来了不少困难。如果你也对这些感兴趣，那么真的可以继续下去。因为我现在所知道的有关SEH的部分仅仅是最最基础的部分，这些部分早在10几年前就已经存在。</p>
+
+<p>　　下一篇将开始真正的接触SEH。</p>
+
+<p>　　最后写给自己。</p>
+
+<p>本来应该更详细的阐述一些细节，特别是local unwind, 他在执行我们的代码之前也构造了一个自己的frame，有兴趣的同学可以自己研究下。这个和AbnormalTermination()的实现息息相关。只是我发现vs2008 和vc6 在这上面似乎有些不同，vs2008似乎很强大的把这个完全优化掉了（也许不是因为这个原因，或是其他原因，了解一点vs的应该都知道vs这方面很强大）。在和他纠结了半个多小时后，我也实在是没有兴趣去和他比下去了。</p>
+
+<p>　　对于像我这样长期处在user mode的开发者来说。了解到这一地步，在实现上已经是足够了。但是即使已经了解大部分的SEH核心行为后（除去安全机制，这个同样对大多数开发者是透明的），依然很难说清楚什么时候改抛出异常，什么时候该使用返回值。（唯一可以肯定的是，不能有时候返回值，有时候又抛异常 :P）</p>
+
+<p>　　这里先记录一下自己的想法吧。当然，这里的异常主要还是SEH，c++概念不在考虑之内（即使在windows 底层实现可能会很相像和SEH）。</p>
+
+<p>首先看SEH的finally，这个的确看上去是一个很美好的东东，Jeffrey Richter给了我们几点使用finally的理由。</p>
+
+<p>They simplify error processing because all cleanup is in one location and is guaranteed to execute.
+They improve program readability.
+They make code easier to maintain.
+They have minimal speed and size overhead if used correctly.
+　　在我看来首先第一条就有问题，finally中的代码能够肯定保证执行么？显然不行，至少现在不可以。在一些严重的异常下，如stack overflow 或是进程，线程直接被Terminate。都不能直接执行。</p>
+
+<p>　　2和3条，这个的确是完美，但是并不是非常完美，因为能够做到这一点的不仅仅是finally，使用良好的编程规范，如合理的goto语句，等等。我们依然能够做到在一个地方释放空间。来增强程序的可读性。比如pthread中的一段。</p>
+
+<pre><code>result = pthread_mutex_init (&amp;rwl-&gt;mtxExclusiveAccess, NULL);
+if (result != 0)
+{
+  goto FAIL0;
+}
+
+result = pthread_mutex_init (&amp;rwl-&gt;mtxSharedAccessCompleted, NULL);
+if (result != 0)
+{
+  goto FAIL1;
+}
+
+result = pthread_cond_init (&amp;rwl-&gt;cndSharedAccessCompleted, NULL);
+if (result != 0)
+{
+  goto FAIL2;
+}
+</code></pre>
+
+<p>　　最后一条，前半句非常对，的确SEH的机制非常迅速（相对，没有绝对），在目前看来在不发生异常的时候，我们的确很享受这个过程，但是当你知道SEH背后的安全机制之后，你可能就不会这么认为了，那可不是点点CPU周期可以搞定的，而且还有后半句 if used correctly。使用异常，那么我们需要理解更多的有关异常本身的问题，包括异常是什么？异常如何调度？什么时候效率影响大？等等问题，也会带来更多的对程序员的心智上的负担。</p>
+
+<p>　　其次 except。同之前说的一样，由于使用异常，的确造成了非常大的知识的负担和程序运行上的负担。但是，当你去编写一个需要长期运行，而且要保证高效稳定性的程序之下。没有异常机制，实在是一件不可能的事情。当整运算一个大数据量的时候（已经算了几个小时了），若是来一点意外，总不能就推到重来计算等。而避免这些的最好的方法就是处理异常。</p>
+
+<p>　　但是在一些情景下，我们却不能使用异常，比如在一些硬件不够高的地方，嵌入式平台等。抛出异常是被禁止的。在一些运算密集性场景，如游戏引擎上，异常依然是禁区。</p>
+
+<p>　　但是在看到一些.net 的源代码上，比如Dictionary，我记得是抛出异常的。55，扯的实在是太远了。</p>
+
+<p>之前描述的不清楚。 如果没有发生异常，SEH的机制比较迅速。只是修改了stack 上的临时变量和线程的 exceptionList（或没有修改）。</p>
+
+<p>只是当抛出异常的时候，整个运行的效率才会降下来。</p>
+</div>
+  
+  
+
+
+    </article>
+  
+  <div class="pagination">
+    
+      <a class="prev" href="/blog/page/6/">&larr; Older</a>
+    
+    <a href="/blog/archives">Blog Archives</a>
+    
+    <a class="next" href="/blog/page/4/">Newer &rarr;</a>
+    
+  </div>
+</div>
+<aside class="sidebar">
+  
+    <section>
+  <h1>Categories</h1>
+  <ul id="categories">
+    <li class='category'><a href='/blog/categories/ios/'>IOS (1)</a></li>
+<li class='category'><a href='/blog/categories/objective-c/'>Objective-C (6)</a></li>
+<li class='category'><a href='/blog/categories/stl/'>STL (5)</a></li>
+<li class='category'><a href='/blog/categories/wpf-sl/'>WPF/SL (1)</a></li>
+<li class='category'><a href='/blog/categories/algorithms/'>algorithms (8)</a></li>
+<li class='category'><a href='/blog/categories/asm/'>asm (1)</a></li>
+<li class='category'><a href='/blog/categories/c-/'>c++ (6)</a></li>
+<li class='category'><a href='/blog/categories/configure/'>configure (2)</a></li>
+<li class='category'><a href='/blog/categories/emotion/'>emotion (8)</a></li>
+<li class='category'><a href='/blog/categories/mysql/'>mysql (1)</a></li>
+<li class='category'><a href='/blog/categories/operating-system/'>operating_system (3)</a></li>
+<li class='category'><a href='/blog/categories/tips/'>tips (1)</a></li>
+<li class='category'><a href='/blog/categories/windows/'>windows (9)</a></li>
+<li class='category'><a href='/blog/categories/windows-mobile/'>windows_mobile (2)</a></li>
+
+  </ul>
+</section>
+<section>
+  <h1>Recent Posts</h1>
+  <ul id="recent_posts">
+    
+      <li class="post">
+        <a href="/blog/2013/03/20/mysql-source-code-setup/">调试 mysql源代码 环境搭建</a>
+      </li>
+    
+      <li class="post">
+        <a href="/blog/2013/03/05/emotion-unknown/">情商太低, 伤不起</a>
+      </li>
+    
+      <li class="post">
+        <a href="/blog/2013/03/03/arc/">ARC 1</a>
+      </li>
+    
+      <li class="post">
+        <a href="/blog/2013/01/26/tips/">tips</a>
+      </li>
+    
+      <li class="post">
+        <a href="/blog/2013/01/15/happiness/">哈佛幸福课 杂感一</a>
+      </li>
+    
+  </ul>
+</section>
+
+<section>
+  <h1>GitHub Repos</h1>
+  <ul id="gh_repos">
+    <li class="loading">Status updating&#8230;</li>
+  </ul>
+  
+  <a href="https://github.com/studentdeng">@studentdeng</a> on GitHub
+  
+  <script type="text/javascript">
+    $.domReady(function(){
+        if (!window.jXHR){
+            var jxhr = document.createElement('script');
+            jxhr.type = 'text/javascript';
+            jxhr.src = '/javascripts/libs/jXHR.js';
+            var s = document.getElementsByTagName('script')[0];
+            s.parentNode.insertBefore(jxhr, s);
+        }
+
+        github.showRepos({
+            user: 'studentdeng',
+            count: 5,
+            skip_forks: true,
+            target: '#gh_repos'
+        });
+    });
+  </script>
+  <script src="/javascripts/github.js" type="text/javascript"> </script>
+</section>
+
+
+
+
+
+<section>
+<h1>Recent Comments</h1>
+<ul class="ds-recent-comments" data-num-items="5" data-show-avatars="0" data-show-time="0" data-show-title="0" data-show-admin="0" data-excerpt-length="18"></ul>
+
+<!--多说js加载开始，一个页面只需要加载一次 -->
+<script type="text/javascript">
+  var duoshuoQuery = {short_name:"studentdeng"};
+  (function() {
+    var ds = document.createElement('script');
+    ds.type = 'text/javascript';ds.async = true;
+    ds.src = 'http://static.duoshuo.com/embed.js';
+    ds.charset = 'UTF-8';
+    (document.getElementsByTagName('head')[0] || document.getElementsByTagName('body')[0]).appendChild(ds);
+  })();
+</script>
+<!--多说js加载结束，一个页面只需要加载一次 -->
+
+</section>
+  
+</aside>
+
+    </div>
+  </div>
+  <footer role="contentinfo"><p>
+  Copyright &copy; 2013 - studentdeng -
+  <span class="credit">Powered by <a href="http://octopress.org">Octopress</a></span>
+</p>
+
+</footer>
+  
+
+
+
+
+
+
+
+
+
+
+
+</body>
+</html>

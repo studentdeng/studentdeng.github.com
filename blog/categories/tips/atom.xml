@@ -4,7 +4,7 @@
   <title><![CDATA[Category: tips | studentdeng Blog]]></title>
   <link href="http://studentdeng.github.com/blog/categories/tips/atom.xml" rel="self"/>
   <link href="http://studentdeng.github.com/"/>
-  <updated>2013-03-05T00:33:29+08:00</updated>
+  <updated>2013-03-20T22:35:21+08:00</updated>
   <id>http://studentdeng.github.com/</id>
   <author>
     <name><![CDATA[studentdeng]]></name>
@@ -23,6 +23,7 @@
 <li><a href="#A2">install cocoapods 问题</a></li>
 <li><a href="#A3">Adding Unit Tests to an existing iOS project with Xcode 4</a></li>
 <li><a href="#A4">NSDateFormatter 问题</a></li>
+<li><a href="#A5">写博客命令</a></li>
 </ol>
 
 
@@ -98,6 +99,16 @@ Click the Build Settings tab and set the Bundle Loader setting to</p>
 s_format = [[NSDateFormatter alloc] init];
 [s_format setDateFormat:@"eee MMM dd HH:mm:ss ZZZZ yyyy"];
 [s_format setLocale:[[NSLocale alloc] initWithLocaleIdentifier:@"en_US_POSIX"]]; //之前少了设定Locale
+</code></pre>
+
+<div name = "A5" id = "A5"></div>
+
+
+<h1>写博客命令</h1>
+
+<pre><code>rake new_post['filename'];
+rake generate 
+rake preview
 </code></pre>
 ]]></content>
   </entry>

@@ -9,7 +9,7 @@
   <meta name="author" content="studentdeng">
 
   
-  <meta name="description" content="这是我写过的最难的一篇, 是目前为止最困难的一篇, 我的思路非常的混乱, 只是想通过这个方式来帮助我理清自己, 找出可以收获的地方. 其实我很早就想写了, 但是有很多东西反反复复,相互牵引的, 我的思维也在不断的变化, 有太多的地方我不明白, 这让我现在非常难受, 而在这个时候写一篇这样子的东西, &hellip;">
+  <meta name="description" content="下载源代码 mysql 下载CMAKE download 代码根目录 执行下面代码, 确定生成configure.data 文件 wscript win\configure.js WITH_INNOBASE_STORAGE_ENGINE WITH_PARTITION_STORAGE_ENGINE &hellip;">
   
 
   <!-- http://t.co/dKP3o1e -->
@@ -62,6 +62,81 @@
     <div id="content">
       <div class="blog-index">
   
+  
+  
+    <article>
+      
+  <header>
+    
+      <h1 class="entry-title"><a href="/blog/2013/03/20/mysql-source-code-setup/">调试 Mysql源代码 环境搭建</a></h1>
+    
+    
+      <p class="meta">
+        
+
+
+
+
+
+
+
+
+  
+
+
+<time datetime="2013-03-20T22:06:00+08:00" pubdate data-updated="true">Mar 20<span>th</span>, 2013</time>
+        
+
+        
+      | <a href="/blog/2013/03/20/mysql-source-code-setup/#comments">Comments</a>
+        
+
+      </p>
+    
+  </header>
+
+
+  <div class="entry-content"><p>下载源代码 <a href="http://dev.mysql.com/downloads/mysql/">mysql</a></p>
+
+<p>下载CMAKE <a href="http://www.cmake.org/">download</a></p>
+
+<p>代码根目录 执行下面代码, 确定生成configure.data 文件</p>
+
+<pre><code>wscript win\configure.js WITH_INNOBASE_STORAGE_ENGINE WITH_PARTITION_STORAGE_ENGINE MYSQL_SERVER_SUFFIX=-pro
+</code></pre>
+
+<p>找到 win 目录下的 XXX.bat 文件复制到源代码根目录下, 我这里使用vs2008 ,所以复制 build-vs9.bat 到源代码根目录
+在系统根目录 C:/windows 下 增加一个 my.ini 用于 mysql 配置, 我的mysql 源代码目录在 C:/mysql_code/mysql-5-1.1.68</p>
+
+<pre><code>[mysqld]
+# set basedir to your installation path
+basedir=C:/mysql_code/mysql-5-1.1.68
+# set datadir to the location of your data directory
+datadir=C:/mysql_code/mysql-5-1.1.68/win/data
+</code></pre>
+
+<p>将sql目录下的share文件夹复制到源代码根目录下</p>
+
+<p>修改sql_locale.cc 文件, 把文件编码改成 UTF8 with BOM, windows 你懂的</p>
+
+<p>然后可以调试了, 不过这里我遇到一个问题, 在 sql_locale.cc 函数 test_lc_time_sz 函数, 这里DEBUG_ASSERT(0)了一下, 目前先暂时注释掉它 : (
+现在可以跑</p>
+
+<pre><code>mysqld
+</code></pre>
+
+<p>然后在</p>
+
+<pre><code>mysql -u root -p 
+</code></pre>
+
+<p>over!</p>
+</div>
+  
+  
+
+
+    </article>
   
   
     <article>
@@ -428,6 +503,7 @@ b.w _objc_release           // 这里我们看出release 掉了 test 变量 也�
 <li><a href="#A2">install cocoapods 问题</a></li>
 <li><a href="#A3">Adding Unit Tests to an existing iOS project with Xcode 4</a></li>
 <li><a href="#A4">NSDateFormatter 问题</a></li>
+<li><a href="#A5">写博客命令</a></li>
 </ol>
 
 
@@ -503,6 +579,16 @@ Click the Build Settings tab and set the Bundle Loader setting to</p>
 s_format = [[NSDateFormatter alloc] init];
 [s_format setDateFormat:@"eee MMM dd HH:mm:ss ZZZZ yyyy"];
 [s_format setLocale:[[NSLocale alloc] initWithLocaleIdentifier:@"en_US_POSIX"]]; //之前少了设定Locale
+</code></pre>
+
+<div name = "A5" id = "A5"></div>
+
+
+<h1>写博客命令</h1>
+
+<pre><code>rake new_post['filename'];
+rake generate 
+rake preview
 </code></pre>
 </div>
   
@@ -634,711 +720,6 @@ s_format = [[NSDateFormatter alloc] init];
 
     </article>
   
-  
-    <article>
-      
-  <header>
-    
-      <h1 class="entry-title"><a href="/blog/2012/02/16/selfos/">Orange‘s 一个操作系统的实现 配置问题</a></h1>
-    
-    
-      <p class="meta">
-        
-
-
-
-
-
-
-
-
-  
-
-
-<time datetime="2012-02-16T23:57:00+08:00" pubdate data-updated="true">Feb 16<span>th</span>, 2012</time>
-        
-
-        
-      | <a href="/blog/2012/02/16/selfos/#comments">Comments</a>
-        
-
-      </p>
-    
-  </header>
-
-
-  <div class="entry-content"><p>最近在瞅《Orange‘s 一个操作系统的实现》，个人认为相当好的OS入门实践书籍，配合之前看过的大部分的理论书，容易理解那些抽象的概念（无代码无真相），</p>
-
-<p>和《Linux内核完全注释》都是相当不错的入门书籍。</p>
-
-<p>这里记录一下可能遇到的问题，主要是配置问题，实现逻辑书里面很详细，代码注释也很详细，仔细多想应该没啥问题。</p>
-
-<p>我这里环境是ubuntu 10 64bit， 而书中代码是32bit的。这里在编译链接的时候出了一点小问题。这里记录下。</p>
-
-<p>错误：</p>
-
-<pre><code>ld: i386 architecture of input file `kernel/kernel.o' is incompatible with i386:x86-64 output
-</code></pre>
-
-<p>需要修改makefile</p>
-
-<pre><code>CFLAGS          = -I include/ -c -fno-builtin -m32
-LDFLAGS         = -m elf_i386 -s -Ttext $(ENTRYPOINT)
-</code></pre>
-
-<p>错误：</p>
-
-<pre><code>klib.c:(.text+0xe5): undefined reference to `__stack_chk_fail'
-</code></pre>
-
-<p> 这里应该是少了c的标准库，还是需要修改makefile文件</p>
-
-<pre><code>LDFLAGS         = -m elf_i386 -s -Ttext $(ENTRYPOINT) -lc
-</code></pre>
-</div>
-  
-  
-
-
-    </article>
-  
-  
-    <article>
-      
-  <header>
-    
-      <h1 class="entry-title"><a href="/blog/2012/02/14/bochs-configure/">Bochs-configure</a></h1>
-    
-    
-      <p class="meta">
-        
-
-
-
-
-
-
-
-
-  
-
-
-<time datetime="2012-02-14T23:55:00+08:00" pubdate data-updated="true">Feb 14<span>th</span>, 2012</time>
-        
-
-        
-      | <a href="/blog/2012/02/14/bochs-configure/#comments">Comments</a>
-        
-
-      </p>
-    
-  </header>
-
-
-  <div class="entry-content"><h1>Bochs + freedos安装配置</h1>
-
-<pre><code>sudo apt-get install build-essential
-
-sudo apt-get install xorg-dev
-
-sudo apt-get install libgtk2.0-dev
-</code></pre>
-
-<p>下载</p>
-
-<pre><code>bochshttp://bochs.sourceforge.net/cgi-bin/topper.pl?name=See+All+Releases&amp;url=http://sourceforge.net/projects/bochs/files
-
-$ tar vxaf bochs-2.5.1.tar.gz
-
-$ cd bochs-2.5.1
-
-$ ./configure –enable-debugger-enable-disasm
-
-$ make
-
-$ sudo make install
-</code></pre>
-
-<p>下载freedoshttp://bochs.sourceforge.net/diskimages.html 复制到工作目录下</p>
-
-<h1>Bochs 配置 先通过dos引导，我们的软件复制在B盘下</h1>
-
-<pre><code>############################################################### 
-# Configuration file for Bochs 
-###############################################################
-
-# how much memory the emulated machine will have 
-megs: 32
-
-# filename of ROM images 
-romimage: file=/usr/share/bochs/BIOS-bochs-latest 
-vgaromimage: file=/usr/share/vgabios/vgabios.bin
-
-# what disk images will be used 
-floppya: 1_44=freedos.img, status=inserted 
-floppyb: 1_44=pm.img, status=inserted
-
-# choose the boot disk. 
-boot: a
-
-# where do we send log messages? 
-# log: bochsout.txt
-
-# disable the mouse 
-mouse: enabled=0
-
-# enable key mapping, using US layout as default. 
-keyboard_mapping: enabled=1, map=/usr/share/bochs/keymaps/x11-pc-us.map
-
-#enabled debug using xchg bx, bx
-
-magic_break:enabled=1
-
-可以通过下面方式来部署程序，当然，写成makefile最省事
-
-$ sudo mount –o loop pm.img /mnt/floppy
-
-$ sudo cp test.com /mnt/floppy
-
-$ sudo umount /mnt/floppy
-</code></pre>
-
-<h1>bochs 调试</h1>
-
-<p>调试方法很多，这里介绍最简单的方式之一。bochs 配置中增加 magic_break:enabled=1</p>
-
-<p>代码中增加xchg bx, bx，bochs会停在代码出。当然，前提是bochs需要支持debug</p>
-</div>
-  
-  
-
-
-    </article>
-  
-  
-    <article>
-      
-  <header>
-    
-      <h1 class="entry-title"><a href="/blog/2012/02/03/objblock/">Objective-C Block</a></h1>
-    
-    
-      <p class="meta">
-        
-
-
-
-
-
-
-
-
-  
-
-
-<time datetime="2012-02-03T23:47:00+08:00" pubdate data-updated="true">Feb 3<span>rd</span>, 2012</time>
-        
-
-        
-      | <a href="/blog/2012/02/03/objblock/#comments">Comments</a>
-        
-
-      </p>
-    
-  </header>
-
-
-  <div class="entry-content"><p>block 有什么意义，特点等等，这些东西，实在是太复杂了，这里只是简单的总结一下block的内存管理。而且也仅仅限于objective-C的部分</p>
-
-<h1>Block memory</h1>
-
-<p>block 的内存管理，应该是最头疼的地方,就用这个来自WWDC的例子来解释一下吧。</p>
-
-<p><img src="/images/objblock-1.png" alt="alt text" /></p>
-
-<p>当程序运行到这里时，stack 空间中有 shared 变量和 captured 变量。</p>
-
-<p>这里可以看出，__block 变量开始是处于stack上的。</p>
-
-<p><img src="/images/objblock-2.png" alt="alt text" /></p>
-
-<p>当程序运行到这里时，stack 空间中有 shared 变量，captured 变量和block1。</p>
-
-<p>这里可以看出，block 类型的变量开始时也是处在stack上的。</p>
-
-<p><img src="/images/objblock-3.png" alt="alt text" /></p>
-
-<p>当程序运行到这里时，stack 空间中有 shared 变量，captured 变量和block1。</p>
-
-<p>这里值得注意的就是当我们直接修改stack 上的captured变量时，block1中的captured变量仍然是原来的数值10。事实上，从const 我们就可以看出，block1中的captured变量是不能被修改的而且是从stack原有变量的一个const 拷贝。在block1中访问的captured变量是const拷贝的，也就是说block1中captured = 10，而不是原有的stack上的值 20。当然，在block1中，我们也不能修改captured变量。</p>
-
-<h1>Copy block</h1>
-
-<p>block在一开始是处在stack上的，这是为了考虑到效率的原因，但是，有时候是需要block的生命周期长于一开始的stack，这时，我们就通过copy block 来将block复制到heap。</p>
-
-<p><img src="/images/objblock-4.png" alt="alt text" /></p>
-
-<p>当程序执行完 block2 = [block1 copy];时，__block 类型变量shared，被复制到了heap中，很显然，shared变量需要被block和block2共享(当然还有stack也要共享)，而block2被移动到heap中，很可能生命周期会长于stack，所以，shared也被复制到了heap中。而block2中的captured 也被复制到了heap中。</p>
-
-<p><img src="/images/objblock-5.png" alt="alt text" /></p>
-
-<p>当程序执行完 block3 = [block2 copy];时, 我们看到的是，block2 和block3 其实指向的是同一片内存空间。事实上，block的数据结构中，保存了引用计数，而对于copy到heap中的block 再copy时，行为同普通对象retain一样，会使引用计数+1。那么如果我们对[block retain]会如何呢？ 实际上什么都没有发生，至少在现在的runtime版本下。因为retain中，不仅有引用计数+1在，而且retain的返回值，必须同返回调用对象的地址一样，而block的地址是可能变化的（stack or heap），所以，这里retain的行为几乎是被忽略掉的。</p>
-
-<p>当heap中的block变量先于stack被销毁时，如调用 [block2 release]; [block3 release];，heap中的block2，block3 由于引用计数为0 而被销毁，而 __block 变量shared则还在heap中，因为stack还要使用，block1 也要使用。</p>
-
-<p><img src="/images/objblock-6.png" alt="alt text" /></p>
-
-<p>当heap中的block变量晚于stack时，显然，stack 被清除，function中也啥都没了。</p>
-
-<p><img src="/images/objblock-7.png" alt="alt text" /></p>
-
-<p>最后，当block2 和block3 都被release之后。则恢复到最初状态</p>
-
-<p><img src="/images/objblock-8.png" alt="alt text" /></p>
-
-<h1>block details</h1>
-
-<p>当我们写出一个Block literal expression</p>
-
-<pre><code>^ { printf("hello world\n"); }
-</code></pre>
-
-<p>事实上，编译器为我们生成了如下结构</p>
-
-<pre><code>struct __block_literal_1 {
-    void *isa;
-    int flags;
-    int reserved; 
-    void (*invoke)(struct __block_literal_1 *);
-    struct __block_descriptor_1 *descriptor;
-};void __block_invoke_1(struct __block_literal_1 *_block) {
-    printf("hello world\n");
-}static struct __block_descriptor_1 {
-    unsigned long int reserved;
-    unsigned long int Block_size;
-} __block_descriptor_1 = { 0, sizeof(struct __block_literal_1)}; 当Block literal expression 使用时 __block_literal_1 则会被初始化为：struct __block_literal_1 _block_literal = {
-    &amp;_NSConcreteStackBlock,
-    (1&lt;&lt;29), &lt;uninitialized&gt;,
-    __block_invoke_1,
-    &amp;__block_descriptor_1
-   };
-</code></pre>
-
-<p>下一个例子</p>
-
-<pre><code>int x = 10;
-void (^vv)(void) = ^{printf("x is %d\n", x);};
-x = 11;
-vv();
-编译器会生成如下结构
-struct __block_literal_2{
-    void *isa;
-    int flags;
-    int reserved;
-    void (*invoke)(struct __block_literal_2 *);
-    struct __block_descriptor_2 *descriptor;
-    const int x;
-};
-void __block_invoke_2(struct __block_literal_2 *_block){
-    printf("x is %d\n", _block-&gt;x);
-}
-void struct __block_descriptor_2{
-    unsigned long int reserved;
-    unsigned long int block_size;
-}__block_descriptor_2 = {0, sizeof(struct __block_literal_2)};
-struct __block_literal_2 __block_literal_2 = {
-    &amp;NSConcreteStackBlock,
-    (1&lt;&lt;29),
-    __block_invoke_2,
-    &amp;__block_descriptor_2,
-    x
-};
-</code></pre>
-
-<p>block中使用的普通变量（int， char *）导入是const copy。普通对象则会retain。__block 类型变量则什么不做，只是保存一个指针，全局变量也只是保存一个简单的指针。</p>
-
-<p>当然，block 可能也会嵌套block，那么又会是什么样子？其实不复杂，复杂的只是增加了复制函数，和释放函数，这一点很像C++的拷贝构造函数，在必要时生成。</p>
-
-<pre><code>void (^existingBlock)(void) = …;
-void (^vv)(void) = ^{existingBlock();};
-vv();
-struct __block_literal_3{
-    ...;//esisting block
-};
-struct __block_literal_4{
-    void *isa;
-    int flags;
-    int reserved;
-    void (*invoke)(struct __block_literal_4 *);
-    struct __block_literal_3 *const existingBlock;
-};
-void __block_invoke_4(struct __block_literal_3 *__block) {
-   __block-&gt;existingBlock-&gt;invoke(__block-&gt;existingBlock);
-}
-void __block_copy_4(struct __block_literal_4 *dst, struct __block_literal_4 *src) {
-     //_Block_copy_assign(&amp;dst-&gt;existingBlock, src-&gt;existingBlock, 0);
-     _Block_object_assign(&amp;dst-&gt;existingBlock, src-&gt;existingBlock, BLOCK_FIELD_IS_BLOCK);
-}
-void __block_dispose_4(struct __block_literal_4 *src) {
-     // was _Block_destroy
-     _Block_object_dispose(src-&gt;existingBlock, BLOCK_FIELD_IS_BLOCK);
-}
-static struct __block_descriptor_4 {
-    unsigned long int reserved;
-    unsigned long int Block_size;
-    void (*copy_helper)(struct __block_literal_4 *dst, struct __block_literal_4 *src);
-    void (*dispose_helper)(struct __block_literal_4 *);
-} __block_descriptor_4 = {
-    0,
-    sizeof(struct __block_literal_4),
-    __block_copy_4,
-    __block_dispose_4,
-};
-</code></pre>
-
-<p>初始化</p>
-
-<pre><code>  struct __block_literal_4 _block_literal = {
-    &amp;_NSConcreteStackBlock,
-    (1&lt;&lt;25)|(1&lt;&lt;29), &lt;uninitialized&gt;
-    __block_invoke_4,
-    &amp; __block_descriptor_4
-        existingBlock,
-   };
-
-
-__block storage variables
-
-__block  变量是一种很特殊的数据类型，有自己的特有的数据结构
-
-struct _block_byref_xxxx {
-    void *isa;
-    struct _block_byref_xxxx *forwarding;
-    int flags;   //refcount;
-    int size;
-    // helper functions called via Block_copy() and Block_release()
-    void (*byref_keep)(void  *dst, void *src); //需要时被生成
-    void (*byref_dispose)(void *);//需要时被生成
-    typeof(marked_variable) marked_variable;
-};
-</code></pre>
-
-<p>看看__block 类型变量的使用</p>
-
-<pre><code>int __block i = 10;
-i = 11;
-struct _block_byref_i {
-    void *isa;
-    struct _block_byref_i *forwarding;
-    int flags;   //refcount;
-    int size;
-    int captured_i;
-} i = { NULL, &amp;i, 0, sizeof(struct _block_byref_i), 10 };
-i.forwarding-&gt;captured_i = 11;
-</code></pre>
-
-<p>显然，当block中增加了<strong>block 类型变量之后，嵌套block 的拷贝函数也会增加对</strong>block 变量的复制。</p>
-
-<pre><code>__block void (voidBlock)(void) = blockA;
-voidBlock = blockB;
-struct _block_byref_voidBlock {
-    void *isa;
-    struct _block_byref_voidBlock *forwarding;
-    int flags;   //refcount;
-    int size;
-    void (*byref_keep)(struct _block_byref_voidBlock *dst, struct _block_byref_voidBlock *src);
-    void (*byref_dispose)(struct _block_byref_voidBlock *);
-    void (^captured_voidBlock)(void);
-};
-void _block_byref_keep_helper(struct _block_byref_voidBlock *dst, struct _block_byref_voidBlock *src) {
-    //_Block_copy_assign(&amp;dst-&gt;captured_voidBlock, src-&gt;captured_voidBlock, 0);
-    _Block_object_assign(&amp;dst-&gt;captured_voidBlock, src-&gt;captured_voidBlock, BLOCK_FIELD_IS_BLOCK | BLOCK_BYREF_CALLER);
-}
-void _block_byref_dispose_helper(struct _block_byref_voidBlock *param) {
-    //_Block_destroy(param-&gt;captured_voidBlock, 0);
-    _Block_object_dispose(param-&gt;captured_voidBlock, BLOCK_FIELD_IS_BLOCK | BLOCK_BYREF_CALLER)}
-struct _block_byref_voidBlock voidBlock = {( .forwarding=&amp;voidBlock, .flags=(1&lt;&lt;25), .size=sizeof(struct _block_byref_voidBlock *),
-      .byref_keep=_block_byref_keep_helper, .byref_dispose=_block_byref_dispose_helper,
-      .captured_voidBlock=blockA )};
-voidBlock.forwarding-&gt;captured_voidBlock = blockB;
-</code></pre>
-
-<p>block中，引入了__block 会是什么情况</p>
-
-<pre><code>int __block i = 2;
-functioncall(^{ i = 10; });
-struct _block_byref_i {
-    void *isa;  // set to NULL
-    struct _block_byref_voidBlock *forwarding;
-    int flags;   //refcount;
-    int size;
-    void (*byref_keep)(struct _block_byref_i *dst, struct _block_byref_i *src);
-    void (*byref_dispose)(struct _block_byref_i *);
-    int captured_i;
-};
-struct __block_literal_5 {
-    void *isa;
-    int flags;
-    int reserved; 
-    void (*invoke)(struct __block_literal_5 *);
-    struct __block_descriptor_5 *descriptor;
-    struct _block_byref_i *i_holder;
-};
-void __block_invoke_5(struct __block_literal_5 *_block) {
-   _block-&gt;i_holder-&gt;forwarding-&gt;captured_i = 10;
-}
-void __block_copy_5(struct __block_literal_5 *dst, struct __block_literal_5 *src) {
-     _Block_object_assign(&amp;dst-&gt;i_holder, src-&gt;i_holder, BLOCK_FIELD_IS_BYREF | BLOCK_BYREF_CALLER);
-}
-void __block_dispose_5(struct __block_literal_5 *src) {
-     _Block_object_dispose(src-&gt;i_holder, BLOCK_FIELD_IS_BYREF | BLOCK_BYREF_CALLER);
-}
-static struct __block_descriptor_5 {
-    unsigned long int reserved;
-    unsigned long int Block_size;
-    void (*copy_helper)(struct __block_literal_5 *dst, struct __block_literal_5 *src);
-    void (*dispose_helper)(struct __block_literal_5 *);
-} __block_descriptor_5 = { 0, sizeof(struct __block_literal_5) __block_copy_5, __block_dispose_5 };
-struct _block_byref_i i = {( .forwarding=&amp;i, .flags=0, .size=sizeof(struct _block_byref_i) )};
-struct __block_literal_5 _block_literal = {
-    &amp;_NSConcreteStackBlock,
-    (1&lt;&lt;25)|(1&lt;&lt;29), &lt;uninitialized&gt;,
-    __block_invoke_5,
-    &amp;__block_descriptor_5,
-        2,
-   };
-</code></pre>
-
-<p>block 中的太多细节这里不做赘述，有兴趣的可以参考Block—ABI-Apple，也可以直接<a href="http://llvm.org/svn/llvm-project/compiler-rt/trunk/BlocksRuntime/runtime.c">这里</a>去看。</p>
-</div>
-  
-  
-
-
-    </article>
-  
-  
-    <article>
-      
-  <header>
-    
-      <h1 class="entry-title"><a href="/blog/2012/01/13/plan/">Plan</a></h1>
-    
-    
-      <p class="meta">
-        
-
-
-
-
-
-
-
-
-  
-
-
-<time datetime="2012-01-13T23:46:00+08:00" pubdate data-updated="true">Jan 13<span>th</span>, 2012</time>
-        
-
-        
-      | <a href="/blog/2012/01/13/plan/#comments">Comments</a>
-        
-
-      </p>
-    
-  </header>
-
-
-  <div class="entry-content"><p>不知不觉又是一年，又大了一岁，呵呵，说的很假，因为自己并没有真正的意识到自己又大了一岁，甚至自己现在的年龄都不能一口说出来，过去的一年，甚至之前，我都不能准确的说出我自己到底做了什么，混沌，浑浑噩噩的一生，没有目标，一切都是随心，一切都是随心而发，没有目的，达成不达成，似乎都不重要。那么自己心里到底有什么在乎的了？不知道，那么还有什么感兴趣的呢？</p>
-
-<p>庄子是我最佩服的人，千年前的古人，都可以去猜测天道，追逐天地之本，而做为现代人的我，从小都希望自己能够成为其中的一员，哪怕只是能够感知到一点，为此沉沦数学，物理。</p>
-
-<p>什么是天道，天道不以人类意志左右，甚至和普通人意志相反。而这也就造就了普通人永远无法理解天道。所以，我从来没有觉得自己是普通人，甚至乐于反着做。而今天，我觉得，我错了，因为我现在自己都不了解，原来追求的东西，随着时间的打磨，已经逐渐淡去。现在做的，只是随心而动，追求自己内心的想法——每件事情，比别人多做一点，多深入一点，至于是什么事情，别人的看法，已经不重要了，我发现，我这个理科生，居然是一个彻头彻尾的唯心主义者。</p>
-
-<p>人的一生是要不断学习的。这里面的动力很简单：因为我们在有些方面还“无知”， 无知是做事情的一个障碍。我们如果想做好事情，就要求知，要改变这种无知的状况。而对于创业这件事情，也是我这20多年来，做的最大的一件事情，1年前，对于创业，我还是处在，拿着无知当无畏的状态，而且，现在也没有好多少，但是，我很感谢我们这个Team，包容了我很多缺点，替我遮挡了许多细枝末节，使得我还有时间有精力追求自己内心的想法，而且我相信，我最终一定能够成功，但是这里面的代价实在是太大了，我甚至不能确定，而且害怕，这个时间太长，而那些身边默默支持我的人已经离去，甚至永远看不到了。</p>
-
-<p>我最讨厌的人，就是浪费时间的人，因为，我自己已经浪费了自己20多年的青春。所以，当我在大三的时候，我就已经意识到，自己需要改变这一点——痛恨那些走在我前面档我走路的人，浪费我时间的人。</p>
-
-<p>而现在，我发现，挡在我前面的那个人，不是别人，就是自己。自己的惰性，侥幸心里，成功考验的不仅是智力，更是意志。就像处在激发态的原子，时间会不断地侵蚀他的能量，而如果想要挣脱枷锁，只能是不断地更快地吸取更多的能量。就像鲲鹏，如果沉迷于大海，永远不可能越出水面，飞翔在空中。</p>
-
-<p>呼呼，扯了好多，看看我这一年做了什么，1年前是离毕业还有半年时。</p>
-
-<p>我很庆幸，因为，在很多人不知道自己以后应该做什么时，我知道了我该做什么，计算机就是为我而生的科学，我也很庆幸，我在离开大学的最后半年里，我能够把大学中学到的和没有学到的东西，捏合到了一起，明白了大学这些课程讲述的意义，汇编程序设计，计算机体系结构，编译原理等等耳熟能详的课程捏到一起，虽然不能融会贯通，但是计算机知识体系已经能够较为清晰的展现在脑海里，而这，也就是为什么我放弃考研的原因之一，不需要再学太多的理论来夯实基础，因为我不是要成为科学家，这些理论知识对现在的我来说已经足够，贪多嚼不烂。而更为重要的是，移动互联网，这一波已经滚滚而来，已经不可能在等我3年，就像我大二时，第一次用到智能手机时（Symbian不算）的感触，传统的PC应用已经不可能吸引我，除了mobile。</p>
-
-<p>大学最后的半年，是在创业公司渡过的，第一次自己独立做项目（自己的毕设），而且是一个会正式发布的产品，对于我这样的一个二流大学毕业生来说已经不易。而后的毕业答辩，更是验证了我对学校的不屑，只能挑挑排版错误的导师，充满各种潜规则的评分，对我来说已经没有任何意义，90分和60分，同样没有区别。我唯一在意的是，最后半年，C++的基础打的更扎实了一点，windows消息机制的了解也更深入了一点。也不枉我在这里学习了将近1年的时间。</p>
-
-<p>后半年，风雨突变，windows mobile 已经死在了IOS 和android 的车轮之下，顺应天意，转战IOS。</p>
-
-<p>从0开始学习一个新的语言，新的平台，到产品上线，呵呵，虽然在Appstore 很惨淡，但是，我们并没有放弃，不说了，来年新产品上线再说，不信这个邪了。</p>
-
-<p>总结之后，就要规划，虽然我实在是不想做这个规划，因为实在是不靠谱。1年的时间，说长不长，说短不短。不求别的，只求不浪费时间，全力学习，深入IOS 一点。</p>
-</div>
-  
-  
-
-
-    </article>
-  
-  
-    <article>
-      
-  <header>
-    
-      <h1 class="entry-title"><a href="/blog/2012/01/13/knownless/">转 从无知到有知</a></h1>
-    
-    
-      <p class="meta">
-        
-
-
-
-
-
-
-
-
-  
-
-
-<time datetime="2012-01-13T23:45:00+08:00" pubdate data-updated="true">Jan 13<span>th</span>, 2012</time>
-        
-
-        
-      | <a href="/blog/2012/01/13/knownless/#comments">Comments</a>
-        
-
-      </p>
-    
-  </header>
-
-
-  <div class="entry-content"><p>人的一生是要不断学习的。这里面的动力很简单：因为我们在有些方面还“无知”， 无知是做事情的一个障碍。我们如果想做好事情，就要求知，要改变这种无知的状况。</p>
-
-<p>可是大多数人不知道的是，“无知” (ignorance) 其实不是一个状态，而是两个截然不同的状态，一种叫做不知道型无知 (uninformed ignorance)，另一种叫做知道型无知 (informed ignorance)。 相信很多人都有这个体会：某天看到一本书，一篇文章，觉得这里面的学问知识，是自己从来没有想过或者接触过的，是一个崭新的领域，这就代表了你突然发现了自己的无知，而且知道自己的这种无知，也就是，从 uninformed ignorance 跨入了 informed ignorance. 这两种无知的另一个不同在于，第一种无知可以让人无知无畏，因为自己不会认识到这种无知。第二种反而让人小心翼翼，知道自己不懂这方面的知识，或者咨询专业人士，或者恶补相关的知识。我们人生下来，所有的知识都在脑袋的外部，所以，我们最初处于一个纯粹的 uninformed ignorance 状态, 所以，从无知到有知，必然要经过两个过程，第一个过程是从第一种无知变到第二种无知；第二种是消灭部分的第二类无知，达到部分有知。 这两个过程其实截然不同，但是实际上我们常常把他们混淆。</p>
-
-<p>第一个过程其实是非常轻松愉快的过程，甚至不需要花太多的力气。有句话叫见多识广，就是说游山玩水也能增广见识。 在互联网发达的今天，随便点几个链接，随便查几个维基百科，都能够让人获得“增长见闻”的感觉。 这是一个好事，因为我们更加容易的发现自己的无知。 同时，在这个过程里也很容易有认知满足感。 所以，很多人不知不觉的觉得每天只要“增广见闻”就行了，轻松愉快又每天都有新的见闻输入，是多么美好的事情呀。不幸的是，这个过程至多只能让人 informed, 而不能让人 knowledgeable。 想要 knowledge, 绕不过去的是持久的，深入的，有系统的学习。更加不幸的是，这个过程是不那么轻松愉快的。</p>
-
-<p>我上高中的时候非常喜欢数学，正好图书馆里面有大学数学书，我就不管看得懂看不懂都借来看，看着那些如“微分方程”，“复变函数”之类的名词觉得很欣喜，虽然是不断的发现自己以前的无知，却也觉得学到了新东西，新名词，新概念。可是总所周知，“看”是不需要花费任何脑力的，尤其是从不知道到知道自己不知道这个状态，简直就是所谓的顿悟（由此我也怀疑所谓的顿悟其实可能也是突然间觉得自己是个笨蛋，也就悟了）。 就这样，我一度以为自己在数学上是非常的 knowledgeable 了。 然后我大学上了数学系，我突然发现，高中看的那些书，虽然也看了，也仅仅是知道名词 ( informed ) 而已，真正的数学训练，还是等到我用书中知识做后面习题的时候才开始的，而这个过程才不是轻松愉快呢。 我不知道是不是普遍的情况，就我见到的同学，有很多高中原来很喜欢某个专业的，等到真的选了这个专业，突然就不喜欢了，这也是 be informed 和 be knowledgeable 两种认知过程不一样造成的。 这种两种认知过程，是不管怎么都没法互相替代的。换句话说，如果只想捡便宜果子吃，只做第一步，或者用第一步里面的那些轻松愉快来代替第二步，就想变成有知识的人，是不可能的。</p>
-
-<p>缺少持久，系统和深入的学习，知识结构就会处于半调子的状态。 李笑来老师在学英语的若干文章中都提到精读和查字典的重要性。比如说，如果在学英语中满足于 informed ignorance， 遇到不认识的单词仅仅是猜一个意思，也不记下这个单词的用法的话，这个单词还是不能成为自己的词汇。然后，如果仅仅是记下用法，而不在以后有意识的练习使用（或者多次再见到）这个词的话，或许很快也就忘掉了。我们对学语言要系统的精耕细作很同意，但是未必能体会到所有其他学科都需要如此，尤其是在那些我们认为“简单”或者“零碎”的领域，我们往往像蜜蜂一样，成了不知疲倦的收集者，不断的 be informed, 而忘了 be knowledgeable 的背后，不是收集，而是学习。知道自己无知是一件非常好的事情，不过不要容忍处于 knowledge 和  be informed之间的尴尬处境，要不代理给专业人士，要不，抓紧时间学习，赶快从无知，到有知。</p>
-</div>
-  
-  
-
-
-    </article>
-  
-  
-    <article>
-      
-  <header>
-    
-      <h1 class="entry-title"><a href="/blog/2012/01/12/objcbase/">Objective-C 一些很基础的总结</a></h1>
-    
-    
-      <p class="meta">
-        
-
-
-
-
-
-
-
-
-  
-
-
-<time datetime="2012-01-12T23:39:00+08:00" pubdate data-updated="true">Jan 12<span>th</span>, 2012</time>
-        
-
-        
-      | <a href="/blog/2012/01/12/objcbase/#comments">Comments</a>
-        
-
-      </p>
-    
-  </header>
-
-
-  <div class="entry-content"><p>学习 Objective-C大概4个月了，居然给一个还没毕业的家伙吹了吹，呼，希望不要误人子弟。这里总结一下，毕竟这是第一次完整的讲一个东西。</p>
-
-<p>附上PPT<a href="http://files.cnblogs.com/studentdeng/Objective-CPrimary.pptx">Objective-C Primary</a> 。资源99%来自WWDC 2010 session 113。</p>
-
-<p>Common Concepts</p>
-
-<p>Objective-C 相对其他更了解的C++语言来说，还是有些不同的。如下表</p>
-
-<p><img src="/images/objbase-1.png" alt="alt text" /></p>
-
-<p>这里面有几点比较重要</p>
-
-<p>Objective-C 中所有的类，其实是另一种“类”的对象，所以Objective-C 中的类方法，其实是另一种类的实例方法。 Objective-C Message
-Objective-C 中没有静态变量，都是用全局变量实现的。
-Category
-如何给一个类增加一个函数方法，在C++中是不可能的（或是很难）但是在Objective-C中确实很简单的事情，category 做的就是这件事情。</p>
-
-<p>当第一次看到category 时，我几乎肯定这是一个非常坑爹的设计，因为这个可以完美的覆盖原有类的方法，如果使用不当，绝对是灾难性的错误。但是，随着使用时间变长category 的好处也慢慢体会出来。</p>
-
-<p>给系统原有的类或是第三方的类增加函数，而不用使用一个新的类，这样使用会更加方便，特别是使用IB时，不需要将系统的类换成自己定义的类，这样减少了非常多的移植问题和同步工作。
-当然，如果使用不当，也会遇到问题</p>
-
-<p>函数覆盖问题，之前提到过
-增加大量的category 会降低系统性能，特别是如果大量的加到一些基础类上，如NSObject 等，因为，几乎整个系统都在使用这些类，而过多的category，不仅降低自己代码的效率，也会降低framework代码的效率，这里的效率，应该主要在类初始化上，和消息发送上面。
-SEL</p>
-
-<p>相关的内容在Objective C SEL
-Memory Management
-语言是离不开平台的，而内存管理，则是了解平台中最基础的部分。而cocoa touch 的内存设计也就是基于引用计数的设计，是针对很早以前的设备设计，显然不适合现在的硬件设备。但是，现在我们似乎没有其他的选择，在一开始学习时。</p>
-
-<p>基于引用计数的内存管理，设计的本质其实就是一个Directed Acyclic Graph（有向无回图）</p>
-
-<p><img src="/images/objbase-2.png" alt="alt text" /></p>
-
-<p>对于引用计数的内存管理，这一点实在是不陌生，不管是什么语言，都会遇到一个问题，循环引用</p>
-
-<p><img src="/images/objbase-3.png" alt="alt text" /></p>
-
-<p>当形成回路时，循环引用发生，导致内存泄露。而对应的方法，不管是什么语言，都需要把引用分为强引用和弱引用</p>
-
-<p><img src="/images/objbase-4.png" alt="alt text" /></p>
-
-<p>解决引用循环的方法很多，但是实质上，都是通过抽象成父子关系来做，一个强引用，一个弱引用，图形下方的节点通过弱引用连接上面的节点，图形上方的节点，通过强引用连接下方节点。实例就是delegate，属性被声明为assign</p>
-
-<p>Autorelease Pools
-autorelease 应该是初学者最容易糊涂的地方，一开始我也非常害怕使用Autorelease 变量，因为，这些变量不仅会增大内存开销，而且使用不当，crash的位置就是main函数，调试器几乎没有任何帮助，但是仍然有非常多的framework是基于autorelease 变量的，所以还是需要屡屡。</p>
-
-<p>cocoa touch 是事件驱动的，我们通过接受一个个的event来跑我们的程序，那么简单的讲，就是一个while的死循环，不断地获取一个event，处理一个event。</p>
-
-<p><img src="/images/objbase-5.png" alt="alt text" /></p>
-
-<p>处理event的时候，framework 帮我们建立了一个autorelease pool。</p>
-
-<p><img src="/images/objbase-6.png" alt="alt text" /></p>
-
-<p>当我们处理或是叫响应一个event时，比如调用了[NSDate date] 函数，这个函数，返回了一个autorelease 变量d</p>
-
-<p>而这个变量，事实上是被autorelease pool 所引用。</p>
-
-<p><img src="/images/objbase-7.png" alt="alt text" /></p>
-
-<p>当一层层stack pop 之后，我们可以看到 autorelease 变量的生命周期</p>
-
-<p><img src="/images/objbase-8.png" alt="alt text" /></p>
-
-<p><img src="/images/objbase-9.png" alt="alt text" /></p>
-
-<p>当调用[pool drain]后，autorelease pool 随之消失，伴随着还有那个var d，回到原点，在下一个event cycle</p>
-
-<p><img src="/images/objbase-10.png" alt="alt text" /></p>
-</div>
-  
-  
-
-
-    </article>
-  
   <div class="pagination">
     
       <a class="prev" href="/blog/page/2/">&larr; Older</a>
@@ -1361,6 +742,7 @@ autorelease 应该是初学者最容易糊涂的地方，一开始我也非常�
 <li class='category'><a href='/blog/categories/c-/'>c++ (6)</a></li>
 <li class='category'><a href='/blog/categories/configure/'>configure (2)</a></li>
 <li class='category'><a href='/blog/categories/emotion/'>emotion (8)</a></li>
+<li class='category'><a href='/blog/categories/mysql/'>mysql (1)</a></li>
 <li class='category'><a href='/blog/categories/operating-system/'>operating_system (3)</a></li>
 <li class='category'><a href='/blog/categories/tips/'>tips (1)</a></li>
 <li class='category'><a href='/blog/categories/windows/'>windows (9)</a></li>
@@ -1371,6 +753,10 @@ autorelease 应该是初学者最容易糊涂的地方，一开始我也非常�
 <section>
   <h1>Recent Posts</h1>
   <ul id="recent_posts">
+    
+      <li class="post">
+        <a href="/blog/2013/03/20/mysql-source-code-setup/">调试 mysql源代码 环境搭建</a>
+      </li>
     
       <li class="post">
         <a href="/blog/2013/03/05/emotion-unknown/">情商太低, 伤不起</a>
@@ -1386,30 +772,6 @@ autorelease 应该是初学者最容易糊涂的地方，一开始我也非常�
     
       <li class="post">
         <a href="/blog/2013/01/15/happiness/">哈佛幸福课 杂感一</a>
-      </li>
-    
-      <li class="post">
-        <a href="/blog/2012/02/16/selfos/">Orange‘s 一个操作系统的实现 配置问题</a>
-      </li>
-    
-      <li class="post">
-        <a href="/blog/2012/02/14/bochs-configure/">bochs-configure</a>
-      </li>
-    
-      <li class="post">
-        <a href="/blog/2012/02/03/objblock/">Objective-C block</a>
-      </li>
-    
-      <li class="post">
-        <a href="/blog/2012/01/13/plan/">plan</a>
-      </li>
-    
-      <li class="post">
-        <a href="/blog/2012/01/13/knownless/">转 从无知到有知</a>
-      </li>
-    
-      <li class="post">
-        <a href="/blog/2012/01/12/objcbase/">Objective-C 一些很基础的总结</a>
       </li>
     
   </ul>
@@ -1450,7 +812,7 @@ autorelease 应该是初学者最容易糊涂的地方，一开始我也非常�
 
 <section>
 <h1>Recent Comments</h1>
-<ul class="ds-recent-comments" data-num-items="10" data-show-avatars="0" data-show-time="0" data-show-title="0" data-show-admin="0" data-excerpt-length="18"></ul>
+<ul class="ds-recent-comments" data-num-items="5" data-show-avatars="0" data-show-time="0" data-show-title="0" data-show-admin="0" data-excerpt-length="18"></ul>
 
 <!--多说js加载开始，一个页面只需要加载一次 -->
 <script type="text/javascript">

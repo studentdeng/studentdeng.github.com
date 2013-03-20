@@ -12,7 +12,8 @@
   <meta name="description" content="ARC 编译时遇到的相关问题
 install cocoapods 问题
 Adding Unit Tests to an existing iOS project with Xcode 4
-NSDateFormatter 问题 ARC 编译时遇到的相关问题 自己的项目没有使用ARC, &hellip;">
+NSDateFormatter 问题
+写博客命令 ARC 编译时遇到的相关问题 自己的项目没有使用ARC, &hellip;">
   
 
   <!-- http://t.co/dKP3o1e -->
@@ -101,6 +102,7 @@ NSDateFormatter 问题 ARC 编译时遇到的相关问题 自己的项目没有�
 <li><a href="#A2">install cocoapods 问题</a></li>
 <li><a href="#A3">Adding Unit Tests to an existing iOS project with Xcode 4</a></li>
 <li><a href="#A4">NSDateFormatter 问题</a></li>
+<li><a href="#A5">写博客命令</a></li>
 </ol>
 
 
@@ -176,6 +178,16 @@ Click the Build Settings tab and set the Bundle Loader setting to</p>
 s_format = [[NSDateFormatter alloc] init];
 [s_format setDateFormat:@"eee MMM dd HH:mm:ss ZZZZ yyyy"];
 [s_format setLocale:[[NSLocale alloc] initWithLocaleIdentifier:@"en_US_POSIX"]]; //之前少了设定Locale
+</code></pre>
+
+<div name = "A5" id = "A5"></div>
+
+
+<h1>写博客命令</h1>
+
+<pre><code>rake new_post['filename'];
+rake generate 
+rake preview
 </code></pre>
 </div>
 
@@ -296,6 +308,7 @@ var jiathis_config={
 <li class='category'><a href='/blog/categories/c-/'>c++ (6)</a></li>
 <li class='category'><a href='/blog/categories/configure/'>configure (2)</a></li>
 <li class='category'><a href='/blog/categories/emotion/'>emotion (8)</a></li>
+<li class='category'><a href='/blog/categories/mysql/'>mysql (1)</a></li>
 <li class='category'><a href='/blog/categories/operating-system/'>operating_system (3)</a></li>
 <li class='category'><a href='/blog/categories/tips/'>tips (1)</a></li>
 <li class='category'><a href='/blog/categories/windows/'>windows (9)</a></li>
@@ -306,6 +319,10 @@ var jiathis_config={
 <section>
   <h1>Recent Posts</h1>
   <ul id="recent_posts">
+    
+      <li class="post">
+        <a href="/blog/2013/03/20/mysql-source-code-setup/">调试 mysql源代码 环境搭建</a>
+      </li>
     
       <li class="post">
         <a href="/blog/2013/03/05/emotion-unknown/">情商太低, 伤不起</a>
@@ -321,30 +338,6 @@ var jiathis_config={
     
       <li class="post">
         <a href="/blog/2013/01/15/happiness/">哈佛幸福课 杂感一</a>
-      </li>
-    
-      <li class="post">
-        <a href="/blog/2012/02/16/selfos/">Orange‘s 一个操作系统的实现 配置问题</a>
-      </li>
-    
-      <li class="post">
-        <a href="/blog/2012/02/14/bochs-configure/">bochs-configure</a>
-      </li>
-    
-      <li class="post">
-        <a href="/blog/2012/02/03/objblock/">Objective-C block</a>
-      </li>
-    
-      <li class="post">
-        <a href="/blog/2012/01/13/plan/">plan</a>
-      </li>
-    
-      <li class="post">
-        <a href="/blog/2012/01/13/knownless/">转 从无知到有知</a>
-      </li>
-    
-      <li class="post">
-        <a href="/blog/2012/01/12/objcbase/">Objective-C 一些很基础的总结</a>
       </li>
     
   </ul>
@@ -385,7 +378,7 @@ var jiathis_config={
 
 <section>
 <h1>Recent Comments</h1>
-<ul class="ds-recent-comments" data-num-items="10" data-show-avatars="0" data-show-time="0" data-show-title="0" data-show-admin="0" data-excerpt-length="18"></ul>
+<ul class="ds-recent-comments" data-num-items="5" data-show-avatars="0" data-show-time="0" data-show-title="0" data-show-admin="0" data-excerpt-length="18"></ul>
 
 </section>
   

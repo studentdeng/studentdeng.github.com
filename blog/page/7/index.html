@@ -1,348 +1,102 @@
-<?xml version="1.0" encoding="utf-8"?>
-<feed xmlns="http://www.w3.org/2005/Atom">
 
-  <title><![CDATA[Category: c++ | studentdeng Blog]]></title>
-  <link href="http://studentdeng.github.com/blog/categories/c-/atom.xml" rel="self"/>
-  <link href="http://studentdeng.github.com/"/>
-  <updated>2013-03-20T22:35:21+08:00</updated>
-  <id>http://studentdeng.github.com/</id>
-  <author>
-    <name><![CDATA[studentdeng]]></name>
+<!DOCTYPE html>
+<!--[if IEMobile 7 ]><html class="no-js iem7"><![endif]-->
+<!--[if lt IE 9]><html class="no-js lte-ie8"><![endif]-->
+<!--[if (gt IE 8)|(gt IEMobile 7)|!(IEMobile)|!(IE)]><!--><html class="no-js" lang="en"><!--<![endif]-->
+<head>
+  <meta charset="utf-8">
+  <title>studentdeng Blog</title>
+  <meta name="author" content="studentdeng">
+
+  
+  <meta name="description" content="昨天和同学对c++虚继承这部分 产生了一些争论，发觉自己对技术越来越浮躁了。不得不痛下决心。一看c++虚继承的内部实现（很浅很浅的看看）。 以下内容来自自己实验，希望各位大哥指点。当然要想获得权威的解释，看《Inside C++ Object Model》 让我们从最简单的开始。以下测试代码。 &hellip;">
+  
+
+  <!-- http://t.co/dKP3o1e -->
+  <meta name="HandheldFriendly" content="True">
+  <meta name="MobileOptimized" content="320">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+
+  
+  <link rel="canonical" href="http://studentdeng.github.com/blog/page/7/">
+  <link href="/favicon.png" rel="icon">
+  <link href="/stylesheets/screen.css" media="screen, projection" rel="stylesheet" type="text/css">
+  <script src="/javascripts/modernizr-2.0.js"></script>
+  <script src="/javascripts/ender.js"></script>
+  <script src="/javascripts/octopress.js" type="text/javascript"></script>
+  <link href="/atom.xml" rel="alternate" title="studentdeng Blog" type="application/atom+xml">
+  <!--Fonts from Google"s Web font directory at http://google.com/webfonts -->
+  
+
+</head>
+
+<body   >
+  <header role="banner"><hgroup>
+  <h1><a href="/">studentdeng Blog</a></h1>
+  
+    <h2>不会开机的男孩</h2>
+  
+</hgroup>
+
+</header>
+  <nav role="navigation"><ul class="subscription" data-subscription="rss">
+  <li><a href="/atom.xml" rel="subscribe-rss" title="subscribe via RSS">RSS</a></li>
+  
+</ul>
+  
+<form action="http://google.com/search" method="get">
+  <fieldset role="search">
+    <input type="hidden" name="q" value="site:studentdeng.github.com" />
+    <input class="search" type="text" name="q" results="0" placeholder="Search"/>
+  </fieldset>
+</form>
+  
+<ul class="main-navigation">
+  <li><a href="/">Blog</a></li>
+  <li><a href="/blog/archives">Archives</a></li>
+  <li><a href="/about">About</a></li>
+</ul>
+
+</nav>
+  <div id="main">
+    <div id="content">
+      <div class="blog-index">
+  
+  
+  
+    <article>
+      
+  <header>
     
-  </author>
-  <generator uri="http://octopress.org/">Octopress</generator>
+      <h1 class="entry-title"><a href="/blog/2010/06/01/c-plus-plus-vtable/">C++虚继承初探</a></h1>
+    
+    
+      <p class="meta">
+        
+
+
+
+
+
+
+
 
   
-  <entry>
-    <title type="html"><![CDATA[再谈C++虚继承]]></title>
-    <link href="http://studentdeng.github.com/blog/2010/06/07/c-plus-plus-vtable2/"/>
-    <updated>2010-06-07T20:50:00+08:00</updated>
-    <id>http://studentdeng.github.com/blog/2010/06/07/c-plus-plus-vtable2</id>
-    <content type="html"><![CDATA[<p>上一篇只是初步的写了一下虚继承，很不清楚而且有的地方自己理解也不到位。这回详细总结一下。以下内容来自vs2008 默认设置下。类的布局可以通过-d1reportSingleClassLayout查看。</p>
-
-<p>让我们从最简单的类结构开始。</p>
-
-<pre><code>class A
-{
-public:
-    int a;
-    void af();
-    void virtual vaf(); 
-};
-void A::vaf(){printf("vaf\n");}
-void A::af(){printf("af\n");}
-class B
-{
-public:
-    int b;
-    void bf();
-    void virtual vbf();
-};
-void B::vbf(){printf("vbf\n");};
-void B::bf(){printf("bf\n");};
-class C:public A,public B
-{
-public:
-    int c;
-    void cf();
-    void virtual vcf();    
-};
-void C::vcf(){printf("vcf\n");}
-void C::cf(){printf("cf\n");}
-</code></pre>
-
-<p>　　内存中这个例子是这样的。</p>
-
-<pre><code>class A    size(8):
-    +---
-    | {vfptr}
-    | a
-    +---
-
-A::$vftable@:
-    | &amp;A_meta
-    |  0
-    | &amp;A::vaf
 
 
-class B    size(8):
-    +---
-    | {vfptr}
-    | b
-    +---
+<time datetime="2010-06-01T20:30:00+08:00" pubdate data-updated="true">Jun 1<span>st</span>, 2010</time>
+        
 
-B::$vftable@:
-    | &amp;B_meta
-    |  0
-    | &amp;B::vbf
+        
+      | <a href="/blog/2010/06/01/c-plus-plus-vtable/#comments">Comments</a>
+        
 
-class C    size(20):
-    +---
-    | +--- (base class A)
-    | | {vfptr}
-    | | a
-    | +---
-    | +--- (base class B)
-    | | {vfptr}
-    | | b
-    | +---
-    | c
-    +---
-
-C::$vftable@A@:
-    | &amp;C_meta
-    |  0
-    | &amp;A::vaf
-    | &amp;C::vcf
-
-C::$vftable@B@:
-    | -8
-    | &amp;B::vbf
-</code></pre>
-
-<p>这里我们总结一下，类中有虚函数布局。</p>
-
-<p>若是类中有虚函数，那么类中第一个元素是指向虚表的指针（这个情况只有vftable）。
-基类数据成员
-本身类成员
-最左边的基类和本类公用同一个虚函数表，从而可以简化一些操作。
-　　一个简单的例子，让我们看一下虚函数运行时的样子。</p>
-
-<pre><code>C *pc= new C;
-pc-&gt;af();
-pc-&gt;vaf();
-pc-&gt;vcf();
-pc-&gt;vbf();
-delete pc;
-.text:00401059                 push    offset aAf      ; "af\n";这里调用非虚函数，之前有一个给ecx赋值语句
-.text:0040105E                 call    ds:__imp__printf
-.text:00401064                 mov     eax, [esi]
-.text:00401066                 mov     edx, [eax]
-.text:00401068                 add     esp, 4
-.text:0040106B                 mov     ecx, esi         ;这里ecx指向类A，这里因为A和C相同的开始地址
-.text:0040106D                 call    edx              ;这里节省了一次类的转化
-.text:0040106F                 mov     eax, [esi]
-.text:00401071                 mov     edx, [eax+4]     ;这里调用vcf，在虚表中我们看到了他的offset 4
-.text:00401074                 mov     ecx, esi
-.text:00401076                 call    edx
-.text:00401078                 mov     eax, [esi+8]     ;这里调用vbf,这里需要首先调整this指针
-.text:0040107B                 mov     edx, [eax]       ;在找到相应的函数偏移量（这里为0）
-.text:0040107D                 lea     ecx, [esi+8]
-.text:00401080                 call    edx
-</code></pre>
-
-<p>有了前面的铺垫，我们步入正题，依然是一个简单的例子。</p>
-
-<pre><code>class D :virtual public A
-{
-    int d;
-    void df();
-    void virtual vdf();
-};
-void D::vdf(){printf("vdf\n");}
-void D::df(){printf("df\n");}
-class E :virtual public A
-{
-public:
-    int e;
-    void ef();
-    void virtual vef();
-};
-void E::vef(){printf("vef\n");}
-void E::ef(){printf("ef\n");}
-class F :public A,public B
-{
-public:
-    int f;
-    void ff();
-    void virtual vff();
-};
-void F::vff(){printf("vff\n");}
-void F::ff(){printf("ff\n");}
-</code></pre>
-
-<p>让我们再看一下class F在内存中的布局</p>
-
-<pre><code>class F    size(36):
-    +---
-    | +--- (base class D)
-    | | {vfptr}
-    | | {vbptr}
-    | | d
-    | +---
-    | +--- (base class E)
-    | | {vfptr}
-    | | {vbptr}
-    | | e
-    | +---
-    | f
-    +---
-    +--- (virtual base A)
-    | {vfptr}
-    | a
-    +---
-
-F::$vftable@D@:
-    | &amp;F_meta
-    |  0
-    | &amp;D::vdf
-    | &amp;F::vff
-
-F::$vftable@E@:
-    | -12
-    | &amp;E::vef
-
-F::$vbtable@D@:
-    | -4
-    | 24 (Fd(D+4)A)
-
-F::$vbtable@E@:
-    | -4
-    | 12 (Fd(E+4)A)
-
-F::$vftable@A@:
-    | -28
-    | &amp;A::vaf
-</code></pre>
-
-<p>这里又增加了一个指向虚基表的指针vbptr，我们可以看出这个指针的目的在于计算包含虚继承的类的位置（有直接虚继承和间接虚继承）。让我们总结下有虚继承下的布局。</p>
-
-<p>将类中非虚继承的基类放置最前面。这样访问非虚继承函数不需再计算偏移量。
-在派生类中若是没有vbtable则增加一个，除非能从原来的非虚继承类继承到了vbtable。
-派生类数据成员
-虚基类
-　　可见，虚基类始终在类的尾部，那么当类生长的时候，也就是继续被继承时，则很有可能使虚基的偏移量变大。</p>
-
-<p>比如在class D的虚基表中，D与A偏移量为0，而在class F中D与A偏移量变为了24，所以只能加入一个vbptr指向虚基表。</p>
-
-<p>有了前面的知识，那么运行时的情况就好分析了。</p>
-
-<pre><code>.text:0040104F     mov     dword ptr [eax+4], offset ??_8F@@7BD@@@ ; const F::`vbtable'{for `D'}
-.text:00401056     mov     dword ptr [eax+10h], offset ??_8F@@7BE@@@ ; const F::`vbtable'{for `E'}
-                                                         ;首先将虚基表初始化 eax=this
-.text:0040105D     mov     dword ptr [eax+1Ch], offset ??_7A@@6B@ ; const A::`vftable'
-.text:00401064     mov     ecx, [eax+4]      ;*ecx=vbtableFD
-.text:00401067     mov     dword ptr [eax], offset ??_7D@@6B0@@ ; const D::`vftable'{for `D'}
-.text:0040106D     mov     edx, [ecx+4]      ;获得vbtableFD表中第2项，也就是D和A虚函数表的offset
-.text:00401070     mov     dword ptr [edx+eax+4], offset ??_7D@@6BA@@@ ; const D::`vftable'{for `A'}
-                                             ;根据和虚基表的offset+虚基表中和虚函数的offset+this找到虚函数位置以下类推
-.text:00401078     mov     ecx, [eax+10h]
-.text:0040107B     mov     dword ptr [eax+0Ch], offset ??_7E@@6B0@@ ; const E::`vftable'{for `E'}
-.text:00401082     mov     edx, [ecx+4]
-.text:00401085     mov     dword ptr [edx+eax+10h], offset ??_7E@@6BA@@@ ; const E::`vftable'{for `A'}
-.text:0040108D     mov     ecx, [eax+4]
-.text:00401090     mov     dword ptr [eax], offset ??_7F@@6BD@@@ ; const F::`vftable'{for `D'}
-.text:00401096     mov     dword ptr [eax+0Ch], offset ??_7F@@6BE@@@ ; const F::`vftable'{for `E'}
-.text:0040109D     mov     edx, [ecx+4]
-.text:004010A0     mov     dword ptr [edx+eax+4], offset ??_7F@@6BA@@@ ; const F::`vftable'{for `A'}
-.text:004010A8     mov     esi, eax
-
-.text:004010AE     mov     eax, [esi+4]            ;eax=*vbtableFD
-.text:004010B1     mov     ecx, [eax+4]            ;ecx=虚基表中和虚函数的offset
-.text:004010B4     mov     edx, [ecx+esi+4]        ;*edx=vftable
-.text:004010B8     mov     eax, [edx]              
-.text:004010BA     lea     ecx, [ecx+esi+4]        ;this=class A的开始
-.text:004010BE     call    eax                     ;pf-&gt;vaf();
-.text:004010C0     mov     edx, [esi]
-.text:004010C2     mov     eax, [edx]
-.text:004010C4     mov     ecx, esi                ;classD和classF公用虚表
-.text:004010C6     call    eax
-.text:004010C8     mov     edx, [esi+0Ch]
-.text:004010CB     mov     eax, [edx]
-.text:004010CD     lea     ecx, [esi+0Ch]          ;修正this，指向class E
-.text:004010D0     call    eax
-.text:004010D2     mov     edx, [esi]
-.text:004010D4     mov     eax, [edx+4]
-.text:004010D7     mov     ecx, esi
-.text:004010D9     call    eax
-</code></pre>
-
-<p>　　再看下虚函数覆盖的问题。</p>
-
-<pre><code>class G
-{
-public:
-    int g;
-    void gf();
-    void virtual vgf();
-    void virtual vaf();
-};
-void G::gf(){printf("gf\n");}
-void G::vgf(){printf("vgf\n");}
-void G::vaf(){printf("vaf_g\n");}
-class H:public A,public G
-{
-public:
-    int h;
-    void hf();
-    void vaf();
-    void vgf();
-    void virtual vhf();
-};
-void H::hf(){printf("hf\n");}
-void H::vaf(){printf("vaf_H\n");}
-void H::vgf(){printf("vgf_h\n");}
-void H::vhf(){printf("vhf\n");}
+      </p>
+    
+  </header>
 
 
-class H    size(20):
-    +---
-    | +--- (base class A)
-    | | {vfptr}
-    | | a
-    | +---
-    | +--- (base class G)
-    | | {vfptr}
-    | | g
-    | +---
-    | h
-    +---
-
-H::$vftable@A@:
-    | &amp;H_meta
-    |  0
-    | &amp;H::vaf
-    | &amp;H::vhf
-
-H::$vftable@G@:
-    | -8
-    | &amp;H::vgf
-    | &amp;thunk: this-=8; goto H::vaf
-</code></pre>
-
-<p>由于A类和G类的函数vaf都被子类H覆盖，由于A和H共用虚函数表，那么如果在G类中依然保留被覆盖的函数则浪费空间。实际是通过以下代码实现的。</p>
-
-<pre><code>.text:004010B0 ; [thunk]:public: virtual void __thiscall H::vaf`adjustor{8}' (void)
-.text:004010B0 ?vaf@H@@W7AEXXZ proc near               ; DATA XREF: .rdata:00402158o
-.text:004010B0                 sub     ecx, 8          ;这里调整this指针，指向class G=class A
-.text:004010B3                 jmp     ?vaf@H@@UAEXXZ  ; H::vaf(void);转向到G表中的vaf()
-.text:004010B3 ?vaf@H@@W7AEXXZ endp
-</code></pre>
-
-<p>可见要是要使用thunk，根本上是处理以达到节省函数表大小，通过修改this指针去调用子类表项，那么也就是当子类覆盖父类多个方法时，只保留一份，其他的则跳转执行。</p>
-
-<pre><code>mov     ecx, esi
-call    edx                   ;调用vaf
-mov     eax, [esi+8]          ;*eax=vftable_G
-mov     edx, [eax]
-lea     ecx, [esi+8]
-call    edx                   ;vgf
-mov     eax, [esi]
-mov     edx, [eax+4] 
-mov     ecx, esi
-call    edx                   ;vhf
-</code></pre>
-
-<p>虚函数中还有2个非常重要的部分一个纯虚函数,一个虚析构函数。由于析构函数和构造函数结合的实在是太紧密了。下一篇先总结下虚析构函数当然也包括构造函数的部分。</p>
-]]></content>
-  </entry>
-  
-  <entry>
-    <title type="html"><![CDATA[C++虚继承初探]]></title>
-    <link href="http://studentdeng.github.com/blog/2010/06/01/c-plus-plus-vtable/"/>
-    <updated>2010-06-01T20:30:00+08:00</updated>
-    <id>http://studentdeng.github.com/blog/2010/06/01/c-plus-plus-vtable</id>
-    <content type="html"><![CDATA[<p>昨天和同学对c++虚继承这部分 产生了一些争论，发觉自己对技术越来越浮躁了。不得不痛下决心。一看c++虚继承的内部实现（很浅很浅的看看）。</p>
+  <div class="entry-content"><p>昨天和同学对c++虚继承这部分 产生了一些争论，发觉自己对技术越来越浮躁了。不得不痛下决心。一看c++虚继承的内部实现（很浅很浅的看看）。</p>
 
 <p>以下内容来自自己实验，希望各位大哥指点。当然要想获得权威的解释，看《Inside C++ Object Model》</p>
 
@@ -578,15 +332,136 @@ jmp     ?f@C@@UAEXXZ    ; C::f(void)  ;这里顺理成章的变成了C::f()，th
 <p>这里似乎就是传说中的“形式转换程序”，这个的确减少了虚表的体积。
 再看后面的代码，函数调用的时候和之前完全一致，也就是在class C中定义的f()，虽然没有被显示的声明为virtual，但vs2008已经
 把他默认当成虚函数调用了。至此，和同学的争论就此结束。</p>
-]]></content>
-  </entry>
+</div>
   
-  <entry>
-    <title type="html"><![CDATA[多线程程序设计笔记二]]></title>
-    <link href="http://studentdeng.github.com/blog/2010/04/24/mult-threading2/"/>
-    <updated>2010-04-24T18:46:00+08:00</updated>
-    <id>http://studentdeng.github.com/blog/2010/04/24/mult-threading2</id>
-    <content type="html"><![CDATA[<p>当我们正式开始之前，我想再多说一点，上一篇最后的那个程序可能会给像我一样的菜鸟一个误解，这里解释下。</p>
+  
+
+
+    </article>
+  
+  
+    <article>
+      
+  <header>
+    
+      <h1 class="entry-title"><a href="/blog/2010/05/22/asm-win32/">Win32汇编学习（1）</a></h1>
+    
+    
+      <p class="meta">
+        
+
+
+
+
+
+
+
+
+  
+
+
+<time datetime="2010-05-22T18:49:00+08:00" pubdate data-updated="true">May 22<span>nd</span>, 2010</time>
+        
+
+        
+      | <a href="/blog/2010/05/22/asm-win32/#comments">Comments</a>
+        
+
+      </p>
+    
+  </header>
+
+
+  <div class="entry-content"><p>终于把学校里面让人无语的论文搞定了。周末终于有时间干些自己想干的事了。想起了这2周做的关于编译原理的实验，代码优化这部分的确是个难题。哎，我实在是太笨了，其实答案就在自己电脑里。将c程序反汇编后，终于第一次感受到了debug 和release的区别。兴奋之余让我又产生了忧虑，自己汇编的能力太弱了，面对稍微复杂点的算法再加上编译优化后的汇编代码，真是欲哭无泪。痛下决心，准备好好学学汇编了。为了给自己一个动力，准备学习Win32汇编（和学校那个8086再见了）。</p>
+
+<p>　　第一天，不准备上难度了。从最简单的&#8221;HelloWorld&#8221;开始。</p>
+
+<pre><code>; HelloWorld.asm
+
+comment * ----------------------------------------------
+                 The First Assemble Application
+                ---------------------------------------------- *
+
+.386
+.model flat, stdcall
+option casemap:none
+
+include \masm32\include\windows.inc
+
+include \masm32\include\user32.inc
+include \masm32\include\kernel32.inc
+
+includelib \masm32\lib\user32.lib
+includelib \masm32\lib\kernel32.lib
+
+    .data
+szCaption   db 'MessageBox', 0
+szText      db 'Hello, World!', 0
+
+    .code
+start:
+    invoke MessageBox,\     ; 调用函数名
+        NULL,\                      ; 父窗口句柄
+        offset szText,\           ; 文字
+        offset szCaption,\      ; 标题
+        MB_OK                    ; 按钮类型
+
+    invoke ExitProcess, NULL
+end start
+</code></pre>
+
+<p>一个简单的窗口就创建好了。一眼看上去发现和以前的8086还是有很多不同的。</p>
+
+<p>首先8086和80386在寻址方式不同。</p>
+
+<p>8086 通过 段地址*0x10 +偏移地址确定的。只能寻址1M，而80386 32根地址线寻址，空间达到了4G而且80386 通用寄存器大小为32位，所以不需要分段就能访问到地址。</p>
+
+<p>那么.data,.code不是段的意思么？ 不是。因为808386有分页机制，每个页可以自由制定属性，已经和8086代码和数据分段处理完全不同，实际上是把不同类型的数据或代码归类，再放到不同属性的内存页。</p>
+
+<p> 其次，8086的不安全，不方便的调用中断的方式改为了调用系统API的方式。我这里是采用的MASM，所以有invoke伪指令，其实这个指令也没别的，就是为我们编程省去了函数参数入栈的那些push。</p>
+
+<p>最后，发现win32汇编和使用c/c++似乎没有复杂很多。</p>
+</div>
+  
+  
+
+
+    </article>
+  
+  
+    <article>
+      
+  <header>
+    
+      <h1 class="entry-title"><a href="/blog/2010/04/24/mult-threading2/">多线程程序设计笔记二</a></h1>
+    
+    
+      <p class="meta">
+        
+
+
+
+
+
+
+
+
+  
+
+
+<time datetime="2010-04-24T18:46:00+08:00" pubdate data-updated="true">Apr 24<span>th</span>, 2010</time>
+        
+
+        
+      | <a href="/blog/2010/04/24/mult-threading2/#comments">Comments</a>
+        
+
+      </p>
+    
+  </header>
+
+
+  <div class="entry-content"><p>当我们正式开始之前，我想再多说一点，上一篇最后的那个程序可能会给像我一样的菜鸟一个误解，这里解释下。</p>
 
 <p>程序启动后就执行的那个线程称为主线程（也就是那个程序中的执行main函数的线程），而其他线程则成为子线程。主线程和其他线程最大的区别是当主线程返回或是调用一些函数强制退出后，使得程序中的其他子线程强制结束。 在一篇中native code和Manager code 在遇到同样的问题时，.net给我们做了一个好的榜样，其实不管是否是UI子线程，.net 控制台在终止进程结束之前，都会保证所有子线程已经退出。虽然我们无法知道到底它采用的是什么机制（我的理解是在调用结束进程之前调用了WaitForMultipleObjects或是其他wait函数等待所有子线程返回），但是这体现了一个很重要的原则，对产生的子线程负责，无论什么时候，都不应该直接结束程序而不等待子线程结束。因为子线程没有机会做清理工作。这个是一个非常可怕的问题，想这样的一个情况，子线程比如正在申请一个堆空间，而正好锁住了那个区域，然后被强制结束了。那么就很可能产生了内存泄露（产生不了也会增大系统负担）。所以再次提醒自己主线程在退出的时候，必须保证所有的子线程已经退出。</p>
 
@@ -720,15 +595,47 @@ void AddHead(List *pList,Node *node)
 想要了解更多的关于临界区的，参考http://msdn.microsoft.com/zh-cn/magazine/cc164040(en-us).aspx</p>
 
 <p>中文http://www.microsoft.com/china/MSDN/library/enterprisedevelopment/softwaredev/ousCriticalSections.mspx?mfr=true</p>
-]]></content>
-  </entry>
+</div>
   
-  <entry>
-    <title type="html"><![CDATA[多线程程序设计笔记一]]></title>
-    <link href="http://studentdeng.github.com/blog/2010/04/16/mult-threading/"/>
-    <updated>2010-04-16T18:11:00+08:00</updated>
-    <id>http://studentdeng.github.com/blog/2010/04/16/mult-threading</id>
-    <content type="html"><![CDATA[<p>多线程编程，学习了一个星期，总结一下。以下内容全部基于windows操作系统。  由于实力有限，对操作系统没有深入了解（或是根本不了解吧），一下内容主要来自《windows核心编程》、《win32多线程程序设计》、一些网上高人的见解和自己的理解而自己的认识难免有些偏差，希望大家挑挑毛病。谢谢。</p>
+  
+
+
+    </article>
+  
+  
+    <article>
+      
+  <header>
+    
+      <h1 class="entry-title"><a href="/blog/2010/04/16/mult-threading/">多线程程序设计笔记一</a></h1>
+    
+    
+      <p class="meta">
+        
+
+
+
+
+
+
+
+
+  
+
+
+<time datetime="2010-04-16T18:11:00+08:00" pubdate data-updated="true">Apr 16<span>th</span>, 2010</time>
+        
+
+        
+      | <a href="/blog/2010/04/16/mult-threading/#comments">Comments</a>
+        
+
+      </p>
+    
+  </header>
+
+
+  <div class="entry-content"><p>多线程编程，学习了一个星期，总结一下。以下内容全部基于windows操作系统。  由于实力有限，对操作系统没有深入了解（或是根本不了解吧），一下内容主要来自《windows核心编程》、《win32多线程程序设计》、一些网上高人的见解和自己的理解而自己的认识难免有些偏差，希望大家挑挑毛病。谢谢。</p>
 
 <h1>进程和线程的区别。</h1>
 
@@ -754,7 +661,7 @@ void AddHead(List *pList,Node *node)
 <h1>使用多线程的原因。</h1>
 
 <ol>
-<li>和进程相比，它是一种非常"节俭"的操作方式。启动一个线程所花费的空间远远小于启动一个进程所花费的空间，而且，线程间彼此切换所需的时间也远远小于进程间切换所需要的时间。</li>
+<li>和进程相比，它是一种非常&#8221;节俭&#8221;的操作方式。启动一个线程所花费的空间远远小于启动一个进程所花费的空间，而且，线程间彼此切换所需的时间也远远小于进程间切换所需要的时间。</li>
 <li>线程间方便的通信机制。同一进程下的线程之间共享数据空间，所以一个线程的数据可以直接为其它线程所用。</li>
 <li>提高应用程序响应。这对图形界面的程序尤其有意义，当一个操作耗时很长时，整个系统都会等待这个操作，此时程序不会响应键盘、鼠标、菜单的操作，而使用多线程技术，将耗时长的操作和UI线程工作分开。</li>
 <li>线程彼此分享了大部分核心对象的拥有权。</li>
@@ -932,15 +839,47 @@ DWORD WINAPI ThreadFunc(LPVOID n)
 <p>好吧。我承认我错了，到底哪里出了问题。我是搞不定了。这个花了我大概2天的时间，曾经我一度以为UI线程和Message queue之间有某种必然的联系，但是上例完全证明了我之前的想法是可笑的或是我整个思考出发点就是错误的。在thread1中不仅调用了GDI函数，而且能够响应消息（说明已经有了Message queue和Message loop）。</p>
 
 <p>看来我得继续学习才能搞定这个了。</p>
-]]></content>
-  </entry>
+</div>
   
-  <entry>
-    <title type="html"><![CDATA[缩略图设计初探二]]></title>
-    <link href="http://studentdeng.github.com/blog/2010/04/06/thumb-pic2/"/>
-    <updated>2010-04-06T18:43:00+08:00</updated>
-    <id>http://studentdeng.github.com/blog/2010/04/06/thumb-pic2</id>
-    <content type="html"><![CDATA[<p>之前的问题还是很大的，参考了.net framework Dictionary的思路，保留MPQ的hash算法和判断冲突的思路。重新整理了一下。</p>
+  
+
+
+    </article>
+  
+  
+    <article>
+      
+  <header>
+    
+      <h1 class="entry-title"><a href="/blog/2010/04/06/thumb-pic2/">缩略图设计初探二</a></h1>
+    
+    
+      <p class="meta">
+        
+
+
+
+
+
+
+
+
+  
+
+
+<time datetime="2010-04-06T18:43:00+08:00" pubdate data-updated="true">Apr 6<span>th</span>, 2010</time>
+        
+
+        
+      | <a href="/blog/2010/04/06/thumb-pic2/#comments">Comments</a>
+        
+
+      </p>
+    
+  </header>
+
+
+  <div class="entry-content"><p>之前的问题还是很大的，参考了.net framework Dictionary的思路，保留MPQ的hash算法和判断冲突的思路。重新整理了一下。</p>
 
 <p>第一部分：改进部分</p>
 
@@ -1064,7 +1003,145 @@ DWORD WINAPI ThreadFunc(LPVOID n)
 </code></pre>
 
 <p><a href="http://files.cnblogs.com/studentdeng/MP_v2.rar">MP_v2.rar源码</a></p>
-]]></content>
-  </entry>
+</div>
   
-</feed>
+  
+
+
+    </article>
+  
+  <div class="pagination">
+    
+      <a class="prev" href="/blog/page/8/">&larr; Older</a>
+    
+    <a href="/blog/archives">Blog Archives</a>
+    
+    <a class="next" href="/blog/page/6/">Newer &rarr;</a>
+    
+  </div>
+</div>
+<aside class="sidebar">
+  
+    <section>
+  <h1>Categories</h1>
+  <ul id="categories">
+    <li class='category'><a href='/blog/categories/ios/'>IOS (1)</a></li>
+<li class='category'><a href='/blog/categories/objective-c/'>Objective-C (6)</a></li>
+<li class='category'><a href='/blog/categories/stl/'>STL (5)</a></li>
+<li class='category'><a href='/blog/categories/wpf-sl/'>WPF/SL (1)</a></li>
+<li class='category'><a href='/blog/categories/algorithms/'>algorithms (8)</a></li>
+<li class='category'><a href='/blog/categories/asm/'>asm (1)</a></li>
+<li class='category'><a href='/blog/categories/c-/'>c++ (6)</a></li>
+<li class='category'><a href='/blog/categories/configure/'>configure (2)</a></li>
+<li class='category'><a href='/blog/categories/emotion/'>emotion (8)</a></li>
+<li class='category'><a href='/blog/categories/mysql/'>mysql (1)</a></li>
+<li class='category'><a href='/blog/categories/operating-system/'>operating_system (3)</a></li>
+<li class='category'><a href='/blog/categories/tips/'>tips (1)</a></li>
+<li class='category'><a href='/blog/categories/windows/'>windows (9)</a></li>
+<li class='category'><a href='/blog/categories/windows-mobile/'>windows_mobile (2)</a></li>
+
+  </ul>
+</section>
+<section>
+  <h1>Recent Posts</h1>
+  <ul id="recent_posts">
+    
+      <li class="post">
+        <a href="/blog/2013/03/20/mysql-source-code-setup/">调试 mysql源代码 环境搭建</a>
+      </li>
+    
+      <li class="post">
+        <a href="/blog/2013/03/05/emotion-unknown/">情商太低, 伤不起</a>
+      </li>
+    
+      <li class="post">
+        <a href="/blog/2013/03/03/arc/">ARC 1</a>
+      </li>
+    
+      <li class="post">
+        <a href="/blog/2013/01/26/tips/">tips</a>
+      </li>
+    
+      <li class="post">
+        <a href="/blog/2013/01/15/happiness/">哈佛幸福课 杂感一</a>
+      </li>
+    
+  </ul>
+</section>
+
+<section>
+  <h1>GitHub Repos</h1>
+  <ul id="gh_repos">
+    <li class="loading">Status updating&#8230;</li>
+  </ul>
+  
+  <a href="https://github.com/studentdeng">@studentdeng</a> on GitHub
+  
+  <script type="text/javascript">
+    $.domReady(function(){
+        if (!window.jXHR){
+            var jxhr = document.createElement('script');
+            jxhr.type = 'text/javascript';
+            jxhr.src = '/javascripts/libs/jXHR.js';
+            var s = document.getElementsByTagName('script')[0];
+            s.parentNode.insertBefore(jxhr, s);
+        }
+
+        github.showRepos({
+            user: 'studentdeng',
+            count: 5,
+            skip_forks: true,
+            target: '#gh_repos'
+        });
+    });
+  </script>
+  <script src="/javascripts/github.js" type="text/javascript"> </script>
+</section>
+
+
+
+
+
+<section>
+<h1>Recent Comments</h1>
+<ul class="ds-recent-comments" data-num-items="5" data-show-avatars="0" data-show-time="0" data-show-title="0" data-show-admin="0" data-excerpt-length="18"></ul>
+
+<!--多说js加载开始，一个页面只需要加载一次 -->
+<script type="text/javascript">
+  var duoshuoQuery = {short_name:"studentdeng"};
+  (function() {
+    var ds = document.createElement('script');
+    ds.type = 'text/javascript';ds.async = true;
+    ds.src = 'http://static.duoshuo.com/embed.js';
+    ds.charset = 'UTF-8';
+    (document.getElementsByTagName('head')[0] || document.getElementsByTagName('body')[0]).appendChild(ds);
+  })();
+</script>
+<!--多说js加载结束，一个页面只需要加载一次 -->
+
+</section>
+  
+</aside>
+
+    </div>
+  </div>
+  <footer role="contentinfo"><p>
+  Copyright &copy; 2013 - studentdeng -
+  <span class="credit">Powered by <a href="http://octopress.org">Octopress</a></span>
+</p>
+
+</footer>
+  
+
+
+
+
+
+
+
+
+
+
+
+</body>
+</html>

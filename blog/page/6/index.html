@@ -1,0 +1,1917 @@
+
+<!DOCTYPE html>
+<!--[if IEMobile 7 ]><html class="no-js iem7"><![endif]-->
+<!--[if lt IE 9]><html class="no-js lte-ie8"><![endif]-->
+<!--[if (gt IE 8)|(gt IEMobile 7)|!(IEMobile)|!(IE)]><!--><html class="no-js" lang="en"><!--<![endif]-->
+<head>
+  <meta charset="utf-8">
+  <title>studentdeng Blog</title>
+  <meta name="author" content="studentdeng">
+
+  
+  <meta name="description" content="SEH(structured exception handling)，结构化异常处理。在windows本身开发中运用的非常广泛，而且MS并没有独享，并且通过vs为开发者提供了方便几个关键字来支持。try, exception,__finally。但是讲解的却非常少。本文希望能够给大家抛砖引玉一下 &hellip;">
+  
+
+  <!-- http://t.co/dKP3o1e -->
+  <meta name="HandheldFriendly" content="True">
+  <meta name="MobileOptimized" content="320">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+
+  
+  <link rel="canonical" href="http://studentdeng.github.com/blog/page/6/">
+  <link href="/favicon.png" rel="icon">
+  <link href="/stylesheets/screen.css" media="screen, projection" rel="stylesheet" type="text/css">
+  <script src="/javascripts/modernizr-2.0.js"></script>
+  <script src="/javascripts/ender.js"></script>
+  <script src="/javascripts/octopress.js" type="text/javascript"></script>
+  <link href="/atom.xml" rel="alternate" title="studentdeng Blog" type="application/atom+xml">
+  <!--Fonts from Google"s Web font directory at http://google.com/webfonts -->
+  
+
+</head>
+
+<body   >
+  <header role="banner"><hgroup>
+  <h1><a href="/">studentdeng Blog</a></h1>
+  
+    <h2>不会开机的男孩</h2>
+  
+</hgroup>
+
+</header>
+  <nav role="navigation"><ul class="subscription" data-subscription="rss">
+  <li><a href="/atom.xml" rel="subscribe-rss" title="subscribe via RSS">RSS</a></li>
+  
+</ul>
+  
+<form action="http://google.com/search" method="get">
+  <fieldset role="search">
+    <input type="hidden" name="q" value="site:studentdeng.github.com" />
+    <input class="search" type="text" name="q" results="0" placeholder="Search"/>
+  </fieldset>
+</form>
+  
+<ul class="main-navigation">
+  <li><a href="/">Blog</a></li>
+  <li><a href="/blog/archives">Archives</a></li>
+  <li><a href="/about">About</a></li>
+</ul>
+
+</nav>
+  <div id="main">
+    <div id="content">
+      <div class="blog-index">
+  
+  
+  
+    <article>
+      
+  <header>
+    
+      <h1 class="entry-title"><a href="/blog/2010/12/15/seh1/">SEH学习笔记一</a></h1>
+    
+    
+      <p class="meta">
+        
+
+
+
+
+
+
+
+
+  
+
+
+<time datetime="2010-12-15T21:20:00+08:00" pubdate data-updated="true">Dec 15<span>th</span>, 2010</time>
+        
+
+        
+      | <a href="/blog/2010/12/15/seh1/#comments">Comments</a>
+        
+
+      </p>
+    
+  </header>
+
+
+  <div class="entry-content"><p>SEH(structured exception handling)，结构化异常处理。在windows本身开发中运用的非常广泛，而且MS并没有独享，并且通过vs为开发者提供了方便几个关键字来支持。<strong>try, </strong>exception,__finally。但是讲解的却非常少。本文希望能够给大家抛砖引玉一下。</p>
+
+<p>http://www.microsoft.com/msj/0197/exception/exception.aspx，这篇是理解SEH必须的文章，虽然他的时间悠久，但是却真正的解释了SEH的编译器级实现，下面的一些示例代码也来自这里。</p>
+
+<p>相关的不错的SEH文章，http://www.woodmann.com/crackz/Tutorials/Seh.htm。</p>
+
+<p>http://blogs.msdn.com/b/cbrumme/archive/2003/10/01/51524.aspx 这里讲了一些.net 异常机制，之前讲一些SEH也很不错。</p>
+
+<p>SEH中，在《windows 核心编程》中有一些讲解，但是我相信绝大多数，想我这样的初学者，并不能理解Jeffrey Richter的意思。其中最富有争议的就是“栈展开”(stack unwind),这个可以说是非常有想象力的一个词，伴随这个还有全局展开(global unwind)，和局部展开(local unwind)。以下内容，主要围绕《windows 核心编程》中比较容易让我这样的初学者困惑的地方展开(unwind? :P)。</p>
+
+<p>首先我们需要对SEH有一个大体的认识，</p>
+
+<p>当异常出现的时候，我们可以有选择性的处理异常，将相同的异常处理函数集中一起，大大减少了代码的维护工作，这意味着处理异常的时候，将有类似非局部跳转的能力。
+异常和返回值判断的最根本的不同是，异常真正的做到了健壮性，甚至连栈溢出的问题都可以恢复运行（当然，这个恢复没有任何意义，主要是能够保存错误信息）。所以异常是和操作系统结合的，所以必然导致了复杂性的大大提高，效率上的降低。
+程序的执行，需要一些最基本的运行环境，而在windows 中则是contex，（上下文），其中保存了大量的寄存器的值，而通过这些可以保证程序的执行环境正确，而这是在进行非局部跳转必须做到的事情。所以，在遇到<strong>try block的时候，编译器会在栈空间上保存一些信息，做为一个结点并将这些信息用链表联系起来，这样，当异常发生的时候，操作系统找到链表的头结点，然后遍历list，执行我们的代码，并找到相对应的处理异常的代码。而这个头结点，就保存在FS:[0]。当windows 遍历list，并找到相对应的代码时，由于程序控制流程的改变，在发生异常，到找到执行代码的这部分之间的一些临时变量都没有被释放掉（这里面不仅有我们的，还有一些是编译器默默为我们做的，比如之前提到的</strong>try所加入的节点必须从之前的list删掉）。而这个做的释放过程就是unwind。处理多个<strong>try的为global unwind，处理当前的</strong>try 上的__try则是local unwind(这里不是很准确，后面会详细解释)。</p>
+
+<p>结束处理程序（Termination Handlers），看起来简单也十分让人疑惑，为什么 return, goto，longjump，异常，控制流离开<strong>try block的时候，可以去执行</strong>finally block呢？ 同样，为什么ExitProcess, ExitThread, TerminateProcess, or TerminateThread则不能被执行呢？为什么可以使用goto到<strong>try外面，而不能跳入一个</strong>try block？等等。</p>
+
+<p>异常处理程序（Exception Handlers），则更让新手疑惑，特别是在结合了结束处理程序情况下，在程序的执行流程则变的诡异起来，而我们看到在vc中的SEH并不能够支持<strong>finally 和</strong>except结合一起使用，这又是为什么？使用SEH是否为我们程序增加了相当的负担？SEH是否安全？</p>
+
+<p>为了清楚的认识这些问题，我们必须更进一步的去探究SEH的具体实现过程，由于不同厂商不同编译器的实现方式不同，所以以下的部分来自MS自己的vc。而其由于SEH涉及到了一些安全问题和硬件的部分，所以在不同的vc 版本，不同的操作系统不同的计算机下的情况也不同。当然，为了简单，我们先看最简单的vc6。在我们正式进入细节的时候，让我们先暂时忘记那些__try关键字。</p>
+
+<p>　　异常是操作系统传给我们写的程序，我们写好处理异常的代码，那么操作系统是如何调用我们写的函数呢？当然是通过回调函数做的，那么这个回调函数是什么样子的呢？</p>
+
+<pre><code>EXCEPTION_DISPOSITION
+__cdecl _except_handler(
+     struct _EXCEPTION_RECORD *ExceptionRecord,
+     void * EstablisherFrame,
+     struct _CONTEXT *ContextRecord,
+     void * DispatcherContext
+     );
+</code></pre>
+
+<p>在EXCPT.H中，我们可以找到这个定义。</p>
+
+<pre><code>typedef struct _EXCEPTION_RECORD {
+    DWORD ExceptionCode;
+    DWORD ExceptionFlags;
+    struct _EXCEPTION_RECORD *ExceptionRecord;
+    PVOID ExceptionAddress;
+    DWORD NumberParameters;
+    DWORD ExceptionInformation[EXCEPTION_MAXIMUM_PARAMETERS];
+}  EXCEPTION_RECORD;
+</code></pre>
+
+<p>EXCEPTION_RECORD 定义异常，更多的可以参考msdn，http://msdn.microsoft.com/en-us/library/aa363082(VS.85).aspx</p>
+
+<p>contex的定义则根据不同的硬件有不同的定义，这里面定义了线程运行的环境，上下文。找到了回调函数，和异常的样子，那么操作系统是如何调用呢？还记得之前提到的list么？fs:[0]，那里，有我们需要的，我们需要知道另一个结构体。这是一个汇编上的定义。</p>
+
+<pre><code>_EXCEPTION_REGISTRATION struc
+        prev    dd              ?
+        handler dd            ?
+_EXCEPTION_REGISTRATION ends
+</code></pre>
+
+<p>prev记录了上一个_EXCEPTION_REGISTRATION结构体的地址，而handler则是我们回调函数的地址，操作系统通过fs:[0]，找到了一系列的我们写的回调函数。</p>
+
+<p>让我们先试一下。</p>
+
+<pre><code>//==================================================
+// MYSEH - Matt Pietrek 1997
+// Microsoft Systems Journal, January 1997
+// FILE: MYSEH.CPP
+// To compile: CL MYSEH.CPP
+//==================================================
+#define WIN32_LEAN_AND_MEAN
+#include &lt;windows.h&gt;
+#include &lt;stdio.h&gt;
+
+DWORD  scratch;
+
+EXCEPTION_DISPOSITION
+__cdecl
+_except_handler(
+    struct _EXCEPTION_RECORD *ExceptionRecord,
+    void * EstablisherFrame,
+    struct _CONTEXT *ContextRecord,
+    void * DispatcherContext )
+{
+    unsigned i;
+
+    // Indicate that we made it to our exception handler
+    printf( "Hello from an exception handler\n" );
+
+    // Change EAX in the context record so that it points to someplace
+    // where we can successfully write
+    ContextRecord-&gt;Eax = (DWORD)&amp;scratch;
+
+    // Tell the OS to restart the faulting instruction
+    return ExceptionContinueExecution;
+}
+
+int main(int argc, char* argv[])
+{
+    DWORD handler = (DWORD)_except_handler;
+
+    __asm
+    {                           // Build EXCEPTION_REGISTRATION record:
+        push    handler         // Address of handler function
+        push    FS:[0]          // Address of previous handler
+        mov     FS:[0],ESP      // Install new EXECEPTION_REGISTRATION
+    }
+
+    __asm
+    {
+        mov     eax,0           // Zero out EAX
+        mov     [eax], 1        // Write to EAX to deliberately cause a fault
+    }
+
+    printf( "After writing!\n" );
+
+    __asm
+    {                           // Remove our EXECEPTION_REGISTRATION record
+        mov     eax,[ESP]       // Get pointer to previous record
+        mov     FS:[0], EAX     // Install previous record
+        add     esp, 8          // Clean our EXECEPTION_REGISTRATION off stack
+    }
+
+    return 0;
+}
+
+typedef enum _EXCEPTION_DISPOSITION {
+    ExceptionContinueExecution,
+    ExceptionContinueSearch,
+    ExceptionNestedException,
+    ExceptionCollidedUnwind
+} EXCEPTION_DISPOSITION;
+</code></pre>
+
+<p>vc通过类似的代码生成，在我们的这段代码，</p>
+
+<pre><code>mov eax,0  mov [eax], 1，
+</code></pre>
+
+<p>在栈空间上分配了一个EXCEPTION_REGISTRATION结构体，并插入了fs:[0]链表的表头。 当然，在最后跳出这个代码块的时候，这个栈空间的EXCEPTION_REGISTRATION结构体也必须从fs:[0]中卸载掉。而在_except_handler返回的ExceptionContinueExecution，则意味着告诉OS，需要从发生异常的那个语句重新执行，一切都是那么的简单和自然。为了简单，我们在首节点就处理了这个异常，让我们再进一步，看一下异常是如何传递的。</p>
+
+<pre><code>EXCEPTION_DISPOSITION
+__cdecl
+_except_handler(
+    struct _EXCEPTION_RECORD *ExceptionRecord,
+    void * EstablisherFrame,
+    struct _CONTEXT *ContextRecord,
+    void * DispatcherContext )
+{
+    printf( "Home Grown handler: Exception Code: %08X Exception Flags %X",
+        ExceptionRecord-&gt;ExceptionCode, ExceptionRecord-&gt;ExceptionFlags );
+
+    if ( ExceptionRecord-&gt;ExceptionFlags &amp; 1 )
+        printf( " EH_NONCONTINUABLE" );
+    if ( ExceptionRecord-&gt;ExceptionFlags &amp; 2 )
+        printf( " EH_UNWINDING" );
+    if ( ExceptionRecord-&gt;ExceptionFlags &amp; 4 )
+        printf( " EH_EXIT_UNWIND" );
+    if ( ExceptionRecord-&gt;ExceptionFlags &amp; 8 )
+        printf( " EH_STACK_INVALID" );
+    if ( ExceptionRecord-&gt;ExceptionFlags &amp; 0x10 )
+        printf( " EH_NESTED_CALL" );
+
+    printf( "\n" );
+
+    // Punt... We don't want to handle this... Let somebody else handle it
+    return ExceptionContinueSearch;
+}
+
+void HomeGrownFrame( void )
+{
+    DWORD handler = (DWORD)_except_handler;
+
+    __asm
+    {                           // Build EXCEPTION_REGISTRATION record:
+        push    handler         // Address of handler function
+        push    FS:[0]          // Address of previous handler
+        mov     FS:[0],ESP      // Install new EXECEPTION_REGISTRATION
+    }
+
+    *(PDWORD)0 = 0;             // Write to address 0 to cause a fault
+
+    printf( "I should never get here!\n" );
+
+    __asm
+    {                           // Remove our EXECEPTION_REGISTRATION record
+        mov     eax,[ESP]       // Get pointer to previous record
+        mov     FS:[0], EAX     // Install previous record
+        add     esp, 8          // Clean our EXECEPTION_REGISTRATION off stack
+    }
+}
+
+int _tmain(int argc, _TCHAR* argv[])
+{
+    _try
+    {
+        HomeGrownFrame(); 
+    }
+    _except( EXCEPTION_EXECUTE_HANDLER )
+    {
+        printf( "Caught the exception in main()\n" );
+    }
+    return 0;
+}
+</code></pre>
+
+<p>我们在_except_handler中返回了ExceptionContinueSearch，这会告诉windows，我们这个回调函数不处理这个异常，你找其他去吧。我们看到了这个输出结果。</p>
+
+<pre><code>Home Grown handler: Exception Code: C0000005 Exception Flags 0
+Home Grown handler: Exception Code: C0000027 Exception Flags 2 EH_UNWINDING
+Caught the exception in main()
+</code></pre>
+
+<p>　　第一个我们很好理解，但是第二次是什么情况呢？这个就是之前提到的unwind过程。windows依次调用fs:[0]上的exceptionlist的回调函数，并根据返回值判断该如何执行，如果是ExceptionContinueSearch，则通过EXCEPTION_REGISTRATION 的prev寻找下一个，直到找到处理异常的函数（windows在创建线程的时候，已经为我们准备好了处理异常的程序）。在找到处理异常的代码后，windows会再一次遍历list，直到处理异常的地方。这一次和第一次不同的是Exception Flags  | = EH_UNWINDING，这一次，正是给那些拒绝处理这个异常的代码块一次清理自己的机会，包括一些编译器默默为我们生成的一些临时东东的移除，c++一些临时对象的析构函数调用，从fs:[0]，list上删除EXCEPTION_REGISTRATION 等等，当然，我们的finally block也正好趁着这个机会把自己执行了一次。但是，在我们开心的找到回调函数地址的时候，我们却不能直接执行这个地址的代码，因为在之前，很可能运行的环境已经变化了，许多寄存器的数值已经变化了，而且更重要的是ebp esp，很可能根本和我们的这个程序不符合，程序根本不能正确执行（之前做了很多的非局部跳转），所以，必须也把函数运行的状态保存起来，这样我们才能真正的执行我们的回调函数。那么这些状态保存在哪里呢？EXCEPTION_REGISTRATION结构体的地址，在windows fs:[0]可以找到, 那么我们只需要在原有的EXCEPTION_REGISTRATION成员下增加数据就可以找到这些状态。从而正确的恢复执行。</p>
+
+<p>在进一步了解之前，让我们先回顾一下文法。</p>
+
+<pre><code>__try 
+{
+   //Guarded body
+}
+__except(exception filter) 
+{
+   // Exception handler
+}
+
+void FuncOStimpy1()
+{
+   //1. Do any processing here.
+
+   ...
+
+   __try
+   {
+      //2. Call another function.
+      FuncORen1();
+
+      // Code here never executes.
+   }
+
+   __except( /* 6. Evaluate filter. */ EXCEPTION_EXECUTE_HANDLER) 
+   {
+      //8. After the unwind, the exception handler executes.
+      MessageBox(…);
+   }
+
+   //9. Exception handled--continue execution.
+
+
+
+}
+void FuncORen1() 
+{
+   DWORD dwTemp = 0;
+
+   //3. Do any processing here.
+
+
+
+   __try
+   {
+      //4. Request permission to access protected data.
+      WaitForSingleObject(g_hSem, INFINITE);
+
+      //5. Modify the data.
+      //    An exception is generated here.
+      g_dwProtectedData = 5 / dwTemp;
+   }
+   __finally
+   {
+      //7. Global unwind occurs because filter evaluated
+      //    to EXCEPTION_EXECUTE_HANDLER.
+
+      // Allow others to use protected data.
+      ReleaseSemaphore(g_hSem, 1, NULL);
+   }
+   // Continue processing--never executes.
+
+   ...  
+
+}
+</code></pre>
+
+<p>　　有了现在的基础，在看上面的代码，在执行代码顺序上，已经没有疑惑了。我们所指的回调函数，其实就是exception filter，当异常在5处发生的时候，系统首先要遍历fs:[0]，找到处理这个异常的代码，执行流程跑到了6，返回了EXCEPTION_EXECUTE_HANDLER，这告诉系统我认出了这个异常，然后，系统再次遍历fs:[0]，这个就是unwind，然后，我们在7处的finally代码才执行，最后执行Exception handler的代码，然后程序从9处恢复执行。Jeffrey Richter中描述的global unwind，local unwind，又是什么意思呢？书写什么样的代码可以最大的提高效率？以及异常处理的效率为什么要慢呢？这背后还有许许多多的小问题，比如为什么goto 只能跳出<strong>try block，而不能跳入</strong>try block？GetExceptionCode为什么能够在filter expression 和exception-handler block，为什么不能在filter function中调用？而如果想弄清楚这一系列问题，我们需要更深入的了解SEH。当然，这才是学习的重点。由于这部分和系统相关，在异常的转发过程中，需要编译器和操作系统的支持，所以，我们需要找一个稍微简单一点的编译器和os，如果是第一次接触这个，那么最好是 vc6 + xp sp1或2000。如果对vc6有极大的抵触情绪(比如本人),使用08的时候需要在编译器中加入/GS-,否则编译器会在栈中生成其他代码（检测是否有溢出）越高的系统还可能会加入safeSEH,SEHOP，而且，具体的实现可能也会稍有不同，一上来全部接触，可能难度稍微有些大（对本人来说），所以，我们从最简单的开始。</p>
+
+<p>让我们看下vc（vc6 vs2008），下的结构体。</p>
+
+<pre><code>struct _EXCEPTION_REGISTRATION {
+     struct _EXCEPTION_REGISTRATION *prev;          //上一个结构体
+     void (*handler)(PEXCEPTION_RECORD,             //我们的回调函数 
+                     PEXCEPTION_REGISTRATION,
+                     PCONTEXT,
+                     PEXCEPTION_RECORD);
+     struct scopetable_entry *scopetable;             
+     int trylevel;
+};
+
+typedef struct _SCOPETABLE
+{
+    DWORD       previousTryLevel;
+    DWORD       lpfnFilter        //我们的filter code address
+    DWORD       lpfnHandler       //我们的exception handler block 或是 finally handler bloack address
+} SCOPETABLE, *PSCOPETABLE;
+</code></pre>
+
+<p>这个trylevel有是什么呢？为什么要有SCOPETABLE？</p>
+
+<p>我们考虑这样的一个问题。</p>
+
+<pre><code>{
+...
+    __try
+    {
+        __try { } __except() { }
+    }
+    __except()
+    {
+
+    }
+...
+    __try
+    {
+
+    }
+    __except()
+    {
+
+    } 
+...
+}
+</code></pre>
+
+<p>当一个函数中，有非常多的<strong>try block时，如果我们每遇到一个</strong>try，就生成一个<em>EXCEPTION_REGISTRATION ，加入fs:[0]然后离开之后，在从fs:[0]中卸载掉，这个的确是一个浪费时间，浪费空间的做法。vc 在做的时候，每个函数只是生成一个</em>EXCEPTION_REGISTRATION 结构体，而在一个函数内，可能有嵌套的<strong>try block，也可能又并列的try block（以下把</strong>try 简写成try，这个的确不是一个好的书写，但是这个<em>_是在是太麻烦了，try block 是c++的异常，和SEH很像，但也是有些不同的），那么如何才能分辨出到底是哪一个try block？trylevel 和SCOPETABLE，则是为了满足这个要求而实现的。在进入函数的时候，vc会把trylevel初始化为-1，这个表示目前的代码在当前的</em>EXCEPTION_REGISTRATION 下，不属于try block保护下，遇到第一个try block的时候，vc把trylevel改为0,进入下一个并列的try block则为1….。struct scopetable_entry *则，保存了一个数组，previousTryLevel，告诉我们这个嵌套try block 的上一层block的index….。</p>
+
+<p>可见，vc通过这些手段，在我们的代码之中，维护了一个树的结构，来标示每一个try block，并提供从内层到外层的遍历方法。handler，按理来所，应该跑我们的lpfnFilter ，这里会不会重复？ 当然不会，vc实现_EXCEPTION_REGISTRATION 中，handler指向了同一个代码，vc 的运行时库函数 __except_handler ，根据vc版本后面3啊4啊什么的。原因也很简单，整个东东都有了嵌套，必然需要遍历，为了减少重复代码，和代码的安全，当然会都从一个函数入口开始，然后再去调用我们的代码。所以代码的地址，也需要保存。lpfnFilter 我们的except filter代码入口，lpfnHandler，则是我们的except block 入口。 那么，我们的finally在那里呢？由于，finally 并没有filter的概念，所以，当lpfnFilter == null的时候，vc会认为我们跑的是finally block，那么lpfnHandler则是我们的finally 的terminal handle。这也就告诉我们，为什么SEH中，不能同时存在finally 和except block了。</p>
+
+<p>整个事情越来越有趣了，但是一大堆的论述，的确没有任何意思。还是让我们看看代码。我在原有的代码上加上了查看trylevel的代码。</p>
+
+<pre><code>#ifndef _MSC_VER
+#error Visual C++ Required (Visual C++ specific information is displayed)
+#endif
+
+//----------------------------------------------------------------------------
+// Structure Definitions
+//----------------------------------------------------------------------------
+
+// The basic, OS defined exception frame
+
+struct EXCEPTION_REGISTRATION
+{
+    EXCEPTION_REGISTRATION* prev;
+    FARPROC                 handler;
+};
+
+
+// Data structure(s) pointed to by Visual C++ extended exception frame
+
+struct scopetable_entry
+{
+    DWORD       previousTryLevel;
+    FARPROC     lpfnFilter;
+    FARPROC     lpfnHandler;
+};
+
+// The extended exception frame used by Visual C++
+
+struct VC_EXCEPTION_REGISTRATION : EXCEPTION_REGISTRATION
+{
+    scopetable_entry *  scopetable;
+    int                 trylevel;
+    int                 _ebp;
+};
+
+//----------------------------------------------------------------------------
+// Prototypes
+//----------------------------------------------------------------------------
+
+// __except_handler3 is a Visual C++ RTL function.  We want to refer to
+// it in order to print it's address.  However, we need to prototype it since
+// it doesn't appear in any header file.
+
+extern "C" int _except_handler3(PEXCEPTION_RECORD, EXCEPTION_REGISTRATION *,
+                                PCONTEXT, PEXCEPTION_RECORD);
+
+
+//----------------------------------------------------------------------------
+// Code
+//----------------------------------------------------------------------------
+
+//
+// Display the information in one exception frame, along with its scopetable
+//
+
+void ShowSEHFrame( VC_EXCEPTION_REGISTRATION * pVCExcRec )
+{
+    printf( "Frame: %08X  Handler: %08X  Prev: %08X  Scopetable: %08X\n",
+            pVCExcRec, pVCExcRec-&gt;handler, pVCExcRec-&gt;prev,
+            pVCExcRec-&gt;scopetable );
+
+    scopetable_entry * pScopeTableEntry = pVCExcRec-&gt;scopetable;
+
+    for ( unsigned i = 0; i &lt;= pVCExcRec-&gt;trylevel; i++ )
+    {
+        printf( "    scopetable[%u] PrevTryLevel: %08X  "
+                "filter: %08X  __except: %08X\n", i,
+                pScopeTableEntry-&gt;previousTryLevel,
+                pScopeTableEntry-&gt;lpfnFilter,
+                pScopeTableEntry-&gt;lpfnHandler );
+
+        pScopeTableEntry++;
+    }
+
+    printf( "\n" );
+}   
+
+//
+// Walk the linked list of frames, displaying each in turn
+//
+
+void WalkSEHFrames( void )
+{
+    VC_EXCEPTION_REGISTRATION * pVCExcRec;
+
+    // Print out the location of the __except_handler3 function
+    printf( "_except_handler3 is at address: %08X\n", _except_handler3 );
+    printf( "\n" );
+
+    // Get a pointer to the head of the chain at FS:[0]
+    __asm   mov eax, FS:[0]
+    __asm   mov [pVCExcRec], EAX
+
+    // Walk the linked list of frames.  0xFFFFFFFF indicates the end of list
+    while (  0xFFFFFFFF != (unsigned)pVCExcRec )
+    {
+        ShowSEHFrame( pVCExcRec );
+        pVCExcRec = (VC_EXCEPTION_REGISTRATION *)(pVCExcRec-&gt;prev);
+    }       
+}
+
+void Function1( void )
+{
+    int tl=0;
+    __try
+    {
+        __asm mov eax, [ebp-4]
+        __asm mov tl, eax
+        printf("try leval = %d\n", tl);
+    }
+    __except(EXCEPTION_CONTINUE_SEARCH)
+    {
+
+    }
+
+    // Set up 3 nested _try levels (thereby forcing 3 scopetable entries)
+    __try
+    {
+        __asm mov eax, [ebp-4]
+        __asm mov tl, eax
+        printf("try leval = %d\n", tl);
+        __try
+        {
+            __asm mov eax, [ebp-4]
+            __asm mov tl, eax
+            printf("try leval = %d\n", tl);
+            __try
+            {
+    __asm mov eax, [ebp-4]
+    __asm mov tl, eax
+    printf("try leval = %d\n", tl);
+                WalkSEHFrames();    // Now show all the exception frames
+            }
+            __except( EXCEPTION_CONTINUE_SEARCH )
+            {
+            }
+        }
+        __except( EXCEPTION_CONTINUE_SEARCH )
+        {
+        }
+    }
+    __except( EXCEPTION_CONTINUE_SEARCH )
+    {
+    }
+}
+
+int main(int argc, char* argv[])
+{
+    int i;
+    int tl=0;
+    __asm mov eax, [ebp-4]
+    __asm mov tl, eax
+    printf("try leval = %d\n", tl);
+    __try
+    {
+        __asm mov eax, [ebp-4]
+  __asm mov tl, eax
+  printf("try leval = %d\n", tl);
+
+        Function1();    // Call a function that sets up more exception frames
+    }
+    __except( EXCEPTION_EXECUTE_HANDLER )
+    {
+        i = 0x4321;     // Do nothing (in reverse)
+    }
+
+    __try
+    {
+  __asm mov eax, [ebp-4]
+  __asm mov tl, eax
+  printf("try leval = %d\n", tl);
+
+        Function1();    // Call a function that sets up more exception frames   
+    }
+    __except( EXCEPTION_EXECUTE_HANDLER )
+    {
+        // Should never get here, since we aren't expecting an exception
+        printf( "Caught Exception in main\n" );
+    }
+    return 0; 
+}
+</code></pre>
+
+<p>这里我们可以看到如下情况，当然，这个是在2003下的，win7，会有不同的结果。最好还是先不用win7。win7的问题，我也不清楚。这个只能先放下了。</p>
+
+<p>try leval = -1</p>
+
+<pre><code>try leval = 0
+try leval = 0
+try leval = 1
+try leval = 2
+try leval = 3
+_except_handler3 is at address: 004014C0
+
+Frame: 0012FEFC  Handler: 004014C0  Prev: 0012FF70  Scopetable: 004210B8
+    scopetable[0] PrevTryLevel: FFFFFFFF  filter: 00401203  __except: 00401206
+    scopetable[1] PrevTryLevel: FFFFFFFF  filter: 004012A4  __except: 004012A7
+    scopetable[2] PrevTryLevel: 00000001  filter: 0040128E  __except: 00401291
+    scopetable[3] PrevTryLevel: 00000002  filter: 00401278  __except: 0040127B
+
+Frame: 0012FF70  Handler: 004014C0  Prev: 0012FFB0  Scopetable: 00420150
+    scopetable[0] PrevTryLevel: FFFFFFFF  filter: 0040135F  __except: 00401365
+
+Frame: 0012FFB0  Handler: 004014C0  Prev: 0012FFE0  Scopetable: 00420278
+    scopetable[0] PrevTryLevel: FFFFFFFF  filter: 00401788  __except: 004017A3
+
+Frame: 0012FFE0  Handler: 7C82B798  Prev: FFFFFFFF  Scopetable: 7C8123D8
+    scopetable[0] PrevTryLevel: FFFFFFFF  filter: 7C8571C8  __except: 7C8571DE
+
+try leval = 1
+try leval = 0
+try leval = 1
+try leval = 2
+try leval = 3
+_except_handler3 is at address: 004014C0
+
+Frame: 0012FEFC  Handler: 004014C0  Prev: 0012FF70  Scopetable: 004210B8
+    scopetable[0] PrevTryLevel: FFFFFFFF  filter: 00401203  __except: 00401206
+    scopetable[1] PrevTryLevel: FFFFFFFF  filter: 004012A4  __except: 004012A7
+    scopetable[2] PrevTryLevel: 00000001  filter: 0040128E  __except: 00401291
+    scopetable[3] PrevTryLevel: 00000002  filter: 00401278  __except: 0040127B
+
+Frame: 0012FF70  Handler: 004014C0  Prev: 0012FFB0  Scopetable: 00420150
+    scopetable[0] PrevTryLevel: FFFFFFFF  filter: 0040135F  __except: 00401365
+    scopetable[1] PrevTryLevel: FFFFFFFF  filter: 004013A2  __except: 004013A8
+
+Frame: 0012FFB0  Handler: 004014C0  Prev: 0012FFE0  Scopetable: 00420278
+    scopetable[0] PrevTryLevel: FFFFFFFF  filter: 00401788  __except: 004017A3
+
+Frame: 0012FFE0  Handler: 7C82B798  Prev: FFFFFFFF  Scopetable: 7C8123D8
+    scopetable[0] PrevTryLevel: FFFFFFFF  filter: 7C8571C8  __except: 7C8571DE
+</code></pre>
+
+<p>有了实践，这部分比较好懂了。明白了vc如何维护try block 之后，想要更清楚一点，只能从汇编的角度来看了。</p>
+
+<pre><code>EBP-00 _ebp
+EBP-04 trylevel
+EBP-08 scopetable pointer
+EBP-0C handler function address
+EBP-10 previous EXCEPTION_REGISTRATION
+EBP-14 LPEXCEPTION_POINTERS
+EBP-18 Standard ESP in frame
+</code></pre>
+
+<p>这是try except block生成时的堆栈。[ebp –10]，这里保存了vc 的EXCEPTION_REGISTRATION结构体，就和之前一样，对windows来说，他只是知道最基本的EXCEPTION_REGISTRATION，也就是只是关注prev 和handler，而其他的则是vc 编译器为了生成高效代码为我们加上去的。对windows当然是透明的。从一开始的例子也可以看出，我们只是使用最基本的EXCEPTION_REGISTRATION，依然能够执行SEH。</p>
+
+<p>同样，EBP-14 GetExceptionPointers， EBP-18 Standard ESP in frame也是vc帮我们加入的。[EBP-14 ]这个就是函数当调用GetExceptionInformation会返回[EBP-14], 所以，这个函数其实是一个vc相关的函数。同样的还有GetExceptioncode这个地方还有一点不同的是，vc通过on the flay的方式处理这个数据，也就是说，当异常真的发生的时候，这个数据才会添入数据（这个真是一个废话，没有发生异常，那里来的异常信息？）EBP-18 Standard ESP in frame就不用说了，想要非局部跳转，光搞定ebp是不行的，没有esp的修正，并不能将控制流转到那里。</p>
+
+<p>为了正确理解整个过程，我们需要理解<strong>except_handler 的代码，可惜，Matt Pietrek的有一些细节问题，可能会给我们这样的初学者疑惑，所以可以先看下http://bbs.pediy.com/showthread.php?t=53778，也是一位大牛的文章中，有vc6的</strong>except_handler code。当然，他多了一个ValidateEH3RN，这个和SEH的安全机制有关，我们目前先跳过去。__except_handler 的代码去了ValidateEH3RN，比较容易理解，当然，细扣细节的话，可能不同。在下一篇文章中，我们会着重关注这些细节。</p>
+
+<p>知道了这么多后，我们在看看我们现在可以解决什么样的问题了。Jeffrey Richter 告诉了我们很多有关于展开的，并且告诉了我们很多可能导致额外负担的代码，那么下面我们就看看，为什么会有额外代码。</p>
+
+<p>DWORD Funcenstein1()</p>
+
+<pre><code>{
+    DWORD dwTemp;
+
+    //1. Do any processing here.
+
+        __try
+    {
+        //2. Request permission to access
+        //    protected data, and then use it.
+        WaitForSingleObject(g_hSem, INFINITE);
+        g_dwProtectedData = 5;
+        dwTemp = g_dwProtectedData;
+
+        // Return the new value.
+        return(dwTemp);
+
+
+    }
+    __finally
+    {
+        //3. Allow others to use protected data.
+        ReleaseSemaphore(g_hSem, 1, NULL);
+    }
+
+    //4. Continue processing.
+    return(dwTemp);
+}
+
+
+.text:00401000                 push    ebp
+.text:00401001                 mov     ebp, esp
+.text:00401003                 push    0FFFFFFFFh
+.text:00401005                 push    offset stru_4021F8
+.text:0040100A                 push    offset __except_handler3
+.text:0040100F                 mov     eax, large fs:0
+.text:00401015                 push    eax
+.text:00401016                 mov     large fs:0, esp
+.text:0040101D                 sub     esp, 0Ch
+.text:00401020                 push    ebx
+.text:00401021                 push    esi
+.text:00401022                 push    edi
+.text:00401023                 mov     [ebp+var_4], 0
+.text:0040102A                 push    0FFFFFFFFh      ; dwMilliseconds
+.text:0040102C                 mov     eax, ?g_hSem@@3PAXA ; void * g_hSem
+.text:00401031                 push    eax             ; hHandle
+.text:00401032                 call    ds:__imp__WaitForSingleObject@8 ; WaitForSingleObject(x,x)
+.text:00401038                 mov     esi, 5
+.text:0040103D                 mov     ?g_dwProtectedData@@3KA, esi ; ulong g_dwProtectedData
+.text:00401043                 mov     [ebp+dwTemp], esi
+.text:00401046                 push    0FFFFFFFFh
+.text:00401048                 lea     ecx, [ebp+var_10]
+.text:0040104B                 push    ecx
+.text:0040104C                 call    __local_unwind2 ;这里应该就是Jeffrey Richter 告诉我们的局部展开。
+.text:00401051                 add     esp, 8
+.text:00401054                 mov     eax, esi
+.text:00401056                 mov     ecx, [ebp+var_10]
+.text:00401059                 mov     large fs:0, ecx
+.text:00401060                 pop     edi
+.text:00401061                 pop     esi
+.text:00401062                 pop     ebx
+.text:00401063                 mov     esp, ebp
+.text:00401065                 pop     ebp
+.text:00401066                 retn
+</code></pre>
+
+<p>那local unwind到底做了什么呢？当然是将本EXCEPTION_REGISTRATION内嵌套的那些try block遍历，并展开了。这里贴出local unwind伪代码。这个和我们想象的一样。当然，我这里掩去了一个很重要很重要的部分，是有关于异常嵌套的问题。这个问题会在下一篇中在描述。</p>
+
+<pre><code>void _local_unwind2(EXCEPTION_REGISTRATION*pEh3Exce, int targetLevel)
+{
+    scopetable_entry *scopetable = peh3Exce-&gt;scopetable;
+    int trylevel = peh3Exce-&gt;trylevel;
+
+    while (trylevel != -1)
+    {
+        if (targetLevel == -1 || trylevel &gt; targetLevel)
+            break;
+
+        if (scopetable[trylevel]-&gt;lpfnFilter == NULL)//__finally block
+        {
+            eax = scopetable[trylevel]-&gt;lpfnHandler;
+            _NLG_Notify(101);
+            eax = scopetable[trylevel]-&gt;lpfnHandler;
+            __NLG_Call();// call eax
+        }
+        trylevel = scopetable[targetLevel].previousTryLevel;
+        peh3Exce-&gt;trylevel = trylevel;
+    }
+    return;
+}
+</code></pre>
+
+<p>那当我们把return 换成<strong>leave时，又是什么样子呢？</strong>leave我们并没有看到local unwind，我们需要明白return 和<strong>leave的区别。从return发生local unwind，我们可以看出多少端倪，local unwind 的作用在于遍历本地的except frame，那么return和</strong>leave的区别就在于，<strong>leave不会跳出多个try block 而 return 是有可能的。 所以return 必须要产生额外的负担去执行local unwind，</strong>leave则相当于，goto到try block 的结束并正常跳出try block。所以，如果我们只是想跳出本次try要注意不要直接return。</p>
+
+<p>写给自己。</p>
+
+<p>这一篇其实没有写完，虽然历时1个多月，最近实在是太忙了。这篇文章有2点遗憾。</p>
+
+<p>1、最后应该写上global unwind，但是的确是不想去重复大牛们的内容了，global unwind 其实是系统RtlUnwind的封装，上边的链接中有讲这个的，也很详细。只是由于时间悠久和我们现在的编译器和操作系统距离很远了。如果对这些感兴趣，可以看看wince的代码，http://www.2beanet.com/wince/src/COREOS/NK/KERNEL/EXDSPTCH.C.html，</p>
+
+<p>http://www.2beanet.com/wince/src/COREOS/NK/KERNEL/X86/MDX86.C.html。这个和我们的xp2比较像。</p>
+
+<p>2、本来想尽可能的在这一篇中没有或是少有汇编，但是这个的确对我来说，是一个比较复杂的问题，而且越到最后，其实汇编也是不可避免的，因为真实的代码也很有可能就是汇编写的，我们实在是没有必要去把他翻译成c。</p>
+
+<p>这篇文章里面的问题还是很多的，也很有可能会给第一次接触这些的同学一些误解，下一篇将更深入的理解SEH机制，将尽可能的减少这些误解（也包括自己理解错误），内容包括global unwind，异常嵌套和一些很基础很基础的SEH安全机制的总结。</p>
+</div>
+  
+  
+
+
+    </article>
+  
+  
+    <article>
+      
+  <header>
+    
+      <h1 class="entry-title"><a href="/blog/2010/11/19/plan/">未来一年的小计划</a></h1>
+    
+    
+      <p class="meta">
+        
+
+
+
+
+
+
+
+
+  
+
+
+<time datetime="2010-11-19T21:18:00+08:00" pubdate data-updated="true">Nov 19<span>th</span>, 2010</time>
+        
+
+        
+      | <a href="/blog/2010/11/19/plan/#comments">Comments</a>
+        
+
+      </p>
+    
+  </header>
+
+
+  <div class="entry-content"><p>虽然目标，任务给自己下了不知道多少次，但是总没有坚持下来过。这次破例，再给自己下一次。这也算是自己未来1年的计划吧。</p>
+
+<p>第一年，我的事情主要有2个。第一个是参与创业，第二个是加强自己的基础知识。</p>
+
+<p>　　参与创业这个事情，对现在的我来说，说容易也容易，说难也难。创业到底是什么，其实我也不知道，对他来说，我不知道他的过去，也无法预知他的将来。也不知道我能为我们这个创业团队带来什么，但是好在我现在能知道他能给我带来什么。自由，这可以说是我加入这个团队最大的原因。在这里，我可以自己去支配自己的时间，能够有一个宽松的技术氛围，去做我感兴趣的事情。报酬么，现在还不是考虑他的时候，如何最大限度的提高自己的能力，则是最重要的。在这里可以我可以真实的体会一个项目的启动，完善以及最后的维护。虽然不可能像那些外企那样一上来就可以做哪些拥有大客户量的产品，但是我相信大道至简，没有最基本的体验，是不可能体会到真实的软件。</p>
+
+<p>　　对于我这种没有任何经验的开发者来说，我的确很难有真正的对产品的认识，在目前的创业团队中也并没有找到自己的位置，这个事情，我目前完全是踩着石头过河。虽然其中可能会走一些弯路，但是只要其中的每一步都是真实的，在我们这个多维空间下，那么也就没有弯路这回事了。</p>
+
+<p>　　如果说，这2件事情谁更重要，说实话，当然是第二个重要，当然也可以说，第二个和第一个并不矛盾。的确，但是这里分出来的主要原因，是这个在技术上的关联有些距离，创业的范围是移动互联，而这里的基础则是操作系统和编译原理。</p>
+
+<p>　　很难讲我是为什么去喜欢上了这2个非常枯燥的东东，我只知道未来的3年里，我将会用自己三分之一以上的精力专注在这2个部分，我相信，这2部分的能力将构成我整个知识体系金字塔的基石。由于平台的相关性和个人兴趣。我准备专注在windows 和vc这2块。希望我通过对windows 和vc底层实现的理解，加深自己对程序的认识。当然，想要真正的理解这2部分，没有10年20年是不可能有结果的。在第一年里，我将专注在OS user mode下，初步了解windows运行机制以及相对应的vc在os 和 code之前做桥梁的部分，这部分将包括编程语言（主要是c\c++）实现的底层部分，特别是在windows平台下，vc和os之间相辅相成的部分，包括windows是如何保证代码安全，漏洞，以及vc代码效率等方面。我希望通过对这些的了解，加深自己对计算机的认知。</p>
+
+<p>　　最后，再一次很无耻的给自己一个硬性的目标。</p>
+
+<p>每天用半个小时到一个小时的时间听英文的webcast,pdc,或是其他的资料。听不懂也要坚持。至少要达到听1个小时英语不恶心的程度。
+每天一道算法题，之前只是坚持了2个月。这次一定要坚持下来。每天不多，也不少。
+每2个月研究一篇有价值，感兴趣的大牛写的技术文章以及相应的周边知识，并写1-2篇博客记录这个学习过程。
+　　先这么多把，其实想想。这个对我来说已经是很满很满的计划了。</p>
+</div>
+  
+  
+
+
+    </article>
+  
+  
+    <article>
+      
+  <header>
+    
+      <h1 class="entry-title"><a href="/blog/2010/10/06/pe2/">PE文件初探二</a></h1>
+    
+    
+      <p class="meta">
+        
+
+
+
+
+
+
+
+
+  
+
+
+<time datetime="2010-10-06T21:15:00+08:00" pubdate data-updated="true">Oct 6<span>th</span>, 2010</time>
+        
+
+        
+      | <a href="/blog/2010/10/06/pe2/#comments">Comments</a>
+        
+
+      </p>
+    
+  </header>
+
+
+  <div class="entry-content"><p>上一篇主要是很初略的总结了是什么，这篇要总结下为什么。以下部分参照了http://msdn.microsoft.com/en-us/magazine/cc301727.aspx和http://blog.donews.com/zwell/archive/2005/10/21/596302.aspx两位大牛的文章。和上述不同的是本文主要的涉及内容来自win7。当然我这里并没有真正的涉及win7，以及Vista所加入的新内容，（因为那些对现在的我来说实在是太复杂了）。win7 只是一个壳子，我描述的核心是在win2K，甚至是在windows3.1这些版本中就已经有的。当然为了能够更详细的理解整个过程。反汇编了部分loader的源代码。 pseudocode下载。</p>
+
+<p>当然，我看到的windows loader的代码对我来说依然是非常庞大，这里仅仅记录了程序正确路线，并没有完善错误路线，往往是return error来结束。当然，在代码中，难免有错误，特别是对我来说，这是第一次从汇编角度观察windows。也希望各位大牛，能够帮我指出里面的错误。</p>
+
+<p>一开始本来是想长篇大论的去写这一篇文章，因为涉及到的内容实在太多。而且大部分都是再重复大师们的内容。这里实在是不敢造次。仅仅记录一些自己认为有必要重复和自己所遇到的问题。上面2篇文章非常值得研究，如果你也对这方面感兴趣。</p>
+
+<p>最后，由于最近时间很紧，代码还是缺少了一些部分。还有相当一部分需要去完善细节，现在之所以记录，仅仅害怕时间长了。自己会懒惰而没有记下这个过程。当然，我会在这个《PE文件初探系列》的最后补全代码。</p>
+
+<p>当我们调用LoadLibraryEx LoadLibrary类似的函数，我们会进入到LdrpLoadDll，就让我们从它开始载入过程。</p>
+
+<p>LdrpLoadDll的大体思路Russ Osterlund，已经解释的很清楚了。为了查阅方便，原谅我这里只是简单翻译重复一下。</p>
+
+<p>检查这个module是否已经被载入过了
+将没有载入的module映射到地址空间
+遍历module的导入表，找到是否需要再导入其他的module。需要则导入并递归1。
+所有相关的module载入完毕后，更新module load count。
+初始化module
+清理一些结尾工作。更新module Flag。
+首先我们遇到的一个重要的函数是LdrApplyFileNameRedirection。这个函数主要是为了解决Dll hell。一种Side-by-Side Assembly的技术，相关的信息可以参考。http://dipplum.com/2009/11/09/side-by-side-assembly/。SxS已经大大超过了我所能解释的范围。原谅我先跳过这步。在STATUS_SXS_KEY_NOT_FOUND后，我们来到了一个非常重要的函数LdrpFindOrMapDll 。</p>
+
+<p>遍历进程LdrpHashTable，查找dll是否已经载入
+查找是否是系统已知KnownDll。
+查找dll文件名，并修正到完整路径名。
+遍历peb中的InLoadOrderModuleList查找dll是否已经载入
+没有找到则将dll映射到地址空间
+这个函数还是比较简单的。但是我却遇到了一个让我很费解的问题。</p>
+
+<pre><code>_KSYSTEM_TIME
+   +0x000 LowPart          : Uint4B
+   +0x004 High1Time        : Int4B
+   +0x008 High2Time        : Int4B
+#define MM_SHARED_USER_DATA_VA      0x7FFE0000
+#define USER_SHARED_DATA ((KUSER_SHARED_DATA * const)MM_SHARED_USER_DATA_VA)
+KUSER_SHARED_DATA ksd;
+
+eax=ksd.SystemTime.High1Time;
+ecx=ksd.SystemTime;
+edx=ksd.SystemTime.High2Time;
+
+KSYSTEM_TIME ktime;
+//real code     
+//eax=[0x7ffe0018];
+//ecx=[0x7ffe0014];
+//edx=[0x7ffe001c];
+do
+{
+    ktime.High1Time= ().High1Time;
+    ktime.LowPart=().LowPart;
+    ktime.High2Time= ().High2Time;
+}
+while(ktime.High1Time!=ktime.High2Time);
+//code end
+typedef struct _KUSER_SHARED_DATA {
+
+    /* Current low 32-bit of tick count and tick count multiplier.
+     * N.B. The tick count is updated each time the clock ticks.
+     */
+    volatile ULONG TickCountLow;
+    UINT32 TickCountMultiplier;
+
+    /* Current 64-bit interrupt time in 100ns units. */
+    volatile KSYSTEM_TIME InterruptTime;
+
+    /* Current 64-bit system time in 100ns units. */
+    volatile KSYSTEM_TIME SystemTime;
+
+    /* Current 64-bit time zone bias. */
+    volatile KSYSTEM_TIME TimeZoneBias;
+} KUSER_SHARED_DATA, *PKUSER_SHARED_DATA;
+</code></pre>
+
+<p>以上结构是wrk上的代码，win7的比他复杂太多了，而且其他的数据成员我们也并不关心。</p>
+
+<p>这是在LdrpFindOrMapDll最后，把数据插入到InLoadOrderModuleList，InMemoryOrderModuleList中遇到的。</p>
+
+<p>这个其实是获得系统时间的过程。更为详细的地方在这里http://www.dcl.hpi.uni-potsdam.de/research/WRK/2007/08/getting-os-information-the-kuser_shared_data-structure/</p>
+
+<p>简单的说。当clock ISR 处理的时候是先更新High2Time，然后LowPart，High1Time。
+而用户程序读取的时候是反着的顺序。 而这一切都是为了同步。但构成这个成立的前提是volatile 关键字，也就是说这样虽然减少了lock的时间，但是却也放弃了CPU的缓冲机制，每次都写操作都必须通过内存。而这个时间更新的速度是如此之快（100ns？），那么是不是同样会对效率造成冲击呢？相信MS一定做了不少测试来衡量利弊，但是再面对现在的多CPU下。是否一定适合呢？这里面涉及到太多有关硬件的知识，缓存的算法。CPU调度等等。。。这个问题还是交给10年，甚至20年后的我吧。这里标记下。更希望大牛能给出解释。//TODO:</p>
+
+<p>如果我们的dll被载入了（原来没有，刚刚被映射），那么我们通常会遇到LdrpProcessStaticImports ，而LdrpCorProcessImports，我这里似乎没有遇到。//TODO这里需要完善。</p>
+
+<p>BasepProbeForDllManifest ,原谅我再次跳过一个函数依然和dll hell有关，这些高级的东东，还是等我们弄清楚基本的东西回过来再解决他们。</p>
+
+<pre><code>LdrpProcessStaticImports
+</code></pre>
+
+<p>修改相应页面为PAGE_READWRITE。
+如果dll 绑定 则采用绑定方式载入dll
+如果没有dll 绑定或绑定失败则已普通方式载入dll
+恢复相应页面。
+先看普通方式载入。我们来到了LdrpHandleOldFormatImportDescriptors。这里我们遍历导入表，对每个导入表的module调用LdrpHandleOneOldFormatImportDescriptor。</p>
+
+<p>LdrpLoadImportModule 将相应的module导入
+调用LdrpProcessStaticImports。查找ped的ldr的StaticLink。找到则更新load count。没有找到则初始化并插入链表首部。
+更新IAT表。
+LdrpLoadImportModule 这是一个非常重要的函数。</p>
+
+<pre><code>LdrpApplyFileNameRedirection。
+LdrpFindOrMapDll
+LdrpProcessStaticImports
+LdrpHandleTlsData //这里相关dll初始化的部分，会在下一篇文章中总结。目前，我们只是关心载入。
+</code></pre>
+
+<p>完毕后插入InInitializationOrderModuleLis
+这里就有点麻烦了。这里面涉及到了很多的递归。让我们重新理解下。</p>
+
+<p>当我们程序编译链接成可执行程序后。loader会检查我们程序,通常可是.exe的文件。操作系统发现有一些dll文件需要载入（我们程序中使用了dll的函数，最通常的例子就是我们使用的系统API，那些函数的代码并不在我们.exe里，而在系统dll中，如ntdll，gdi32.dll等，所以我们必须把他们载入CPU才能执行代码），那么我们需要首先从dll导入表中查找我们需要的dll。去寻找那些我们调用的函数。就和上一篇文章中提到的MessageBox函数。但是，我们发现我们的MessageBox函数地址并不是真正函数的地址，loader 需要遍历dll的导出表。而在那里，我们找到了函数的地址，然后经过计算，loader帮我们把函数真实地址添入。而这个真实添入的地址所构成的表则为IAT表。MS的编译器还会保存另一个表，是在IAT添入之前的样子，叫做INT表。而其他的编译器可能并没有这个表生成。比如Borland。为什么保留这个INT表，等绑定之后再解释。</p>
+
+<p>OK，看样子十分完美，我们找到了我们所需要的dll的地址，但是事实上却很复杂。因为我们所导入的dll，很可能使用了另外的dll的代码中的函数。那么我们必须递归的调用，来把我们.exe中所有有关系的dll，都载入才能保证我们执行时，IAT表中的代码地址，真实的是我们需要的代码。有了这个大体的感觉。让我们查看整个过程的细节。</p>
+
+<p>LdrpSnapIAT</p>
+
+<p>LdrpSnapIAT做的事情也很简单，遍历导入表内容，并查找导出表内容，再调用LdrpSnapThunk。</p>
+
+<p>LdrpSnapThunk</p>
+
+<p>遍历导入表，根据序号或名字查找导入函数。
+遍历导出表，查找相应导入函数的地址。
+将计算好的函数地址添入IAT表。
+函数很好理解，当我们使用函数名字查找时，会遇到一个很重要的函数LdrpNameToOrdinal，Russ Osterlund的precode给出了详细代码，我觉得win7在这里并没有太大改动。LdrpNameToOrdinal是一个简单的二分法在导出表中查找匹配函数位置。而如果我们使用序号来查找，则可以直接定位到函数地址，而不需要经过这么一个字符串查找过程。当然不管是按照名字还是序号查找之前，有一个编译器给我们的提示，hint来查找函数。（不过这个真的没什么用。面对那么多的导出函数，就提示一个。怎么可能满足要求？）。</p>
+
+<p>不管用什么方法，我们总算是朝着我们的目标前进了。但是另一个问题来了。有些函数的地址却在导出表中，这就是dll函数的转发问题。</p>
+
+<p>什么是转发？</p>
+
+<p>我们之前说我们需要查找一个函数的地址，我们找到了这个xxx.dll。但是这个xxx.dll却告诉我们，这个函数地址也不在他那里，而在xxxx.dll里。这个就是转发的过程。用那个破的再不能破的例子就是kernel32 的HeapAlloc 转发到了ntdll中。</p>
+
+<p>那么为什么要有转发？</p>
+
+<p>看样子，似乎是MS在给我们打马虎眼，通过转发来保证他的源代码不被泄露。给我们一个表面的公开函数，然后去调用它不公开的函数。除了这一点，转发函数的另一个重要的特点是，他割断了部分dll之间的关系。</p>
+
+<p>让我们首先回头看一下，会发现，loader在做这个添入IAT表的时候是十分辛苦的。</p>
+
+<p>即便是使用了二分法来查找。但是面对字符串的挨个比较。这个效率是无法接受的。如果有些dll导出了上百了dll。还有一些长长的名字（事实上会更长，因为如果用c++，编译器还要加名字）。
+IAT处在代码段，是可读的。会在多个进程之间共享。一个进程对共享数据页面做了修改，操作系统会启动copy_on_write机制去创建另一个页面然后把修改的数据保存下来。为这个修改页面后的进程保留一个private的页面。如果我们的dll在多个进程载入的地址相同。那么我们就会有一大堆的private页面，但是却完全一样。这确实浪费了我们的资源，操作系统分配页面的时候，可不会去比较页面是否一样。（//TODO:check windows也许会在某些时间真的去比较这些页面是否相同，然后相同会修改成共享，但是由于我英文太差，不知道老外是瞎扯还是真有，时间也很长了，页面也一时找不到了。。。无奈）。
+当然我们一般的应用程序，不会有那么多的函数去做，但是MS自己却是地地道道的需要做。面对那么多的API函数。MS提供了一系列的优化载入dll的措施，分别节省了link时间（转发），重定位时间（rebase），添入IAT表时间（bind），延迟了载入时间（delay load）。同样也适用于我们的应用程序。（不过效率有多大的提高呢？反正肯定是有的）。当然，每一个解决都不是完美的方案，都有自己的缺陷。</p>
+
+<p>我们首先遇到了转发。</p>
+
+<p>转发的直白意思是，这个函数我提供一个入口，但是实现的代码却在别的dll中。那么他是如何提高我们的dll载入效率呢？</p>
+
+<p>如果我们在程序中调用了A.dll，A.dll 使用了func1 ，func2，func3。而func1被转发到了B.dll中的Bfunc1。如果我们在A.dll中使用了func1那么，我们必须载入B.dll。但是如果我们在A.dll中，没有使用func1，那么如果func1是转发到B.dll的，那么我们就不会载入B.dll，而如果我们是通过导入的方式做func1,那么不管是否使用，我们都要载入B.dll。为什么？因为我们的.exe和A.dll建立的关系，而A.dll的导入表中有B.dll,A和B的这种紧密关系，使我们不得不把B.dll载入进来，但我们的.exe却永远不会使用B.dll中的任何函数。（如果我们不使用A.dll中的func1）。而转发，则可以避免这个情况。因为在A.dll的导入表中，没有Bfunc1。</p>
+
+<p>OK，转发函数。割断了部分DLL之间的联系。他直接减少了link的时间。这个好。彻底不用载入了。</p>
+
+<p>让我们继续LdrpSnapThunk。的转发处理</p>
+
+<p>查找是否是转发函数，在export table中。
+比较是否是ntdll（不管是大写还是小写还是都有，反正都算）。相等则直接获得ntdll的 forwardEntry。//TODO:这里总觉得有种很怪的感觉，很怪很怪的感觉。
+如果不是ntdll，那么我们回到了原点调用LdrpLoadDll。
+（可选）调用LdrpRecordForwarder，查找ldr的ForwarderLinks。没有则添加。并更新load count。
+最后调用LdrGetProcedureAddressEx，获得相应函数地址。
+由于LdrGetProcedureAddressEx涉及到了dll的初始化问题。所以这篇不细说，下一篇再总结他。</p>
+
+<p>转发给我们解决了一个问题。那些不使用的没关系的dll，并没有被我们载入进来。但是如果我们使用了函数，依然会有IAT表的添入，查找，那一系列的问题。OK。让我们来看看另一个解决方案。绑定。不过在这个之前，需要理解下重定位。</p>
+
+<p>重定位部分的代码，Russ Osterlund没有写，我也没有写（希望后面我能完善了）。有关的知识网上很多。这里不重复了。只是解释下原因。我们在程序中的绝大部分数据都是相对的偏移量。因为我们不能确定我们的PE文件最终会被操作系统载入到那个位置上去。在编译和链接的过程，我们是相对一个默认的位置来生成相应的代码。这些默认值，会被写到PE头文件中去。windows loader在载入的时候，如果发现有冲突，则会重新计算这些偏移量。当然，为了减少这个运算。我们可以通过rebase来处理。</p>
+
+<p>还是让我们把注意力集中在bind上面。</p>
+
+<p>我们看到loader首先就是查找是不是可以使用bind来做。</p>
+
+<p>LdrpHandleNewFormatImportDescriptors</p>
+
+<p>遍历绑定描述符表，和导入描述符表。查找是否匹配
+成功则调用LdrpHandleOneNewFormatImportDescriptor，否则返回INVALID_IMAGE_FORMAT(0xC000007B)，直到0。
+  LdrpHandleOneNewFormatImportDescriptor</p>
+
+<p>LdrpLoadImportModule，加载module
+LdrpRecordStaticImport 加载导入的一系列东东
+如果bind失败，则调用LdrpSnapIAT。
+如果bind成功，则遍历绑定转发表。IMAGE_BOUND_FORWARDER_REF，依次调用LdrpLoadImportModule， LdrpRecordStaticImport。
+最后不管bind是否成功调用LdrpFixupIATForRelocatedImport。
+//TODO LdrpFixupIATForRelocatedImport,没有全部完成，真不知道MS搞一个这个巨大的函数名字有什么深意。看来是逼我把这个重定位做了，: ) 。</p>
+
+<p>bind这部分比较难。LdrpFixupIATForRelocatedImport的部分我没有完成，所以这部分应该是有很多值得推敲的地方。</p>
+
+<p>等最近不忙了。再彻底搞定他。</p>
+
+<p>最后剩下了一部分。就是INT的问题。这个问题的出现是为了我们在处理bind失败所必须的。当bind被失败后，我们不得不和原来一样去做。这是INT表作用体现处理了。当然如果没有INT表。整个载入则会直接down掉。</p>
+
+<p>使用bind，我们将避免了动态添入IAT所需要花费的空间和时间。这的确是一个是非优秀的设计。但是同样的。他的条件实在太苛刻了。如果其中有部分更新的操作系统，某个系统的dll被更新了。那么这一切也随之破灭了。他实在是太脆弱了。</p>
+
+<p>最后写给自己的</p>
+
+<p>这的确不是一篇完整的文章。因为有太多太多的知识对我来说是一个空白。每一个函数后面都可能是给我打开一个新的世界。在没有对已经存在的世界有一个清醒的认识前，非常容易造成溢出。有时候，真想找一个事情，可以就像操作系统分配物理内存一样。你什么时候使用给你一点，而且还能具有不错的缓存性能。而在这整个过程最郁闷的就是要不什么也没有，要不多的你放不下。而且各种跳转，冲击着我可怜的缓存。。。如果把我比作一个运作的很困难的操作系统。那么这篇文章就是我其中的一个页文件再适合不过了。</p>
+
+<p>//////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////</p>
+
+<p>　　哎，也许我的实力太差了。这篇的姊妹篇，初探一已经被博客园从首页上抹去了。这篇也可能和上一篇同样的命运。我可能要创一个记录了，虽然不是那么光彩，10篇文章2篇都被毙掉。如果加上这一篇，就是第三篇了。哈哈。我只知道Matt Pietrek 在2002年的MSJ上写道。</p>
+
+<p>“You might be wondering why you should care about the executable file format. The answer is the same now as it was then: an operating system&#8217;s executable format and data structures reveal quite a bit about the underlying operating system. By understanding what&#8217;s in your EXEs and DLLs, you&#8217;ll find that you&#8217;ve become a better programmer all around.”。</p>
+
+<p>　　当然，我不该提Matt Pietrek，因为我把“我”和他的名字放到一起就是其实就是对他的一种不尊敬。我也不敢扯我懂PE。我甚至只能皮毛都不了解。因为涉及到太多有关操纵系统、编译器、连接器的细节。对于我这个菜鸟来说也的确没有这个资本谈论这个问题。我也不想说别的。只是想发泄下自己的情绪。仅此而已。</p>
+</div>
+  
+  
+
+
+    </article>
+  
+  
+    <article>
+      
+  <header>
+    
+      <h1 class="entry-title"><a href="/blog/2010/10/06/pe1/">PE文件初探一</a></h1>
+    
+    
+      <p class="meta">
+        
+
+
+
+
+
+
+
+
+  
+
+
+<time datetime="2010-10-06T20:55:00+08:00" pubdate data-updated="true">Oct 6<span>th</span>, 2010</time>
+        
+
+        
+      | <a href="/blog/2010/10/06/pe1/#comments">Comments</a>
+        
+
+      </p>
+    
+  </header>
+
+
+  <div class="entry-content"><p>最近一直在学习PE文件的相关知识。随着了解的增多，我不得不改变之前的学习方式。以前总是再理解更进一步后， 才总结上一层的知识。而且理解知识的时候总是喜欢从难到易得方式去理解知识。因为如果漫无目的的去学习，实在是 一个体力活。如果把一系列相关的知识比作一颗倒置的二叉树的话，我总是喜欢从根节点开始，然后再去遍历每个叶子 节点。只可惜我并没有掌握非递归算法。好吧，再没有处理尾递归的情况下，随着二叉树深度的增加。我的堆栈也果断溢 出。并导致一度中断学习过程。。。。。。。。。虽然我不断地去增加堆栈空间。但是总会有不能再增加的时候。好吧， 就是现在。该让我好好处理这个尾递归的问题。这也就是这篇文章的目的了。</p>
+
+<p>　　闲话扯得太多了。这篇文章主要内容是DLL的载入过程分析。以下部分主要来自《windows核心编程》和一些网上资料。 当然，如果想仔细理解相关内容。那么这3篇文章你是不该错过的。http://msdn.microsoft.com/zh-cn/magazine/cc301727(en-us).aspx， http://msdn.microsoft.com/en-us/magazine/cc301808.aspx ， http://msdn.microsoft.com/en-us/magazine/cc301805.aspx 事实上，你可能 还需要非常非常多的延伸知识需要帮助理解。如果对这部分知识不是很了解。而且英文也不是很好的话，《软件加密 技术内 幕》中的前几章的相关讲解，可能会更加易懂，还有老罗的书《Windows环境下32位汇编语言》，当然。这里讲的是最最基础 的部分。而且事实上，那3篇英文的分量对我来说还是很重的。这也是造成我堆栈溢出的原因。而且我脑子现在还没从错误中 恢复过来。。。。。</p>
+
+<h2>1.1 简短的背景知识</h2>
+
+<p>在操作系统中，执行的代码在载入内存之前，是以文件的方式存放在磁盘中。为了灵活的使用代码，在代码之前增加 一个文件头，在文件头中包括各种数据，文件入口，重定位表等信息。操作系统根据给定的信息，将部分代码载入内存，初始 化必要数据后，最后从指定位置开始执行。</p>
+
+<h2>1.2 开始了解PE</h2>
+
+<p>PE文件基本结构如下图。</p>
+
+<p><img src="/images/pm1.png" alt="alt text" /></p>
+
+<p>在PE文件中，代码、资源，导入表等信息被按照属性（可读，可读写，可执行等）分类放到了不同的节（section）中（上图是段）。每一个section的属性和位置用IMAGE_SECTION_HEADER结构描述。许多的IMAGE_SECTION_HEADER组成一个节表。由于数据是按照属性在节中放置，不同用途的数据可能被放在同一个节中。但是我们更关心数据的用途而属性是操作系统更为关心的。所以又有一个IMAGE_DATA_DIRECTORY来指明这些数据的位置。</p>
+
+<p>PE文件是如何映射到内存的</p>
+
+<p>windows并不在一开始将整个文件读入内存。windows在装载程序时，仅仅建立好虚拟地址和PE文件之前的映射关系，只有执行 到某个内存页中的指令或访问某页数据时，页面才会被提交到物理内存。这个机制类似于内存映射文件。但是不同的是，装载 可执行文件时，有些数据会被重新处理，装入到的数据相对位置也不一样，而且也有些数据是不会载入到内存中。</p>
+
+<p>原因</p>
+
+<p>windows按照节的属性载入，同一个节中所对应的内存页有相同的页属性。而windows对内存属性的设置是以页为单位进行，所以也在内存中的对齐单位至少是一个页的大小。在32位下，为默认为4KB。</p>
+
+<p>磁盘文件并没有这个设置，文件的对齐单位一般为200h。具体数据在IMAGE_OPTIONAL_HEADER32结构体中的SectionAlignment和FileAlignment设定。PE文件中的重要概念RVA（Relative Virtual Address）RVA是相对虚拟地址。由于数据可能发生重定向，所以所有数据都是保存为相对地址，而为了在运行时效率最大化，PE文件中保存的地址都是在内存中的虚拟地址偏移量。如果PE文件装入0x40000000h中的内存，而某个节中的某个数据被装入了0x40001000h，那么这个数据的RVA为1000h。下面了解下DLL的静态信息。</p>
+
+<p>如果需要调用DLL中的函数，那么DLL的imag必须映射到调用线程的进程地址空间中，我们可以通过2种方法处理。</p>
+
+<p>1、在源代码中引入DLL的符号。当应用程序启动运行时，loader会隐式加载链接需要的DLL。</p>
+
+<p>2、在程序运行时显示加载需要的DLL（调用LoadLibraryEx or LoadLibrary 卸载FreeLibrary），并显示链接到需要的输出符</p>
+
+<p>（GetProcAddress）。</p>
+
+<p>3、延迟加载DLL。这部分后面会解释。</p>
+
+<p>另外还有一些了解DLL必须的知识。这里罗列出来。</p>
+
+<h2>2、导入表</h2>
+
+<p>我们在编写程序的时候，几乎全部用到了导入函数的概念。导入函数就是程序执行的这段代码不在程序中，这些程序在</p>
+
+<p>一个或多个DLL中，而调用者仅仅保留一些必要的信息。主要是函数名和DLL名等。</p>
+
+<p>但是对于存储在磁盘上的PE文件来说，是无法得知导入函数会在内存的那个地方。只有PE文件被装入内存的时候，</p>
+
+<p>windows loader将DLL装入，并将执行导入函数的指令和函数真正的地址联系起来。有些抽象。让我们来看下代码真正执行</p>
+
+<p>的情况。</p>
+
+<p>让我们来试下最简单的Win32 HelloWorld，但是很让我“失望”，不得不佩服现在的vs，以前的可能影响效率的问题可能</p>
+
+<p>现在不是很重要了。 不过如果创建的是DLL文件，那么vs不会改变。依然是通过跳转表来实现。这里有一点不同是因为</p>
+
+<pre><code>int symbol(char *);
+__declspec(dllimport) int symbol2(char*);
+.text:10001000                 push    offset aBar     ; "bar"
+.text:10001005                 call    ?symbol@@YAHPAD@Z_0 ; 10001020
+.text:1000100A                 push    offset aBaz     ; "baz"
+.text:1000100F                 call    ds:__imp_?symbol2@@YAHPAD@Z ; symbol2(char *)
+.text:10001020                 jmp     ds:__imp_?symbol@@YAHPAD@Z ; symbol(char *).idata:10002080                 
+extrn __imp_?symbol2@@YAHPAD@Z:dword.idata:10002084                 
+extrn __imp_?symbol@@YAHPAD@Z:dword
+</code></pre>
+
+<p>我们告诉了编译器，symbol2是一个外部的函数调用，那么编译器将不生成跳转，而直接找到函数的入口地址。而symbol并</p>
+
+<p>没有指定是外部定义 函数，那么编译器默认生成一个跳转表，然后再跳转到真正执行的函数入口地址。看来vs还不是无</p>
+
+<p>所不能的。至于为什么.exe和.DLL vs的对待方式不同。没有想明白。不过，在dll中使用__declspec将大大缩短代码量，也</p>
+
+<p>不会降低缓存性能。而且如果我们需要共享一个变量（好吧，我承认这个的确不是一个好的主意）也只能使用__declspec，</p>
+
+<p>因为变量访问是不可能通过jmp来实现的。</p>
+
+<p>注：DLL的理解。为什么DLL默认不被优化。</p>
+
+<p>编译器在编译DLL文件的时候，为了提高效率，遇到调用函数的地方，并不回去查找这个函数是普通的内部函数，</p>
+
+<p>还是外部导入的函数，编译器统一生成一个指令 call xxxxxxx。而xxxxxx指令的地址将被linker修改。而对于外部导入函数</p>
+
+<p>的地址在载入内存的时候添入，而且还有可能要被修改。为了效率，而且linker不能随便修改compiler的数据，所以这些需</p>
+
+<p>要修改的函数入口需要集中放在一起，那么在每个call xxxxx指令下，最快速，简单的方法就是jmp到那个集中在一起的表</p>
+
+<p>的位置。这个位置，就是下面提到的IAT表。如果使用__declspec(dllimport)来标示函数，那么编译器将知道这个函数是由</p>
+
+<p>外部导入，那么生成的代码则是call    ds:<strong>imp_funcname, 而:</strong>imp_funcname在IAT表中也存在一样的函数符号。那么</p>
+
+<pre><code>call    ds:__imp_funcname将直接找到函数的真正入口。由于DLL是可以分开编译的，所以编译器不可能直接生成优化后的
+</code></pre>
+
+<p>代码（再考虑效率的情况下），在不加__declspec(dllimport)标号情况下。</p>
+
+<p>TODO：那么为什么.exe文件编译器会默认直接优化呢？</p>
+
+<p>好在使用一个老的编译器，在写好一段MessageBox(…); 会汇编成如下代码</p>
+
+<pre><code>.text:00401000                 public start
+.text:00401000 start           proc near
+.text:00401000                 push    0               ; uType
+.text:00401002                 push    offset Caption  ; "A MessageBox !"
+.text:00401007                 push    offset Text     ; "Hello, World !"
+.text:0040100C                 push    0               ; hWnd
+.text:0040100E                 call    MessageBoxA     ; 0040101A
+.text:00401013                 push    0               ; uExitCode
+.text:00401015                 call    ExitProcess
+.text:0040101A MessageBoxA     proc near               ; CODE XREF: start
+.text:0040101A                 jmp     ds:__imp_MessageBoxA; jmp 00402008
+.text:0040101A MessageBoxA     endp.idata:00402008                 
+extrn __imp_MessageBoxA:dword ;MessageBoxA
+</code></pre>
+
+<p>在老的编译器下，会生成2步去调用MessageBox。首先跳转到一个“跳转表”中，再根据跳转指令后，才能找到真正的</p>
+
+<p>函数入口。没有优化。</p>
+
+<p>但是现在的vs（我使用的是vs2008），很不好，它把这一部分直接给优化掉了。我们看到的代码是直接</p>
+
+<pre><code>call    ds:__imp__MessageBoxW@16。
+</code></pre>
+
+<p>vs真不是一个用来学习的编译器，太有进取心了。不过用来开发倒是不错。 ：）。</p>
+
+<p>回到正题，虽然这里有些改变，但是核心的东西并没有改变。</p>
+
+<pre><code>#include &lt;windows.h&gt;
+int WINAPI WinMain (HINSTANCE hInstance, HINSTANCE hPrevInstance,PSTR szCmdLine, int iCmdShow) 
+{
+　　TCHAR *t=L"HelloWorld";
+　　TCHAR *t2=L"hello";MessageBox(NULL,t,t2,NULL);
+　　return 0;
+}
+</code></pre>
+
+<p>让我们看下现在编译器的结果</p>
+
+<pre><code>.text:00401000                 push    0               ; uType
+.text:00401002                 push    offset Caption  ; "hello"
+.text:00401007                 push    offset Text     ; "HelloWorld"
+.text:0040100C                 push    0               ; hWnd.text:0040100E                 
+call    ds:__imp__MessageBoxW@16 ; 004020AC.idata:004020AC                 
+extrn __imp__MessageBoxW@16:dword
+很简单的代码，让我们先看看他的二进制文件。自己也可以做一个查看PE文件头信息的小程序。
+
+Machine 0000014C
+SecNum  00000005
+prop    00000102
+ImageBase       00400000
+**********************************************************
+session name            .text
+session size            0000087E
+session VirtualAddress  00001000
+session SizeOfRawData   00000A00
+session Raw_offset      00000400
+session prop            60000020
+**********************************************************
+session name            .rdata
+session size            0000062E
+session VirtualAddress  00002000
+session SizeOfRawData   00000800
+session Raw_offset      00000E00
+session prop            40000040
+**********************************************************
+session name            .data
+session size            00000384
+session VirtualAddress  00003000
+session SizeOfRawData   00000200
+session Raw_offset      00001600
+session prop            C0000040
+**********************************************************
+session name            .rsrc
+session size            000002B0
+session VirtualAddress  00004000
+session SizeOfRawData   00000400
+session Raw_offset      00001800
+session prop            40000040
+**********************************************************
+session name            .reloc
+session size            00000192
+session VirtualAddress  00005000
+session SizeOfRawData   00000200
+session Raw_offset      00001C00
+session prop            42000040
+**********************************************************
+</code></pre>
+
+<p>也可以查看DLL的数据，特别是kernel32.dll user32.dll等信息，会发现这些系统DLL加载的默认位置是不同的。 kernel32.dll 位于0x77DE0000 user32.dll 0x77D10000。定义不同的默认值将不会减慢载入的速度。具体会在重定位节中说明。 默认载入的地址是0x00400000，所以函数004020AC的RVA为AC，查看各节数据后发现，这段数据位于.rdata段， （VirtualAddress  00002000），而Raw_offset      00000E00，那么我们查看下 E00+AC = 0EAC在PE文件中的值是00002330。 这个显然不可能是函数的入口，但是如果把这个数字继续当成RVA来看，那么00002330-00002000=0330，再加上Raw_offset 0E00, 为1130，再跳过2个字节，那么正好是“MessageBoxW”。是个巧合么？当然不是。为什么后面会说明。 但是这里还有一个问题，我们在call   ds:<strong>imp</strong>MessageBoxW@16时，得到的东西是一个跳过2个字节然后是这个函数名。 这个显然不能正确执行。当然我们这里是在硬盘的文件，没有载入内存。在我们这个情况下，在载入内存中的时候， windows loader 会根据这个地址，并找到这个函数名，然后找到这个函数的真正地址，并写入004020AC位置，那么程序 就能正确运行了。那么问题似乎回到原点了，windows loader如何能够根据函数名来找到函数的真正地址呢？ 导入表的作用就体现出来了。</p>
+
+<p>首先找到导入表的信息</p>
+
+<p>PE文件的导入表的位置和大小可以从PE文件头中IMAGE_OPTIONAL_HEADER32结构的数据目录字段中获取，对应的项目是DataDirectory字段的第2个IMAGE_DATA_DIRECTORY结构。</p>
+
+<p>导入表是通过一系列的IMAGE_IMPORT_DESCRIPTOR结构组成。每一个结构描述一个DLL。最后以一个全0为这个结构 数组的结束。</p>
+
+<pre><code>typedef struct _IMAGE_IMPORT_DESCRIPTOR {
+    union {
+        DWORD   Characteristics;            // 0 for terminating null import descriptor
+        DWORD   OriginalFirstThunk;         // RVA to original unbound IAT (PIMAGE_THUNK_DATA)
+    } DUMMYUNIONNAME;
+    DWORD   TimeDateStamp;  // 0 if not bound,
+                                            // -1 if bound, and real date\time stamp
+                                            //     in IMAGE_DIRECTORY_ENTRY_BOUND_IMPORT (new BIND)
+                                            // O.W. date/time stamp of DLL bound to (Old BIND)
+
+    DWORD   ForwarderChain;                 // -1 if no forwarders
+    DWORD   Name;
+    DWORD   FirstThunk;                     // RVA to IAT (if bound this IAT has actual addresses)
+} IMAGE_IMPORT_DESCRIPTOR;
+typedef IMAGE_IMPORT_DESCRIPTOR UNALIGNED *PIMAGE_IMPORT_DESCRIPTOR;
+
+IMAGE_THUNK_DATA 是一个DWORD大小的共用体，包括以下含义。
+
+typedef struct _IMAGE_THUNK_DATA32 {
+    union {
+        DWORD ForwarderString;      // //转发函数字符串的RVA
+        DWORD Function;             //     导入函数的内存地址
+        DWORD Ordinal;              // 导入函数的序数
+        DWORD AddressOfData;        // IMAGE_IMPORT_BY_NAME和导入函数名称的RVA
+
+    } u1;
+} IMAGE_THUNK_DATA32;
+</code></pre>
+
+<p>IMAGE_THUNK_DATA  如何判断是序号还是RVA呢？ 通过IMAGE_THUNK_DATA的最高位来判断，如果为1， 那么就是导入函数的序数否则就是RVA。IAT 指向的IMAGE_THUNK_DATA 有2种。导入函数的序号数和IMAGE_IMPORT_BY_NAME结构的RVA</p>
+
+<pre><code>typedef struct _IMAGE_IMPORT_BY_NAME {
+    WORD    Hint;     //告诉loader带入函数的序号可能是什么。loader会在加载的时候检测这个值。并根据值来做查找
+
+字符串比较。
+    BYTE    Name[1]; //指向DLL名字字符串
+} IMAGE_IMPORT_BY_NAME, *PIMAGE_IMPORT_BY_NAME;
+</code></pre>
+
+<p>INT和IAT的内容一致，当文件没有加载进内存时。当文件加载进内存时(这个其实也不是很准确，后面会解释)，他并不覆盖INT。而IAT则会被覆盖成函数真正的地址。但是程序运行的时候是不需要INT的（我们只关心地址）。这里面涉及到一个绑定的概念，当绑定失败后，则需要根据INT中的信息，重新构建IAT OriginalFirstThunk 和FirstThunk在文件中指向同一地方。但是当载入内存中FirstThunk指向了函数真正的入口地址。</p>
+
+<p><img src="/images/pm2.png" alt="alt text" /></p>
+
+<p>我们看到的FirstThunk指向的位置，其实就是之前看到的jmp指令跳到的位置。是一个个顺序排列的&#8221;__impxxxx的函数入口地址，这部分数据也被IMAGE_DIRECTORY_ENTRY_IAT指向。在IMAGE_DIRECTORY的12号索引。</p>
+
+<p>2、导出表</p>
+
+<p><img src="/images/pm3.png" alt="alt text" /></p>
+
+<p>同导入表类似，当PE文件导出函数或变量的时候，这些信息被保存在了导出表中。这里导出的函数和变量统称为“符号”。</p>
+
+<pre><code>typedef struct _IMAGE_EXPORT_DIRECTORY {
+    DWORD   Characteristics;
+    DWORD   TimeDateStamp;
+    WORD    MajorVersion;
+    WORD    MinorVersion;
+    DWORD   Name;                                //RVA to 导出的DLL名字字符串
+    DWORD   Base;                                  //导出符号的起始值
+    DWORD   NumberOfFunctions;           //导出函数的总数
+    DWORD   NumberOfNames;              // 名称导出的函数总数
+    DWORD   AddressOfFunctions;     // RVA to 导出函数EAT    
+    DWORD   AddressOfNames;         // RVA to 导出函数名EAT
+    DWORD   AddressOfNameOrdinals;  // RVA to 导出函数序号表
+} IMAGE_EXPORT_DIRECTORY, *PIMAGE_EXPORT_DIRECTORY;
+</code></pre>
+
+<p>让我们模拟下如何找到函数的入口地址。通过函数名来查找，AddressOfNames遍历的函数名称地址表，并根据字符串找到对应的在AddressOfNames的序数，在根据这个序数，作为AddressOfFunctions的index，然后找到对应函数的RVA，在和dll的基地址相加，就得到了函数的真实地址。当然直接通过函数序数来查找函数将得到最快的性能。但是MS并不推荐这么做。因为函数导出的序数很可能在以后的系统中被改写。那么这个程序就不能在日后的操作系统下运行。导出表中还有一个重要概念是导出转发。 必须在windows 2000 windows XP中，kernel32 的HeapAlloc函数执行是被转发到了NTDLL中的RtlAllocHeap函数上。也就是说当执行HeapAlloc函数是，其实函数的真实地址不在kernel32 中，而是需要再次查找到NTDLL中的RtlAllocHeap，才能找到真正地址。而这实现着一切也很简单。只要把导出函数的RVA位于导出表中就可以。当转发一个符号时，首先找到的RVA指向了一个由DLL和转发的符号名称组成的字符串。比如“NTDLL.RtlAllocateHeap”。然后在通过递归的方式，在NTDLL的导出表中的RtlAllocateHeap找到真实地址。</p>
+
+<p>3、重定位。</p>
+
+<p>在IMAGE_OPTIONAL_HEADER32 结构中，有一个非常重要的字段ImageBase，他指明了可执行文件最希望载入的地址，而且任何涉及到直接操作地址的操作（比如全局变量，函数调用），所涉及到的地址都是根据这个imageBase算出来的。但是如果载入到内存的时候，ImageBase上已经有了其他的映射。那么必须要重新修正这些地址。而重定位表正式为了解决这个问题。它保存了这些需要修正的代码的地址。如果直接存储地址，在32位下。要花费4个字节，n个重定向，需要4n个字节。这将会大大的增加文件的长度，并浪费更多的空间。所以重定位表存储地址做了优化。在一组靠近的代码，32位中的高位地址总是相同，所以可以将高位地址统一标示来节省空间。当按照一个内存页来分隔时，一个页面寻址空间为4K，12位。把这12位凑齐16位并放入一个字类型数据，在加一个双字保存页的起始地址。 另一个双字表示重定位项数，那么大小会是4+4+2*n。</p>
+
+<pre><code>typedef struct _IMAGE_BASE_RELOCATION {
+    DWORD   VirtualAddress; //RVA to页面起始
+    DWORD   SizeOfBlock;    //重定位块长度，包括IMAGE_BASE_RELOCATION自身的大小
+//  WORD    TypeOffset[1];
+} IMAGE_BASE_RELOCATION; 
+</code></pre>
+
+<p>这个结构后面，将是n个重定位项，n可以根据SizeOfBlock算出。当然，根据一贯的设计风格，那高4位，不会被浪费。他被用来描述重定项种类。看过了以上的介绍，那么就初步明白了一个DLL是如何被载入的。而且这里面中有很多降低效率的部分。如，字符串比较，重定位数据，修改数据所引发的copy on write等。所以这引出了下面的部分。（我这里的资料都比较旧，以下的2个部分，MS可能又做了新的优化，所以可能和实际情况有些出入）首先解决重定位数据。可以使用Rebase.exe程序，它将修正多个DLL数据的imageBase。关于更多详细的介绍。MSDN。还剩下一个问题是字符串的比较。而这个处理的原因是在导入表中查到了DLLName，然后再在导出表中找到响应的函数名。最后把地址写入IAT中。好的。如果能找到一个方式在载入之前就把IAT建好，那么就不用载入的时候算这些数据了。而这个过程就是绑定。将.exe和DLL绑定起来，将会大大减少程序载入的时间。当然这也会带来一些问题。如何能够确定是被正确绑定的呢？windows loader载入的时候会判断绑定的合法性，如果不合法，他会根据之前的INT表重新查找那些地址再填入IAT中。而这一切和未绑定数据的情况一样，也就是没有额外的开销。</p>
+
+<pre><code>typedef struct _IMAGE_BOUND_IMPORT_DESCRIPTOR {
+    DWORD   TimeDateStamp;                     //导入dll的时间
+    WORD    OffsetModuleName;                 //指向导入DLL名字字符串偏移地址的值，这个值相对于首个结构体
+    WORD    NumberOfModuleForwarderRefs; //指向转发的DLL信息 //reserved?
+// Array of zero or more IMAGE_BOUND_FORWARDER_REF follows
+} IMAGE_BOUND_IMPORT_DESCRIPTOR,  *PIMAGE_BOUND_IMPORT_DESCRIPTOR;
+
+typedef struct _IMAGE_BOUND_FORWARDER_REF {
+    DWORD   TimeDateStamp;
+    WORD    OffsetModuleName;
+    WORD    Reserved;
+} IMAGE_BOUND_FORWARDER_REF, *PIMAGE_BOUND_FORWARDER_REF;
+</code></pre>
+
+<p>当然，构建一个正确的binding，需要的条件还是相当苛刻的。</p>
+
+<p>1、DLL需要加载到期望加载的基地址上。</p>
+
+<p>2、绑定成功后，DLL的导出表中的符号位置不能变。而且每个DLL的时间也必须和绑定时写入的时间一致。</p>
+
+<p>哦，差点忘记一个重要的话题，延迟加载DLL。这个概念依然是围绕如何加快程序载入速度这个问题上来的。当使用多个DLL的时候，由于loader需要把所有的需要的DLL映射到进程的地址空间中，那么它的初始化时间会变长。当然，我们可以手动控制DLL的装入，当他需要执行的时候。当然这么做会增加程序的复杂度。而延迟加载就是MS提供的一个非常好的方案。而且它的控制也很方便，在DLL载入失败时，可以由自己的选择，而不是想隐式加载而直接down掉。它的思想是，首先在载入的时候，添入一些基本信息，当这个DLL被真正调用时，根据这些添入的代码，去加载DLL。当完毕后将信息保存下来。那么下次加载的时候就可以直接找到函数的地址。而这个整个过程，最有趣的是这个过程是由编译器加入的代码完成。所以操作系统是不会分别出来的。现在，我们可以遍历整个导入表的项目。但这并没结束。这里需要的知识实在是太多了。下一篇一定要好好理解下函数导入的整个过程。我查到的PE文件的资料是在1994年，而直到现在从32位到64位数据执行文件加载，到.net的metadata IL，都有它的身影。能够经得起10多年的变化。真是不得不佩服。</p>
+</div>
+  
+  
+
+
+    </article>
+  
+  
+    <article>
+      
+  <header>
+    
+      <h1 class="entry-title"><a href="/blog/2010/06/07/c-plus-plus-vtable2/">再谈C++虚继承</a></h1>
+    
+    
+      <p class="meta">
+        
+
+
+
+
+
+
+
+
+  
+
+
+<time datetime="2010-06-07T20:50:00+08:00" pubdate data-updated="true">Jun 7<span>th</span>, 2010</time>
+        
+
+        
+      | <a href="/blog/2010/06/07/c-plus-plus-vtable2/#comments">Comments</a>
+        
+
+      </p>
+    
+  </header>
+
+
+  <div class="entry-content"><p>上一篇只是初步的写了一下虚继承，很不清楚而且有的地方自己理解也不到位。这回详细总结一下。以下内容来自vs2008 默认设置下。类的布局可以通过-d1reportSingleClassLayout查看。</p>
+
+<p>让我们从最简单的类结构开始。</p>
+
+<pre><code>class A
+{
+public:
+    int a;
+    void af();
+    void virtual vaf(); 
+};
+void A::vaf(){printf("vaf\n");}
+void A::af(){printf("af\n");}
+class B
+{
+public:
+    int b;
+    void bf();
+    void virtual vbf();
+};
+void B::vbf(){printf("vbf\n");};
+void B::bf(){printf("bf\n");};
+class C:public A,public B
+{
+public:
+    int c;
+    void cf();
+    void virtual vcf();    
+};
+void C::vcf(){printf("vcf\n");}
+void C::cf(){printf("cf\n");}
+</code></pre>
+
+<p>　　内存中这个例子是这样的。</p>
+
+<pre><code>class A    size(8):
+    +---
+    | {vfptr}
+    | a
+    +---
+
+A::$vftable@:
+    | &amp;A_meta
+    |  0
+    | &amp;A::vaf
+
+
+class B    size(8):
+    +---
+    | {vfptr}
+    | b
+    +---
+
+B::$vftable@:
+    | &amp;B_meta
+    |  0
+    | &amp;B::vbf
+
+class C    size(20):
+    +---
+    | +--- (base class A)
+    | | {vfptr}
+    | | a
+    | +---
+    | +--- (base class B)
+    | | {vfptr}
+    | | b
+    | +---
+    | c
+    +---
+
+C::$vftable@A@:
+    | &amp;C_meta
+    |  0
+    | &amp;A::vaf
+    | &amp;C::vcf
+
+C::$vftable@B@:
+    | -8
+    | &amp;B::vbf
+</code></pre>
+
+<p>这里我们总结一下，类中有虚函数布局。</p>
+
+<p>若是类中有虚函数，那么类中第一个元素是指向虚表的指针（这个情况只有vftable）。
+基类数据成员
+本身类成员
+最左边的基类和本类公用同一个虚函数表，从而可以简化一些操作。
+　　一个简单的例子，让我们看一下虚函数运行时的样子。</p>
+
+<pre><code>C *pc= new C;
+pc-&gt;af();
+pc-&gt;vaf();
+pc-&gt;vcf();
+pc-&gt;vbf();
+delete pc;
+.text:00401059                 push    offset aAf      ; "af\n";这里调用非虚函数，之前有一个给ecx赋值语句
+.text:0040105E                 call    ds:__imp__printf
+.text:00401064                 mov     eax, [esi]
+.text:00401066                 mov     edx, [eax]
+.text:00401068                 add     esp, 4
+.text:0040106B                 mov     ecx, esi         ;这里ecx指向类A，这里因为A和C相同的开始地址
+.text:0040106D                 call    edx              ;这里节省了一次类的转化
+.text:0040106F                 mov     eax, [esi]
+.text:00401071                 mov     edx, [eax+4]     ;这里调用vcf，在虚表中我们看到了他的offset 4
+.text:00401074                 mov     ecx, esi
+.text:00401076                 call    edx
+.text:00401078                 mov     eax, [esi+8]     ;这里调用vbf,这里需要首先调整this指针
+.text:0040107B                 mov     edx, [eax]       ;在找到相应的函数偏移量（这里为0）
+.text:0040107D                 lea     ecx, [esi+8]
+.text:00401080                 call    edx
+</code></pre>
+
+<p>有了前面的铺垫，我们步入正题，依然是一个简单的例子。</p>
+
+<pre><code>class D :virtual public A
+{
+    int d;
+    void df();
+    void virtual vdf();
+};
+void D::vdf(){printf("vdf\n");}
+void D::df(){printf("df\n");}
+class E :virtual public A
+{
+public:
+    int e;
+    void ef();
+    void virtual vef();
+};
+void E::vef(){printf("vef\n");}
+void E::ef(){printf("ef\n");}
+class F :public A,public B
+{
+public:
+    int f;
+    void ff();
+    void virtual vff();
+};
+void F::vff(){printf("vff\n");}
+void F::ff(){printf("ff\n");}
+</code></pre>
+
+<p>让我们再看一下class F在内存中的布局</p>
+
+<pre><code>class F    size(36):
+    +---
+    | +--- (base class D)
+    | | {vfptr}
+    | | {vbptr}
+    | | d
+    | +---
+    | +--- (base class E)
+    | | {vfptr}
+    | | {vbptr}
+    | | e
+    | +---
+    | f
+    +---
+    +--- (virtual base A)
+    | {vfptr}
+    | a
+    +---
+
+F::$vftable@D@:
+    | &amp;F_meta
+    |  0
+    | &amp;D::vdf
+    | &amp;F::vff
+
+F::$vftable@E@:
+    | -12
+    | &amp;E::vef
+
+F::$vbtable@D@:
+    | -4
+    | 24 (Fd(D+4)A)
+
+F::$vbtable@E@:
+    | -4
+    | 12 (Fd(E+4)A)
+
+F::$vftable@A@:
+    | -28
+    | &amp;A::vaf
+</code></pre>
+
+<p>这里又增加了一个指向虚基表的指针vbptr，我们可以看出这个指针的目的在于计算包含虚继承的类的位置（有直接虚继承和间接虚继承）。让我们总结下有虚继承下的布局。</p>
+
+<p>将类中非虚继承的基类放置最前面。这样访问非虚继承函数不需再计算偏移量。
+在派生类中若是没有vbtable则增加一个，除非能从原来的非虚继承类继承到了vbtable。
+派生类数据成员
+虚基类
+　　可见，虚基类始终在类的尾部，那么当类生长的时候，也就是继续被继承时，则很有可能使虚基的偏移量变大。</p>
+
+<p>比如在class D的虚基表中，D与A偏移量为0，而在class F中D与A偏移量变为了24，所以只能加入一个vbptr指向虚基表。</p>
+
+<p>有了前面的知识，那么运行时的情况就好分析了。</p>
+
+<pre><code>.text:0040104F     mov     dword ptr [eax+4], offset ??_8F@@7BD@@@ ; const F::`vbtable'{for `D'}
+.text:00401056     mov     dword ptr [eax+10h], offset ??_8F@@7BE@@@ ; const F::`vbtable'{for `E'}
+                                                         ;首先将虚基表初始化 eax=this
+.text:0040105D     mov     dword ptr [eax+1Ch], offset ??_7A@@6B@ ; const A::`vftable'
+.text:00401064     mov     ecx, [eax+4]      ;*ecx=vbtableFD
+.text:00401067     mov     dword ptr [eax], offset ??_7D@@6B0@@ ; const D::`vftable'{for `D'}
+.text:0040106D     mov     edx, [ecx+4]      ;获得vbtableFD表中第2项，也就是D和A虚函数表的offset
+.text:00401070     mov     dword ptr [edx+eax+4], offset ??_7D@@6BA@@@ ; const D::`vftable'{for `A'}
+                                             ;根据和虚基表的offset+虚基表中和虚函数的offset+this找到虚函数位置以下类推
+.text:00401078     mov     ecx, [eax+10h]
+.text:0040107B     mov     dword ptr [eax+0Ch], offset ??_7E@@6B0@@ ; const E::`vftable'{for `E'}
+.text:00401082     mov     edx, [ecx+4]
+.text:00401085     mov     dword ptr [edx+eax+10h], offset ??_7E@@6BA@@@ ; const E::`vftable'{for `A'}
+.text:0040108D     mov     ecx, [eax+4]
+.text:00401090     mov     dword ptr [eax], offset ??_7F@@6BD@@@ ; const F::`vftable'{for `D'}
+.text:00401096     mov     dword ptr [eax+0Ch], offset ??_7F@@6BE@@@ ; const F::`vftable'{for `E'}
+.text:0040109D     mov     edx, [ecx+4]
+.text:004010A0     mov     dword ptr [edx+eax+4], offset ??_7F@@6BA@@@ ; const F::`vftable'{for `A'}
+.text:004010A8     mov     esi, eax
+
+.text:004010AE     mov     eax, [esi+4]            ;eax=*vbtableFD
+.text:004010B1     mov     ecx, [eax+4]            ;ecx=虚基表中和虚函数的offset
+.text:004010B4     mov     edx, [ecx+esi+4]        ;*edx=vftable
+.text:004010B8     mov     eax, [edx]              
+.text:004010BA     lea     ecx, [ecx+esi+4]        ;this=class A的开始
+.text:004010BE     call    eax                     ;pf-&gt;vaf();
+.text:004010C0     mov     edx, [esi]
+.text:004010C2     mov     eax, [edx]
+.text:004010C4     mov     ecx, esi                ;classD和classF公用虚表
+.text:004010C6     call    eax
+.text:004010C8     mov     edx, [esi+0Ch]
+.text:004010CB     mov     eax, [edx]
+.text:004010CD     lea     ecx, [esi+0Ch]          ;修正this，指向class E
+.text:004010D0     call    eax
+.text:004010D2     mov     edx, [esi]
+.text:004010D4     mov     eax, [edx+4]
+.text:004010D7     mov     ecx, esi
+.text:004010D9     call    eax
+</code></pre>
+
+<p>　　再看下虚函数覆盖的问题。</p>
+
+<pre><code>class G
+{
+public:
+    int g;
+    void gf();
+    void virtual vgf();
+    void virtual vaf();
+};
+void G::gf(){printf("gf\n");}
+void G::vgf(){printf("vgf\n");}
+void G::vaf(){printf("vaf_g\n");}
+class H:public A,public G
+{
+public:
+    int h;
+    void hf();
+    void vaf();
+    void vgf();
+    void virtual vhf();
+};
+void H::hf(){printf("hf\n");}
+void H::vaf(){printf("vaf_H\n");}
+void H::vgf(){printf("vgf_h\n");}
+void H::vhf(){printf("vhf\n");}
+
+
+class H    size(20):
+    +---
+    | +--- (base class A)
+    | | {vfptr}
+    | | a
+    | +---
+    | +--- (base class G)
+    | | {vfptr}
+    | | g
+    | +---
+    | h
+    +---
+
+H::$vftable@A@:
+    | &amp;H_meta
+    |  0
+    | &amp;H::vaf
+    | &amp;H::vhf
+
+H::$vftable@G@:
+    | -8
+    | &amp;H::vgf
+    | &amp;thunk: this-=8; goto H::vaf
+</code></pre>
+
+<p>由于A类和G类的函数vaf都被子类H覆盖，由于A和H共用虚函数表，那么如果在G类中依然保留被覆盖的函数则浪费空间。实际是通过以下代码实现的。</p>
+
+<pre><code>.text:004010B0 ; [thunk]:public: virtual void __thiscall H::vaf`adjustor{8}' (void)
+.text:004010B0 ?vaf@H@@W7AEXXZ proc near               ; DATA XREF: .rdata:00402158o
+.text:004010B0                 sub     ecx, 8          ;这里调整this指针，指向class G=class A
+.text:004010B3                 jmp     ?vaf@H@@UAEXXZ  ; H::vaf(void);转向到G表中的vaf()
+.text:004010B3 ?vaf@H@@W7AEXXZ endp
+</code></pre>
+
+<p>可见要是要使用thunk，根本上是处理以达到节省函数表大小，通过修改this指针去调用子类表项，那么也就是当子类覆盖父类多个方法时，只保留一份，其他的则跳转执行。</p>
+
+<pre><code>mov     ecx, esi
+call    edx                   ;调用vaf
+mov     eax, [esi+8]          ;*eax=vftable_G
+mov     edx, [eax]
+lea     ecx, [esi+8]
+call    edx                   ;vgf
+mov     eax, [esi]
+mov     edx, [eax+4] 
+mov     ecx, esi
+call    edx                   ;vhf
+</code></pre>
+
+<p>虚函数中还有2个非常重要的部分一个纯虚函数,一个虚析构函数。由于析构函数和构造函数结合的实在是太紧密了。下一篇先总结下虚析构函数当然也包括构造函数的部分。</p>
+</div>
+  
+  
+
+
+    </article>
+  
+  <div class="pagination">
+    
+      <a class="prev" href="/blog/page/7/">&larr; Older</a>
+    
+    <a href="/blog/archives">Blog Archives</a>
+    
+    <a class="next" href="/blog/page/5/">Newer &rarr;</a>
+    
+  </div>
+</div>
+<aside class="sidebar">
+  
+    <section>
+  <h1>Categories</h1>
+  <ul id="categories">
+    <li class='category'><a href='/blog/categories/ios/'>IOS (1)</a></li>
+<li class='category'><a href='/blog/categories/objective-c/'>Objective-C (6)</a></li>
+<li class='category'><a href='/blog/categories/stl/'>STL (5)</a></li>
+<li class='category'><a href='/blog/categories/wpf-sl/'>WPF/SL (1)</a></li>
+<li class='category'><a href='/blog/categories/algorithms/'>algorithms (8)</a></li>
+<li class='category'><a href='/blog/categories/asm/'>asm (1)</a></li>
+<li class='category'><a href='/blog/categories/c-/'>c++ (6)</a></li>
+<li class='category'><a href='/blog/categories/configure/'>configure (2)</a></li>
+<li class='category'><a href='/blog/categories/emotion/'>emotion (8)</a></li>
+<li class='category'><a href='/blog/categories/mysql/'>mysql (1)</a></li>
+<li class='category'><a href='/blog/categories/operating-system/'>operating_system (3)</a></li>
+<li class='category'><a href='/blog/categories/tips/'>tips (1)</a></li>
+<li class='category'><a href='/blog/categories/windows/'>windows (9)</a></li>
+<li class='category'><a href='/blog/categories/windows-mobile/'>windows_mobile (2)</a></li>
+
+  </ul>
+</section>
+<section>
+  <h1>Recent Posts</h1>
+  <ul id="recent_posts">
+    
+      <li class="post">
+        <a href="/blog/2013/03/20/mysql-source-code-setup/">调试 mysql源代码 环境搭建</a>
+      </li>
+    
+      <li class="post">
+        <a href="/blog/2013/03/05/emotion-unknown/">情商太低, 伤不起</a>
+      </li>
+    
+      <li class="post">
+        <a href="/blog/2013/03/03/arc/">ARC 1</a>
+      </li>
+    
+      <li class="post">
+        <a href="/blog/2013/01/26/tips/">tips</a>
+      </li>
+    
+      <li class="post">
+        <a href="/blog/2013/01/15/happiness/">哈佛幸福课 杂感一</a>
+      </li>
+    
+  </ul>
+</section>
+
+<section>
+  <h1>GitHub Repos</h1>
+  <ul id="gh_repos">
+    <li class="loading">Status updating&#8230;</li>
+  </ul>
+  
+  <a href="https://github.com/studentdeng">@studentdeng</a> on GitHub
+  
+  <script type="text/javascript">
+    $.domReady(function(){
+        if (!window.jXHR){
+            var jxhr = document.createElement('script');
+            jxhr.type = 'text/javascript';
+            jxhr.src = '/javascripts/libs/jXHR.js';
+            var s = document.getElementsByTagName('script')[0];
+            s.parentNode.insertBefore(jxhr, s);
+        }
+
+        github.showRepos({
+            user: 'studentdeng',
+            count: 5,
+            skip_forks: true,
+            target: '#gh_repos'
+        });
+    });
+  </script>
+  <script src="/javascripts/github.js" type="text/javascript"> </script>
+</section>
+
+
+
+
+
+<section>
+<h1>Recent Comments</h1>
+<ul class="ds-recent-comments" data-num-items="5" data-show-avatars="0" data-show-time="0" data-show-title="0" data-show-admin="0" data-excerpt-length="18"></ul>
+
+<!--多说js加载开始，一个页面只需要加载一次 -->
+<script type="text/javascript">
+  var duoshuoQuery = {short_name:"studentdeng"};
+  (function() {
+    var ds = document.createElement('script');
+    ds.type = 'text/javascript';ds.async = true;
+    ds.src = 'http://static.duoshuo.com/embed.js';
+    ds.charset = 'UTF-8';
+    (document.getElementsByTagName('head')[0] || document.getElementsByTagName('body')[0]).appendChild(ds);
+  })();
+</script>
+<!--多说js加载结束，一个页面只需要加载一次 -->
+
+</section>
+  
+</aside>
+
+    </div>
+  </div>
+  <footer role="contentinfo"><p>
+  Copyright &copy; 2013 - studentdeng -
+  <span class="credit">Powered by <a href="http://octopress.org">Octopress</a></span>
+</p>
+
+</footer>
+  
+
+
+
+
+
+
+
+
+
+
+
+</body>
+</html>
