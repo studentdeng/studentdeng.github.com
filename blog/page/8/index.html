@@ -9,7 +9,7 @@
   <meta name="author" content="studentdeng">
 
   
-  <meta name="description" content="第一部分简介： 最近有幸参加了一个网上的开源项目，需要我设计一个缩略图存储的方法。整个思路主要是模仿XP的实现方式，而对于Win7（或是Vista）里面将所有缩略图统一管理的模式没有采用。主要想法还是一切从简，这也就是初探的来由了。 整个缩略图的核心算法来自《Inside MoPaQ》http &hellip;">
+  <meta name="description" content="之前的问题还是很大的，参考了.net framework Dictionary的思路，保留MPQ的hash算法和判断冲突的思路。重新整理了一下。 第一部分：改进部分 1、处理冲突的方法由原来线性再散列，改为分离链表法。 2、修正了一些因为处理冲突而变化的部分。 3、增加了扩容的部分。 4、 &hellip;">
   
 
   <!-- http://t.co/dKP3o1e -->
@@ -62,6 +62,170 @@
     <div id="content">
       <div class="blog-index">
   
+  
+  
+    <article>
+      
+  <header>
+    
+      <h1 class="entry-title"><a href="/blog/2010/04/06/thumb-pic2/">缩略图设计初探二</a></h1>
+    
+    
+      <p class="meta">
+        
+
+
+
+
+
+
+
+
+  
+
+
+<time datetime="2010-04-06T18:43:00+08:00" pubdate data-updated="true">Apr 6<span>th</span>, 2010</time>
+        
+
+        
+      | <a href="/blog/2010/04/06/thumb-pic2/#comments">Comments</a>
+        
+
+      </p>
+    
+  </header>
+
+
+  <div class="entry-content"><p>之前的问题还是很大的，参考了.net framework Dictionary的思路，保留MPQ的hash算法和判断冲突的思路。重新整理了一下。</p>
+
+<p>第一部分：改进部分</p>
+
+<p>1、处理冲突的方法由原来线性再散列，改为分离链表法。</p>
+
+<p>2、修正了一些因为处理冲突而变化的部分。</p>
+
+<p>3、增加了扩容的部分。</p>
+
+<p>4、增加了CRC校验部分。</p>
+
+<p>第二部分：疑问</p>
+
+<p>1、如何保证数据的安全性？Delete操作只是将数据从hashTable中delete，但是文件中依然有图片存在。</p>
+
+<p>要么将每个图片加密储存，但是手机上资源消耗太大。那么最有可能就是delete之后将文件数据格式中关键数据上写一些随机数，从而正常解码失败。</p>
+
+<p>2、如果要统一管理图片，需要建立文件索引。</p>
+
+<p>3、过多的seek会影响效率，我这里还是保存了文件的偏移量，在读取的时候也必然会seek，因为我觉得使用seek似乎没有在效率产生很大的损失（可能我测试的数据不具有普遍性吧），但是很多资料上都对寻道很讨厌。这里我又参考了一下空间问题，故而保存了文件偏移量。</p>
+
+<p>第三部分：部分代码</p>
+
+<p>插入</p>
+
+<pre><code>BOOL MPFile::InsertData( LPCVOID lpBuffer, TCHAR *lpszString, const UINT fileSize, const FILETIME LastModiTime, 
+        LONG &amp;lindex, DWORD dwFlags )
+{
+    ASSERT( lpBuffer != NULL );
+    ASSERT( lpszString != NULL );
+
+    if( m_pMPBlockTable == NULL ) Initialize(0);
+    const DWORD HASH_OFFSET = 0, HASH_A = 1, HASH_B = 2;   
+    DWORD hashCode = hash.HashString(lpszString, HASH_OFFSET);   
+    DWORD nHashA = hash.HashString(lpszString, HASH_A);   
+    DWORD nHashB = hash.HashString(lpszString, HASH_B);   
+
+    DWORD targetBucket = hashCode % (m_pMPFileHeader-&gt;nHashTableLength); 
+    for ( LONG i = m_pMPBlucketTable[targetBucket].iBlockIndex; i &gt;= 0; i = m_pMPBlockTable[i].MPEntry.iNext ) 
+    {
+        if( m_pMPBlockTable[i].MPEntry.dwHashCode == hashCode
+    　　　　&amp;&amp;m_pMPBlockTable[i].MPEntry.dwHashValueA == nHashA 
+    　　　　&amp;&amp; m_pMPBlockTable[i].MPEntry.dwHashValueB == nHashB )
+        {
+        if( !(dwFlags &amp; INSERT_REPLACE_EXISTING) ) {return FALSE;}
+            return SetDataToFile(lpBuffer,lpszString,i);
+        }
+    }
+    // add new 
+    LONG index;
+    BOOL isNew=TRUE;
+    if (m_pMPFileHeader-&gt;nFreeCount &gt; 0) 
+    { 
+        index = m_pMPFileHeader-&gt;iFreeList;
+        m_pMPFileHeader-&gt;iFreeList = m_pMPBlockTable[index].MPEntry.iNext;
+        m_pMPFileHeader-&gt;nFreeCount--;
+        isNew = FALSE;
+    } 
+    else 
+    {
+        if (m_pMPFileHeader-&gt;nChildFileCount == m_pMPFileHeader-&gt;nHashTableLength) 
+        {
+            ReSize();
+            targetBucket = hashCode % (m_pMPFileHeader-&gt;nHashTableLength);
+        }
+        index = m_pMPFileHeader-&gt;nChildFileCount;
+        m_pMPFileHeader-&gt;nChildFileCount++;
+    } 
+
+    m_pMPBlockTable[index].MPEntry.dwHashCode= hashCode; 
+    m_pMPBlockTable[index].MPEntry.iNext = m_pMPBlucketTable[targetBucket].iBlockIndex; 
+    m_pMPBlockTable[index].MPEntry.dwHashValueA = nHashA;
+    m_pMPBlockTable[index].MPEntry.dwHashValueB = nHashB;
+    m_pMPBlockTable[index].dwFlag = dwFlags;
+    m_pMPBlockTable[index].nSize = fileSize + sizeof(MINIPICDATAITEMHEADER)+sizeof(DWORD);//size add fileName and crc32
+    m_pMPBlucketTable[targetBucket].iBlockIndex = index;
+
+    lindex = index;
+
+    //TODO:修改数据
+     if(isNew)
+    {
+        m_pMPBlockTable[index].FileStartAt = m_endOfFileData;
+        if(SetDataToFile(lpBuffer,lpszString,index) )
+        {
+            m_endOfFileData+=m_pMPBlockTable[index].nSize;//TODO:防止溢出
+        　　  return TRUE;
+        }
+        return FALSE;
+    }
+    else
+    {
+        return SetDataToFile( lpBuffer,lpszString, index );
+    }
+}
+</code></pre>
+
+<p>读取数据</p>
+
+<pre><code>LONG MPFile::FindEntry( TCHAR *lpszString )
+{
+    ASSERT(lpszString!=NULL);
+     if (m_pMPBlucketTable != NULL ) 
+     {
+        const DWORD HASH_OFFSET = 0, HASH_A = 1, HASH_B = 2;   
+        DWORD    hashCode = hash.HashString(lpszString, HASH_OFFSET);   
+        DWORD    nHashA = hash.HashString(lpszString, HASH_A);   
+        DWORD    nHashB = hash.HashString(lpszString, HASH_B);   
+        DWORD    nHashStart = hashCode % (m_pMPFileHeader-&gt;nHashTableLength);   
+
+        for (LONG i = m_pMPBlucketTable[nHashStart].iBlockIndex; i &gt;= 0; i = m_pMPBlockTable[i].MPEntry.iNext) 
+        {
+            if (m_pMPBlockTable[i].MPEntry.dwHashCode == hashCode 
+                &amp;&amp;m_pMPBlockTable[i].MPEntry.dwHashValueA == nHashA 
+                &amp;&amp; m_pMPBlockTable[i].MPEntry.dwHashValueB == nHashB )
+            return i;
+        }
+     }
+     return -1;
+}
+</code></pre>
+
+<p><a href="http://files.cnblogs.com/studentdeng/MP_v2.rar">MP_v2.rar源码</a></p>
+</div>
+  
+  
+
+
+    </article>
   
   
     <article>
@@ -556,7 +720,7 @@ DispatcherTimer被称为生命线程，用来控制该类对象的状态和在UI
 <li class='category'><a href='/blog/categories/c-/'>c++ (6)</a></li>
 <li class='category'><a href='/blog/categories/configure/'>configure (2)</a></li>
 <li class='category'><a href='/blog/categories/emotion/'>emotion (8)</a></li>
-<li class='category'><a href='/blog/categories/mysql/'>mysql (1)</a></li>
+<li class='category'><a href='/blog/categories/mysql/'>mysql (2)</a></li>
 <li class='category'><a href='/blog/categories/operating-system/'>operating_system (3)</a></li>
 <li class='category'><a href='/blog/categories/tips/'>tips (1)</a></li>
 <li class='category'><a href='/blog/categories/windows/'>windows (9)</a></li>
@@ -567,6 +731,10 @@ DispatcherTimer被称为生命线程，用来控制该类对象的状态和在UI
 <section>
   <h1>Recent Posts</h1>
   <ul id="recent_posts">
+    
+      <li class="post">
+        <a href="/blog/2013/03/21/mysql-source-code-2/">mysql 源代码 第二天 </a>
+      </li>
     
       <li class="post">
         <a href="/blog/2013/03/20/mysql-source-code-setup/">调试 mysql源代码 环境搭建</a>
@@ -582,10 +750,6 @@ DispatcherTimer被称为生命线程，用来控制该类对象的状态和在UI
     
       <li class="post">
         <a href="/blog/2013/01/26/tips/">tips</a>
-      </li>
-    
-      <li class="post">
-        <a href="/blog/2013/01/15/happiness/">哈佛幸福课 杂感一</a>
       </li>
     
   </ul>
