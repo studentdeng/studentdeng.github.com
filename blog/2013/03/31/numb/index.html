@@ -5,15 +5,11 @@
 <!--[if (gt IE 8)|(gt IEMobile 7)|!(IEMobile)|!(IE)]><!--><html class="no-js" lang="en"><!--<![endif]-->
 <head>
   <meta charset="utf-8">
-  <title>tips - studentdeng Blog</title>
+  <title>numb - studentdeng Blog</title>
   <meta name="author" content="studentdeng">
 
   
-  <meta name="description" content="ARC 编译时遇到的相关问题
-install cocoapods 问题
-Adding Unit Tests to an existing iOS project with Xcode 4
-NSDateFormatter 问题
-写博客命令 ARC 编译时遇到的相关问题 自己的项目没有使用ARC, &hellip;">
+  <meta name="description" content="前几天运气很好和一大堆朋友吃饭和一个老外boss吃饭, 他很牛, 20岁从MIT毕业, 第一份工作是参与波音777的设计制作, 做了当时波音第一个用电脑辅助设计飞机的软件. 在控制项目的时候, 他们当时犯了相当大的错误, 18个月30W行的C代码, 被重新推倒重来, &hellip;">
   
 
   <!-- http://t.co/dKP3o1e -->
@@ -22,7 +18,7 @@ NSDateFormatter 问题
   <meta name="viewport" content="width=device-width, initial-scale=1">
 
   
-  <link rel="canonical" href="http://studentdeng.github.com/blog/2013/01/26/tips/">
+  <link rel="canonical" href="http://studentdeng.github.com/blog/2013/03/31/numb/">
   <link href="/favicon.png" rel="icon">
   <link href="/stylesheets/screen.css" media="screen, projection" rel="stylesheet" type="text/css">
   <script src="/javascripts/modernizr-2.0.js"></script>
@@ -69,7 +65,7 @@ NSDateFormatter 问题
   
   <header>
     
-      <h1 class="entry-title">Tips</h1>
+      <h1 class="entry-title">Numb</h1>
     
     
       <p class="meta">
@@ -85,7 +81,7 @@ NSDateFormatter 问题
   
 
 
-<time datetime="2013-01-26T18:05:00+08:00" pubdate data-updated="true">Jan 26<span>th</span>, 2013</time>
+<time datetime="2013-03-31T16:31:00+08:00" pubdate data-updated="true">Mar 31<span>st</span>, 2013</time>
         
 
         
@@ -97,98 +93,15 @@ NSDateFormatter 问题
   </header>
 
 
-<div class="entry-content"><ol>
-<li><a href="#A1">ARC 编译时遇到的相关问题</a></li>
-<li><a href="#A2">install cocoapods 问题</a></li>
-<li><a href="#A3">Adding Unit Tests to an existing iOS project with Xcode 4</a></li>
-<li><a href="#A4">NSDateFormatter 问题</a></li>
-<li><a href="#A5">写博客命令</a></li>
-</ol>
+<div class="entry-content"><p>前几天运气很好和一大堆朋友吃饭和一个老外boss吃饭, 他很牛, 20岁从MIT毕业, 第一份工作是参与波音777的设计制作, 做了当时波音第一个用电脑辅助设计飞机的软件. 在控制项目的时候, 他们当时犯了相当大的错误, 18个月30W行的C代码, 被重新推倒重来, 再用18个月一个team从头学习然后最后项目上线, 他说777是当时最安全的飞机. 因为在这个之前,的飞机一直是手写设计稿做的, 不是通过计算机. 然后我问他为什么要离开波音呢? 他说因为他觉得没有意思, 他在波音继续待下去,也就是一个非常出色的工程师, 这个不是他想要的, 他想去做一点更新的,更cool的东西, 但是这个似乎很矛盾的, 因为我知道他现在是做传统行业石油的, 每天都是谈论石头, 这个和做飞机根本不是一个概念啊.我问他这个似乎很矛盾啊, 他说恩,是的. 他离开波音之后, 花了6,7年. 知道了什么事情是不对的.2000年那会, 他做自己第一个公司, 是做电商, 当时风投给他们了$1500W, 最后还是没做下去, 没想到最后居然被NSA看中了, 因为这里面他们实现了一个根据兴趣爱好推荐内容的算法, 而这个算法,正好适合间谍交易的使用场景. =. =!</p>
 
+<p>最后bob说了一句非常感动我的话, 想得到自己想要的东西, 非常难, 即便自己很努力的去做, 最后得到的和之前想象的完全不一样. 是的, 如果让我来总结我这2年来的收获,用一句话来说就是 &#8220;很多东西觉得真心过不去这个坎了, 但是这个事情却做到了, 而有些东西觉得挺简单的,但最后却一直没有做到&#8221;.而有意思的是,我再写这篇blogs之前的2个小时之前, 还在愁一个项目无法交付,但是,有时候运气就这样子砸下来了.</p>
 
+<p>2年来, 就是不断地在从一个坑里爬出来,然后跌进去,再爬出来,再跌进去. 昨天晚上和老大聊到晚上3点.呵呵, 真得, 我们只是知道了什么事情是不对的.</p>
 
+<p>2年前,我觉得我虽然是一个很diaosi的家伙,但是我有一点是觉得很少人能够做到我这点的, 就是我知道我想要做什么, 我喜欢做什么,我适合做什么, 能够在22岁的时候想明白这个事情,让我非常开心,而且也一直向这个目标前进, 而为了这个,当然, 我放弃了非常多的东西, 其实我现在也不知道,因为一个东西,你付出了大量的时间,即便是没啥天赋, 也会做得不错, 这个世界上有太多的东西,我没有做过, 甚至都没有听到, 我凭什么说我适合做这个呢?</p>
 
-<div name = "A1" id = "A1"></div>
-
-
-<h1>ARC 编译时遇到的相关问题</h1>
-
-<ol>
-<li>自己的项目没有使用ARC, 其他代码使用ARC</li>
-<li>自己项目使用ARC, 其他代码没有使用ARC</li>
-</ol>
-
-
-<p>在Xcode Build Phases 里面的 Compile Source 需要特殊处理的文件 增加 COmpiler Flags
-1. 第一种情况 添加 -fobjc-arc
-2. 第二种情况 添加 -fno-objc-arc</p>
-
-<div name = "A2" id = "A2"></div>
-
-
-<h1>install cocoapods 问题</h1>
-
-<p>In Preview of OS X Mountain Lion, Xcode has been distributed as X.app. And Commandline Tools are not installed by default. Commandline Tools contains cc/gcc that you must need to build environment.</p>
-
-<p>Open Xcode and cmd +, to open Preferences panel where you can install Commandline Tools:</p>
-
-<p><img src="/images/commandline.jpg" alt="alt text" /></p>
-
-<p>then</p>
-
-<pre><code>gem install hpricot
-gem install cocoapods
-</code></pre>
-
-<div name = "A3" id = "A3"></div>
-
-
-<h1>Adding Unit Tests to an existing iOS project with Xcode 4</h1>
-
-<p>When you build a new iPhone or iPad app from scratch, you can generate a new project with tests using Xcode’s project templates, and the test dependency is set up correctly.</p>
-
-<p>However, if you add a unit test target to an existing iOS project, there are some manual steps required to set up the target correctly. Following these steps will get you up and running quickly:</p>
-
-<p>Project MyExistingApp -> + Add Target -> iOS -> Other -> Cocoa Unit Testing Bundle
-Name the new target something like “Unit Tests” or “MyAppTests”
-Select your new “Unit Tests” target and click the Build Phases tab, expand Target Dependencies and add MyExistingApp as as a Target Dependency
-Click the Build Settings tab and set the Bundle Loader setting to</p>
-
-<pre><code>$(BUILT_PRODUCTS_DIR)/MyExistingApp.app/MyExistingApp
-</code></pre>
-
-<p>Set the Test Host build setting to</p>
-
-<pre><code>$(BUNDLE_LOADER)
-</code></pre>
-
-<p>Go back to your app target (not the test target), set the Symbols Hidden by Default build setting to NO</p>
-
-<p>That should take care of it, and you can now start adding tests for your app. With this configuration, you continue to add application classes only to your app target, and add test classes only to your test target. Since the tests run in the app running in the simulator, the code under test can safely instantiate views and fonts, which would otherwise cause OCunit to crash when running without the Test Host setting.</p>
-
-<div name = "A4" id = "A4"></div>
-
-
-<h1>NSDateFormatter 问题</h1>
-
-<p>最近在使用新版本xcode4.6 或是 因为新版本的sdk6.1 日期转换出现了一个问题. 而且是在模拟器可以, 真机不行的问题.
-问题是 时间格式中的 &#8220;Thu Jan&#8221; 无法被识别出来. 这个挺奇怪的, 可能新版本修改了默认行为. 下面是解决方法</p>
-
-<pre><code>//time format: @"Thu Jan 17 13:59:11 +0000 2013"
-s_format = [[NSDateFormatter alloc] init];
-[s_format setDateFormat:@"eee MMM dd HH:mm:ss ZZZZ yyyy"];
-[s_format setLocale:[[NSLocale alloc] initWithLocaleIdentifier:@"en_US_POSIX"]]; //之前少了设定Locale
-</code></pre>
-
-<div name = "A5" id = "A5"></div>
-
-
-<h1>写博客命令</h1>
-
-<pre><code>rake new_post['filename'];
-rake generate 
-rake preview
-</code></pre>
+<p>唯一能确定的就是,&#8221;天道酬勤&#8221;,&#8221;机会只会留给有准备的人&#8221;</p>
 </div>
 
 
@@ -211,12 +124,12 @@ rake preview
   
 
 
-<time datetime="2013-01-26T18:05:00+08:00" pubdate data-updated="true">Jan 26<span>th</span>, 2013</time>
+<time datetime="2013-03-31T16:31:00+08:00" pubdate data-updated="true">Mar 31<span>st</span>, 2013</time>
       
 
 <span class="categories">
   
-    <a class='category' href='/blog/categories/ios/'>IOS</a>, <a class='category' href='/blog/categories/configure/'>configure</a>, <a class='category' href='/blog/categories/tips/'>tips</a>
+    <a class='category' href='/blog/categories/emotion/'>emotion</a>
   
 </span>
 
@@ -261,10 +174,8 @@ var jiathis_config={
     
     <p class="meta">
       
-        <a class="basic-alignment left" href="/blog/2013/01/15/happiness/" title="Previous Post: 哈佛幸福课 杂感一">&laquo; 哈佛幸福课 杂感一</a>
+        <a class="basic-alignment left" href="/blog/2013/03/21/mysql-source-code-2/" title="Previous Post: mysql 源代码 第二天 ">&laquo; mysql 源代码 第二天 </a>
       
-      
-        <a class="basic-alignment right" href="/blog/2013/03/03/arc/" title="Next Post: ARC 1">ARC 1 &raquo;</a>
       
     </p>
   </footer>
