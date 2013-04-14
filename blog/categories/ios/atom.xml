@@ -4,7 +4,7 @@
   <title><![CDATA[Category: IOS | studentdeng Blog]]></title>
   <link href="http://studentdeng.github.com/blog/categories/ios/atom.xml" rel="self"/>
   <link href="http://studentdeng.github.com/"/>
-  <updated>2013-03-31T17:29:59+08:00</updated>
+  <updated>2013-04-14T17:07:52+08:00</updated>
   <id>http://studentdeng.github.com/</id>
   <author>
     <name><![CDATA[studentdeng]]></name>
@@ -24,6 +24,7 @@
 <li><a href="#A3">Adding Unit Tests to an existing iOS project with Xcode 4</a></li>
 <li><a href="#A4">NSDateFormatter 问题</a></li>
 <li><a href="#A5">写博客命令</a></li>
+<li><a href="#A6">php apigen command demo</a></li>
 </ol>
 
 
@@ -109,6 +110,14 @@ s_format = [[NSDateFormatter alloc] init];
 <pre><code>rake new_post['filename'];
 rake generate 
 rake preview
+</code></pre>
+
+<div name = "A6" id = "A6"></div>
+
+
+<h1>apigen command demo</h1>
+
+<pre><code>/usr/bin/php /Users/ygcurer/apigen/apigen.php --source /Applications/XAMPP/xamppfiles/htdocs/curer/application/controllers/api --destination /Applications/XAMPP/xamppfiles/htdocs/curer/doc_test --title curer --charset UTF-8 --access-levels public,protected --internal no --php yes --tree yes --deprecated no --todo no --download no --source-code yes --colors yes --progressbar no --update-check no
 </code></pre>
 ]]></content>
   </entry>
