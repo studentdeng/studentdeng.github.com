@@ -9,7 +9,8 @@
   <meta name="author" content="studentdeng">
 
   
-  <meta name="description" content="前几天运气很好和一大堆朋友吃饭和一个老外boss吃饭, 他很牛, 20岁从MIT毕业, 第一份工作是参与波音777的设计制作, 做了当时波音第一个用电脑辅助设计飞机的软件. 在控制项目的时候, 他们当时犯了相当大的错误, 18个月30W行的C代码, 被重新推倒重来, &hellip;">
+  <meta name="description" content="apple script 这种脚本语言就是精炼, 可执行的伪代码 tell application "Finder" display dialog "选择源文件目录"
+set sourcepath to quoted form of POSIX path of (choose folder) &hellip;">
   
 
   <!-- http://t.co/dKP3o1e -->
@@ -62,6 +63,62 @@
     <div id="content">
       <div class="blog-index">
   
+  
+  
+    <article>
+      
+  <header>
+    
+      <h1 class="entry-title"><a href="/blog/2013/04/24/apple-script-1/">Apple Script 可执行的伪代码</a></h1>
+    
+    
+      <p class="meta">
+        
+
+
+
+
+
+
+
+
+  
+
+
+<time datetime="2013-04-24T19:21:00+08:00" pubdate data-updated="true">Apr 24<span>th</span>, 2013</time>
+        
+
+        
+      | <a href="/blog/2013/04/24/apple-script-1/#comments">Comments</a>
+        
+
+      </p>
+    
+  </header>
+
+
+  <div class="entry-content"><p>apple script 这种脚本语言就是精炼, 可执行的伪代码</p>
+
+<pre><code>tell application "Finder"
+
+display dialog "选择源文件目录"
+set sourcepath to quoted form of POSIX path of (choose folder)
+
+display dialog "选择输出目录"
+set destinationpath to quoted form of POSIX path of (choose folder)
+
+end tell
+
+do shell script "/usr/bin/php /Users/ygcurer/apigen/apigen.php --source " &amp; sourcepath &amp; " --destination " &amp; destinationpath &amp; " --title curer --charset UTF-8 --access-levels public,protected --internal no --php yes --tree yes --deprecated no --todo no --download no --source-code yes --colors yes --progressbar no --update-check no"
+</code></pre>
+
+<p>这里把php document generate 的shell command 包装进了application中</p>
+</div>
+  
+  
+
+
+    </article>
   
   
     <article>
@@ -404,241 +461,6 @@ datadir=C:/mysql_code/mysql-5-1.1.68/win/data
 
     </article>
   
-  
-    <article>
-      
-  <header>
-    
-      <h1 class="entry-title"><a href="/blog/2013/03/03/arc/">ARC 1</a></h1>
-    
-    
-      <p class="meta">
-        
-
-
-
-
-
-
-
-
-  
-
-
-<time datetime="2013-03-03T13:43:00+08:00" pubdate data-updated="true">Mar 3<span>rd</span>, 2013</time>
-        
-
-        
-      | <a href="/blog/2013/03/03/arc/#comments">Comments</a>
-        
-
-      </p>
-    
-  </header>
-
-
-  <div class="entry-content"><p>内容主要来自http://www.galloway.me.uk/2012/01/a-look-under-arcs-hood-episode-1/ 里面加入了一点点自己的吐槽和理解</p>
-
-<p>已经有很久很久没有写一些 under the hood 的东西了, 好久没有学习新的技术了, 不说废话了.
-ARC 是编译器的技术, 不知道为什么, 我对编译器增加额外代码有着非常大的恐惧, 是因为和C++ 相关么? 不知道, anyway ARC 的确帮我这样的码农减少了工作量, 对于一向懒惰的我来说, 我还是更倾向于省事.</p>
-
-<p>在之前写block 的时候, 有些好奇的家伙们问我,是怎么发现编译器增加代码的. 这个其实很简单, 就是看一些文档了,但是总是有些人比较好奇编译器到底做了什么,不想理所当然的接受.</p>
-
-<p>先瞅瞅我们的测试函数 test_arc.m</p>
-
-<pre><code>    @interface ClassA : NSObject
-    @interface ClassA : NSObject
-    {
-            NSNumber *_foo;
-    }
-    @property (nonatomic, retain) NSNumber *foo;
-    @end
-
-    @implementation ClassA
-
-    @synthesize foo = _foo;
-
-    - (void)changeFooDirect:(NSNumber*)inFoo {
-        _foo = inFoo;
-    }
-
-    - (void)changeFooSetter:(NSNumber*)inFoo {
-        self.foo = inFoo;
-    }
-
-    - (NSNumber*)newNumber {
-        return [[NSNumber alloc] initWithInt:10];
-    }
-
-    - (NSNumber*)getNumber {
-        return [[NSNumber alloc] initWithInt:10];
-    }
-
-    @end
-</code></pre>
-
-<p>Mac 环境比较让人dt, 安装Xcode 后 安装Command Line Tools 否则, 会遇到各种各样的问题. 首先关闭ARC</p>
-
-<pre><code>clang -isysroot /Applications/Xcode.app/Contents/Developer/Platforms/iPhoneOS.platform/Developer/SDKs/iPhoneOS6.1.sdk/ -arch armv7 -fno-objc-arc -O3 -S -o test_arc.s test_arc.m
-</code></pre>
-
-<p>这个是开启ARC的命令</p>
-
-<pre><code>clang -isysroot /Applications/Xcode.app/Contents/Developer/Platforms/iPhoneOS.platform/Developer/SDKs/iPhoneOS6.1.sdk/ -arch armv7 -fobjc-arc -O3 -S -o test_arc_on.s test_arc.m
-</code></pre>
-
-<p>让我们先看一下 changeFooDirect 在没有开启arc时的样子, 当然, 如果有人和我一起工作,敢写出这样的代码, 肯定会让我喷的体无完肤的: )</p>
-
-<pre><code>.align  2
-.code   16                      @ @"\01-[ClassA changeFooDirect:]"
-.thumb_func "-[ClassA changeFooDirect:]"
-"-[ClassA changeFooDirect:]":
-@ BB#0:
-    movw    r1, :lower16:(_OBJC_IVAR_$_ClassA.foo-(LPC0_0+4))
-    movt    r1, :upper16:(_OBJC_IVAR_$_ClassA.foo-(LPC0_0+4))
-LPC0_0:
-    add r1, pc
-    ldr r1, [r1]
-    str r2, [r0, r1]
-    bx  lr
-</code></pre>
-
-<p>这里可以看出, 只是简单的覆盖变量, 没有retain release, 非常容易产生内存问题.
-再看一下 changeFooDirect 开启ARC后的样子</p>
-
-<pre><code>.align  2
-.code   16                      @ @"\01-[ClassA changeFooDirect:]"
-.thumb_func "-[ClassA changeFooDirect:]"
-"-[ClassA changeFooDirect:]":
-@ BB#0:
-    push    {r4, r7, lr}
-    mov r4, r0                          
-    mov r0, r2
-    add r7, sp, #4
-    blx _objc_retain
-    movw    r1, :lower16:(_OBJC_IVAR_$_ClassA._foo-(LPC0_0+4))
-    movt    r1, :upper16:(_OBJC_IVAR_$_ClassA._foo-(LPC0_0+4))
-LPC0_0:
-    add r1, pc                          
-    ldr r2, [r1]            //r2 = 变量foo在类实例中的偏移量
-    ldr r1, [r4, r2]            //r4 = self 这句的意思就是 r1 = foo;
-    str r0, [r4, r2]            //r0 表示参数inFoo, 这里相当于_foo = inFoo;
-    mov r0, r1              
-    pop.w   {r4, r7, lr}            
-    b.w _objc_release           //release ro的变量 也就是 _foo
-</code></pre>
-
-<p>这里我们可以看出, ARC retain 新变量, 然后release 旧的变量, 而这个正是我们想要的结果.这段坑爹的代码在ARC下是可以正确运行的</p>
-
-<p><strong>这里我再次声明一下, 类似changeFooDirect 这样的代码 只是用于研究, 访问类实例成员变量时都应该使用property方法而不是直接访问或是修改</strong></p>
-
-<p>changeFooSetter 这里我们看到无论是否开启ARC 生成的代码都是一样的.调用自动生成的setter 方法</p>
-
-<pre><code>.align  2
-.code   16                      @ @"\01-[ClassA changeFooSetter:]"
-.thumb_func "-[ClassA changeFooSetter:]"
-"-[ClassA changeFooSetter:]":
-@ BB#0:
-    movw    r1, :lower16:(L_OBJC_SELECTOR_REFERENCES_-(LPC1_0+4))
-    movt    r1, :upper16:(L_OBJC_SELECTOR_REFERENCES_-(LPC1_0+4))
-LPC1_0:
-    add r1, pc
-    ldr r1, [r1]
-    b.w _objc_msgSend
-</code></pre>
-
-<p>然后我们再看看getNumber 函数 开启ARC后的代码</p>
-
-<pre><code>.align  2
-.code   16                      @ @"\01-[ClassA getNumber]"
-.thumb_func "-[ClassA getNumber]"
-"-[ClassA getNumber]":
-@ BB#0:
-push    {r7, lr}
-movw    r0, :lower16:(L_OBJC_SELECTOR_REFERENCES_2-(LPC3_0+4))
-mov r7, sp
-movt    r0, :upper16:(L_OBJC_SELECTOR_REFERENCES_2-(LPC3_0+4))
-movw    r2, :lower16:(L_OBJC_CLASSLIST_REFERENCES_$_-(LPC3_1+4))
-movt    r2, :upper16:(L_OBJC_CLASSLIST_REFERENCES_$_-(LPC3_1+4))
-LPC3_0:
-add r0, pc
-LPC3_1:
-add r2, pc
-ldr r1, [r0]
-ldr r0, [r2]
-blx _objc_msgSend
-movw    r1, :lower16:(L_OBJC_SELECTOR_REFERENCES_4-(LPC3_2+4))
-movs    r2, #10
-movt    r1, :upper16:(L_OBJC_SELECTOR_REFERENCES_4-(LPC3_2+4))
-LPC3_2:
-add r1, pc
-ldr r1, [r1]
-blx _objc_msgSend
-pop.w   {r7, lr}
-b.w _objc_autoreleaseReturnValue               //如果没有开启ARC 则没有 _objc_autoreleaseReturnValue
-</code></pre>
-
-<p>关于_objc_autoreleaseReturnValue 也有很多有趣的事情, 如果把这个家伙简单的理解成autorelease就大错特错了, 编译器会对这些做优化, 减少一些无谓的retain release 来提高代码效率</p>
-
-<p>newNumber 和我们想的也一样, 在开启ARC的时候, 并没有增加 类似autorelease 的函数, 而是将retain count 保持为1.</p>
-
-<p>如果是普通的临时变量又是什么样子呢?</p>
-
-<pre><code>- (void)test
-{
-        NSNumber *test = [[NSNumber alloc] initWithInt:1];
-
-        NSLog(@"%@", test);
-}
-</code></pre>
-
-<p>开启ARC 后的代码</p>
-
-<pre><code>.align  2
-.code   16                      @ @"\01-[ClassA test]"
-.thumb_func "-[ClassA test]"
-"-[ClassA test]":
-@ BB#0:
-push    {r4, r7, lr}
-movw    r0, :lower16:(L_OBJC_SELECTOR_REFERENCES_2-(LPC4_0+4))
-add r7, sp, #4
-movt    r0, :upper16:(L_OBJC_SELECTOR_REFERENCES_2-(LPC4_0+4))
-movw    r2, :lower16:(L_OBJC_CLASSLIST_REFERENCES_$_-(LPC4_1+4))
-movt    r2, :upper16:(L_OBJC_CLASSLIST_REFERENCES_$_-(LPC4_1+4))
-LPC4_0:
-add r0, pc
-LPC4_1:
-add r2, pc
-ldr r1, [r0]
-ldr r0, [r2]
-blx _objc_msgSend
-movw    r1, :lower16:(L_OBJC_SELECTOR_REFERENCES_4-(LPC4_2+4))
-movs    r2, #1
-movt    r1, :upper16:(L_OBJC_SELECTOR_REFERENCES_4-(LPC4_2+4))
-LPC4_2:
-add r1, pc
-ldr r1, [r1]
-blx _objc_msgSend
-mov r4, r0
-movw    r0, :lower16:(L__unnamed_cfstring_-(LPC4_3+4))
-movt    r0, :upper16:(L__unnamed_cfstring_-(LPC4_3+4))
-mov r1, r4
-LPC4_3:
-add r0, pc
-blx _NSLog
-mov r0, r4
-pop.w   {r4, r7, lr}
-b.w _objc_release           // 这里我们看出release 掉了 test 变量 也和我们想想的一样.ARC 这里对带类成员变量和普通的临时变量是不同的
-</code></pre>
-
-<p>寄存器变量在第一个例子中已经列举了一点, 这个就不赘述啦.</p>
-</div>
-  
-  
-
-
-    </article>
-  
   <div class="pagination">
     
       <a class="prev" href="/blog/page/2/">&larr; Older</a>
@@ -657,6 +479,7 @@ b.w _objc_release           // 这里我们看出release 掉了 test 变量 也�
 <li class='category'><a href='/blog/categories/stl/'>STL (5)</a></li>
 <li class='category'><a href='/blog/categories/wpf-sl/'>WPF/SL (1)</a></li>
 <li class='category'><a href='/blog/categories/algorithms/'>algorithms (8)</a></li>
+<li class='category'><a href='/blog/categories/apple-script/'>apple_script (1)</a></li>
 <li class='category'><a href='/blog/categories/asm/'>asm (1)</a></li>
 <li class='category'><a href='/blog/categories/c-/'>c++ (6)</a></li>
 <li class='category'><a href='/blog/categories/configure/'>configure (2)</a></li>
@@ -674,6 +497,10 @@ b.w _objc_release           // 这里我们看出release 掉了 test 变量 也�
   <ul id="recent_posts">
     
       <li class="post">
+        <a href="/blog/2013/04/24/apple-script-1/">Apple Script 可执行的伪代码</a>
+      </li>
+    
+      <li class="post">
         <a href="/blog/2013/03/31/numb/">numb</a>
       </li>
     
@@ -687,10 +514,6 @@ b.w _objc_release           // 这里我们看出release 掉了 test 变量 也�
     
       <li class="post">
         <a href="/blog/2013/03/05/emotion-unknown/">情商太低, 伤不起</a>
-      </li>
-    
-      <li class="post">
-        <a href="/blog/2013/03/03/arc/">ARC 1</a>
       </li>
     
   </ul>
