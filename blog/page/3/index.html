@@ -9,7 +9,7 @@
   <meta name="author" content="studentdeng">
 
   
-  <meta name="description" content="block 有什么意义，特点等等，这些东西，实在是太复杂了，这里只是简单的总结一下block的内存管理。而且也仅仅限于objective-C的部分 Block memory block 的内存管理，应该是最头疼的地方,就用这个来自WWDC的例子来解释一下吧。 当程序运行到这里时，stack &hellip;">
+  <meta name="description" content="Bochs + freedos安装配置 sudo apt-get install build-essential sudo apt-get install xorg-dev sudo apt-get install libgtk2.0-dev 下载 bochshttp://bochs. &hellip;">
   
 
   <!-- http://t.co/dKP3o1e -->
@@ -62,6 +62,119 @@
     <div id="content">
       <div class="blog-index">
   
+  
+  
+    <article>
+      
+  <header>
+    
+      <h1 class="entry-title"><a href="/blog/2012/02/14/bochs-configure/">Bochs-configure</a></h1>
+    
+    
+      <p class="meta">
+        
+
+
+
+
+
+
+
+
+  
+
+
+<time datetime="2012-02-14T23:55:00+08:00" pubdate data-updated="true">Feb 14<span>th</span>, 2012</time>
+        
+
+        
+      | <a href="/blog/2012/02/14/bochs-configure/#comments">Comments</a>
+        
+
+      </p>
+    
+  </header>
+
+
+  <div class="entry-content"><h1>Bochs + freedos安装配置</h1>
+
+<pre><code>sudo apt-get install build-essential
+
+sudo apt-get install xorg-dev
+
+sudo apt-get install libgtk2.0-dev
+</code></pre>
+
+<p>下载</p>
+
+<pre><code>bochshttp://bochs.sourceforge.net/cgi-bin/topper.pl?name=See+All+Releases&amp;url=http://sourceforge.net/projects/bochs/files
+
+$ tar vxaf bochs-2.5.1.tar.gz
+
+$ cd bochs-2.5.1
+
+$ ./configure –enable-debugger-enable-disasm
+
+$ make
+
+$ sudo make install
+</code></pre>
+
+<p>下载freedoshttp://bochs.sourceforge.net/diskimages.html 复制到工作目录下</p>
+
+<h1>Bochs 配置 先通过dos引导，我们的软件复制在B盘下</h1>
+
+<pre><code>############################################################### 
+# Configuration file for Bochs 
+###############################################################
+
+# how much memory the emulated machine will have 
+megs: 32
+
+# filename of ROM images 
+romimage: file=/usr/share/bochs/BIOS-bochs-latest 
+vgaromimage: file=/usr/share/vgabios/vgabios.bin
+
+# what disk images will be used 
+floppya: 1_44=freedos.img, status=inserted 
+floppyb: 1_44=pm.img, status=inserted
+
+# choose the boot disk. 
+boot: a
+
+# where do we send log messages? 
+# log: bochsout.txt
+
+# disable the mouse 
+mouse: enabled=0
+
+# enable key mapping, using US layout as default. 
+keyboard_mapping: enabled=1, map=/usr/share/bochs/keymaps/x11-pc-us.map
+
+#enabled debug using xchg bx, bx
+
+magic_break:enabled=1
+
+可以通过下面方式来部署程序，当然，写成makefile最省事
+
+$ sudo mount –o loop pm.img /mnt/floppy
+
+$ sudo cp test.com /mnt/floppy
+
+$ sudo umount /mnt/floppy
+</code></pre>
+
+<h1>bochs 调试</h1>
+
+<p>调试方法很多，这里介绍最简单的方式之一。bochs 配置中增加 magic_break:enabled=1</p>
+
+<p>代码中增加xchg bx, bx，bochs会停在代码出。当然，前提是bochs需要支持debug</p>
+</div>
+  
+  
+
+
+    </article>
   
   
     <article>
@@ -587,188 +700,6 @@ autorelease 应该是初学者最容易糊涂的地方，一开始我也非常�
 
     </article>
   
-  
-    <article>
-      
-  <header>
-    
-      <h1 class="entry-title"><a href="/blog/2011/10/16/objcsel/">Objective C SEL</a></h1>
-    
-    
-      <p class="meta">
-        
-
-
-
-
-
-
-
-
-  
-
-
-<time datetime="2011-10-16T23:37:00+08:00" pubdate data-updated="true">Oct 16<span>th</span>, 2011</time>
-        
-
-        
-      | <a href="/blog/2011/10/16/objcsel/#comments">Comments</a>
-        
-
-      </p>
-    
-  </header>
-
-
-  <div class="entry-content"><p>上一篇http://www.cnblogs.com/studentdeng/archive/2011/10/06/2199873.html，总结了一点关于Objective C message send 的有意思的东西，中间穿插了一点关于SEL有趣的东西，之前，我们知道Objective-C runtime 在处理selector时，是做一个unique hash set， 那么今天，我们看看这个set 是如何产生的。这篇文章参考了<a href="http://www.sealiesoftware.com/blog/archive/2009/09/01/objc_explain_Selector_uniquing_in_the_dyld_shared_cache.html">link</a></p>
-
-<p>unique set的好处是，字符串的比较可以非常迅速，但是也带来一个棘手的问题，创建一个这样的集合，真的不容易。虽然我们能够在compiler和 link的时候保证我们程序中唯一，但是这还远远不够，因为我们并不是生活在真空中，我们的程序需要和各种各样的其他程序协同工作，那么如何能够在这种繁杂的各种情况下，保证唯一呢？</p>
-
-<p>简单说，就是在程序A中，有一个@selector（customInit），但在程序A中引入了程序B，而B中也有一个@selector（customInit），那么，显然，我们需要修正这2个selector，使他们指向同一个内存地址，这样才能保证消息发送正确。</p>
-
-<p>好吧，我们程序员又要惊呼了，这是一个非常非常大的开销，因为</p>
-
-<p>1、我们只能在运行时做这些工作。</p>
-
-<p>2、这些工作是不可能不绕过strcmp（创建hash表时，如果发生了冲突，我们为了保证绝对正确，只能strcmp）。</p>
-
-<p>3、当我们修正之后，也意味着，我们浪费了空间，而实际上就是我们创建了一个更大的hashtable（元素越多，发生碰撞的概率越大，空间的开销越大），</p>
-
-<p>4、代码段在被映射到内存地址空间时，都在可读地址空间上，那么修正，意味着我们又多做了copy-on-write，同样意味着更多的空间开销</p>
-
-<p>5、事实上，这样的函数还非常多，那些界面库函数等等，几乎被所有app引用 e.g. init，initWithFrame:。</p>
-
-<p>更多的空间，更多的比较，导致了性能下降，特别是在程序载入时。事实上，runtime 和os 为我们的selector unique 做了下面的优化，大体可以理解成2个部分</p>
-
-<h2>1、减少需要修正的selector 集合</h2>
-
-<p>之前，我们看到的只有一个hash set，在runtime 载入时创建，但是，现在我们有了2个set（这个set是在Snow Leopard被加入的）。</p>
-
-<p>一个是之前我们知道的，另一个也是一个hash set 当然，特别的是，这是一个perfect hash set。</p>
-
-<p>从之前的5条件中，我们知道了，这些常用的如系统库函数，cocoa.framework中的selector 几乎被所有app引用，而且，我们非常开心的看到了，这些函数，都是可以确定的固定集合。事实上，dyld（dynamic loader and linker），给我们build了一个dyld shared cache，而且是一个perfect hash。而这个被映射到了各种app内存地址空间，并被共享。当我们创建unique selector set 时，我们可以先查找这个perfect hash set，来判断，我们是不是需要动态扩展我们的程序自己的selector hash set。而且，由于是perfect hash，使我们能够拥有在最坏情况下常数时间的开销。</p>
-
-<h2>2、延迟加载</h2>
-
-<p>对于这个，我们已经不陌生了，不管是windows dll 中的延时加载，还是各种在linux中的动态模块的延时载入，原理都是一样的。这些工作，只有在认为是必要条件时，才被真正的加载并初始化。</p>
-
-<p>说的实在是太空了，让我们来看代码吧。</p>
-
-<p>当类被调用或是说在被发送消息之前，类，需要被初始化一下，做的工作就是一些，运行时必要的空间分配，初始化，修正selector，methodlist， propertylist，categorylist等等的工作，我们这里，只是关注selector部分。</p>
-
-<p>prepareForMethodLookup->realizeClass –> methodizeClass->attachMethodLists->fixupMethodList.</p>
-
-<p>经过一系列的东东，修正我们的methodlist时，我们需要将methodlist中的SEL 修正，而这个过程就是我们关注的select unique。</p>
-
-<p>不知道，大家还记得不记得，上一篇讲的 method结构</p>
-
-<pre><code>typedef struct method_list_t {
-
-uint32_t entsize_NEVER_USE;  // low 2 bits used for fixup markers
-
-uint32_t count;
-
-struct method_t first;
-
-} method_list_t;
-
-typedef struct method_t {
-
-SEL name;
-
-const char *types;
-
-IMP imp;
-
-} method_t
-
-
-
-
-static void 
-fixupMethodList(method_list_t *mlist, BOOL bundleCopy) 
-{ 
-    assert(!isMethodListFixedUp(mlist));
-
-    // fixme lock less in attachMethodLists ? 
-    sel_lock();
-
-    uint32_t m; 
-    for (m = 0; m &lt; mlist-&gt;count; m++) {
-
-        //studentdeng note：fixup selector and make sure selector unique 
-        method_t *meth = method_list_nth(mlist, m); 
-        SEL sel = sel_registerNameNoLock((const char *)meth-&gt;name, bundleCopy); 
-        meth-&gt;name = sel;
-
-        if (sel == (SEL)kIgnore) { 
-            meth-&gt;imp = (IMP)&amp;_objc_ignored_method; 
-        } 
-    }
-
-    sel_unlock();
-
-    setMethodListFixedUp(mlist); 
-}
-
-
-
-
-
-
-sel_registerNameNoLock-&gt;__sel_registerName
-
-
-static SEL __sel_registerName(const char *name, int lock, int copy) 
-{ 
-    SEL result = 0;
-
-    if (lock) rwlock_assert_unlocked(&amp;selLock); 
-    else rwlock_assert_writing(&amp;selLock);
-
-    if (!name) return (SEL)0; 
-    result = _objc_search_builtins(name); //studentdeng note:这里就是查找perfect hash set build by dyld cache 
-    if (result) return result; 
-
-    if (lock) rwlock_read(&amp;selLock); 
-    if (_objc_selectors) { 
-        result = __objc_sel_set_get(_objc_selectors, (SEL)name); //studentdeng note: 这里就是查找我们程序自己的hash set 
-    } 
-    if (lock) rwlock_unlock_read(&amp;selLock); 
-    if (result) return result;
-
-    // No match. Insert.
-
-    if (lock) rwlock_write(&amp;selLock);
-
-    if (!_objc_selectors) { 
-        _objc_selectors = __objc_sel_set_create(NUM_NONBUILTIN_SELS); 
-    } 
-    if (lock) { 
-        // Rescan in case it was added while we dropped the lock 
-        result = __objc_sel_set_get(_objc_selectors, (SEL)name); 
-    } 
-    if (!result) { 
-        result = (SEL)(copy ? _strdup_internal(name) : name); 
-        __objc_sel_set_add(_objc_selectors, result); 
-#if defined(DUMP_UNKNOWN_SELECTORS) 
-        printf("\t\"%s\",\n", name); 
-#endif 
-    }
-
-    if (lock) rwlock_unlock_write(&amp;selLock); 
-    return result; 
-}
-</code></pre>
-
-<p>牛b的代码，从来都是自解释的。</p>
-</div>
-  
-  
-
-
-    </article>
-  
   <div class="pagination">
     
       <a class="prev" href="/blog/page/4/">&larr; Older</a>
@@ -807,6 +738,10 @@ static SEL __sel_registerName(const char *name, int lock, int copy)
   <ul id="recent_posts">
     
       <li class="post">
+        <a href="/blog/2013/05/02/test-douban/">doubanclaimcdfdf3a7896f1306</a>
+      </li>
+    
+      <li class="post">
         <a href="/blog/2013/04/24/apple-script-1/">Apple Script 可执行的伪代码</a>
       </li>
     
@@ -820,10 +755,6 @@ static SEL __sel_registerName(const char *name, int lock, int copy)
     
       <li class="post">
         <a href="/blog/2013/03/20/mysql-source-code-setup/">调试 mysql源代码 环境搭建</a>
-      </li>
-    
-      <li class="post">
-        <a href="/blog/2013/03/05/emotion-unknown/">情商太低, 伤不起</a>
       </li>
     
   </ul>
