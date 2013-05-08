@@ -4,7 +4,7 @@
   <title><![CDATA[Category: tips | studentdeng Blog]]></title>
   <link href="http://studentdeng.github.com/blog/categories/tips/atom.xml" rel="self"/>
   <link href="http://studentdeng.github.com/"/>
-  <updated>2013-05-02T23:39:05+08:00</updated>
+  <updated>2013-05-08T11:56:59+08:00</updated>
   <id>http://studentdeng.github.com/</id>
   <author>
     <name><![CDATA[studentdeng]]></name>
@@ -12,6 +12,31 @@
   </author>
   <generator uri="http://octopress.org/">Octopress</generator>
 
+  
+  <entry>
+    <title type="html"><![CDATA[code snippets]]></title>
+    <link href="http://studentdeng.github.com/blog/2013/05/08/code-snippets/"/>
+    <updated>2013-05-08T11:30:00+08:00</updated>
+    <id>http://studentdeng.github.com/blog/2013/05/08/code-snippets</id>
+    <content type="html"><![CDATA[<p>Recently I found a fascinated feature of Xcode is the Code Snippets feature. It allows you to just type few characters instead of requiring you retype them over and over.</p>
+
+<p>In my opinion, this is feature is not very obvious. The snippets library is fairly well hidden. Luckily, I've found it. There's no sort of + button or something on the bottom of IDE. Apple just add a gesture to it. The only way you add a new snippet is to write a chunk of code and drag it into the Code Snippet Library window, and then it creates a default snippet and you can modify it, do whatever you want.</p>
+
+<p>add dynamic fields</p>
+
+<pre><code>&lt;#something...#&gt;
+</code></pre>
+
+<p>Finally I also found the same feature of Netbeans. It's called Code Templates. and this feature is much easier to use than xcode.</p>
+
+<p>add dynamic fields</p>
+
+<pre><code>${something...}
+</code></pre>
+
+<p>It's really fascinated feature and avoid retype the same piece of code again and again.</p>
+]]></content>
+  </entry>
   
   <entry>
     <title type="html"><![CDATA[tips]]></title>
