@@ -9,7 +9,7 @@
   <meta name="author" content="studentdeng">
 
   
-  <meta name="description" content="Bochs + freedos安装配置 sudo apt-get install build-essential sudo apt-get install xorg-dev sudo apt-get install libgtk2.0-dev 下载 bochshttp://bochs. &hellip;">
+  <meta name="description" content="最近在瞅《Orange‘s 一个操作系统的实现》，个人认为相当好的OS入门实践书籍，配合之前看过的大部分的理论书，容易理解那些抽象的概念（无代码无真相）， 和《Linux内核完全注释》都是相当不错的入门书籍。 这里记录一下可能遇到的问题，主要是配置问题，实现逻辑书里面很详细，代码注释也很详细， &hellip;">
   
 
   <!-- http://t.co/dKP3o1e -->
@@ -62,6 +62,74 @@
     <div id="content">
       <div class="blog-index">
   
+  
+  
+    <article>
+      
+  <header>
+    
+      <h1 class="entry-title"><a href="/blog/2012/02/16/selfos/">Orange‘s 一个操作系统的实现 配置问题</a></h1>
+    
+    
+      <p class="meta">
+        
+
+
+
+
+
+
+
+
+  
+
+
+<time datetime="2012-02-16T23:57:00+08:00" pubdate data-updated="true">Feb 16<span>th</span>, 2012</time>
+        
+
+        
+      | <a href="/blog/2012/02/16/selfos/#comments">Comments</a>
+        
+
+      </p>
+    
+  </header>
+
+
+  <div class="entry-content"><p>最近在瞅《Orange‘s 一个操作系统的实现》，个人认为相当好的OS入门实践书籍，配合之前看过的大部分的理论书，容易理解那些抽象的概念（无代码无真相），</p>
+
+<p>和《Linux内核完全注释》都是相当不错的入门书籍。</p>
+
+<p>这里记录一下可能遇到的问题，主要是配置问题，实现逻辑书里面很详细，代码注释也很详细，仔细多想应该没啥问题。</p>
+
+<p>我这里环境是ubuntu 10 64bit， 而书中代码是32bit的。这里在编译链接的时候出了一点小问题。这里记录下。</p>
+
+<p>错误：</p>
+
+<pre><code>ld: i386 architecture of input file `kernel/kernel.o' is incompatible with i386:x86-64 output
+</code></pre>
+
+<p>需要修改makefile</p>
+
+<pre><code>CFLAGS          = -I include/ -c -fno-builtin -m32
+LDFLAGS         = -m elf_i386 -s -Ttext $(ENTRYPOINT)
+</code></pre>
+
+<p>错误：</p>
+
+<pre><code>klib.c:(.text+0xe5): undefined reference to `__stack_chk_fail'
+</code></pre>
+
+<p> 这里应该是少了c的标准库，还是需要修改makefile文件</p>
+
+<pre><code>LDFLAGS         = -m elf_i386 -s -Ttext $(ENTRYPOINT) -lc
+</code></pre>
+</div>
+  
+  
+
+
+    </article>
   
   
     <article>
@@ -590,116 +658,6 @@ struct __block_literal_5 _block_literal = {
 
     </article>
   
-  
-    <article>
-      
-  <header>
-    
-      <h1 class="entry-title"><a href="/blog/2012/01/12/objcbase/">Objective-C 一些很基础的总结</a></h1>
-    
-    
-      <p class="meta">
-        
-
-
-
-
-
-
-
-
-  
-
-
-<time datetime="2012-01-12T23:39:00+08:00" pubdate data-updated="true">Jan 12<span>th</span>, 2012</time>
-        
-
-        
-      | <a href="/blog/2012/01/12/objcbase/#comments">Comments</a>
-        
-
-      </p>
-    
-  </header>
-
-
-  <div class="entry-content"><p>学习 Objective-C大概4个月了，居然给一个还没毕业的家伙吹了吹，呼，希望不要误人子弟。这里总结一下，毕竟这是第一次完整的讲一个东西。</p>
-
-<p>附上PPT<a href="http://files.cnblogs.com/studentdeng/Objective-CPrimary.pptx">Objective-C Primary</a> 。资源99%来自WWDC 2010 session 113。</p>
-
-<p>Common Concepts</p>
-
-<p>Objective-C 相对其他更了解的C++语言来说，还是有些不同的。如下表</p>
-
-<p><img src="/images/objbase-1.png" alt="alt text" /></p>
-
-<p>这里面有几点比较重要</p>
-
-<p>Objective-C 中所有的类，其实是另一种“类”的对象，所以Objective-C 中的类方法，其实是另一种类的实例方法。 Objective-C Message
-Objective-C 中没有静态变量，都是用全局变量实现的。
-Category
-如何给一个类增加一个函数方法，在C++中是不可能的（或是很难）但是在Objective-C中确实很简单的事情，category 做的就是这件事情。</p>
-
-<p>当第一次看到category 时，我几乎肯定这是一个非常坑爹的设计，因为这个可以完美的覆盖原有类的方法，如果使用不当，绝对是灾难性的错误。但是，随着使用时间变长category 的好处也慢慢体会出来。</p>
-
-<p>给系统原有的类或是第三方的类增加函数，而不用使用一个新的类，这样使用会更加方便，特别是使用IB时，不需要将系统的类换成自己定义的类，这样减少了非常多的移植问题和同步工作。
-当然，如果使用不当，也会遇到问题</p>
-
-<p>函数覆盖问题，之前提到过
-增加大量的category 会降低系统性能，特别是如果大量的加到一些基础类上，如NSObject 等，因为，几乎整个系统都在使用这些类，而过多的category，不仅降低自己代码的效率，也会降低framework代码的效率，这里的效率，应该主要在类初始化上，和消息发送上面。
-SEL</p>
-
-<p>相关的内容在Objective C SEL
-Memory Management
-语言是离不开平台的，而内存管理，则是了解平台中最基础的部分。而cocoa touch 的内存设计也就是基于引用计数的设计，是针对很早以前的设备设计，显然不适合现在的硬件设备。但是，现在我们似乎没有其他的选择，在一开始学习时。</p>
-
-<p>基于引用计数的内存管理，设计的本质其实就是一个Directed Acyclic Graph（有向无回图）</p>
-
-<p><img src="/images/objbase-2.png" alt="alt text" /></p>
-
-<p>对于引用计数的内存管理，这一点实在是不陌生，不管是什么语言，都会遇到一个问题，循环引用</p>
-
-<p><img src="/images/objbase-3.png" alt="alt text" /></p>
-
-<p>当形成回路时，循环引用发生，导致内存泄露。而对应的方法，不管是什么语言，都需要把引用分为强引用和弱引用</p>
-
-<p><img src="/images/objbase-4.png" alt="alt text" /></p>
-
-<p>解决引用循环的方法很多，但是实质上，都是通过抽象成父子关系来做，一个强引用，一个弱引用，图形下方的节点通过弱引用连接上面的节点，图形上方的节点，通过强引用连接下方节点。实例就是delegate，属性被声明为assign</p>
-
-<p>Autorelease Pools
-autorelease 应该是初学者最容易糊涂的地方，一开始我也非常害怕使用Autorelease 变量，因为，这些变量不仅会增大内存开销，而且使用不当，crash的位置就是main函数，调试器几乎没有任何帮助，但是仍然有非常多的framework是基于autorelease 变量的，所以还是需要屡屡。</p>
-
-<p>cocoa touch 是事件驱动的，我们通过接受一个个的event来跑我们的程序，那么简单的讲，就是一个while的死循环，不断地获取一个event，处理一个event。</p>
-
-<p><img src="/images/objbase-5.png" alt="alt text" /></p>
-
-<p>处理event的时候，framework 帮我们建立了一个autorelease pool。</p>
-
-<p><img src="/images/objbase-6.png" alt="alt text" /></p>
-
-<p>当我们处理或是叫响应一个event时，比如调用了[NSDate date] 函数，这个函数，返回了一个autorelease 变量d</p>
-
-<p>而这个变量，事实上是被autorelease pool 所引用。</p>
-
-<p><img src="/images/objbase-7.png" alt="alt text" /></p>
-
-<p>当一层层stack pop 之后，我们可以看到 autorelease 变量的生命周期</p>
-
-<p><img src="/images/objbase-8.png" alt="alt text" /></p>
-
-<p><img src="/images/objbase-9.png" alt="alt text" /></p>
-
-<p>当调用[pool drain]后，autorelease pool 随之消失，伴随着还有那个var d，回到原点，在下一个event cycle</p>
-
-<p><img src="/images/objbase-10.png" alt="alt text" /></p>
-</div>
-  
-  
-
-
-    </article>
-  
   <div class="pagination">
     
       <a class="prev" href="/blog/page/4/">&larr; Older</a>
@@ -726,6 +684,7 @@ autorelease 应该是初学者最容易糊涂的地方，一开始我也非常�
 <li class='category'><a href='/blog/categories/configure/'>configure (2)</a></li>
 <li class='category'><a href='/blog/categories/emotion/'>emotion (9)</a></li>
 <li class='category'><a href='/blog/categories/mysql/'>mysql (2)</a></li>
+<li class='category'><a href='/blog/categories/notes/'>notes (1)</a></li>
 <li class='category'><a href='/blog/categories/operating-system/'>operating_system (3)</a></li>
 <li class='category'><a href='/blog/categories/tips/'>tips (2)</a></li>
 <li class='category'><a href='/blog/categories/windows/'>windows (9)</a></li>
@@ -736,6 +695,10 @@ autorelease 应该是初学者最容易糊涂的地方，一开始我也非常�
 <section>
   <h1>Recent Posts</h1>
   <ul id="recent_posts">
+    
+      <li class="post">
+        <a href="/blog/2013/06/12/note-book/">《20个月赚130亿》笔记</a>
+      </li>
     
       <li class="post">
         <a href="/blog/2013/05/08/code-snippets/">code snippets</a>
@@ -751,10 +714,6 @@ autorelease 应该是初学者最容易糊涂的地方，一开始我也非常�
     
       <li class="post">
         <a href="/blog/2013/03/21/mysql-source-code-2/">mysql 源代码 第二天 </a>
-      </li>
-    
-      <li class="post">
-        <a href="/blog/2013/03/20/mysql-source-code-setup/">调试 mysql源代码 环境搭建</a>
       </li>
     
   </ul>

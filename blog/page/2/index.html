@@ -9,7 +9,7 @@
   <meta name="author" content="studentdeng">
 
   
-  <meta name="description" content="这是我写过的最难的一篇, 是目前为止最困难的一篇, 我的思路非常的混乱, 只是想通过这个方式来帮助我理清自己, 找出可以收获的地方. 其实我很早就想写了, 但是有很多东西反反复复,相互牵引的, 我的思维也在不断的变化, 有太多的地方我不明白, 这让我现在非常难受, 而在这个时候写一篇这样子的东西, &hellip;">
+  <meta name="description" content="下载源代码 mysql 下载CMAKE download 代码根目录 执行下面代码, 确定生成configure.data 文件 wscript win\configure.js WITH_INNOBASE_STORAGE_ENGINE WITH_PARTITION_STORAGE_ENGINE &hellip;">
   
 
   <!-- http://t.co/dKP3o1e -->
@@ -62,6 +62,81 @@
     <div id="content">
       <div class="blog-index">
   
+  
+  
+    <article>
+      
+  <header>
+    
+      <h1 class="entry-title"><a href="/blog/2013/03/20/mysql-source-code-setup/">调试 Mysql源代码 环境搭建</a></h1>
+    
+    
+      <p class="meta">
+        
+
+
+
+
+
+
+
+
+  
+
+
+<time datetime="2013-03-20T22:06:00+08:00" pubdate data-updated="true">Mar 20<span>th</span>, 2013</time>
+        
+
+        
+      | <a href="/blog/2013/03/20/mysql-source-code-setup/#comments">Comments</a>
+        
+
+      </p>
+    
+  </header>
+
+
+  <div class="entry-content"><p>下载源代码 <a href="http://dev.mysql.com/downloads/mysql/">mysql</a></p>
+
+<p>下载CMAKE <a href="http://www.cmake.org/">download</a></p>
+
+<p>代码根目录 执行下面代码, 确定生成configure.data 文件</p>
+
+<pre><code>wscript win\configure.js WITH_INNOBASE_STORAGE_ENGINE WITH_PARTITION_STORAGE_ENGINE MYSQL_SERVER_SUFFIX=-pro
+</code></pre>
+
+<p>找到 win 目录下的 XXX.bat 文件复制到源代码根目录下, 我这里使用vs2008 ,所以复制 build-vs9.bat 到源代码根目录
+在系统根目录 C:/windows 下 增加一个 my.ini 用于 mysql 配置, 我的mysql 源代码目录在 C:/mysql_code/mysql-5-1.1.68</p>
+
+<pre><code>[mysqld]
+# set basedir to your installation path
+basedir=C:/mysql_code/mysql-5-1.1.68
+# set datadir to the location of your data directory
+datadir=C:/mysql_code/mysql-5-1.1.68/win/data
+</code></pre>
+
+<p>将sql目录下的share文件夹复制到源代码根目录下</p>
+
+<p>修改sql_locale.cc 文件, 把文件编码改成 UTF8 with BOM, windows 你懂的</p>
+
+<p>然后可以调试了, 不过这里我遇到一个问题, 在 sql_locale.cc 函数 test_lc_time_sz 函数, 这里DEBUG_ASSERT(0)了一下, 目前先暂时注释掉它 : (
+现在可以跑</p>
+
+<pre><code>mysqld
+</code></pre>
+
+<p>然后在</p>
+
+<pre><code>mysql -u root -p 
+</code></pre>
+
+<p>over!</p>
+</div>
+  
+  
+
+
+    </article>
   
   
     <article>
@@ -654,74 +729,6 @@ rake preview
 
     </article>
   
-  
-    <article>
-      
-  <header>
-    
-      <h1 class="entry-title"><a href="/blog/2012/02/16/selfos/">Orange‘s 一个操作系统的实现 配置问题</a></h1>
-    
-    
-      <p class="meta">
-        
-
-
-
-
-
-
-
-
-  
-
-
-<time datetime="2012-02-16T23:57:00+08:00" pubdate data-updated="true">Feb 16<span>th</span>, 2012</time>
-        
-
-        
-      | <a href="/blog/2012/02/16/selfos/#comments">Comments</a>
-        
-
-      </p>
-    
-  </header>
-
-
-  <div class="entry-content"><p>最近在瞅《Orange‘s 一个操作系统的实现》，个人认为相当好的OS入门实践书籍，配合之前看过的大部分的理论书，容易理解那些抽象的概念（无代码无真相），</p>
-
-<p>和《Linux内核完全注释》都是相当不错的入门书籍。</p>
-
-<p>这里记录一下可能遇到的问题，主要是配置问题，实现逻辑书里面很详细，代码注释也很详细，仔细多想应该没啥问题。</p>
-
-<p>我这里环境是ubuntu 10 64bit， 而书中代码是32bit的。这里在编译链接的时候出了一点小问题。这里记录下。</p>
-
-<p>错误：</p>
-
-<pre><code>ld: i386 architecture of input file `kernel/kernel.o' is incompatible with i386:x86-64 output
-</code></pre>
-
-<p>需要修改makefile</p>
-
-<pre><code>CFLAGS          = -I include/ -c -fno-builtin -m32
-LDFLAGS         = -m elf_i386 -s -Ttext $(ENTRYPOINT)
-</code></pre>
-
-<p>错误：</p>
-
-<pre><code>klib.c:(.text+0xe5): undefined reference to `__stack_chk_fail'
-</code></pre>
-
-<p> 这里应该是少了c的标准库，还是需要修改makefile文件</p>
-
-<pre><code>LDFLAGS         = -m elf_i386 -s -Ttext $(ENTRYPOINT) -lc
-</code></pre>
-</div>
-  
-  
-
-
-    </article>
-  
   <div class="pagination">
     
       <a class="prev" href="/blog/page/3/">&larr; Older</a>
@@ -748,6 +755,7 @@ LDFLAGS         = -m elf_i386 -s -Ttext $(ENTRYPOINT)
 <li class='category'><a href='/blog/categories/configure/'>configure (2)</a></li>
 <li class='category'><a href='/blog/categories/emotion/'>emotion (9)</a></li>
 <li class='category'><a href='/blog/categories/mysql/'>mysql (2)</a></li>
+<li class='category'><a href='/blog/categories/notes/'>notes (1)</a></li>
 <li class='category'><a href='/blog/categories/operating-system/'>operating_system (3)</a></li>
 <li class='category'><a href='/blog/categories/tips/'>tips (2)</a></li>
 <li class='category'><a href='/blog/categories/windows/'>windows (9)</a></li>
@@ -758,6 +766,10 @@ LDFLAGS         = -m elf_i386 -s -Ttext $(ENTRYPOINT)
 <section>
   <h1>Recent Posts</h1>
   <ul id="recent_posts">
+    
+      <li class="post">
+        <a href="/blog/2013/06/12/note-book/">《20个月赚130亿》笔记</a>
+      </li>
     
       <li class="post">
         <a href="/blog/2013/05/08/code-snippets/">code snippets</a>
@@ -773,10 +785,6 @@ LDFLAGS         = -m elf_i386 -s -Ttext $(ENTRYPOINT)
     
       <li class="post">
         <a href="/blog/2013/03/21/mysql-source-code-2/">mysql 源代码 第二天 </a>
-      </li>
-    
-      <li class="post">
-        <a href="/blog/2013/03/20/mysql-source-code-setup/">调试 mysql源代码 环境搭建</a>
       </li>
     
   </ul>
