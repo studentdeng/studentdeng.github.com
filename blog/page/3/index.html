@@ -9,12 +9,8 @@
   <meta name="author" content="studentdeng">
 
   
-  <meta name="description" content="ARC 编译时遇到的相关问题
-install cocoapods 问题
-Adding Unit Tests to an existing iOS project with Xcode 4
-NSDateFormatter 问题
-写博客命令
-php apigen command demo ARC &hellip;">
+  <meta name="description" content="内容主要来自http://www.galloway.me.uk/2012/01/a-look-under-arcs-hood-episode-1/ 里面加入了一点点自己的吐槽和理解 已经有很久很久没有写一些 under the hood 的东西了, 好久没有学习新的技术了, 不说废话了.
+ARC &hellip;">
   
 
   <!-- http://t.co/dKP3o1e -->
@@ -68,6 +64,241 @@ php apigen command demo ARC &hellip;">
     <div id="content">
       <div class="blog-index">
   
+  
+  
+    <article>
+      
+  <header>
+    
+      <h1 class="entry-title"><a href="/blog/2013/03/03/arc/">ARC 1</a></h1>
+    
+    
+      <p class="meta">
+        
+
+
+
+
+
+
+
+
+  
+
+
+<time datetime="2013-03-03T13:43:00+08:00" pubdate data-updated="true">Mar 3<span>rd</span>, 2013</time>
+        
+
+        
+      | <a href="/blog/2013/03/03/arc/#comments">Comments</a>
+        
+
+      </p>
+    
+  </header>
+
+
+  <div class="entry-content"><p>内容主要来自http://www.galloway.me.uk/2012/01/a-look-under-arcs-hood-episode-1/ 里面加入了一点点自己的吐槽和理解</p>
+
+<p>已经有很久很久没有写一些 under the hood 的东西了, 好久没有学习新的技术了, 不说废话了.
+ARC 是编译器的技术, 不知道为什么, 我对编译器增加额外代码有着非常大的恐惧, 是因为和C++ 相关么? 不知道, anyway ARC 的确帮我这样的码农减少了工作量, 对于一向懒惰的我来说, 我还是更倾向于省事.</p>
+
+<p>在之前写block 的时候, 有些好奇的家伙们问我,是怎么发现编译器增加代码的. 这个其实很简单, 就是看一些文档了,但是总是有些人比较好奇编译器到底做了什么,不想理所当然的接受.</p>
+
+<p>先瞅瞅我们的测试函数 test_arc.m</p>
+
+<pre><code>    @interface ClassA : NSObject
+    @interface ClassA : NSObject
+    {
+            NSNumber *_foo;
+    }
+    @property (nonatomic, retain) NSNumber *foo;
+    @end
+
+    @implementation ClassA
+
+    @synthesize foo = _foo;
+
+    - (void)changeFooDirect:(NSNumber*)inFoo {
+        _foo = inFoo;
+    }
+
+    - (void)changeFooSetter:(NSNumber*)inFoo {
+        self.foo = inFoo;
+    }
+
+    - (NSNumber*)newNumber {
+        return [[NSNumber alloc] initWithInt:10];
+    }
+
+    - (NSNumber*)getNumber {
+        return [[NSNumber alloc] initWithInt:10];
+    }
+
+    @end
+</code></pre>
+
+<p>Mac 环境比较让人dt, 安装Xcode 后 安装Command Line Tools 否则, 会遇到各种各样的问题. 首先关闭ARC</p>
+
+<pre><code>clang -isysroot /Applications/Xcode.app/Contents/Developer/Platforms/iPhoneOS.platform/Developer/SDKs/iPhoneOS6.1.sdk/ -arch armv7 -fno-objc-arc -O3 -S -o test_arc.s test_arc.m
+</code></pre>
+
+<p>这个是开启ARC的命令</p>
+
+<pre><code>clang -isysroot /Applications/Xcode.app/Contents/Developer/Platforms/iPhoneOS.platform/Developer/SDKs/iPhoneOS6.1.sdk/ -arch armv7 -fobjc-arc -O3 -S -o test_arc_on.s test_arc.m
+</code></pre>
+
+<p>让我们先看一下 changeFooDirect 在没有开启arc时的样子, 当然, 如果有人和我一起工作,敢写出这样的代码, 肯定会让我喷的体无完肤的: )</p>
+
+<pre><code>.align  2
+.code   16                      @ @"\01-[ClassA changeFooDirect:]"
+.thumb_func "-[ClassA changeFooDirect:]"
+"-[ClassA changeFooDirect:]":
+@ BB#0:
+    movw    r1, :lower16:(_OBJC_IVAR_$_ClassA.foo-(LPC0_0+4))
+    movt    r1, :upper16:(_OBJC_IVAR_$_ClassA.foo-(LPC0_0+4))
+LPC0_0:
+    add r1, pc
+    ldr r1, [r1]
+    str r2, [r0, r1]
+    bx  lr
+</code></pre>
+
+<p>这里可以看出, 只是简单的覆盖变量, 没有retain release, 非常容易产生内存问题.
+再看一下 changeFooDirect 开启ARC后的样子</p>
+
+<pre><code>.align  2
+.code   16                      @ @"\01-[ClassA changeFooDirect:]"
+.thumb_func "-[ClassA changeFooDirect:]"
+"-[ClassA changeFooDirect:]":
+@ BB#0:
+    push    {r4, r7, lr}
+    mov r4, r0                          
+    mov r0, r2
+    add r7, sp, #4
+    blx _objc_retain
+    movw    r1, :lower16:(_OBJC_IVAR_$_ClassA._foo-(LPC0_0+4))
+    movt    r1, :upper16:(_OBJC_IVAR_$_ClassA._foo-(LPC0_0+4))
+LPC0_0:
+    add r1, pc                          
+    ldr r2, [r1]            //r2 = 变量foo在类实例中的偏移量
+    ldr r1, [r4, r2]            //r4 = self 这句的意思就是 r1 = foo;
+    str r0, [r4, r2]            //r0 表示参数inFoo, 这里相当于_foo = inFoo;
+    mov r0, r1              
+    pop.w   {r4, r7, lr}            
+    b.w _objc_release           //release ro的变量 也就是 _foo
+</code></pre>
+
+<p>这里我们可以看出, ARC retain 新变量, 然后release 旧的变量, 而这个正是我们想要的结果.这段坑爹的代码在ARC下是可以正确运行的</p>
+
+<p><strong>这里我再次声明一下, 类似changeFooDirect 这样的代码 只是用于研究, 访问类实例成员变量时都应该使用property方法而不是直接访问或是修改</strong></p>
+
+<p>changeFooSetter 这里我们看到无论是否开启ARC 生成的代码都是一样的.调用自动生成的setter 方法</p>
+
+<pre><code>.align  2
+.code   16                      @ @"\01-[ClassA changeFooSetter:]"
+.thumb_func "-[ClassA changeFooSetter:]"
+"-[ClassA changeFooSetter:]":
+@ BB#0:
+    movw    r1, :lower16:(L_OBJC_SELECTOR_REFERENCES_-(LPC1_0+4))
+    movt    r1, :upper16:(L_OBJC_SELECTOR_REFERENCES_-(LPC1_0+4))
+LPC1_0:
+    add r1, pc
+    ldr r1, [r1]
+    b.w _objc_msgSend
+</code></pre>
+
+<p>然后我们再看看getNumber 函数 开启ARC后的代码</p>
+
+<pre><code>.align  2
+.code   16                      @ @"\01-[ClassA getNumber]"
+.thumb_func "-[ClassA getNumber]"
+"-[ClassA getNumber]":
+@ BB#0:
+push    {r7, lr}
+movw    r0, :lower16:(L_OBJC_SELECTOR_REFERENCES_2-(LPC3_0+4))
+mov r7, sp
+movt    r0, :upper16:(L_OBJC_SELECTOR_REFERENCES_2-(LPC3_0+4))
+movw    r2, :lower16:(L_OBJC_CLASSLIST_REFERENCES_$_-(LPC3_1+4))
+movt    r2, :upper16:(L_OBJC_CLASSLIST_REFERENCES_$_-(LPC3_1+4))
+LPC3_0:
+add r0, pc
+LPC3_1:
+add r2, pc
+ldr r1, [r0]
+ldr r0, [r2]
+blx _objc_msgSend
+movw    r1, :lower16:(L_OBJC_SELECTOR_REFERENCES_4-(LPC3_2+4))
+movs    r2, #10
+movt    r1, :upper16:(L_OBJC_SELECTOR_REFERENCES_4-(LPC3_2+4))
+LPC3_2:
+add r1, pc
+ldr r1, [r1]
+blx _objc_msgSend
+pop.w   {r7, lr}
+b.w _objc_autoreleaseReturnValue               //如果没有开启ARC 则没有 _objc_autoreleaseReturnValue
+</code></pre>
+
+<p>关于_objc_autoreleaseReturnValue 也有很多有趣的事情, 如果把这个家伙简单的理解成autorelease就大错特错了, 编译器会对这些做优化, 减少一些无谓的retain release 来提高代码效率</p>
+
+<p>newNumber 和我们想的也一样, 在开启ARC的时候, 并没有增加 类似autorelease 的函数, 而是将retain count 保持为1.</p>
+
+<p>如果是普通的临时变量又是什么样子呢?</p>
+
+<pre><code>- (void)test
+{
+        NSNumber *test = [[NSNumber alloc] initWithInt:1];
+
+        NSLog(@"%@", test);
+}
+</code></pre>
+
+<p>开启ARC 后的代码</p>
+
+<pre><code>.align  2
+.code   16                      @ @"\01-[ClassA test]"
+.thumb_func "-[ClassA test]"
+"-[ClassA test]":
+@ BB#0:
+push    {r4, r7, lr}
+movw    r0, :lower16:(L_OBJC_SELECTOR_REFERENCES_2-(LPC4_0+4))
+add r7, sp, #4
+movt    r0, :upper16:(L_OBJC_SELECTOR_REFERENCES_2-(LPC4_0+4))
+movw    r2, :lower16:(L_OBJC_CLASSLIST_REFERENCES_$_-(LPC4_1+4))
+movt    r2, :upper16:(L_OBJC_CLASSLIST_REFERENCES_$_-(LPC4_1+4))
+LPC4_0:
+add r0, pc
+LPC4_1:
+add r2, pc
+ldr r1, [r0]
+ldr r0, [r2]
+blx _objc_msgSend
+movw    r1, :lower16:(L_OBJC_SELECTOR_REFERENCES_4-(LPC4_2+4))
+movs    r2, #1
+movt    r1, :upper16:(L_OBJC_SELECTOR_REFERENCES_4-(LPC4_2+4))
+LPC4_2:
+add r1, pc
+ldr r1, [r1]
+blx _objc_msgSend
+mov r4, r0
+movw    r0, :lower16:(L__unnamed_cfstring_-(LPC4_3+4))
+movt    r0, :upper16:(L__unnamed_cfstring_-(LPC4_3+4))
+mov r1, r4
+LPC4_3:
+add r0, pc
+blx _NSLog
+mov r0, r4
+pop.w   {r4, r7, lr}
+b.w _objc_release           // 这里我们看出release 掉了 test 变量 也和我们想想的一样.ARC 这里对带类成员变量和普通的临时变量是不同的
+</code></pre>
+
+<p>寄存器变量在第一个例子中已经列举了一点, 这个就不赘述啦.</p>
+</div>
+  
+  
+
+
+    </article>
   
   
     <article>
@@ -514,308 +745,6 @@ $ sudo umount /mnt/floppy
 
     </article>
   
-  
-    <article>
-      
-  <header>
-    
-      <h1 class="entry-title"><a href="/blog/2012/02/03/objblock/">Objective-C Block</a></h1>
-    
-    
-      <p class="meta">
-        
-
-
-
-
-
-
-
-
-  
-
-
-<time datetime="2012-02-03T23:47:00+08:00" pubdate data-updated="true">Feb 3<span>rd</span>, 2012</time>
-        
-
-        
-      | <a href="/blog/2012/02/03/objblock/#comments">Comments</a>
-        
-
-      </p>
-    
-  </header>
-
-
-  <div class="entry-content"><p>block 有什么意义，特点等等，这些东西，实在是太复杂了，这里只是简单的总结一下block的内存管理。而且也仅仅限于objective-C的部分</p>
-
-<h1>Block memory</h1>
-
-<p>block 的内存管理，应该是最头疼的地方,就用这个来自WWDC的例子来解释一下吧。</p>
-
-<p><img src="/images/objblock-1.png" alt="alt text" /></p>
-
-<p>当程序运行到这里时，stack 空间中有 shared 变量和 captured 变量。</p>
-
-<p>这里可以看出，__block 变量开始是处于stack上的。</p>
-
-<p><img src="/images/objblock-2.png" alt="alt text" /></p>
-
-<p>当程序运行到这里时，stack 空间中有 shared 变量，captured 变量和block1。</p>
-
-<p>这里可以看出，block 类型的变量开始时也是处在stack上的。</p>
-
-<p><img src="/images/objblock-3.png" alt="alt text" /></p>
-
-<p>当程序运行到这里时，stack 空间中有 shared 变量，captured 变量和block1。</p>
-
-<p>这里值得注意的就是当我们直接修改stack 上的captured变量时，block1中的captured变量仍然是原来的数值10。事实上，从const 我们就可以看出，block1中的captured变量是不能被修改的而且是从stack原有变量的一个const 拷贝。在block1中访问的captured变量是const拷贝的，也就是说block1中captured = 10，而不是原有的stack上的值 20。当然，在block1中，我们也不能修改captured变量。</p>
-
-<h1>Copy block</h1>
-
-<p>block在一开始是处在stack上的，这是为了考虑到效率的原因，但是，有时候是需要block的生命周期长于一开始的stack，这时，我们就通过copy block 来将block复制到heap。</p>
-
-<p><img src="/images/objblock-4.png" alt="alt text" /></p>
-
-<p>当程序执行完 block2 = [block1 copy];时，__block 类型变量shared，被复制到了heap中，很显然，shared变量需要被block和block2共享(当然还有stack也要共享)，而block2被移动到heap中，很可能生命周期会长于stack，所以，shared也被复制到了heap中。而block2中的captured 也被复制到了heap中。</p>
-
-<p><img src="/images/objblock-5.png" alt="alt text" /></p>
-
-<p>当程序执行完 block3 = [block2 copy];时, 我们看到的是，block2 和block3 其实指向的是同一片内存空间。事实上，block的数据结构中，保存了引用计数，而对于copy到heap中的block 再copy时，行为同普通对象retain一样，会使引用计数+1。那么如果我们对[block retain]会如何呢？ 实际上什么都没有发生，至少在现在的runtime版本下。因为retain中，不仅有引用计数+1在，而且retain的返回值，必须同返回调用对象的地址一样，而block的地址是可能变化的（stack or heap），所以，这里retain的行为几乎是被忽略掉的。</p>
-
-<p>当heap中的block变量先于stack被销毁时，如调用 [block2 release]; [block3 release];，heap中的block2，block3 由于引用计数为0 而被销毁，而 __block 变量shared则还在heap中，因为stack还要使用，block1 也要使用。</p>
-
-<p><img src="/images/objblock-6.png" alt="alt text" /></p>
-
-<p>当heap中的block变量晚于stack时，显然，stack 被清除，function中也啥都没了。</p>
-
-<p><img src="/images/objblock-7.png" alt="alt text" /></p>
-
-<p>最后，当block2 和block3 都被release之后。则恢复到最初状态</p>
-
-<p><img src="/images/objblock-8.png" alt="alt text" /></p>
-
-<h1>block details</h1>
-
-<p>当我们写出一个Block literal expression</p>
-
-<pre><code>^ { printf("hello world\n"); }
-</code></pre>
-
-<p>事实上，编译器为我们生成了如下结构</p>
-
-<pre><code>struct __block_literal_1 {
-    void *isa;
-    int flags;
-    int reserved; 
-    void (*invoke)(struct __block_literal_1 *);
-    struct __block_descriptor_1 *descriptor;
-};void __block_invoke_1(struct __block_literal_1 *_block) {
-    printf("hello world\n");
-}static struct __block_descriptor_1 {
-    unsigned long int reserved;
-    unsigned long int Block_size;
-} __block_descriptor_1 = { 0, sizeof(struct __block_literal_1)}; 当Block literal expression 使用时 __block_literal_1 则会被初始化为：struct __block_literal_1 _block_literal = {
-    &amp;_NSConcreteStackBlock,
-    (1&lt;&lt;29), &lt;uninitialized&gt;,
-    __block_invoke_1,
-    &amp;__block_descriptor_1
-   };
-</code></pre>
-
-<p>下一个例子</p>
-
-<pre><code>int x = 10;
-void (^vv)(void) = ^{printf("x is %d\n", x);};
-x = 11;
-vv();
-编译器会生成如下结构
-struct __block_literal_2{
-    void *isa;
-    int flags;
-    int reserved;
-    void (*invoke)(struct __block_literal_2 *);
-    struct __block_descriptor_2 *descriptor;
-    const int x;
-};
-void __block_invoke_2(struct __block_literal_2 *_block){
-    printf("x is %d\n", _block-&gt;x);
-}
-void struct __block_descriptor_2{
-    unsigned long int reserved;
-    unsigned long int block_size;
-}__block_descriptor_2 = {0, sizeof(struct __block_literal_2)};
-struct __block_literal_2 __block_literal_2 = {
-    &amp;NSConcreteStackBlock,
-    (1&lt;&lt;29),
-    __block_invoke_2,
-    &amp;__block_descriptor_2,
-    x
-};
-</code></pre>
-
-<p>block中使用的普通变量（int， char *）导入是const copy。普通对象则会retain。__block 类型变量则什么不做，只是保存一个指针，全局变量也只是保存一个简单的指针。</p>
-
-<p>当然，block 可能也会嵌套block，那么又会是什么样子？其实不复杂，复杂的只是增加了复制函数，和释放函数，这一点很像C++的拷贝构造函数，在必要时生成。</p>
-
-<pre><code>void (^existingBlock)(void) = …;
-void (^vv)(void) = ^{existingBlock();};
-vv();
-struct __block_literal_3{
-    ...;//esisting block
-};
-struct __block_literal_4{
-    void *isa;
-    int flags;
-    int reserved;
-    void (*invoke)(struct __block_literal_4 *);
-    struct __block_literal_3 *const existingBlock;
-};
-void __block_invoke_4(struct __block_literal_3 *__block) {
-   __block-&gt;existingBlock-&gt;invoke(__block-&gt;existingBlock);
-}
-void __block_copy_4(struct __block_literal_4 *dst, struct __block_literal_4 *src) {
-     //_Block_copy_assign(&amp;dst-&gt;existingBlock, src-&gt;existingBlock, 0);
-     _Block_object_assign(&amp;dst-&gt;existingBlock, src-&gt;existingBlock, BLOCK_FIELD_IS_BLOCK);
-}
-void __block_dispose_4(struct __block_literal_4 *src) {
-     // was _Block_destroy
-     _Block_object_dispose(src-&gt;existingBlock, BLOCK_FIELD_IS_BLOCK);
-}
-static struct __block_descriptor_4 {
-    unsigned long int reserved;
-    unsigned long int Block_size;
-    void (*copy_helper)(struct __block_literal_4 *dst, struct __block_literal_4 *src);
-    void (*dispose_helper)(struct __block_literal_4 *);
-} __block_descriptor_4 = {
-    0,
-    sizeof(struct __block_literal_4),
-    __block_copy_4,
-    __block_dispose_4,
-};
-</code></pre>
-
-<p>初始化</p>
-
-<pre><code>  struct __block_literal_4 _block_literal = {
-    &amp;_NSConcreteStackBlock,
-    (1&lt;&lt;25)|(1&lt;&lt;29), &lt;uninitialized&gt;
-    __block_invoke_4,
-    &amp; __block_descriptor_4
-        existingBlock,
-   };
-
-
-__block storage variables
-
-__block  变量是一种很特殊的数据类型，有自己的特有的数据结构
-
-struct _block_byref_xxxx {
-    void *isa;
-    struct _block_byref_xxxx *forwarding;
-    int flags;   //refcount;
-    int size;
-    // helper functions called via Block_copy() and Block_release()
-    void (*byref_keep)(void  *dst, void *src); //需要时被生成
-    void (*byref_dispose)(void *);//需要时被生成
-    typeof(marked_variable) marked_variable;
-};
-</code></pre>
-
-<p>看看__block 类型变量的使用</p>
-
-<pre><code>int __block i = 10;
-i = 11;
-struct _block_byref_i {
-    void *isa;
-    struct _block_byref_i *forwarding;
-    int flags;   //refcount;
-    int size;
-    int captured_i;
-} i = { NULL, &amp;i, 0, sizeof(struct _block_byref_i), 10 };
-i.forwarding-&gt;captured_i = 11;
-</code></pre>
-
-<p>显然，当block中增加了<strong>block 类型变量之后，嵌套block 的拷贝函数也会增加对</strong>block 变量的复制。</p>
-
-<pre><code>__block void (voidBlock)(void) = blockA;
-voidBlock = blockB;
-struct _block_byref_voidBlock {
-    void *isa;
-    struct _block_byref_voidBlock *forwarding;
-    int flags;   //refcount;
-    int size;
-    void (*byref_keep)(struct _block_byref_voidBlock *dst, struct _block_byref_voidBlock *src);
-    void (*byref_dispose)(struct _block_byref_voidBlock *);
-    void (^captured_voidBlock)(void);
-};
-void _block_byref_keep_helper(struct _block_byref_voidBlock *dst, struct _block_byref_voidBlock *src) {
-    //_Block_copy_assign(&amp;dst-&gt;captured_voidBlock, src-&gt;captured_voidBlock, 0);
-    _Block_object_assign(&amp;dst-&gt;captured_voidBlock, src-&gt;captured_voidBlock, BLOCK_FIELD_IS_BLOCK | BLOCK_BYREF_CALLER);
-}
-void _block_byref_dispose_helper(struct _block_byref_voidBlock *param) {
-    //_Block_destroy(param-&gt;captured_voidBlock, 0);
-    _Block_object_dispose(param-&gt;captured_voidBlock, BLOCK_FIELD_IS_BLOCK | BLOCK_BYREF_CALLER)}
-struct _block_byref_voidBlock voidBlock = {( .forwarding=&amp;voidBlock, .flags=(1&lt;&lt;25), .size=sizeof(struct _block_byref_voidBlock *),
-      .byref_keep=_block_byref_keep_helper, .byref_dispose=_block_byref_dispose_helper,
-      .captured_voidBlock=blockA )};
-voidBlock.forwarding-&gt;captured_voidBlock = blockB;
-</code></pre>
-
-<p>block中，引入了__block 会是什么情况</p>
-
-<pre><code>int __block i = 2;
-functioncall(^{ i = 10; });
-struct _block_byref_i {
-    void *isa;  // set to NULL
-    struct _block_byref_voidBlock *forwarding;
-    int flags;   //refcount;
-    int size;
-    void (*byref_keep)(struct _block_byref_i *dst, struct _block_byref_i *src);
-    void (*byref_dispose)(struct _block_byref_i *);
-    int captured_i;
-};
-struct __block_literal_5 {
-    void *isa;
-    int flags;
-    int reserved; 
-    void (*invoke)(struct __block_literal_5 *);
-    struct __block_descriptor_5 *descriptor;
-    struct _block_byref_i *i_holder;
-};
-void __block_invoke_5(struct __block_literal_5 *_block) {
-   _block-&gt;i_holder-&gt;forwarding-&gt;captured_i = 10;
-}
-void __block_copy_5(struct __block_literal_5 *dst, struct __block_literal_5 *src) {
-     _Block_object_assign(&amp;dst-&gt;i_holder, src-&gt;i_holder, BLOCK_FIELD_IS_BYREF | BLOCK_BYREF_CALLER);
-}
-void __block_dispose_5(struct __block_literal_5 *src) {
-     _Block_object_dispose(src-&gt;i_holder, BLOCK_FIELD_IS_BYREF | BLOCK_BYREF_CALLER);
-}
-static struct __block_descriptor_5 {
-    unsigned long int reserved;
-    unsigned long int Block_size;
-    void (*copy_helper)(struct __block_literal_5 *dst, struct __block_literal_5 *src);
-    void (*dispose_helper)(struct __block_literal_5 *);
-} __block_descriptor_5 = { 0, sizeof(struct __block_literal_5) __block_copy_5, __block_dispose_5 };
-struct _block_byref_i i = {( .forwarding=&amp;i, .flags=0, .size=sizeof(struct _block_byref_i) )};
-struct __block_literal_5 _block_literal = {
-    &amp;_NSConcreteStackBlock,
-    (1&lt;&lt;25)|(1&lt;&lt;29), &lt;uninitialized&gt;,
-    __block_invoke_5,
-    &amp;__block_descriptor_5,
-        2,
-   };
-</code></pre>
-
-<p>block 中的太多细节这里不做赘述，有兴趣的可以参考Block—ABI-Apple，也可以直接<a href="http://llvm.org/svn/llvm-project/compiler-rt/trunk/BlocksRuntime/runtime.c">这里</a>去看。</p>
-</div>
-  
-  
-
-
-    </article>
-  
   <div class="pagination">
     
       <a class="prev" href="/blog/page/4/">&larr; Older</a>
@@ -840,7 +769,8 @@ struct __block_literal_5 _block_literal = {
 <li class='category'><a href='/blog/categories/asm/'>asm (1)</a></li>
 <li class='category'><a href='/blog/categories/c-/'>c++ (6)</a></li>
 <li class='category'><a href='/blog/categories/configure/'>configure (2)</a></li>
-<li class='category'><a href='/blog/categories/emotion/'>emotion (11)</a></li>
+<li class='category'><a href='/blog/categories/emotion/'>emotion (12)</a></li>
+<li class='category'><a href='/blog/categories/exercise/'>exercise (1)</a></li>
 <li class='category'><a href='/blog/categories/mysql/'>mysql (2)</a></li>
 <li class='category'><a href='/blog/categories/notes/'>notes (1)</a></li>
 <li class='category'><a href='/blog/categories/operating-system/'>operating_system (3)</a></li>
@@ -853,6 +783,10 @@ struct __block_literal_5 _block_literal = {
 <section>
   <h1>Recent Posts</h1>
   <ul id="recent_posts">
+    
+      <li class="post">
+        <a href="/blog/2013/07/09/exercise/">运动小结</a>
+      </li>
     
       <li class="post">
         <a href="/blog/2013/06/24/remember/">唯一有益的怀旧是想像未来的自己怀旧现在</a>
@@ -868,10 +802,6 @@ struct __block_literal_5 _block_literal = {
     
       <li class="post">
         <a href="/blog/2013/05/08/code-snippets/">code snippets</a>
-      </li>
-    
-      <li class="post">
-        <a href="/blog/2013/04/24/apple-script-1/">Apple Script 可执行的伪代码</a>
       </li>
     
   </ul>
