@@ -5,12 +5,13 @@
 <!--[if (gt IE 8)|(gt IEMobile 7)|!(IEMobile)|!(IE)]><!--><html class="no-js" lang="en"><!--<![endif]-->
 <head>
   <meta charset="utf-8">
-  <title>Apple Script 可执行的伪代码 - studentdeng Blog</title>
+  <title>Box2D 02 刚体 - studentdeng Blog</title>
   <meta name="author" content="studentdeng">
 
   
-  <meta name="description" content="apple script 这种脚本语言就是精炼, 可执行的伪代码 tell application "Finder" display dialog "选择源文件目录"
-set sourcepath to quoted form of POSIX path of (choose folder) &hellip;">
+  <meta name="description" content="刚体的属性有3种。 staticBody
+kinematicBody
+dynamicBody staticzero mass, zero velocity, may be manually moved kinematic: zero mass, non-zero velocity set by &hellip;">
   
 
   <!-- http://t.co/dKP3o1e -->
@@ -19,7 +20,7 @@ set sourcepath to quoted form of POSIX path of (choose folder) &hellip;">
   <meta name="viewport" content="width=device-width, initial-scale=1">
 
   
-  <link rel="canonical" href="http://studentdeng.github.com/blog/2013/04/24/apple-script-1/">
+  <link rel="canonical" href="http://studentdeng.github.com/blog/2013/07/19/box2d-02/">
   <link href="/favicon.png" rel="icon">
   <link href="/stylesheets/screen.css" media="screen, projection" rel="stylesheet" type="text/css">
   <script src="/javascripts/modernizr-2.0.js"></script>
@@ -67,7 +68,7 @@ set sourcepath to quoted form of POSIX path of (choose folder) &hellip;">
   
   <header>
     
-      <h1 class="entry-title">Apple Script 可执行的伪代码</h1>
+      <h1 class="entry-title">Box2D 02 刚体</h1>
     
     
       <p class="meta">
@@ -83,7 +84,7 @@ set sourcepath to quoted form of POSIX path of (choose folder) &hellip;">
   
 
 
-<time datetime="2013-04-24T19:21:00+08:00" pubdate data-updated="true">Apr 24<span>th</span>, 2013</time>
+<time datetime="2013-07-19T15:30:00+08:00" pubdate data-updated="true">Jul 19<span>th</span>, 2013</time>
         
 
         
@@ -95,22 +96,33 @@ set sourcepath to quoted form of POSIX path of (choose folder) &hellip;">
   </header>
 
 
-<div class="entry-content"><p>apple script 这种脚本语言就是精炼, 可执行的伪代码</p>
+<div class="entry-content"><p>刚体的属性有3种。</p>
 
-<pre><code>tell application "Finder"
+<ul>
+<li>staticBody</li>
+<li>kinematicBody</li>
+<li><p>dynamicBody</p>
 
-display dialog "选择源文件目录"
-set sourcepath to quoted form of POSIX path of (choose folder)
+<p>  staticzero mass, zero velocity, may be manually moved</p>
 
-display dialog "选择输出目录"
-set destinationpath to quoted form of POSIX path of (choose folder)
+<p>  kinematic: zero mass, non-zero velocity set by user, moved by solver</p>
 
-end tell
+<p>  dynamic: positive mass, non-zero velocity determined by forces, moved by solver</p></li>
+</ul>
 
-do shell script "/usr/bin/php /Users/ygcurer/apigen/apigen.php --source " &amp; sourcepath &amp; " --destination " &amp; destinationpath &amp; " --title curer --charset UTF-8 --access-levels public,protected --internal no --php yes --tree yes --deprecated no --todo no --download no --source-code yes --colors yes --progressbar no --update-check no"
-</code></pre>
 
-<p>这里把php document generate 的shell command 包装进了application中</p>
+<p>简单说就是static 的刚体没有质量，没有速度。
+kinematic 的刚体没有质量，但是可以设置速度。
+dynamic 的刚体就是之前我们写的小球。有质量有速度。</p>
+
+<p>static 的常常用于游戏中的墙，这种不会移动的，而且不会受到力的作用改变他的位置，速度等。
+kinematic 的常常用于游戏中的跳板这些，他们会移动，但是同样不会受到力的作用改变原来的运动轨迹。
+dynamic 通常是我们的玩家，敌人。他们会移动，而且会受到力的作用，旋转，碰撞，加速等。</p>
+
+<p>刚写好了几个demo，用来做这几种类型的区分，</p>
+
+<p><a href="https://github.com/studentdeng/box2d-tutorials/tree/master/02">demo代码</a>
+<a href="http://v.youku.com/v_show/id_XNTg0OTM0OTg4.html">demo演示</a></p>
 </div>
 
 
@@ -133,12 +145,12 @@ do shell script "/usr/bin/php /Users/ygcurer/apigen/apigen.php --source " &amp; 
   
 
 
-<time datetime="2013-04-24T19:21:00+08:00" pubdate data-updated="true">Apr 24<span>th</span>, 2013</time>
+<time datetime="2013-07-19T15:30:00+08:00" pubdate data-updated="true">Jul 19<span>th</span>, 2013</time>
       
 
 <span class="categories">
   
-    <a class='category' href='/blog/categories/apple-script/'>apple_script</a>
+    <a class='category' href='/blog/categories/box2d/'>box2D</a>, <a class='category' href='/blog/categories/game/'>game</a>
   
 </span>
 
@@ -183,10 +195,8 @@ var jiathis_config={
     
     <p class="meta">
       
-        <a class="basic-alignment left" href="/blog/2013/03/31/numb/" title="Previous Post: numb">&laquo; numb</a>
+        <a class="basic-alignment left" href="/blog/2013/07/18/box2d-01/" title="Previous Post: Box2D 01 基本概念">&laquo; Box2D 01 基本概念</a>
       
-      
-        <a class="basic-alignment right" href="/blog/2013/05/08/code-snippets/" title="Next Post: code snippets">code snippets &raquo;</a>
       
     </p>
   </footer>

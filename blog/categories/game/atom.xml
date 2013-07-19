@@ -4,7 +4,7 @@
   <title><![CDATA[Category: game | studentdeng Blog]]></title>
   <link href="http://studentdeng.github.com/blog/categories/game/atom.xml" rel="self"/>
   <link href="http://studentdeng.github.com/"/>
-  <updated>2013-07-18T17:22:42+08:00</updated>
+  <updated>2013-07-19T16:12:34+08:00</updated>
   <id>http://studentdeng.github.com/</id>
   <author>
     <name><![CDATA[studentdeng]]></name>
@@ -12,6 +12,41 @@
   </author>
   <generator uri="http://octopress.org/">Octopress</generator>
 
+  
+  <entry>
+    <title type="html"><![CDATA[Box2D 02 刚体]]></title>
+    <link href="http://studentdeng.github.com/blog/2013/07/19/box2d-02/"/>
+    <updated>2013-07-19T15:30:00+08:00</updated>
+    <id>http://studentdeng.github.com/blog/2013/07/19/box2d-02</id>
+    <content type="html"><![CDATA[<p>刚体的属性有3种。</p>
+
+<ul>
+<li>staticBody</li>
+<li>kinematicBody</li>
+<li><p>dynamicBody</p>
+
+<p>  staticzero mass, zero velocity, may be manually moved</p>
+
+<p>  kinematic: zero mass, non-zero velocity set by user, moved by solver</p>
+
+<p>  dynamic: positive mass, non-zero velocity determined by forces, moved by solver</p></li>
+</ul>
+
+
+<p>简单说就是static 的刚体没有质量，没有速度。
+kinematic 的刚体没有质量，但是可以设置速度。
+dynamic 的刚体就是之前我们写的小球。有质量有速度。</p>
+
+<p>static 的常常用于游戏中的墙，这种不会移动的，而且不会受到力的作用改变他的位置，速度等。
+kinematic 的常常用于游戏中的跳板这些，他们会移动，但是同样不会受到力的作用改变原来的运动轨迹。
+dynamic 通常是我们的玩家，敌人。他们会移动，而且会受到力的作用，旋转，碰撞，加速等。</p>
+
+<p>刚写好了几个demo，用来做这几种类型的区分，</p>
+
+<p><a href="https://github.com/studentdeng/box2d-tutorials/tree/master/02">demo代码</a>
+<a href="http://v.youku.com/v_show/id_XNTg0OTM0OTg4.html">demo演示</a></p>
+]]></content>
+  </entry>
   
   <entry>
     <title type="html"><![CDATA[Box2D 01 基本概念]]></title>
@@ -119,6 +154,8 @@ body-&gt;ApplyLinearImpulse(force, body-&gt;GetPosition());
 <p>body是我们其中的一个小球。ApplyLinearImpulse的意思就是对body施加一个冲量。</p>
 
 <p><a href="https://github.com/studentdeng/box2d-tutorials/tree/master/01">demo地址</a></p>
+
+<p><a href="http://v.youku.com/v_show/id_XNTg0NTU4NzQ0.html">demo演示地址</a></p>
 ]]></content>
   </entry>
   
