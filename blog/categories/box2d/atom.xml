@@ -4,7 +4,7 @@
   <title><![CDATA[Category: box2D | studentdeng Blog]]></title>
   <link href="http://studentdeng.github.com/blog/categories/box2d/atom.xml" rel="self"/>
   <link href="http://studentdeng.github.com/"/>
-  <updated>2013-07-19T16:12:34+08:00</updated>
+  <updated>2013-07-20T14:02:53+08:00</updated>
   <id>http://studentdeng.github.com/</id>
   <author>
     <name><![CDATA[studentdeng]]></name>
@@ -12,6 +12,35 @@
   </author>
   <generator uri="http://octopress.org/">Octopress</generator>
 
+  
+  <entry>
+    <title type="html"><![CDATA[box2d 03 b2Joint 连接器]]></title>
+    <link href="http://studentdeng.github.com/blog/2013/07/20/box2d-03/"/>
+    <updated>2013-07-20T13:30:00+08:00</updated>
+    <id>http://studentdeng.github.com/blog/2013/07/20/box2d-03</id>
+    <content type="html"><![CDATA[<p>在真实世界中，一个物体很难孤立的存在，比如一个我们的自行车，2个轮子除了可以自由滚动以外，还必须保证2个轮子之间的距离不变，而保证这个距离不变的就是自行车的大梁。我们的胳膊，需要保证在一定范围的情况下围绕一个点旋转等等。Box2D中 连接器就是用来保证刚体和刚体之间的某种关系而出现的。</p>
+
+<p>我们先认识b2DistanceJoint——距离连接器。</p>
+
+<p><img src="http://www.ladeng6666.com/blog/wp-content/uploads/2012/08/zixingche.jpg" alt="image" /></p>
+
+<p>这是一个自行车的模型bodyA bodyB 就是之前熟悉的圆形刚体，中间的红线是我们的距离连接，anchorA，anchorB 则是连接器连接2个刚体的位置。非常的直观。</p>
+
+<pre><code>b2DistanceJointDef jointDef;
+jointDef.Initialize(ballA, ballB, ballA-&gt;GetPosition(), ballB-&gt;GetPosition());
+
+b2DistanceJoint *join = (b2DistanceJoint *)world-&gt;CreateJoint(&amp;jointDef);
+CGFloat distance = 30.0 / PTM_RATIO;
+join-&gt;SetLength(distance);
+</code></pre>
+
+<p>非常的直观，制定连接的位置和距离，就创建完毕了。下面是一个demo，每当触摸屏幕的时候给自行车一个向右的冲量。</p>
+
+<p><a href="https://github.com/studentdeng/box2d-tutorials/tree/master/03">demo代码</a></p>
+
+<p><a href="http://v.youku.com/v_show/id_XNTg1MjU2MTQ4.html">demo演示</a></p>
+]]></content>
+  </entry>
   
   <entry>
     <title type="html"><![CDATA[Box2D 02 刚体]]></title>

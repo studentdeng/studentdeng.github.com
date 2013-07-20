@@ -5,11 +5,11 @@
 <!--[if (gt IE 8)|(gt IEMobile 7)|!(IEMobile)|!(IE)]><!--><html class="no-js" lang="en"><!--<![endif]-->
 <head>
   <meta charset="utf-8">
-  <title>plan - studentdeng Blog</title>
+  <title>box2d 03 b2Joint 连接器 - studentdeng Blog</title>
   <meta name="author" content="studentdeng">
 
   
-  <meta name="description" content="不知不觉又是一年，又大了一岁，呵呵，说的很假，因为自己并没有真正的意识到自己又大了一岁，甚至自己现在的年龄都不能一口说出来，过去的一年，甚至之前，我都不能准确的说出我自己到底做了什么，混沌，浑浑噩噩的一生，没有目标，一切都是随心，一切都是随心而发，没有目的，达成不达成，似乎都不重要。 &hellip;">
+  <meta name="description" content="在真实世界中，一个物体很难孤立的存在，比如一个我们的自行车，2个轮子除了可以自由滚动以外，还必须保证2个轮子之间的距离不变，而保证这个距离不变的就是自行车的大梁。我们的胳膊，需要保证在一定范围的情况下围绕一个点旋转等等。Box2D中 连接器就是用来保证刚体和刚体之间的某种关系而出现的。 &hellip;">
   
 
   <!-- http://t.co/dKP3o1e -->
@@ -18,7 +18,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1">
 
   
-  <link rel="canonical" href="http://studentdeng.github.com/blog/2012/01/13/plan/">
+  <link rel="canonical" href="http://studentdeng.github.com/blog/2013/07/20/box2d-03/">
   <link href="/favicon.png" rel="icon">
   <link href="/stylesheets/screen.css" media="screen, projection" rel="stylesheet" type="text/css">
   <script src="/javascripts/modernizr-2.0.js"></script>
@@ -66,7 +66,7 @@
   
   <header>
     
-      <h1 class="entry-title">Plan</h1>
+      <h1 class="entry-title">Box2d 03 b2Joint 连接器</h1>
     
     
       <p class="meta">
@@ -82,7 +82,7 @@
   
 
 
-<time datetime="2012-01-13T23:46:00+08:00" pubdate data-updated="true">Jan 13<span>th</span>, 2012</time>
+<time datetime="2013-07-20T13:30:00+08:00" pubdate data-updated="true">Jul 20<span>th</span>, 2013</time>
         
 
         
@@ -94,29 +94,27 @@
   </header>
 
 
-<div class="entry-content"><p>不知不觉又是一年，又大了一岁，呵呵，说的很假，因为自己并没有真正的意识到自己又大了一岁，甚至自己现在的年龄都不能一口说出来，过去的一年，甚至之前，我都不能准确的说出我自己到底做了什么，混沌，浑浑噩噩的一生，没有目标，一切都是随心，一切都是随心而发，没有目的，达成不达成，似乎都不重要。那么自己心里到底有什么在乎的了？不知道，那么还有什么感兴趣的呢？</p>
+<div class="entry-content"><p>在真实世界中，一个物体很难孤立的存在，比如一个我们的自行车，2个轮子除了可以自由滚动以外，还必须保证2个轮子之间的距离不变，而保证这个距离不变的就是自行车的大梁。我们的胳膊，需要保证在一定范围的情况下围绕一个点旋转等等。Box2D中 连接器就是用来保证刚体和刚体之间的某种关系而出现的。</p>
 
-<p>庄子是我最佩服的人，千年前的古人，都可以去猜测天道，追逐天地之本，而做为现代人的我，从小都希望自己能够成为其中的一员，哪怕只是能够感知到一点，为此沉沦数学，物理。</p>
+<p>我们先认识b2DistanceJoint——距离连接器。</p>
 
-<p>什么是天道，天道不以人类意志左右，甚至和普通人意志相反。而这也就造就了普通人永远无法理解天道。所以，我从来没有觉得自己是普通人，甚至乐于反着做。而今天，我觉得，我错了，因为我现在自己都不了解，原来追求的东西，随着时间的打磨，已经逐渐淡去。现在做的，只是随心而动，追求自己内心的想法——每件事情，比别人多做一点，多深入一点，至于是什么事情，别人的看法，已经不重要了，我发现，我这个理科生，居然是一个彻头彻尾的唯心主义者。</p>
+<p><img src="http://www.ladeng6666.com/blog/wp-content/uploads/2012/08/zixingche.jpg" alt="image" /></p>
 
-<p>人的一生是要不断学习的。这里面的动力很简单：因为我们在有些方面还“无知”， 无知是做事情的一个障碍。我们如果想做好事情，就要求知，要改变这种无知的状况。而对于创业这件事情，也是我这20多年来，做的最大的一件事情，1年前，对于创业，我还是处在，拿着无知当无畏的状态，而且，现在也没有好多少，但是，我很感谢我们这个Team，包容了我很多缺点，替我遮挡了许多细枝末节，使得我还有时间有精力追求自己内心的想法，而且我相信，我最终一定能够成功，但是这里面的代价实在是太大了，我甚至不能确定，而且害怕，这个时间太长，而那些身边默默支持我的人已经离去，甚至永远看不到了。</p>
+<p>这是一个自行车的模型bodyA bodyB 就是之前熟悉的圆形刚体，中间的红线是我们的距离连接，anchorA，anchorB 则是连接器连接2个刚体的位置。非常的直观。</p>
 
-<p>我最讨厌的人，就是浪费时间的人，因为，我自己已经浪费了自己20多年的青春。所以，当我在大三的时候，我就已经意识到，自己需要改变这一点——痛恨那些走在我前面档我走路的人，浪费我时间的人。</p>
+<pre><code>b2DistanceJointDef jointDef;
+jointDef.Initialize(ballA, ballB, ballA-&gt;GetPosition(), ballB-&gt;GetPosition());
 
-<p>而现在，我发现，挡在我前面的那个人，不是别人，就是自己。自己的惰性，侥幸心里，成功考验的不仅是智力，更是意志。就像处在激发态的原子，时间会不断地侵蚀他的能量，而如果想要挣脱枷锁，只能是不断地更快地吸取更多的能量。就像鲲鹏，如果沉迷于大海，永远不可能越出水面，飞翔在空中。</p>
+b2DistanceJoint *join = (b2DistanceJoint *)world-&gt;CreateJoint(&amp;jointDef);
+CGFloat distance = 30.0 / PTM_RATIO;
+join-&gt;SetLength(distance);
+</code></pre>
 
-<p>呼呼，扯了好多，看看我这一年做了什么，1年前是离毕业还有半年时。</p>
+<p>非常的直观，制定连接的位置和距离，就创建完毕了。下面是一个demo，每当触摸屏幕的时候给自行车一个向右的冲量。</p>
 
-<p>我很庆幸，因为，在很多人不知道自己以后应该做什么时，我知道了我该做什么，计算机就是为我而生的科学，我也很庆幸，我在离开大学的最后半年里，我能够把大学中学到的和没有学到的东西，捏合到了一起，明白了大学这些课程讲述的意义，汇编程序设计，计算机体系结构，编译原理等等耳熟能详的课程捏到一起，虽然不能融会贯通，但是计算机知识体系已经能够较为清晰的展现在脑海里，而这，也就是为什么我放弃考研的原因之一，不需要再学太多的理论来夯实基础，因为我不是要成为科学家，这些理论知识对现在的我来说已经足够，贪多嚼不烂。而更为重要的是，移动互联网，这一波已经滚滚而来，已经不可能在等我3年，就像我大二时，第一次用到智能手机时（Symbian不算）的感触，传统的PC应用已经不可能吸引我，除了mobile。</p>
+<p><a href="https://github.com/studentdeng/box2d-tutorials/tree/master/03">demo代码</a></p>
 
-<p>大学最后的半年，是在创业公司渡过的，第一次自己独立做项目（自己的毕设），而且是一个会正式发布的产品，对于我这样的一个二流大学毕业生来说已经不易。而后的毕业答辩，更是验证了我对学校的不屑，只能挑挑排版错误的导师，充满各种潜规则的评分，对我来说已经没有任何意义，90分和60分，同样没有区别。我唯一在意的是，最后半年，C++的基础打的更扎实了一点，windows消息机制的了解也更深入了一点。也不枉我在这里学习了将近1年的时间。</p>
-
-<p>后半年，风雨突变，windows mobile 已经死在了IOS 和android 的车轮之下，顺应天意，转战IOS。</p>
-
-<p>从0开始学习一个新的语言，新的平台，到产品上线，呵呵，虽然在Appstore 很惨淡，但是，我们并没有放弃，不说了，来年新产品上线再说，不信这个邪了。</p>
-
-<p>总结之后，就要规划，虽然我实在是不想做这个规划，因为实在是不靠谱。1年的时间，说长不长，说短不短。不求别的，只求不浪费时间，全力学习，深入IOS 一点。</p>
+<p><a href="http://v.youku.com/v_show/id_XNTg1MjU2MTQ4.html">demo演示</a></p>
 </div>
 
 
@@ -139,12 +137,12 @@
   
 
 
-<time datetime="2012-01-13T23:46:00+08:00" pubdate data-updated="true">Jan 13<span>th</span>, 2012</time>
+<time datetime="2013-07-20T13:30:00+08:00" pubdate data-updated="true">Jul 20<span>th</span>, 2013</time>
       
 
 <span class="categories">
   
-    <a class='category' href='/blog/categories/emotion/'>emotion</a>
+    <a class='category' href='/blog/categories/box2d/'>box2D</a>, <a class='category' href='/blog/categories/game/'>game</a>
   
 </span>
 
@@ -189,10 +187,8 @@ var jiathis_config={
     
     <p class="meta">
       
-        <a class="basic-alignment left" href="/blog/2012/01/13/knownless/" title="Previous Post: 转 从无知到有知">&laquo; 转 从无知到有知</a>
+        <a class="basic-alignment left" href="/blog/2013/07/19/box2d-02/" title="Previous Post: Box2D 02 刚体">&laquo; Box2D 02 刚体</a>
       
-      
-        <a class="basic-alignment right" href="/blog/2012/02/03/objblock/" title="Next Post: Objective-C block">Objective-C block &raquo;</a>
       
     </p>
   </footer>
