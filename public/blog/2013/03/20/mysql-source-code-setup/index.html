@@ -1,0 +1,209 @@
+
+<!DOCTYPE HTML>
+<html>
+<head>
+	<meta charset="utf-8">
+	<title>调试 mysql源代码 环境搭建 - 不会开机的男孩</title>
+	<meta name="author" content="studentdeng">
+
+	
+	<meta name="description" content="调试 Mysql源代码 环境搭建 下载源代码 mysql 下载CMAKE download 代码根目录 执行下面代码, 确定生成configure.data 文件 wscript win\configure.js WITH_INNOBASE_STORAGE_ENGINE &hellip;">
+	
+
+  <!-- http://t.co/dKP3o1e -->
+  <meta name="HandheldFriendly" content="True">
+  <meta name="MobileOptimized" content="320">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+
+	<link href="/atom.xml" rel="alternate" title="不会开机的男孩" type="application/atom+xml">
+	
+	<link rel="canonical" href="http://studentdeng.github.com/blog/2013/03/20/mysql-source-code-setup/">
+	<link href="/favicon.png" rel="shortcut icon">
+	<link href="/stylesheets/screen.css" media="screen, projection" rel="stylesheet" type="text/css">
+	<!--[if lt IE 9]><script src="//html5shiv.googlecode.com/svn/trunk/html5.js"></script><![endif]-->
+	<script src="//ajax.googleapis.com/ajax/libs/jquery/1.7.2/jquery.min.js"></script>
+	<link href='http://fonts.googleapis.com/css?family=Open+Sans:400italic,400,700' rel='stylesheet' type='text/css'>
+	<!--Fonts from Google"s Web font directory at http://google.com/webfonts -->
+<link href="http://fonts.googleapis.com/css?family=PT+Serif:regular,italic,bold,bolditalic" rel="stylesheet" type="text/css">
+<link href="http://fonts.googleapis.com/css?family=PT+Sans:regular,italic,bold,bolditalic" rel="stylesheet" type="text/css">
+
+<script type="text/javascript">var switchTo5x=false;</script>
+<script type="text/javascript" src="http://w.sharethis.com/button/buttons.js"></script>
+<script type="text/javascript">stLight.options({publisher: "496dac80-40ba-487b-b557-af2d3629eb28", doNotHash: false, doNotCopy: false, hashAddressBar: false});</script>
+</head>
+
+
+<body>
+	<div class="container">
+		<div class="left-col">
+			<div class="intrude-less">
+			<header id="header" class="inner"><div class="profilepic">	
+	<script src="/javascripts/md5.js"></script>
+	<script type="text/javascript">
+		document.write("<img src='http://www.gravatar.com/avatar/" + MD5("studentdeng@hotmail.com") + "?s=160' alt='Profile Picture' style='width: 160px;' />");
+	</script>
+</div>
+<h1><a href="/">不会开机的男孩</a></h1>
+<p class="subtitle"></p>
+<nav id="main-nav"><ul class="main-navigation">
+  <li><a href="/">Blog</a></li>
+  <li><a href="/tags">tags</a></li>
+  <li><a href="/blog/archives">Archives</a></li>
+  <li><a href="/about">About</a></li>
+  <li><a href="/favorite">favorite</a></li>
+</ul>
+</nav>
+<nav id="sub-nav">
+	<div class="social">
+		
+		<a class="weibo" href="http://www.weibo.com/studentdeng" title="Weibo">Weibo</a>
+		
+		
+		
+		
+		
+		<a class="github" href="https://github.com/studentdeng" title="GitHub">GitHub</a>
+		
+		
+		<a class="dribbble" href="http://www.dribbble.com/curer" title="Dribbble">Dribbble</a>
+		
+		
+		
+		
+		
+		
+		<a class="rss" href="/atom.xml" title="RSS">RSS</a>
+		
+	</div>
+</nav>
+<hgroup>
+  <aside class="sidebar">
+  
+    
+<section>
+  <h1>GitHub Repos</h1>
+  <ul id="gh_repos">
+    <li class="loading">Status updating...</li>
+  </ul>
+  
+  <script type="text/javascript">
+    $(document).ready(function(){
+        if (!window.jXHR){
+            var jxhr = document.createElement('script');
+            jxhr.type = 'text/javascript';
+            jxhr.src = '/javascripts/libs/jXHR.js';
+            var s = document.getElementsByTagName('script')[0];
+            s.parentNode.insertBefore(jxhr, s);
+        }
+
+        github.showRepos({
+            user: 'studentdeng',
+            count: 3,
+            skip_forks: true,
+            target: '#gh_repos'
+        });
+    });
+  </script>
+  <script src="/javascripts/github.js" type="text/javascript"> </script>
+</section>
+
+<section>
+<h1>Recent Comments</h1>
+<ul class="ds-recent-comments" data-num-items="5" data-show-avatars="0" data-show-time="0" data-show-title="0" data-show-admin="0" data-excerpt-length="18"></ul>
+
+</section>
+  
+</aside>
+</hgroup>
+
+</header>				
+			</div>
+		</div>	
+		<div class="mid-col">
+			
+				
+			
+			<div class="mid-col-container">
+				<div id="content" class="inner"><article class="post" itemscope itemtype="http://schema.org/BlogPosting">
+	<h1 class="title" itemprop="name">调试 Mysql源代码 环境搭建</h1>
+	<div class="entry-content" itemprop="articleBody"><p>下载源代码 <a href="http://dev.mysql.com/downloads/mysql/">mysql</a></p>
+
+<p>下载CMAKE <a href="http://www.cmake.org/">download</a></p>
+
+<p>代码根目录 执行下面代码, 确定生成configure.data 文件</p>
+
+<pre><code>wscript win\configure.js WITH_INNOBASE_STORAGE_ENGINE WITH_PARTITION_STORAGE_ENGINE MYSQL_SERVER_SUFFIX=-pro
+</code></pre>
+
+<p>找到 win 目录下的 XXX.bat 文件复制到源代码根目录下, 我这里使用vs2008 ,所以复制 build-vs9.bat 到源代码根目录
+在系统根目录 C:/windows 下 增加一个 my.ini 用于 mysql 配置, 我的mysql 源代码目录在 C:/mysql_code/mysql-5-1.1.68</p>
+
+<pre><code>[mysqld]
+# set basedir to your installation path
+basedir=C:/mysql_code/mysql-5-1.1.68
+# set datadir to the location of your data directory
+datadir=C:/mysql_code/mysql-5-1.1.68/win/data
+</code></pre>
+
+<p>将sql目录下的share文件夹复制到源代码根目录下</p>
+
+<p>修改sql_locale.cc 文件, 把文件编码改成 UTF8 with BOM, windows 你懂的</p>
+
+<p>然后可以调试了, 不过这里我遇到一个问题, 在 sql_locale.cc 函数 test_lc_time_sz 函数, 这里DEBUG_ASSERT(0)了一下, 目前先暂时注释掉它 : (
+现在可以跑</p>
+
+<pre><code>mysqld
+</code></pre>
+
+<p>然后在</p>
+
+<pre><code>mysql -u root -p 
+</code></pre>
+
+<p>over!</p>
+</div>
+
+</article>
+
+	<div class="share">
+	<div class="addthis_toolbox addthis_default_style addthis_16x16_style">
+	
+	<a class="addthis_button_sinaweibo"></a>
+	
+	
+	
+	
+	
+	<a class="addthis_button_compact"></a>
+	<a class="addthis_counter addthis_bubble_style"></a>
+	</div>
+  <script type="text/javascript" src="http://s7.addthis.com/js/300/addthis_widget.js#pubid="></script>
+</div>
+
+
+</div>
+			</div>
+			<footer id="footer" class="inner"><p>
+  2013 - @studentdeng  
+  <span class="credit">Powered by <a href="http://octopress.org">Octopress</a></span>
+</p>
+
+Design credit: <a href="http://shashankmehta.in/archive/2012/greyshade.html">Shashank Mehta</a></footer>
+			<script src="/javascripts/slash.js"></script>
+<script src="/javascripts/jquery.fancybox.pack.js"></script>
+<script type="text/javascript">
+(function($){
+	$('.fancybox').fancybox();
+})(jQuery);
+</script> <!-- Delete or comment this line to disable Fancybox -->
+
+
+
+
+
+
+
+		</div>
+	</div>
+</body>
+</html>

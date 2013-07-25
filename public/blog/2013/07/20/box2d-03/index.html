@@ -1,0 +1,195 @@
+
+<!DOCTYPE HTML>
+<html>
+<head>
+	<meta charset="utf-8">
+	<title>box2d 03 b2Joint 连接器 - 不会开机的男孩</title>
+	<meta name="author" content="studentdeng">
+
+	
+	<meta name="description" content="Box2d 03 b2Joint 连接器 在真实世界中，一个物体很难孤立的存在，比如一个我们的自行车，2个轮子除了可以自由滚动以外，还必须保证2个轮子之间的距离不变，而保证这个距离不变的就是自行车的大梁。我们的胳膊，需要保证在一定范围的情况下围绕一个点旋转等等。Box2D中 &hellip;">
+	
+
+  <!-- http://t.co/dKP3o1e -->
+  <meta name="HandheldFriendly" content="True">
+  <meta name="MobileOptimized" content="320">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+
+	<link href="/atom.xml" rel="alternate" title="不会开机的男孩" type="application/atom+xml">
+	
+	<link rel="canonical" href="http://studentdeng.github.com/blog/2013/07/20/box2d-03/">
+	<link href="/favicon.png" rel="shortcut icon">
+	<link href="/stylesheets/screen.css" media="screen, projection" rel="stylesheet" type="text/css">
+	<!--[if lt IE 9]><script src="//html5shiv.googlecode.com/svn/trunk/html5.js"></script><![endif]-->
+	<script src="//ajax.googleapis.com/ajax/libs/jquery/1.7.2/jquery.min.js"></script>
+	<link href='http://fonts.googleapis.com/css?family=Open+Sans:400italic,400,700' rel='stylesheet' type='text/css'>
+	<!--Fonts from Google"s Web font directory at http://google.com/webfonts -->
+<link href="http://fonts.googleapis.com/css?family=PT+Serif:regular,italic,bold,bolditalic" rel="stylesheet" type="text/css">
+<link href="http://fonts.googleapis.com/css?family=PT+Sans:regular,italic,bold,bolditalic" rel="stylesheet" type="text/css">
+
+<script type="text/javascript">var switchTo5x=false;</script>
+<script type="text/javascript" src="http://w.sharethis.com/button/buttons.js"></script>
+<script type="text/javascript">stLight.options({publisher: "496dac80-40ba-487b-b557-af2d3629eb28", doNotHash: false, doNotCopy: false, hashAddressBar: false});</script>
+</head>
+
+
+<body>
+	<div class="container">
+		<div class="left-col">
+			<div class="intrude-less">
+			<header id="header" class="inner"><div class="profilepic">	
+	<script src="/javascripts/md5.js"></script>
+	<script type="text/javascript">
+		document.write("<img src='http://www.gravatar.com/avatar/" + MD5("studentdeng@hotmail.com") + "?s=160' alt='Profile Picture' style='width: 160px;' />");
+	</script>
+</div>
+<h1><a href="/">不会开机的男孩</a></h1>
+<p class="subtitle"></p>
+<nav id="main-nav"><ul class="main-navigation">
+  <li><a href="/">Blog</a></li>
+  <li><a href="/tags">tags</a></li>
+  <li><a href="/blog/archives">Archives</a></li>
+  <li><a href="/about">About</a></li>
+  <li><a href="/favorite">favorite</a></li>
+</ul>
+</nav>
+<nav id="sub-nav">
+	<div class="social">
+		
+		<a class="weibo" href="http://www.weibo.com/studentdeng" title="Weibo">Weibo</a>
+		
+		
+		
+		
+		
+		<a class="github" href="https://github.com/studentdeng" title="GitHub">GitHub</a>
+		
+		
+		<a class="dribbble" href="http://www.dribbble.com/curer" title="Dribbble">Dribbble</a>
+		
+		
+		
+		
+		
+		
+		<a class="rss" href="/atom.xml" title="RSS">RSS</a>
+		
+	</div>
+</nav>
+<hgroup>
+  <aside class="sidebar">
+  
+    
+<section>
+  <h1>GitHub Repos</h1>
+  <ul id="gh_repos">
+    <li class="loading">Status updating...</li>
+  </ul>
+  
+  <script type="text/javascript">
+    $(document).ready(function(){
+        if (!window.jXHR){
+            var jxhr = document.createElement('script');
+            jxhr.type = 'text/javascript';
+            jxhr.src = '/javascripts/libs/jXHR.js';
+            var s = document.getElementsByTagName('script')[0];
+            s.parentNode.insertBefore(jxhr, s);
+        }
+
+        github.showRepos({
+            user: 'studentdeng',
+            count: 3,
+            skip_forks: true,
+            target: '#gh_repos'
+        });
+    });
+  </script>
+  <script src="/javascripts/github.js" type="text/javascript"> </script>
+</section>
+
+<section>
+<h1>Recent Comments</h1>
+<ul class="ds-recent-comments" data-num-items="5" data-show-avatars="0" data-show-time="0" data-show-title="0" data-show-admin="0" data-excerpt-length="18"></ul>
+
+</section>
+  
+</aside>
+</hgroup>
+
+</header>				
+			</div>
+		</div>	
+		<div class="mid-col">
+			
+				
+			
+			<div class="mid-col-container">
+				<div id="content" class="inner"><article class="post" itemscope itemtype="http://schema.org/BlogPosting">
+	<h1 class="title" itemprop="name">Box2d 03 b2Joint 连接器</h1>
+	<div class="entry-content" itemprop="articleBody"><p>在真实世界中，一个物体很难孤立的存在，比如一个我们的自行车，2个轮子除了可以自由滚动以外，还必须保证2个轮子之间的距离不变，而保证这个距离不变的就是自行车的大梁。我们的胳膊，需要保证在一定范围的情况下围绕一个点旋转等等。Box2D中 连接器就是用来保证刚体和刚体之间的某种关系而出现的。</p>
+
+<p>我们先认识b2DistanceJoint——距离连接器。</p>
+
+<p><img src="http://www.ladeng6666.com/blog/wp-content/uploads/2012/08/zixingche.jpg" alt="image" /></p>
+
+<p>这是一个自行车的模型bodyA bodyB 就是之前熟悉的圆形刚体，中间的红线是我们的距离连接，anchorA，anchorB 则是连接器连接2个刚体的位置。非常的直观。</p>
+
+<pre><code>b2DistanceJointDef jointDef;
+jointDef.Initialize(ballA, ballB, ballA-&gt;GetPosition(), ballB-&gt;GetPosition());
+
+b2DistanceJoint *join = (b2DistanceJoint *)world-&gt;CreateJoint(&amp;jointDef);
+CGFloat distance = 30.0 / PTM_RATIO;
+join-&gt;SetLength(distance);
+</code></pre>
+
+<p>非常的直观，制定连接的位置和距离，就创建完毕了。下面是一个demo，每当触摸屏幕的时候给自行车一个向右的冲量。</p>
+
+<p><a href="https://github.com/studentdeng/box2d-tutorials/tree/master/03">demo代码</a></p>
+
+<p><a href="http://v.youku.com/v_show/id_XNTg1MjU2MTQ4.html">demo演示</a></p>
+</div>
+
+</article>
+
+	<div class="share">
+	<div class="addthis_toolbox addthis_default_style addthis_16x16_style">
+	
+	<a class="addthis_button_sinaweibo"></a>
+	
+	
+	
+	
+	
+	<a class="addthis_button_compact"></a>
+	<a class="addthis_counter addthis_bubble_style"></a>
+	</div>
+  <script type="text/javascript" src="http://s7.addthis.com/js/300/addthis_widget.js#pubid="></script>
+</div>
+
+
+</div>
+			</div>
+			<footer id="footer" class="inner"><p>
+  2013 - @studentdeng  
+  <span class="credit">Powered by <a href="http://octopress.org">Octopress</a></span>
+</p>
+
+Design credit: <a href="http://shashankmehta.in/archive/2012/greyshade.html">Shashank Mehta</a></footer>
+			<script src="/javascripts/slash.js"></script>
+<script src="/javascripts/jquery.fancybox.pack.js"></script>
+<script type="text/javascript">
+(function($){
+	$('.fancybox').fancybox();
+})(jQuery);
+</script> <!-- Delete or comment this line to disable Fancybox -->
+
+
+
+
+
+
+
+		</div>
+	</div>
+</body>
+</html>

@@ -1,0 +1,806 @@
+---
+layout: post
+title: "SEH 学习笔记二"
+date: 2010-12-21 21:25
+comments: true
+categories: [windows]
+---
+
+之前我们知道了异常是什么样的，以及我们写好了出现异常时执行的代码。那么windows是如何调用我们的代码呢？在了解这个之后，global unwind，异常嵌套也就容易了解了。不得不说，如果之前没有了解SEH，这的确是一件非常有挑战的事情。当然，如果从根上，也就是从硬件到os kernel再到user mode这个就不是挑战，而是不可能一下子完成的任务了。我们还是一步步来，从异常跑到user mode开始。准备好了么？
+
+　　首先想一个问题，上一篇我们的第一个例子，我们保护了一段代码，但是同时，为了修正这段代码，我们又引入了一段代码。事实上，我们的确没有解决问题，谁能保证我们又引入的代码本身不会再产生异常呢？而且，这次是在发生异常的“拯救”过程中又产生异常。让我们先看一个简单的例子，我对上一篇的第一个例子，加了一点点修饰。
+
+	EXCEPTION_DISPOSITION
+    __cdecl
+    _except_handler(
+    struct _EXCEPTION_RECORD *ExceptionRecord,
+        void * EstablisherFrame,
+    struct _CONTEXT *ContextRecord,
+        void * DispatcherContext )
+    {
+        unsigned i;
+     
+        // Indicate that we made it to our exception handler
+        printf( "Hello from an exception handler\n" );
+     
+        if (ExceptionRecord->ExceptionFlags & 0x10)
+        {
+            printf( "bad except\n" );
+        }
+        else
+        {
+            //  bad happen
+            __asm
+            {
+                mov     eax,   0
+                mov     [eax], 1
+            }
+        }
+         
+        //
+        // Change EAX in the context record so that it points to someplace
+        // where we can successfully write
+        ContextRecord->Eax = (DWORD)&scratch;
+     
+        // Tell the OS to restart the faulting instruction
+        return ExceptionContinueExecution;
+    }
+
+结果
+
+	Hello from an exception handler
+	Hello from an exception handler
+	bad except
+	After writing!
+
+　　如果我们把ExceptionRecord->ExceptionFlags & 0x10 判断去掉，无条件的执行 bad ，那么我们好像陷入了死循环中，不停的输出Hello from an exception handler，而整个线程也死在了栈溢出，栈溢出是一个非常严重的异常，他会导致我们的finally block 无法执行，我们获得的同步变量没有被释放掉，即使我们填入了finally block。 我们一切的梦似乎还没有开始就结束了，而原因仅仅是因为我们在异常中又产生了一个异常。异常本身已经很让人头痛了，现在又来了一个。为了彻底了解，我们必须从了解OS是如何调用我们的代码，如何分配异常开始。
+
+异常user mode 从KiUserExceptionDispatcher 开始。
+
+	VOID KiUserExceptionDispatcher( PEXCEPTION_RECORD pExcptRec, CONTEXT * pContext )
+	 {
+	     DWORD retValue;
+	  
+	     // Note: If the exception is handled, RtlDispatchException() never returns
+	     if ( RtlDispatchException( pExceptRec, pContext ) )
+	         retValue = NtContinue( pContext, 0 );
+	     else
+	         retValue = NtRaiseException( pExceptRec, pContext, 0 );
+	  
+	     EXCEPTION_RECORD excptRec2;
+	  
+	     excptRec2.ExceptionCode = retValue;
+	     excptRec2.ExceptionFlags = EXCEPTION_NONCONTINUABLE;
+	     excptRec2.ExceptionRecord = pExcptRec;
+	     excptRec2.NumberParameters = 0;
+	  
+	     RtlRaiseException( &excptRec2 );
+	 }
+ 
+
+    BOOLEAN
+    NTAPI
+    RtlDispatchException(IN PEXCEPTION_RECORD ExceptionRecord,
+                         IN PCONTEXT Context)
+    {
+        PEXCEPTION_REGISTRATION_RECORD RegistrationFrame, NestedFrame = NULL;
+        DISPATCHER_CONTEXT DispatcherContext;
+        EXCEPTION_RECORD ExceptionRecord2;
+        EXCEPTION_DISPOSITION Disposition;
+        ULONG_PTR StackLow, StackHigh;
+        ULONG_PTR RegistrationFrameEnd;
+     
+        /* Perform vectored exception handling if we are in user mode */
+        if (RtlpGetMode() != KernelMode)
+        {
+            /* Call any registered vectored handlers */
+            if (RtlCallVectoredExceptionHandlers(ExceptionRecord, Context))
+            {
+                /* Exception handled, continue execution */
+                return TRUE;
+            }
+        }
+     
+        /* Get the current stack limits and registration frame */
+        RtlpGetStackLimits(&StackLow, &StackHigh);
+        RegistrationFrame = RtlpGetExceptionList();
+     
+        /* Now loop every frame */
+        while (RegistrationFrame != EXCEPTION_CHAIN_END)//#define EXCEPTION_CHAIN_END  -1
+        {
+            /* Find out where it ends */
+            RegistrationFrameEnd = (ULONG_PTR)RegistrationFrame +
+                                    sizeof(EXCEPTION_REGISTRATION_RECORD);
+     
+            /* Make sure the registration frame is located within the stack */
+            if ((RegistrationFrameEnd > StackHigh) ||
+                ((ULONG_PTR)RegistrationFrame < StackLow) ||
+                ((ULONG_PTR)RegistrationFrame & 0x3))
+            {
+                /* Check if this happened in the DPC Stack */
+                if (RtlpHandleDpcStackException(RegistrationFrame,
+                                                RegistrationFrameEnd,
+                                                &StackLow,
+                                                &StackHigh))
+                {
+                    /* Use DPC Stack Limits and restart */
+                    continue;
+                }
+     
+                /* Set invalid stack and return false */
+                ExceptionRecord->ExceptionFlags |= EXCEPTION_STACK_INVALID;
+                return FALSE;
+            }
+     
+            /* Check if logging is enabled */
+            RtlpCheckLogException(ExceptionRecord,
+                                  Context,
+                                  RegistrationFrame,
+                                  sizeof(*RegistrationFrame));
+     
+            //这里应该有判断SEH是否有效，reactos这里并没有检查。
+
+
+    /* Call the handler */
+            Disposition = RtlpExecuteHandlerForException(ExceptionRecord,
+                                                         RegistrationFrame,
+                                                         Context,
+                                                         &DispatcherContext,
+                                                         RegistrationFrame->
+                                                         Handler);
+     
+            /* Check if this is a nested frame */
+            if (RegistrationFrame == NestedFrame)
+            {
+                /* Mask out the flag and the nested frame */
+                ExceptionRecord->ExceptionFlags &= ~EXCEPTION_NESTED_CALL;
+                NestedFrame = NULL;
+            }
+     
+            /* Handle the dispositions */
+            switch (Disposition)
+            {
+                /* Continue searching */
+                case ExceptionContinueExecution:
+     
+                    /* Check if it was non-continuable */
+                    if (ExceptionRecord->ExceptionFlags & EXCEPTION_NONCONTINUABLE)
+                    {
+                        /* Set up the exception record */
+                        ExceptionRecord2.ExceptionRecord = ExceptionRecord;
+                        ExceptionRecord2.ExceptionCode =
+                            STATUS_NONCONTINUABLE_EXCEPTION;
+                        ExceptionRecord2.ExceptionFlags = EXCEPTION_NONCONTINUABLE;
+                        ExceptionRecord2.NumberParameters = 0;
+     
+                        /* Raise the exception */
+                        RtlRaiseException(&ExceptionRecord2);
+                    }
+                    else
+                    {
+                        /* Return to caller */
+                        return TRUE;
+                    }
+     
+                /* Continue searching */
+                case ExceptionContinueSearch:
+                    break;
+     
+                /* Nested exception */
+                case ExceptionNestedException:
+     
+                    /* Turn the nested flag on */
+                    ExceptionRecord->ExceptionFlags |= EXCEPTION_NESTED_CALL;
+     
+                    /* Update the current nested frame */
+                    if (DispatcherContext.RegistrationPointer > NestedFrame)
+                    {
+                        /* Get the frame from the dispatcher context */
+                        NestedFrame = DispatcherContext.RegistrationPointer;
+                    }
+                    break;
+     
+                /* Anything else */
+                default:
+     
+                    /* Set up the exception record */
+                    ExceptionRecord2.ExceptionRecord = ExceptionRecord;
+                    ExceptionRecord2.ExceptionCode = STATUS_INVALID_DISPOSITION;
+                    ExceptionRecord2.ExceptionFlags = EXCEPTION_NONCONTINUABLE;
+                    ExceptionRecord2.NumberParameters = 0;
+     
+                    /* Raise the exception */
+                    RtlRaiseException(&ExceptionRecord2);
+                    break;
+            }
+     
+            /* Go to the next frame */
+            RegistrationFrame = RegistrationFrame->Next;
+        }
+     
+        /* Unhandled, return false */
+        return FALSE;
+    }
+
+　　上面的代码来自ReactOS，和我们xp2上的代码已经很接近了（除了SEH的安全机制）,RtlDispatchException将处理异常的部分交给了RtlpExecuteHandlerForException。
+
+　　看一下RtlUnwind，同样来自ReactOS。同样把脏活给了RtlpExecuteHandlerForUnwind来做。
+
+
+    VOID
+    NTAPI
+    RtlUnwind(IN PVOID TargetFrame OPTIONAL,
+              IN PVOID TargetIp OPTIONAL,
+              IN PEXCEPTION_RECORD ExceptionRecord OPTIONAL,
+              IN PVOID ReturnValue)
+    {
+        PEXCEPTION_REGISTRATION_RECORD RegistrationFrame, OldFrame;
+        DISPATCHER_CONTEXT DispatcherContext;
+        EXCEPTION_RECORD ExceptionRecord2, ExceptionRecord3;
+        EXCEPTION_DISPOSITION Disposition;
+        ULONG_PTR StackLow, StackHigh;
+        ULONG_PTR RegistrationFrameEnd;
+        CONTEXT LocalContext;
+        PCONTEXT Context;
+     
+        /* Get the current stack limits */
+        RtlpGetStackLimits(&StackLow, &StackHigh);
+     
+        /* Check if we don't have an exception record */
+        if (!ExceptionRecord)
+        {
+            /* Overwrite the argument */
+            ExceptionRecord = &ExceptionRecord3;
+     
+            /* Setup a local one */
+            ExceptionRecord3.ExceptionFlags = 0;
+            ExceptionRecord3.ExceptionCode = STATUS_UNWIND;
+            ExceptionRecord3.ExceptionRecord = NULL;
+            ExceptionRecord3.ExceptionAddress = _ReturnAddress();
+            ExceptionRecord3.NumberParameters = 0;
+        }
+     
+        /* Check if we have a frame */
+        if (TargetFrame)
+        {
+            /* Set it as unwinding */
+            ExceptionRecord->ExceptionFlags |= EXCEPTION_UNWINDING;
+        }
+        else
+        {
+            /* Set the Exit Unwind flag as well */
+            ExceptionRecord->ExceptionFlags |= (EXCEPTION_UNWINDING |
+                                                EXCEPTION_EXIT_UNWIND);
+        }
+     
+        /* Now capture the context */
+        Context = &LocalContext;
+        LocalContext.ContextFlags = CONTEXT_INTEGER |
+                                    CONTEXT_CONTROL |
+                                    CONTEXT_SEGMENTS;
+        RtlpCaptureContext(Context);
+     
+        /* Pop the current arguments off */
+        Context->Esp += sizeof(TargetFrame) +
+                        sizeof(TargetIp) +
+                        sizeof(ExceptionRecord) +
+                        sizeof(ReturnValue);
+     
+        /* Set the new value for EAX */
+        Context->Eax = (ULONG)ReturnValue;
+     
+        /* Get the current frame */
+        RegistrationFrame = RtlpGetExceptionList();
+     
+        /* Now loop every frame */
+        while (RegistrationFrame != EXCEPTION_CHAIN_END)
+        {
+            /* If this is the target */
+            if (RegistrationFrame == TargetFrame) ZwContinue(Context, FALSE);
+     
+            /* Check if the frame is too low */
+            if ((TargetFrame) &&
+                ((ULONG_PTR)TargetFrame < (ULONG_PTR)RegistrationFrame))
+            {
+                /* Create an invalid unwind exception */
+                ExceptionRecord2.ExceptionCode = STATUS_INVALID_UNWIND_TARGET;
+                ExceptionRecord2.ExceptionFlags = EXCEPTION_NONCONTINUABLE;
+                ExceptionRecord2.ExceptionRecord = ExceptionRecord;
+                ExceptionRecord2.NumberParameters = 0;
+     
+                /* Raise the exception */
+                RtlRaiseException(&ExceptionRecord2);
+            }
+     
+            /* Find out where it ends */
+            RegistrationFrameEnd = (ULONG_PTR)RegistrationFrame +
+                                   sizeof(EXCEPTION_REGISTRATION_RECORD);
+     
+            /* Make sure the registration frame is located within the stack */
+            if ((RegistrationFrameEnd > StackHigh) ||
+                ((ULONG_PTR)RegistrationFrame < StackLow) ||
+                ((ULONG_PTR)RegistrationFrame & 0x3))
+            {
+                /* Check if this happened in the DPC Stack */
+                if (RtlpHandleDpcStackException(RegistrationFrame,
+                                                RegistrationFrameEnd,
+                                                &StackLow,
+                                                &StackHigh))
+                {
+                    /* Use DPC Stack Limits and restart */
+                    continue;
+                }
+     
+                /* Create an invalid stack exception */
+                ExceptionRecord2.ExceptionCode = STATUS_BAD_STACK;
+                ExceptionRecord2.ExceptionFlags = EXCEPTION_NONCONTINUABLE;
+                ExceptionRecord2.ExceptionRecord = ExceptionRecord;
+                ExceptionRecord2.NumberParameters = 0;
+     
+                /* Raise the exception */
+                RtlRaiseException(&ExceptionRecord2);
+            }
+            else
+            {
+                /* Call the handler */
+                Disposition = RtlpExecuteHandlerForUnwind(ExceptionRecord,
+                                                          RegistrationFrame,
+                                                          Context,
+                                                          &DispatcherContext,
+                                                          RegistrationFrame->
+                                                          Handler);
+                switch(Disposition)
+                {
+                    /* Continue searching */
+                    case ExceptionContinueSearch:
+                        break;
+     
+                    /* Collission */
+                    case ExceptionCollidedUnwind :
+     
+                        /* Get the original frame */
+                        RegistrationFrame = DispatcherContext.RegistrationPointer;
+                        break;
+     
+                    /* Anything else */
+                    default:
+     
+                        /* Set up the exception record */
+                        ExceptionRecord2.ExceptionRecord = ExceptionRecord;
+                        ExceptionRecord2.ExceptionCode = STATUS_INVALID_DISPOSITION;
+                        ExceptionRecord2.ExceptionFlags = EXCEPTION_NONCONTINUABLE;
+                        ExceptionRecord2.NumberParameters = 0;
+     
+                        /* Raise the exception */
+                        RtlRaiseException(&ExceptionRecord2);
+                        break;
+                }
+     
+                /* Go to the next frame */
+                OldFrame = RegistrationFrame;
+                RegistrationFrame = RegistrationFrame->Next;
+     
+                /* Remove this handler */
+                RtlpSetExceptionList(OldFrame);
+            }
+        }
+     
+        /* Check if we reached the end */
+        if (TargetFrame == EXCEPTION_CHAIN_END)
+        {
+            /* Unwind completed, so we don't exit */
+            ZwContinue(Context, FALSE);
+        }
+        else
+        {
+            /* This is an exit_unwind or the frame wasn't present in the list */
+            ZwRaiseException(ExceptionRecord, Context, FALSE);
+        }
+    }
+
+RtlpExecuteHandlerForUnwind 和RtlpExecuteHandlerForException 是汇编写的代码，这个函数的尾部会跳转到ExecuteHandler。
+
+
+    PUBLIC _RtlpExecuteHandlerForException@20
+    _RtlpExecuteHandlerForException@20:
+     
+        /* Copy the routine in EDX */
+        mov edx, offset _RtlpExceptionProtector
+     
+        /* Jump to common routine */
+        jmp _RtlpExecuteHandler@20
+     
+     
+    PUBLIC _RtlpExecuteHandlerForUnwind@20
+    _RtlpExecuteHandlerForUnwind@20:
+        /* Copy the routine in EDX */
+        mov edx, offset _RtlpUnwindProtector
+     
+     
+    _RtlpExecuteHandler@20:
+     
+        /* Save non-volatile */
+        push ebx
+        push esi
+        push edi
+     
+        /* Clear registers */
+        xor eax, eax
+        xor ebx, ebx
+        xor esi, esi
+        xor edi, edi
+     
+        /* Call the 2nd-stage executer */
+        push [esp+32]
+        push [esp+32]
+        push [esp+32]
+        push [esp+32]
+        push [esp+32]
+        call _RtlpExecuteHandler2@20
+     
+        /* Restore non-volatile */
+        pop edi
+        pop esi
+        pop ebx
+        ret 20
+     
+     
+    PUBLIC _RtlpExecuteHandler2@20
+    _RtlpExecuteHandler2@20:
+     
+        /* Set up stack frame */
+        push ebp
+        mov ebp, esp
+     
+        /* Save the Frame */
+        push [ebp+12]
+     
+        /* Push handler address */
+        push edx
+     
+        /* Push the exception list */
+        push [fs:TEB_EXCEPTION_LIST]
+     
+        /* Link us to it */
+        mov [fs:TEB_EXCEPTION_LIST], esp //这里我们构造了一个nt_EXCEPTION_REGISTRATION
+     
+        /* Call the handler */
+        push [ebp+20]
+        push [ebp+16]
+        push [ebp+12]
+        push [ebp+8]
+        mov ecx, [ebp+24]
+        call ecx
+     
+        /* Unlink us */
+        mov esp, [fs:TEB_EXCEPTION_LIST]
+     
+        /* Restore it */
+        pop [fs:TEB_EXCEPTION_LIST]
+     
+        /* Undo stack frame and return */
+        mov esp, ebp
+        pop ebp
+        ret 20
+
+
+　　我们看到了，其实，当我们真正执行filter（其实是vc的运行时库函数_except_handler）之前，windows 已经为我们提前构造了一个nt_EXCEPTION_REGISTRATION, 和我们之前的vc_EXCEPTION_REGISTRATION,不同的是，在基本的EXCEPTION_REGISTRATION结构体之后，只是加了一个成员PEXCEPTION_REGISTRATION_RECORD  RegistrationFrame，这个成员的意义则就是判断异常嵌套。当然，这依然没有解决问题（异常再产生异常），我们需要知道_RtlpExceptionProtector，_RtlpUnwindProtector。不过，我们这个担心有点多余，因为这个是os本身的代码，如果他自己还不能保证正确，那么后面还有什么意义呢？
+
+    _RtlpExceptionProtector:
+     
+        /* Assume we'll continue */
+        mov eax, ExceptionContinueSearch
+     
+        /* Put the exception record in ECX and check the Flags */
+        mov ecx, [esp+4]
+        test dword ptr [ecx+EXCEPTION_RECORD_EXCEPTION_FLAGS], EXCEPTION_UNWINDING + EXCEPTION_EXIT_UNWIND
+        jnz return
+     
+        /* Save the frame in ECX and Context in EDX */
+        mov ecx, [esp+8]
+        mov edx, [esp+16]
+     
+        /* Get the nested frame */
+        mov eax, [ecx+8]
+     
+        /* Set it as the dispatcher context */
+        mov [edx], eax
+     
+        /* Return nested exception */
+        mov eax, ExceptionNestedException
+     
+    return:
+        ret 16
+     
+     
+    _RtlpUnwindProtector:
+     
+        /* Assume we'll continue */
+        mov eax, ExceptionContinueSearch
+     
+        /* Put the exception record in ECX and check the Flags */
+        mov ecx, [esp+4]
+        test dword ptr [ecx+EXCEPTION_RECORD_EXCEPTION_FLAGS], EXCEPTION_UNWINDING + EXCEPTION_EXIT_UNWIND
+        jz .return
+     
+        /* Save the frame in ECX and Context in EDX */
+        mov ecx, [esp+8]
+        mov edx, [esp+16]
+     
+        /* Get the nested frame */
+        mov eax, [ecx+8]
+     
+        /* Set it as the dispatcher context */
+        mov [edx], eax
+     
+        /* Return collided unwind */
+        mov eax, ExceptionCollidedUnwind
+     
+    .return:
+        ret 16
+ 
+
+　　我们看到了，当异常嵌套发生时，windows和处理之前的异常一样，依然会走这个流程。来自Matt Pietrek，之前介绍的文章。
+
+	KiUserExceptionDispatcher()
+	     RtlDispatchException()
+	         RtlpExecuteHandlerForException()
+	             ExecuteHandler() // Normally goes to __except_handler3
+	 ---------
+	 __except_handler3()
+	     scopetable filter-expression()
+	     __global_unwind2() 
+	         RtlUnwind()
+	             RtlpExecuteHandlerForUnwind() 
+	     scopetable __except block()
+
+　　只是不同的是，嵌套发生时，fs:[0]上的frame，已经不是我们的代码，而是nt_frame，回调函数的事情也很简单，判断异常时候是在unwind或是unwind_exit，如果不是，那么我们知道了这个是异常传递的第一次，而这个是在正常情况下，不可能发生的（正常情况指的是异常没有嵌套，执行nt_frame的只可能是第二次，也就是unwind 或是 exit_unwind，nt_frame返回ExceptionContinueSearch，让异常继续传递给我们的代码）。那么很显然，现在遇到了异常嵌套，nt_frame返回了 ExceptionNestedException，并且将frame 保存在了edx中，也就是修改了DispatcherContext，RtlpExecuteHandlerForException的第四个参数。那么当返回时，windows 就可以知道是那个frame 在处理异常的时候，干了坏事（又产生了异常）。好吧。流程又恢复一样，继续的去遍历 fs:[0],直到我们发现了这个干坏事的frame，然后我们把异常嵌套标志位去掉，ExceptionRecord->ExceptionFlags &= ~EXCEPTION_NESTED_CALL; NestedFrame = NULL。
+
+让我们看一个简单的例子。对上一篇的Matt Pietrek的例子做了些修改。
+
+    void WalkSEHFrames( void )
+    {
+        VC_EXCEPTION_REGISTRATION * pVCExcRec;
+        printf( "\n" );
+     
+        // Get a pointer to the head of the chain at FS:[0]
+        __asm   mov eax, FS:[0]
+        __asm   mov [pVCExcRec], EAX
+     
+        // Walk the linked list of frames.  0xFFFFFFFF indicates the end of list
+        while (  0xFFFFFFFF != (unsigned)pVCExcRec )
+        {
+            ShowSEHFrame( pVCExcRec );
+            pVCExcRec = (VC_EXCEPTION_REGISTRATION *)(pVCExcRec->prev);
+        }       
+    }
+     
+    EXCEPTION_DISPOSITION
+    __cdecl
+    _except_handler(
+    struct _EXCEPTION_RECORD *ExceptionRecord,
+        void * EstablisherFrame,
+    struct _CONTEXT *ContextRecord,
+        void * DispatcherContext )
+    {
+        unsigned i;
+     
+        // Indicate that we made it to our exception handler
+        printf( "Hello from an exception handler\n" );
+     
+        WalkSEHFrames();
+     
+         if (ExceptionRecord->ExceptionFlags & 0x10)
+         {
+             printf( "bad except\n" );
+         }
+         else
+         {
+             //  bad happen
+             __asm
+             {
+                 mov     eax,   0
+                 mov     [eax], 1
+             }
+         }
+         //
+         // Change EAX in the context record so that it points to someplace
+         // where we can successfully write
+         ContextRecord->Eax = (DWORD)&scratch;
+     
+         // Tell the OS to restart the faulting instruction
+         return ExceptionContinueExecution;
+    }
+     
+    int _tmain(int argc, _TCHAR* argv[])
+    {
+        DWORD handler = (DWORD)_except_handler;
+     
+        __try
+        {
+            __asm
+            {                           // Build EXCEPTION_REGISTRATION record:
+                push    handler         // Address of handler function
+                push    FS:[0]          // Address of previous handler
+                mov     FS:[0],ESP      // Install new EXECEPTION_REGISTRATION
+            }
+     
+            WalkSEHFrames();
+     
+            __asm
+            {
+                mov     eax,0           // Zero out EAX
+                mov     [eax], 1        // Write to EAX to deliberately cause a fault
+            }
+     
+            printf( "After writing!\n" );
+     
+            __asm
+            {                           // Remove our EXECEPTION_REGISTRATION record
+                mov     eax,[ESP]       // Get pointer to previous record
+                mov     FS:[0], EAX     // Install previous record
+                add     esp, 8          // Clean our EXECEPTION_REGISTRATION off stack
+            }
+     
+            WalkSEHFrames();
+     
+        }
+        __except(EXCEPTION_EXECUTE_HANDLER)
+        {
+            printf("never happen\n");
+        }
+         
+             
+        return 0;
+    }
+
+产生的结果
+
+    Frame: 0022FDD8  Handler: 0118110E  Prev: 0022FEC0  Scopetable: 00000000
+     
+    Frame: 0022FEC0  Handler: 01181091  Prev: 0022FF10  Scopetable: 01186C80
+     
+    Frame: 0022FF10  Handler: 01181096  Prev: 0022FF64  Scopetable: 81F63D92
+     
+    Frame: 0022FF64  Handler: 7712D74D  Prev: FFFFFFFF  Scopetable: 021DFE40
+     
+    Hello from an exception handler
+     
+    Frame: 0022FA04  Handler: 7715660D  Prev: 0022FDD8  Scopetable: 0022FDD8
+     
+    Frame: 0022FDD8  Handler: 0118110E  Prev: 0022FEC0  Scopetable: 00000000
+     
+    Frame: 0022FEC0  Handler: 01181091  Prev: 0022FF10  Scopetable: 01186C80
+     
+    Frame: 0022FF10  Handler: 01181096  Prev: 0022FF64  Scopetable: 81F63D92
+     
+    Frame: 0022FF64  Handler: 7712D74D  Prev: FFFFFFFF  Scopetable: 021DFE40
+     
+    Hello from an exception handler
+     
+    Frame: 0022F540  Handler: 7715660D  Prev: 0022FA04  Scopetable: 0022FDD8
+     
+    Frame: 0022FA04  Handler: 7715660D  Prev: 0022FDD8  Scopetable: 0022FDD8
+     
+    Frame: 0022FDD8  Handler: 0118110E  Prev: 0022FEC0  Scopetable: 00000000
+     
+    Frame: 0022FEC0  Handler: 01181091  Prev: 0022FF10  Scopetable: 01186C80
+     
+    Frame: 0022FF10  Handler: 01181096  Prev: 0022FF64  Scopetable: 81F63D92
+     
+    Frame: 0022FF64  Handler: 7712D74D  Prev: FFFFFFFF  Scopetable: 021DFE40
+     
+    bad except
+    After writing!
+     
+    Frame: 0022FEC0  Handler: 01181091  Prev: 0022FF10  Scopetable: 01186C80
+     
+    Frame: 0022FF10  Handler: 01181096  Prev: 0022FF64  Scopetable: 81F63D92
+     
+    Frame: 0022FF64  Handler: 7712D74D  Prev: FFFFFFFF  Scopetable: 021DFE40
+
+　　0x0118110E这个是我们自己的handler地址，也就是handler。0x01181091则是vc_handler的地址，  0x7715660D, 这个地址，就是我们的nt_frame的地址。0x01181096是CRT main函数时加的， 0x7712D74D 地址是KERNEL32.DLL 的 BaseProcessStart加的。
+
+　　在发生异常之后，windows为了保证vc_exception_hander抛出异常可以处理，加了nt_frame，但是运行时，再次引发异常，那么则会继续走KiUserExceptionDispatcher…那么则会再加入一个nt_frame在stack上。这时异常没有继续抛出，最后，windows 会逐个卸载掉那些frame。
+
+再搞明白这些之后，就很容易理解一开始的例子了，为什么死在栈溢出，如果我们在异常嵌套的时候，继续产生异常，那么windows会不断的去走KiUserExceptionDispatcher…而SEH的frame是建立在stack上的，那么stack overflow 实在是不可避免的事情了。所以，我们最好按照msdn上的建议，filter的代码一定要简洁(我们在遍历和unwind的时候，执行2次)，而且一定不能产生任何异常，否则，后果十分严重（可能死在stack overflow）。
+
+　　但是，事实上，我们却很难写出不再产生异常的代码，即使代码很简洁，而且逻辑上看上去并没有问题。那时因为我们的惯性思维停留在了像，c，c++这些高级语言上了（相对汇编）。比如下面的例子。来自《windows 核心编程》。
+
+
+	char g_szBuffer[100];
+	 
+	void FunclinRoosevelt1() 
+	{
+	   int x = 0;
+	   char *pchBuffer = NULL;
+	 
+	   __try
+	   {
+	      *pchBuffer = 'J';
+	      x = 5 / x;
+	   }
+	   __except(OilFilter1(&pchBuffer)) 
+	   {
+	      MessageBox(NULL, "An exception occurred", NULL, MB_OK);
+	   }
+	   MessageBox(NULL, "Function completed", NULL, MB_OK);
+	}
+	 
+	LONG OilFilter1(char **ppchBuffer)
+	{
+	   if(*ppchBuffer == NULL) 
+	   {
+	      *ppchBuffer = g_szBuffer;
+	      return(EXCEPTION_CONTINUE_EXECUTION);
+	   }
+	   return(EXCEPTION_EXECUTE_HANDLER);
+	}
+
+　　一段看似，没有问题的代码。但是这个确实是一个问题很隐晦的代码。我们看似修改了pchBuffer，使得pchBuffer 指向一个合法的地址，但是继续执行依然会有可能产生异常。原因在于，编译器有可能给我们产生如下代码，对*pchBuffer = 'J'; 来说。
+
+	MOV EAX, [pchBuffer]  // Move the address into a register
+	MOV [EAX], 'J'        // Move 'J' into the address
+ 
+
+　　我们只是修改了pchBuffer，并没有修改eax的值，程序并不能真正的继续执行。所以，如果想使用EXCEPTION_CONTINUE_EXECUTION，Jeffrey Richter告诉我们一定要小心，小心。但是我相信，即使这个功能很cool，没有人会愿意每次编译之后，查看下汇编代码，看看是否生成了我们想要的代码。所以，我大胆的说，想使用EXCEPTION_CONTINUE_EXECUTION，最简单的方法就是在汇编下跑，c，c++下，就不用想了。而Jeffrey Richter 告诉我们系统在处理访问违规的时候，有类似的使用，那么系统那部分的代码，也很有可能是汇编直接写的。
+
+所以，在c++下，MS自己都劝开发者使用c++自己的异常语法，而不是直接使用SEH。这个不仅能使代码有强的移植性，而且也能避免EXCEPTION_CONTINUE_EXECUTION。
+
+SEH就像ReactOS上写的一样，“SEH is a game which is played between OS and Compiler (Keywords: __try, __except, __finally)”。vc通过这些关键字，使得开发者只需要了解一点点知识，便可以体验到SEH的强大。当然，强大的封装之后，必然会给我们理解带来了不少困难。如果你也对这些感兴趣，那么真的可以继续下去。因为我现在所知道的有关SEH的部分仅仅是最最基础的部分，这些部分早在10几年前就已经存在。
+
+　　下一篇将开始真正的接触SEH。
+
+ 
+
+　　最后写给自己。
+
+本来应该更详细的阐述一些细节，特别是local unwind, 他在执行我们的代码之前也构造了一个自己的frame，有兴趣的同学可以自己研究下。这个和AbnormalTermination()的实现息息相关。只是我发现vs2008 和vc6 在这上面似乎有些不同，vs2008似乎很强大的把这个完全优化掉了（也许不是因为这个原因，或是其他原因，了解一点vs的应该都知道vs这方面很强大）。在和他纠结了半个多小时后，我也实在是没有兴趣去和他比下去了。
+
+　　对于像我这样长期处在user mode的开发者来说。了解到这一地步，在实现上已经是足够了。但是即使已经了解大部分的SEH核心行为后（除去安全机制，这个同样对大多数开发者是透明的），依然很难说清楚什么时候改抛出异常，什么时候该使用返回值。（唯一可以肯定的是，不能有时候返回值，有时候又抛异常 :P）
+
+　　这里先记录一下自己的想法吧。当然，这里的异常主要还是SEH，c++概念不在考虑之内（即使在windows 底层实现可能会很相像和SEH）。
+
+首先看SEH的finally，这个的确看上去是一个很美好的东东，Jeffrey Richter给了我们几点使用finally的理由。
+
+They simplify error processing because all cleanup is in one location and is guaranteed to execute.
+They improve program readability.
+They make code easier to maintain.
+They have minimal speed and size overhead if used correctly.
+　　在我看来首先第一条就有问题，finally中的代码能够肯定保证执行么？显然不行，至少现在不可以。在一些严重的异常下，如stack overflow 或是进程，线程直接被Terminate。都不能直接执行。
+
+　　2和3条，这个的确是完美，但是并不是非常完美，因为能够做到这一点的不仅仅是finally，使用良好的编程规范，如合理的goto语句，等等。我们依然能够做到在一个地方释放空间。来增强程序的可读性。比如pthread中的一段。
+
+
+	result = pthread_mutex_init (&rwl->mtxExclusiveAccess, NULL);
+	if (result != 0)
+	{
+	  goto FAIL0;
+	}
+	 
+	result = pthread_mutex_init (&rwl->mtxSharedAccessCompleted, NULL);
+	if (result != 0)
+	{
+	  goto FAIL1;
+	}
+	 
+	result = pthread_cond_init (&rwl->cndSharedAccessCompleted, NULL);
+	if (result != 0)
+	{
+	  goto FAIL2;
+	}
+
+
+　　最后一条，前半句非常对，的确SEH的机制非常迅速（相对，没有绝对），在目前看来在不发生异常的时候，我们的确很享受这个过程，但是当你知道SEH背后的安全机制之后，你可能就不会这么认为了，那可不是点点CPU周期可以搞定的，而且还有后半句 if used correctly。使用异常，那么我们需要理解更多的有关异常本身的问题，包括异常是什么？异常如何调度？什么时候效率影响大？等等问题，也会带来更多的对程序员的心智上的负担。
+
+　　其次 except。同之前说的一样，由于使用异常，的确造成了非常大的知识的负担和程序运行上的负担。但是，当你去编写一个需要长期运行，而且要保证高效稳定性的程序之下。没有异常机制，实在是一件不可能的事情。当整运算一个大数据量的时候（已经算了几个小时了），若是来一点意外，总不能就推到重来计算等。而避免这些的最好的方法就是处理异常。
+
+　　但是在一些情景下，我们却不能使用异常，比如在一些硬件不够高的地方，嵌入式平台等。抛出异常是被禁止的。在一些运算密集性场景，如游戏引擎上，异常依然是禁区。
+
+　　但是在看到一些.net 的源代码上，比如Dictionary，我记得是抛出异常的。55，扯的实在是太远了。
+
+ 
+
+之前描述的不清楚。 如果没有发生异常，SEH的机制比较迅速。只是修改了stack 上的临时变量和线程的 exceptionList（或没有修改）。
+
+只是当抛出异常的时候，整个运行的效率才会降下来。

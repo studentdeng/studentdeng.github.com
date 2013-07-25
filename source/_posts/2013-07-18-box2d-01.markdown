@@ -1,0 +1,107 @@
+---
+layout: post
+title: "Box2D 01 基本概念"
+date: 2013-07-18 16:05
+comments: true
+categories: [box2D, game]
+---
+
+首先几个概念需要了解一下。
+
+**world**
+就是engin需要模拟的世界，他有一个大家都很熟悉的重力
+
+**body(刚体)**
+刚体的定义大家在物理中都熟悉了，在box2D世界中，刚体定义了物体一些重要的属性，比如质点位置，旋转角度，角速度，线性阻尼，等
+
+
+**shape(形状)**这里定义我们的物体的形状是圆的，方的还是多边形等
+
+**fixture(材质？这个好难翻译中文)**光是上面的东西，我们不能够完成物理世界的碰撞，fixture定义了几个重要的属性，包括摩擦系数，恢复系数，密度
+
+回想当初学习的物理知识也就这么多了，当然后面还会介绍其他新的东西。有个形状，和密度我们可以计算质量，有了位置，速度，角速度，足够我们计算高中学到的简单碰撞了，在有恢复系数和线性阻尼，我们也能更好的模拟更真实的物理情景，而这也是大学物理的部分了。
+
+好多的背景知识，让我们再看看如何在程序里面做一个真实的世界出来。
+	
+	b2Vec2 gravity;
+	gravity.Set(0.0f, -10.0f);
+	world = new b2World(gravity);
+
+box2D的坐标是和笛卡尔坐标系一样的，向量 (0, -10) 表示我们真实世界的重力，大约为10米每秒
+
+创建我们的第一个物体，一个圆球。
+这里Box2D采用了工厂模式来创建一个我们需要的物体。我们首先描述一个需求，然后通过一个工厂来生产我们需要的产品。
+
+	b2BodyDef bodyDef;//
+    bodyDef.type = b2_dynamicBody; //这里定义为动态刚体
+    bodyDef.position.Set(pt.x/PTM_RATIO, pt.y/PTM_RATIO);
+    body = world->CreateBody(&bodyDef);
+    
+    b2CircleShape bodyShape;
+    bodyShape.m_radius = 26.0 / PTM_RATIO; //定义球的半径
+    
+    b2FixtureDef fixtureDef;
+    fixtureDef.shape = &bodyShape;
+    fixtureDef.density = 0.1f;  //密度
+    fixtureDef.friction = 0.1f; //摩擦力
+    fixtureDef.restitution = 0.9f; //恢复系数
+    body->CreateFixture(&fixtureDef);
+
+还急得之前的概念么？在定义好body，shape，创建好fixture之后。这些信息已经足够模拟真实运动了。因为是真实的世界，独立各个平台，box2D的单位是米，而不是程序图形图像的单位像素，PTM_RATIO这个宏用于转换单位。
+
+当然，这些物理数据还不能让我们在程序中看到，为了美观，增加一点小东西，希望大家了解cocos2d。这里创建一个CCPhysicsSprite
+
+	CCPhysicsSprite *sprite = [CCPhysicsSprite spriteWithFile:@"ball.png"];
+    [self addChild:sprite];
+    
+    [sprite setPTMRatio:PTM_RATIO];
+    [sprite setB2Body:body];
+    
+    //CCPhysicsSprite 的操作一定要在设置PTMRatio 和 body之后
+    [sprite setPosition: ccp(pt.x, pt.y)];
+   
+这时我们就可以看到一个小球自由落体，然后淡出世界，不过似乎有一种淡淡的忧伤，太无趣了这个世界。
+
+让我们为这个世界创建一个边界，让小球不要运动超过屏幕。
+
+	// Define the ground body.
+	b2BodyDef groundBodyDef;
+	groundBodyDef.position.Set(0, 0); // bottom-left corner
+	
+	// Call the body factory which allocates memory for the ground body
+	// from a pool and creates the ground box shape (also from a pool).
+	// The body is also added to the world.
+	b2Body* groundBody = world->CreateBody(&groundBodyDef);
+	
+	// Define the ground box shape.
+	b2EdgeShape groundBox;		
+	
+	// bottom
+	
+	groundBox.Set(b2Vec2(0,0), b2Vec2(s.width/PTM_RATIO,0));
+	groundBody->CreateFixture(&groundBox,0);
+	
+	// top
+	groundBox.Set(b2Vec2(0,s.height/PTM_RATIO), b2Vec2(s.width/PTM_RATIO,s.height/PTM_RATIO));
+	groundBody->CreateFixture(&groundBox,0);
+	
+	// left
+	groundBox.Set(b2Vec2(0,s.height/PTM_RATIO), b2Vec2(0,0));
+	groundBody->CreateFixture(&groundBox,0);
+	
+	// right
+	groundBox.Set(b2Vec2(s.width/PTM_RATIO,s.height/PTM_RATIO), b2Vec2(s.width/PTM_RATIO,0));
+	groundBody->CreateFixture(&groundBox,0);
+	
+这里没有指定其他属性，默认创建的刚体是静态的，不会移动的。而这正是我们想要的。
+
+这时小球会自由落体然后反弹，这时可以调整restitution，如果对这些不是很熟悉的话。但是总体感觉还是有一点无聊，让我们再来一点新东西。
+
+	b2Vec2 force = b2Vec2(-30, 30);
+    body->ApplyLinearImpulse(force, body->GetPosition());
+    
+body是我们其中的一个小球。ApplyLinearImpulse的意思就是对body施加一个冲量。
+
+[demo地址](https://github.com/studentdeng/box2d-tutorials/tree/master/01)
+
+[demo演示地址](http://v.youku.com/v_show/id_XNTg0NTU4NzQ0.html)

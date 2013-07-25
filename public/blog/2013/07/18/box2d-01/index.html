@@ -1,0 +1,279 @@
+
+<!DOCTYPE HTML>
+<html>
+<head>
+	<meta charset="utf-8">
+	<title>Box2D 01 基本概念 - 不会开机的男孩</title>
+	<meta name="author" content="studentdeng">
+
+	
+	<meta name="description" content="Box2D 01 基本概念 首先几个概念需要了解一下。 world
+就是engin需要模拟的世界，他有一个大家都很熟悉的重力 body(刚体)
+刚体的定义大家在物理中都熟悉了，在box2D世界中，刚体定义了物体一些重要的属性，比如质点位置，旋转角度，角速度，线性阻尼，等 shape(形状) &hellip;">
+	
+
+  <!-- http://t.co/dKP3o1e -->
+  <meta name="HandheldFriendly" content="True">
+  <meta name="MobileOptimized" content="320">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+
+	<link href="/atom.xml" rel="alternate" title="不会开机的男孩" type="application/atom+xml">
+	
+	<link rel="canonical" href="http://studentdeng.github.com/blog/2013/07/18/box2d-01/">
+	<link href="/favicon.png" rel="shortcut icon">
+	<link href="/stylesheets/screen.css" media="screen, projection" rel="stylesheet" type="text/css">
+	<!--[if lt IE 9]><script src="//html5shiv.googlecode.com/svn/trunk/html5.js"></script><![endif]-->
+	<script src="//ajax.googleapis.com/ajax/libs/jquery/1.7.2/jquery.min.js"></script>
+	<link href='http://fonts.googleapis.com/css?family=Open+Sans:400italic,400,700' rel='stylesheet' type='text/css'>
+	<!--Fonts from Google"s Web font directory at http://google.com/webfonts -->
+<link href="http://fonts.googleapis.com/css?family=PT+Serif:regular,italic,bold,bolditalic" rel="stylesheet" type="text/css">
+<link href="http://fonts.googleapis.com/css?family=PT+Sans:regular,italic,bold,bolditalic" rel="stylesheet" type="text/css">
+
+<script type="text/javascript">var switchTo5x=false;</script>
+<script type="text/javascript" src="http://w.sharethis.com/button/buttons.js"></script>
+<script type="text/javascript">stLight.options({publisher: "496dac80-40ba-487b-b557-af2d3629eb28", doNotHash: false, doNotCopy: false, hashAddressBar: false});</script>
+</head>
+
+
+<body>
+	<div class="container">
+		<div class="left-col">
+			<div class="intrude-less">
+			<header id="header" class="inner"><div class="profilepic">	
+	<script src="/javascripts/md5.js"></script>
+	<script type="text/javascript">
+		document.write("<img src='http://www.gravatar.com/avatar/" + MD5("studentdeng@hotmail.com") + "?s=160' alt='Profile Picture' style='width: 160px;' />");
+	</script>
+</div>
+<h1><a href="/">不会开机的男孩</a></h1>
+<p class="subtitle"></p>
+<nav id="main-nav"><ul class="main-navigation">
+  <li><a href="/">Blog</a></li>
+  <li><a href="/tags">tags</a></li>
+  <li><a href="/blog/archives">Archives</a></li>
+  <li><a href="/about">About</a></li>
+  <li><a href="/favorite">favorite</a></li>
+</ul>
+</nav>
+<nav id="sub-nav">
+	<div class="social">
+		
+		<a class="weibo" href="http://www.weibo.com/studentdeng" title="Weibo">Weibo</a>
+		
+		
+		
+		
+		
+		<a class="github" href="https://github.com/studentdeng" title="GitHub">GitHub</a>
+		
+		
+		<a class="dribbble" href="http://www.dribbble.com/curer" title="Dribbble">Dribbble</a>
+		
+		
+		
+		
+		
+		
+		<a class="rss" href="/atom.xml" title="RSS">RSS</a>
+		
+	</div>
+</nav>
+<hgroup>
+  <aside class="sidebar">
+  
+    
+<section>
+  <h1>GitHub Repos</h1>
+  <ul id="gh_repos">
+    <li class="loading">Status updating...</li>
+  </ul>
+  
+  <script type="text/javascript">
+    $(document).ready(function(){
+        if (!window.jXHR){
+            var jxhr = document.createElement('script');
+            jxhr.type = 'text/javascript';
+            jxhr.src = '/javascripts/libs/jXHR.js';
+            var s = document.getElementsByTagName('script')[0];
+            s.parentNode.insertBefore(jxhr, s);
+        }
+
+        github.showRepos({
+            user: 'studentdeng',
+            count: 3,
+            skip_forks: true,
+            target: '#gh_repos'
+        });
+    });
+  </script>
+  <script src="/javascripts/github.js" type="text/javascript"> </script>
+</section>
+
+<section>
+<h1>Recent Comments</h1>
+<ul class="ds-recent-comments" data-num-items="5" data-show-avatars="0" data-show-time="0" data-show-title="0" data-show-admin="0" data-excerpt-length="18"></ul>
+
+</section>
+  
+</aside>
+</hgroup>
+
+</header>				
+			</div>
+		</div>	
+		<div class="mid-col">
+			
+				
+			
+			<div class="mid-col-container">
+				<div id="content" class="inner"><article class="post" itemscope itemtype="http://schema.org/BlogPosting">
+	<h1 class="title" itemprop="name">Box2D 01 基本概念</h1>
+	<div class="entry-content" itemprop="articleBody"><p>首先几个概念需要了解一下。</p>
+
+<p><strong>world</strong>
+就是engin需要模拟的世界，他有一个大家都很熟悉的重力</p>
+
+<p><strong>body(刚体)</strong>
+刚体的定义大家在物理中都熟悉了，在box2D世界中，刚体定义了物体一些重要的属性，比如质点位置，旋转角度，角速度，线性阻尼，等</p>
+
+<p><strong>shape(形状)</strong>这里定义我们的物体的形状是圆的，方的还是多边形等</p>
+
+<p><strong>fixture(材质？这个好难翻译中文)</strong>光是上面的东西，我们不能够完成物理世界的碰撞，fixture定义了几个重要的属性，包括摩擦系数，恢复系数，密度</p>
+
+<p>回想当初学习的物理知识也就这么多了，当然后面还会介绍其他新的东西。有个形状，和密度我们可以计算质量，有了位置，速度，角速度，足够我们计算高中学到的简单碰撞了，在有恢复系数和线性阻尼，我们也能更好的模拟更真实的物理情景，而这也是大学物理的部分了。</p>
+
+<p>好多的背景知识，让我们再看看如何在程序里面做一个真实的世界出来。</p>
+
+<pre><code>b2Vec2 gravity;
+gravity.Set(0.0f, -10.0f);
+world = new b2World(gravity);
+</code></pre>
+
+<p>box2D的坐标是和笛卡尔坐标系一样的，向量 (0, -10) 表示我们真实世界的重力，大约为10米每秒</p>
+
+<p>创建我们的第一个物体，一个圆球。
+这里Box2D采用了工厂模式来创建一个我们需要的物体。我们首先描述一个需求，然后通过一个工厂来生产我们需要的产品。</p>
+
+<pre><code>b2BodyDef bodyDef;//
+bodyDef.type = b2_dynamicBody; //这里定义为动态刚体
+bodyDef.position.Set(pt.x/PTM_RATIO, pt.y/PTM_RATIO);
+body = world-&gt;CreateBody(&amp;bodyDef);
+
+b2CircleShape bodyShape;
+bodyShape.m_radius = 26.0 / PTM_RATIO; //定义球的半径
+
+b2FixtureDef fixtureDef;
+fixtureDef.shape = &amp;bodyShape;
+fixtureDef.density = 0.1f;  //密度
+fixtureDef.friction = 0.1f; //摩擦力
+fixtureDef.restitution = 0.9f; //恢复系数
+body-&gt;CreateFixture(&amp;fixtureDef);
+</code></pre>
+
+<p>还急得之前的概念么？在定义好body，shape，创建好fixture之后。这些信息已经足够模拟真实运动了。因为是真实的世界，独立各个平台，box2D的单位是米，而不是程序图形图像的单位像素，PTM_RATIO这个宏用于转换单位。</p>
+
+<p>当然，这些物理数据还不能让我们在程序中看到，为了美观，增加一点小东西，希望大家了解cocos2d。这里创建一个CCPhysicsSprite</p>
+
+<pre><code>CCPhysicsSprite *sprite = [CCPhysicsSprite spriteWithFile:@"ball.png"];
+[self addChild:sprite];
+
+[sprite setPTMRatio:PTM_RATIO];
+[sprite setB2Body:body];
+
+//CCPhysicsSprite 的操作一定要在设置PTMRatio 和 body之后
+[sprite setPosition: ccp(pt.x, pt.y)];
+</code></pre>
+
+<p>这时我们就可以看到一个小球自由落体，然后淡出世界，不过似乎有一种淡淡的忧伤，太无趣了这个世界。</p>
+
+<p>让我们为这个世界创建一个边界，让小球不要运动超过屏幕。</p>
+
+<pre><code>// Define the ground body.
+b2BodyDef groundBodyDef;
+groundBodyDef.position.Set(0, 0); // bottom-left corner
+
+// Call the body factory which allocates memory for the ground body
+// from a pool and creates the ground box shape (also from a pool).
+// The body is also added to the world.
+b2Body* groundBody = world-&gt;CreateBody(&amp;groundBodyDef);
+
+// Define the ground box shape.
+b2EdgeShape groundBox;      
+
+// bottom
+
+groundBox.Set(b2Vec2(0,0), b2Vec2(s.width/PTM_RATIO,0));
+groundBody-&gt;CreateFixture(&amp;groundBox,0);
+
+// top
+groundBox.Set(b2Vec2(0,s.height/PTM_RATIO), b2Vec2(s.width/PTM_RATIO,s.height/PTM_RATIO));
+groundBody-&gt;CreateFixture(&amp;groundBox,0);
+
+// left
+groundBox.Set(b2Vec2(0,s.height/PTM_RATIO), b2Vec2(0,0));
+groundBody-&gt;CreateFixture(&amp;groundBox,0);
+
+// right
+groundBox.Set(b2Vec2(s.width/PTM_RATIO,s.height/PTM_RATIO), b2Vec2(s.width/PTM_RATIO,0));
+groundBody-&gt;CreateFixture(&amp;groundBox,0);
+</code></pre>
+
+<p>这里没有指定其他属性，默认创建的刚体是静态的，不会移动的。而这正是我们想要的。</p>
+
+<p>这时小球会自由落体然后反弹，这时可以调整restitution，如果对这些不是很熟悉的话。但是总体感觉还是有一点无聊，让我们再来一点新东西。</p>
+
+<pre><code>b2Vec2 force = b2Vec2(-30, 30);
+body-&gt;ApplyLinearImpulse(force, body-&gt;GetPosition());
+</code></pre>
+
+<p>body是我们其中的一个小球。ApplyLinearImpulse的意思就是对body施加一个冲量。</p>
+
+<p><a href="https://github.com/studentdeng/box2d-tutorials/tree/master/01">demo地址</a></p>
+
+<p><a href="http://v.youku.com/v_show/id_XNTg0NTU4NzQ0.html">demo演示地址</a></p>
+</div>
+
+</article>
+
+	<div class="share">
+	<div class="addthis_toolbox addthis_default_style addthis_16x16_style">
+	
+	<a class="addthis_button_sinaweibo"></a>
+	
+	
+	
+	
+	
+	<a class="addthis_button_compact"></a>
+	<a class="addthis_counter addthis_bubble_style"></a>
+	</div>
+  <script type="text/javascript" src="http://s7.addthis.com/js/300/addthis_widget.js#pubid="></script>
+</div>
+
+
+</div>
+			</div>
+			<footer id="footer" class="inner"><p>
+  2013 - @studentdeng  
+  <span class="credit">Powered by <a href="http://octopress.org">Octopress</a></span>
+</p>
+
+Design credit: <a href="http://shashankmehta.in/archive/2012/greyshade.html">Shashank Mehta</a></footer>
+			<script src="/javascripts/slash.js"></script>
+<script src="/javascripts/jquery.fancybox.pack.js"></script>
+<script type="text/javascript">
+(function($){
+	$('.fancybox').fancybox();
+})(jQuery);
+</script> <!-- Delete or comment this line to disable Fancybox -->
+
+
+
+
+
+
+
+		</div>
+	</div>
+</body>
+</html>

@@ -1,0 +1,532 @@
+
+<!DOCTYPE HTML>
+<html>
+<head>
+	<meta charset="utf-8">
+	<title>不会开机的男孩</title>
+	<meta name="author" content="studentdeng">
+
+	
+	<meta name="description" content="Apr 24th, 2013 apple_script Apple Script 可执行的伪代码 apple script 这种脚本语言就是精炼, 可执行的伪代码 tell application "Finder" display dialog "选择源文件目录"
+set sourcepath &hellip;">
+	
+
+  <!-- http://t.co/dKP3o1e -->
+  <meta name="HandheldFriendly" content="True">
+  <meta name="MobileOptimized" content="320">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+
+	<link href="/atom.xml" rel="alternate" title="不会开机的男孩" type="application/atom+xml">
+	
+	<link rel="canonical" href="http://studentdeng.github.com/blog/page/3/">
+	<link href="/favicon.png" rel="shortcut icon">
+	<link href="/stylesheets/screen.css" media="screen, projection" rel="stylesheet" type="text/css">
+	<!--[if lt IE 9]><script src="//html5shiv.googlecode.com/svn/trunk/html5.js"></script><![endif]-->
+	<script src="//ajax.googleapis.com/ajax/libs/jquery/1.7.2/jquery.min.js"></script>
+	<link href='http://fonts.googleapis.com/css?family=Open+Sans:400italic,400,700' rel='stylesheet' type='text/css'>
+	<!--Fonts from Google"s Web font directory at http://google.com/webfonts -->
+<link href="http://fonts.googleapis.com/css?family=PT+Serif:regular,italic,bold,bolditalic" rel="stylesheet" type="text/css">
+<link href="http://fonts.googleapis.com/css?family=PT+Sans:regular,italic,bold,bolditalic" rel="stylesheet" type="text/css">
+
+<script type="text/javascript">var switchTo5x=false;</script>
+<script type="text/javascript" src="http://w.sharethis.com/button/buttons.js"></script>
+<script type="text/javascript">stLight.options({publisher: "496dac80-40ba-487b-b557-af2d3629eb28", doNotHash: false, doNotCopy: false, hashAddressBar: false});</script>
+</head>
+
+
+<body>
+	<div class="container">
+		<div class="left-col">
+			<div class="intrude-less">
+			<header id="header" class="inner"><div class="profilepic">	
+	<script src="/javascripts/md5.js"></script>
+	<script type="text/javascript">
+		document.write("<img src='http://www.gravatar.com/avatar/" + MD5("studentdeng@hotmail.com") + "?s=160' alt='Profile Picture' style='width: 160px;' />");
+	</script>
+</div>
+<h1><a href="/">不会开机的男孩</a></h1>
+<p class="subtitle"></p>
+<nav id="main-nav"><ul class="main-navigation">
+  <li><a href="/">Blog</a></li>
+  <li><a href="/tags">tags</a></li>
+  <li><a href="/blog/archives">Archives</a></li>
+  <li><a href="/about">About</a></li>
+  <li><a href="/favorite">favorite</a></li>
+</ul>
+</nav>
+<nav id="sub-nav">
+	<div class="social">
+		
+		<a class="weibo" href="http://www.weibo.com/studentdeng" title="Weibo">Weibo</a>
+		
+		
+		
+		
+		
+		<a class="github" href="https://github.com/studentdeng" title="GitHub">GitHub</a>
+		
+		
+		<a class="dribbble" href="http://www.dribbble.com/curer" title="Dribbble">Dribbble</a>
+		
+		
+		
+		
+		
+		
+		<a class="rss" href="/atom.xml" title="RSS">RSS</a>
+		
+	</div>
+</nav>
+<hgroup>
+  <aside class="sidebar">
+  
+    
+<section>
+  <h1>GitHub Repos</h1>
+  <ul id="gh_repos">
+    <li class="loading">Status updating...</li>
+  </ul>
+  
+  <script type="text/javascript">
+    $(document).ready(function(){
+        if (!window.jXHR){
+            var jxhr = document.createElement('script');
+            jxhr.type = 'text/javascript';
+            jxhr.src = '/javascripts/libs/jXHR.js';
+            var s = document.getElementsByTagName('script')[0];
+            s.parentNode.insertBefore(jxhr, s);
+        }
+
+        github.showRepos({
+            user: 'studentdeng',
+            count: 3,
+            skip_forks: true,
+            target: '#gh_repos'
+        });
+    });
+  </script>
+  <script src="/javascripts/github.js" type="text/javascript"> </script>
+</section>
+
+<section>
+<h1>Recent Comments</h1>
+<ul class="ds-recent-comments" data-num-items="5" data-show-avatars="0" data-show-time="0" data-show-title="0" data-show-admin="0" data-excerpt-length="18"></ul>
+
+</section>
+  
+</aside>
+</hgroup>
+
+</header>				
+			</div>
+		</div>	
+		<div class="mid-col">
+			
+				
+			
+			<div class="mid-col-container">
+				<div id="content" class="inner">
+<div itemscope itemtype="http://schema.org/Blog">
+
+
+    <article class="post" itemprop="blogPost" itemscope itemtype="http://schema.org/BlogPosting">
+	<div class="meta">
+		<div class="date">
+
+
+
+
+
+
+
+
+  
+
+
+<time datetime="2013-04-24T19:21:00+08:00" data-updated="true" itemprop="datePublished">Apr 24<span>th</span>, 2013</time></div>
+		<div class="tags">
+
+
+	<a class='category' href='/blog/categories/apple-script/'>apple_script</a>
+
+
+</div>
+		
+	</div>
+	<h1 class="title" itemprop="name"><a href="/blog/2013/04/24/apple-script-1/" itemprop="url">Apple Script 可执行的伪代码</a></h1>
+	<div class="entry-content" itemprop="articleBody">
+		<p>apple script 这种脚本语言就是精炼, 可执行的伪代码</p>
+
+<pre><code>tell application "Finder"
+
+display dialog "选择源文件目录"
+set sourcepath to quoted form of POSIX path of (choose folder)
+
+display dialog "选择输出目录"
+set destinationpath to quoted form of POSIX path of (choose folder)
+
+end tell
+
+do shell script "/usr/bin/php /Users/ygcurer/apigen/apigen.php --source " &amp; sourcepath &amp; " --destination " &amp; destinationpath &amp; " --title curer --charset UTF-8 --access-levels public,protected --internal no --php yes --tree yes --deprecated no --todo no --download no --source-code yes --colors yes --progressbar no --update-check no"
+</code></pre>
+
+<p>这里把php document generate 的shell command 包装进了application中</p>
+
+		
+		
+	</div>
+
+</article>
+
+
+    <article class="post" itemprop="blogPost" itemscope itemtype="http://schema.org/BlogPosting">
+	<div class="meta">
+		<div class="date">
+
+
+
+
+
+
+
+
+  
+
+
+<time datetime="2013-03-31T16:31:00+08:00" data-updated="true" itemprop="datePublished">Mar 31<span>st</span>, 2013</time></div>
+		<div class="tags">
+
+
+	<a class='category' href='/blog/categories/emotion/'>emotion</a>
+
+
+</div>
+		
+	</div>
+	<h1 class="title" itemprop="name"><a href="/blog/2013/03/31/numb/" itemprop="url">Numb</a></h1>
+	<div class="entry-content" itemprop="articleBody">
+		<p>前几天运气很好和一大堆朋友吃饭和一个老外boss吃饭, 他很牛, 20岁从MIT毕业, 第一份工作是参与波音777的设计制作, 做了当时波音第一个用电脑辅助设计飞机的软件. 在控制项目的时候, 他们当时犯了相当大的错误, 18个月30W行的C代码, 被重新推倒重来, 再用18个月一个team从头学习然后最后项目上线, 他说777是当时最安全的飞机. 因为在这个之前,的飞机一直是手写设计稿做的, 不是通过计算机. 然后我问他为什么要离开波音呢? 他说因为他觉得没有意思, 他在波音继续待下去,也就是一个非常出色的工程师, 这个不是他想要的, 他想去做一点更新的,更cool的东西, 但是这个似乎很矛盾的, 因为我知道他现在是做传统行业石油的, 每天都是谈论石头, 这个和做飞机根本不是一个概念啊.我问他这个似乎很矛盾啊, 他说恩,是的. 他离开波音之后, 花了6,7年. 知道了什么事情是不对的.2000年那会, 他做自己第一个公司, 是做电商, 当时风投给他们了$1500W, 最后还是没做下去, 没想到最后居然被NSA看中了, 因为这里面他们实现了一个根据兴趣爱好推荐内容的算法, 而这个算法,正好适合间谍交易的使用场景. =. =!</p>
+
+<p>最后bob说了一句非常感动我的话, 想得到自己想要的东西, 非常难, 即便自己很努力的去做, 最后得到的和之前想象的完全不一样. 是的, 如果让我来总结我这2年来的收获,用一句话来说就是 &#8220;很多东西觉得真心过不去这个坎了, 但是这个事情却做到了, 而有些东西觉得挺简单的,但最后却一直没有做到&#8221;.而有意思的是,我再写这篇blogs之前的2个小时之前, 还在愁一个项目无法交付,但是,有时候运气就这样子砸下来了.</p>
+
+<p>2年来, 就是不断地在从一个坑里爬出来,然后跌进去,再爬出来,再跌进去. 昨天晚上和老大聊到晚上3点.呵呵, 真得, 我们只是知道了什么事情是不对的.</p>
+
+<p>2年前,我觉得我虽然是一个很diaosi的家伙,但是我有一点是觉得很少人能够做到我这点的, 就是我知道我想要做什么, 我喜欢做什么,我适合做什么, 能够在22岁的时候想明白这个事情,让我非常开心,而且也一直向这个目标前进, 而为了这个,当然, 我放弃了非常多的东西, 其实我现在也不知道,因为一个东西,你付出了大量的时间,即便是没啥天赋, 也会做得不错, 这个世界上有太多的东西,我没有做过, 甚至都没有听到, 我凭什么说我适合做这个呢?</p>
+
+<p>唯一能确定的就是,&#8221;天道酬勤&#8221;,&#8221;机会只会留给有准备的人&#8221;</p>
+
+		
+		
+	</div>
+
+</article>
+
+
+    <article class="post" itemprop="blogPost" itemscope itemtype="http://schema.org/BlogPosting">
+	<div class="meta">
+		<div class="date">
+
+
+
+
+
+
+
+
+  
+
+
+<time datetime="2013-03-21T23:48:00+08:00" data-updated="true" itemprop="datePublished">Mar 21<span>st</span>, 2013</time></div>
+		<div class="tags">
+
+
+	<a class='category' href='/blog/categories/mysql/'>mysql</a>
+
+
+</div>
+		
+	</div>
+	<h1 class="title" itemprop="name"><a href="/blog/2013/03/21/mysql-source-code-2/" itemprop="url">Mysql 源代码 第二天</a></h1>
+	<div class="entry-content" itemprop="articleBody">
+		<p>昨天搭建好环境, 今天怀着无比兴奋的心情看一下, 一条简单的sql 背后有那些有趣的事情发生, 当然, 我们先从最简单的sql 开始.</p>
+
+<pre><code>select * from example
+</code></pre>
+
+<p>当然, 对于这么庞大的项目, 我只能小小的大略一下代码结构了.</p>
+
+<h2>SQL Interface</h2>
+
+<p>首先启动mysqld, mysql的 server 部分</p>
+
+<p>mysqld.cc</p>
+
+<pre><code>int main(int argc, char **argv) 
+</code></pre>
+
+<p>传说中一切世界的源头. 在处理一些参数或是配置什么的, whatever, 先不关心这个,跳转到</p>
+
+<pre><code>int win_main(int argc, char **argv)
+</code></pre>
+
+<p>还是一些配置, 读取my.ini, 日志, socket, 什么的. 然后创建一大堆的thread, 这里面大部分暂时没用
+在很多的thread callback 函数中, 有一个必须要了解一下了它是</p>
+
+<pre><code>handle_one_connection // sql_connect.cc
+</code></pre>
+
+<p>它是client 请求server callback的开始 然后依次调用</p>
+
+<pre><code>my_real_read -&gt; do_command -&gt; my_net_read 
+</code></pre>
+
+<p>这里等待socket</p>
+
+<p>client 部分</p>
+
+<p>通过mysql 我们连接到 mysqld, 这里我们先跳过其他命令过程. 直接步入今天的主题, 我事先已经创建好一个简单的数据库, 里面2个字段, 3条数据.</p>
+
+<pre><code>select * from example
+</code></pre>
+
+<p>回到之前的server</p>
+
+<p>这时, mysqld 收到的socket, 在检查一些错误之后, 我们来到</p>
+
+<pre><code>dispatch_command -&gt; mysql_parse
+</code></pre>
+
+<h2>mysql Query Parser</h2>
+
+<p>这里我们进入了mysql Query Parser 部分, mysql 首先需要词法分析,语法分析 SQL 语句, 把我们的SQL 转变成一个个token 语法树什么的 要做一些编译器类似的前端部分, whatever, 对这部分不感兴趣, 我现在可没有扩展SQL 语句的想法.我们这条语句是select 所以, 我们最后跳到了 handle_select部分</p>
+
+<pre><code>mysql_parse -&gt; mysql_execute_command -&gt; execute_sqlcom_select -&gt; handle_select -&gt; mysql_select
+</code></pre>
+
+<h2>Query Optimizer</h2>
+
+<p>这里我们来到了mysql Query Optimizer 部分, 3个主要的事情</p>
+
+<pre><code> prepare
+ optimize
+ exec
+</code></pre>
+
+<p>这个将是之后重点要学的, 现在先跳过啦</p>
+
+<h2>Query Execution</h2>
+
+<pre><code>do_select -&gt; sub_select -&gt; sub_select ....
+</code></pre>
+
+<p>这里我们看到了很多类似的函数, 从名字上来看, 基本上是处理递归的, 而且,事实上也的确是这样子的&#8230;.(真是废话), mysql 这里不断地读取一行行数据,
+判断是否嵌套查询等等.最后 一系列的clear unlock. free, release</p>
+
+<pre><code>net_end_statement
+</code></pre>
+
+<p>这里将数据返回client, server 继续</p>
+
+<pre><code>do_command -&gt; my_net_read ... 
+</code></pre>
+
+<p>最后结构图
+<img src="/images/mysql_1_1.gif" alt="alt text" />
+<img src="/images/mysql_1_2.gif" alt="alt text" /></p>
+
+		
+		
+	</div>
+
+</article>
+
+
+    <article class="post" itemprop="blogPost" itemscope itemtype="http://schema.org/BlogPosting">
+	<div class="meta">
+		<div class="date">
+
+
+
+
+
+
+
+
+  
+
+
+<time datetime="2013-03-20T22:06:00+08:00" data-updated="true" itemprop="datePublished">Mar 20<span>th</span>, 2013</time></div>
+		<div class="tags">
+
+
+	<a class='category' href='/blog/categories/mysql/'>mysql</a>
+
+
+</div>
+		
+	</div>
+	<h1 class="title" itemprop="name"><a href="/blog/2013/03/20/mysql-source-code-setup/" itemprop="url">调试 Mysql源代码 环境搭建</a></h1>
+	<div class="entry-content" itemprop="articleBody">
+		<p>下载源代码 <a href="http://dev.mysql.com/downloads/mysql/">mysql</a></p>
+
+<p>下载CMAKE <a href="http://www.cmake.org/">download</a></p>
+
+<p>代码根目录 执行下面代码, 确定生成configure.data 文件</p>
+
+<pre><code>wscript win\configure.js WITH_INNOBASE_STORAGE_ENGINE WITH_PARTITION_STORAGE_ENGINE MYSQL_SERVER_SUFFIX=-pro
+</code></pre>
+
+<p>找到 win 目录下的 XXX.bat 文件复制到源代码根目录下, 我这里使用vs2008 ,所以复制 build-vs9.bat 到源代码根目录
+在系统根目录 C:/windows 下 增加一个 my.ini 用于 mysql 配置, 我的mysql 源代码目录在 C:/mysql_code/mysql-5-1.1.68</p>
+
+<pre><code>[mysqld]
+# set basedir to your installation path
+basedir=C:/mysql_code/mysql-5-1.1.68
+# set datadir to the location of your data directory
+datadir=C:/mysql_code/mysql-5-1.1.68/win/data
+</code></pre>
+
+<p>将sql目录下的share文件夹复制到源代码根目录下</p>
+
+<p>修改sql_locale.cc 文件, 把文件编码改成 UTF8 with BOM, windows 你懂的</p>
+
+<p>然后可以调试了, 不过这里我遇到一个问题, 在 sql_locale.cc 函数 test_lc_time_sz 函数, 这里DEBUG_ASSERT(0)了一下, 目前先暂时注释掉它 : (
+现在可以跑</p>
+
+<pre><code>mysqld
+</code></pre>
+
+<p>然后在</p>
+
+<pre><code>mysql -u root -p 
+</code></pre>
+
+<p>over!</p>
+
+		
+		
+	</div>
+
+</article>
+
+
+    <article class="post" itemprop="blogPost" itemscope itemtype="http://schema.org/BlogPosting">
+	<div class="meta">
+		<div class="date">
+
+
+
+
+
+
+
+
+  
+
+
+<time datetime="2013-03-05T00:25:00+08:00" data-updated="true" itemprop="datePublished">Mar 5<span>th</span>, 2013</time></div>
+		<div class="tags">
+
+
+	<a class='category' href='/blog/categories/emotion/'>emotion</a>
+
+
+</div>
+		
+	</div>
+	<h1 class="title" itemprop="name"><a href="/blog/2013/03/05/emotion-unknown/" itemprop="url">情商太低, 伤不起</a></h1>
+	<div class="entry-content" itemprop="articleBody">
+		<p>这是我写过的最难的一篇, 是目前为止最困难的一篇, 我的思路非常的混乱, 只是想通过这个方式来帮助我理清自己, 找出可以收获的地方. 其实我很早就想写了, 但是有很多东西反反复复,相互牵引的, 我的思维也在不断的变化, 有太多的地方我不明白, 这让我现在非常难受, 而在这个时候写一篇这样子的东西,实在是一件非常痛苦的事情, anyway, 就当这一篇是我对抗自己完美主义的一部分啦.</p>
+
+<h2>先喷下自己吧, 展现一下负能量</h2>
+
+<p>我是一个天生的悲观主义者, 有的人天生就比其他人容易快乐, 幸福, 而有的人天生就容易比其他人焦虑, 抑郁.很不幸, 我是那种容易焦虑的, 我非常害怕失败,特别是自己在意的事情, 我经常自己YY出一大堆各种失败的场景和缘由, 有的甚至是非常低概率事情,一旦遇到失败又或是最后结果达不到我的期望,我还会深深的陷入自卑中. 不管是什么原因, 最后会被自己大量的消极情绪淹没.</p>
+
+<p>所以,我非常想改变, 我不想被那些大量的消极情绪,影响到我的效率. 因为这个要消耗掉我相当多的精力来应付这些我认为是累赘,但我又甩不掉的习惯 &#8212;- 就是不去思考那些产生烦心事的缘由, 不要去想或是分析自己的消极情绪的原因. 我一直希望我能够改掉, 直到我听到这个实验</p>
+
+<p>首先参与实验的家伙们需要回答一个问题, 他们是否希望能够摆脱自己性格方面的某些缺点, 比如古板, 或者容易亲信别人. 第二部分, 则是让这些家伙们去评估这些正面的性格, 言行一致是否对你很重要, 值得信赖是否很重要, 被认为是一个严肃认真的人, 是否很重要.</p>
+
+<p>而实验的结果也很有趣, 那些给这些正面性格打高分的人, 认为这些性格很重要的人, 反而比较不容易去改变自己的负面性格. 不如 容易相信别人 和 值得信赖.</p>
+
+<p>就拿我自己来说吧, 我觉得最大的优点就是喜欢思考, 思考问为什么, 如果说得难听一点, 就是喜欢钻牛角尖, 而且我一直赞同一个观点, 一个人的专注一件事情的时间越长, 那么越容易做好. 事实上, 如果我喜欢一件事情, 我可以每天超过15个小时在一件事情上面,并坚持至少半年,  我很开心, 我有比别人更多的精力去专注的做事情, 而且我自己的进步有很大的原因在于这里, 但是这个也带给了我一个非常大的缺点.就是钻牛角尖, 对自己在乎的事情, 太过于在意细节, 导致和人不好相处. 我带过一个刚毕业的小弟, 我能够从工作时间到下班回家地铁的路上, 不断的展现我的负能量, &#8220;这段代码不能这么写? 你知道这样有什么后果么?&#8221;, 而且这个时间相当的长,大概有半年多吧, 每天都要喷.</p>
+
+<p>我想该掉这些坏毛病, 但是我的潜意识告诉我, 细节是必须要扣的. 对于工作来说, 钻牛角尖能够让我学到更多, 而且对于Geek们来说, 面对枯燥的code都能看出花来, 或多或少都是些钻牛角尖的家伙,但是这些在人际交往中就是一个非常大的问题. 哎, 更别说,我还有完美主义问题,</p>
+
+<p>完美主义:一种充斥在我们生活中的对失败的失能性恐惧, 尤其是在我们最在意的方面. 失能性恐惧 指的是在面对失败时, 有这裹足不前的畏惧. 我的完美主义并不是在生活中的每一个方面, 每一个细节. 而是发生在我们在意的地方.</p>
+
+<p>从本质来看, 我的schema就是一个逐利者, 虽然很难听, 但这的确是事实. 我对自已在意的事情, 只是追求结果, 几乎不在乎过程.</p>
+
+<ul>
+<li><p>我看不到那个小弟的进步, 我一直以一个很高的要求(对他来说), 在他达到这个要求之前都是一文不值的.</p></li>
+<li><p>我看中一门考试, 那么如果这门考试我不是满分, 我就觉得非常难受, 因为我觉得我没有做到, 那么别人也不能做出来.</p></li>
+<li><p>在公司中,我的目标就是做问题的终结者, 如果这个问题我解决不了, 那么没人可以解决.</p></li>
+</ul>
+
+
+<p>这就是我的schema, 在达到这些标准之前, 所有的努力都没有价值. 因为我眼中, 只有一条路是正确的,</p>
+
+<p>典型的完美主义者, 完美主义者的确非常的痛苦, 因为很简单, 现实总是非常的残酷. 因为害怕心理上的失落而变得患得患失, 特别害怕失败.</p>
+
+<p>说到根底, 还是自己分不清出很多事情, 把太多的事情看成一件事情, all or nothing.</p>
+
+<h2>What should I do</h2>
+
+<p>答案很简单, 就是在遇到问题的时候, 选择面对, 不是逃避.去做, 去承担风险,承担责任.去尝试, 这里面有几个原因.</p>
+
+<p>首先, 我们是如何评价自己的,这个标准有些时候和评价其他人的方式是一样的.</p>
+
+<p>一个简单的例子, 比如,我们看到一个家伙, 敢于主动站出来, 表达自己的想法, 积极发言, 或是不断的失败,但依然不放弃,一直在努力坚持, 我们会认为这个家伙很有勇气, 有毅力.这个家伙心理一定很强大.勇于面对困难的家伙和普通人一样会有起起落落, 但是整体的幸福基线却在上升.我们很多时候通过行为来判断一个人的能力, 同样也适用于自己.</p>
+
+<p>那些勇于向喜欢的女孩表白的男孩, 虽然会有更多失败的经历, 但却越来越明白自己适合找那种类型的女孩, 那些能够在工作中敢于请教别人, 在上课时勇于回答老师问题, 向老师提出问题的家伙们, 也更容易学到并记住知识.很多时候, 我们害怕失败,以及失败以后带来的各种消极想法. 但当事情过去之后, 即使是失败了, 经历的痛苦情绪也并没有想象中的那么大. 就像我之前第一次喜欢一个女孩, 然后最后居然发现这个女孩已经结婚了?觉得这个心坎真的实在是迈不过去.但现在也迈过去了.等等, 越来越多的尝试, 成功固然好, 而且即使失败了,最后也会过去. 但如果没有尝试, 那么会一直认为这个事情会一直持续下去, 但事实上这是不可能的.而当我们意识到真正的失败的痛苦要比我们想象的失败的痛苦少时, 我们会变得更自信.</p>
+
+<p>如果说第一段感情我最大的收获是什么, 就是不管是多么美好的事情, 都会成为浮云, 不管是多么烂, 多么糟糕的事情, 也都会过去.</p>
+
+<p>以前和女孩说话都会脸红, 现在和美女聊天也不觉得有什么尴尬了, 所以每周的锻炼还是很有必要的.</p>
+
+<p>很多人都佩服我能够坚持半年健身, 保持体重, 但又有多少人知道我第一个月就减少了20斤, 后5个月加起来才少了5斤, 又有多少人知道我曾经减肥2次, 每次都不少于20斤, 但是反弹却超过了30斤. 我能做到今天的样子, 因为我经历了别人想象不到多的失败.</p>
+
+<p>所以, just do it.</p>
+
+<p>改变很难, 改变也不是灵丹妙药, 能够一下子解决问题. 我追求的只是不后悔, 做自己认为对的事情.</p>
+
+		
+		
+	</div>
+
+</article>
+
+</div>
+<nav id="pagenavi">
+    
+        <a href="/blog/page/2/" class="prev">Prev</a>
+    
+    
+        <a href="/blog/page/4/" class="next">Next</a>
+    
+    <div class="center"><a href="/blog/archives">Blog Archives</a></div>
+</nav></div>
+			</div>
+			<footer id="footer" class="inner"><p>
+  2013 - @studentdeng  
+  <span class="credit">Powered by <a href="http://octopress.org">Octopress</a></span>
+</p>
+
+Design credit: <a href="http://shashankmehta.in/archive/2012/greyshade.html">Shashank Mehta</a></footer>
+			<script src="/javascripts/slash.js"></script>
+<script src="/javascripts/jquery.fancybox.pack.js"></script>
+<script type="text/javascript">
+(function($){
+	$('.fancybox').fancybox();
+})(jQuery);
+</script> <!-- Delete or comment this line to disable Fancybox -->
+
+
+
+
+
+
+
+		</div>
+	</div>
+</body>
+</html>

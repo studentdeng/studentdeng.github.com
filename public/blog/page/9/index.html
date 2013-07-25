@@ -1,0 +1,1427 @@
+
+<!DOCTYPE HTML>
+<html>
+<head>
+	<meta charset="utf-8">
+	<title>不会开机的男孩</title>
+	<meta name="author" content="studentdeng">
+
+	
+	<meta name="description" content="Oct 6th, 2010 windows PE文件初探二 上一篇主要是很初略的总结了是什么，这篇要总结下为什么。以下部分参照了http://msdn.microsoft.com/en-us/magazine/cc301727.aspx和http://blog.donews.com/zwell/ &hellip;">
+	
+
+  <!-- http://t.co/dKP3o1e -->
+  <meta name="HandheldFriendly" content="True">
+  <meta name="MobileOptimized" content="320">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+
+	<link href="/atom.xml" rel="alternate" title="不会开机的男孩" type="application/atom+xml">
+	
+	<link rel="canonical" href="http://studentdeng.github.com/blog/page/9/">
+	<link href="/favicon.png" rel="shortcut icon">
+	<link href="/stylesheets/screen.css" media="screen, projection" rel="stylesheet" type="text/css">
+	<!--[if lt IE 9]><script src="//html5shiv.googlecode.com/svn/trunk/html5.js"></script><![endif]-->
+	<script src="//ajax.googleapis.com/ajax/libs/jquery/1.7.2/jquery.min.js"></script>
+	<link href='http://fonts.googleapis.com/css?family=Open+Sans:400italic,400,700' rel='stylesheet' type='text/css'>
+	<!--Fonts from Google"s Web font directory at http://google.com/webfonts -->
+<link href="http://fonts.googleapis.com/css?family=PT+Serif:regular,italic,bold,bolditalic" rel="stylesheet" type="text/css">
+<link href="http://fonts.googleapis.com/css?family=PT+Sans:regular,italic,bold,bolditalic" rel="stylesheet" type="text/css">
+
+<script type="text/javascript">var switchTo5x=false;</script>
+<script type="text/javascript" src="http://w.sharethis.com/button/buttons.js"></script>
+<script type="text/javascript">stLight.options({publisher: "496dac80-40ba-487b-b557-af2d3629eb28", doNotHash: false, doNotCopy: false, hashAddressBar: false});</script>
+</head>
+
+
+<body>
+	<div class="container">
+		<div class="left-col">
+			<div class="intrude-less">
+			<header id="header" class="inner"><div class="profilepic">	
+	<script src="/javascripts/md5.js"></script>
+	<script type="text/javascript">
+		document.write("<img src='http://www.gravatar.com/avatar/" + MD5("studentdeng@hotmail.com") + "?s=160' alt='Profile Picture' style='width: 160px;' />");
+	</script>
+</div>
+<h1><a href="/">不会开机的男孩</a></h1>
+<p class="subtitle"></p>
+<nav id="main-nav"><ul class="main-navigation">
+  <li><a href="/">Blog</a></li>
+  <li><a href="/tags">tags</a></li>
+  <li><a href="/blog/archives">Archives</a></li>
+  <li><a href="/about">About</a></li>
+  <li><a href="/favorite">favorite</a></li>
+</ul>
+</nav>
+<nav id="sub-nav">
+	<div class="social">
+		
+		<a class="weibo" href="http://www.weibo.com/studentdeng" title="Weibo">Weibo</a>
+		
+		
+		
+		
+		
+		<a class="github" href="https://github.com/studentdeng" title="GitHub">GitHub</a>
+		
+		
+		<a class="dribbble" href="http://www.dribbble.com/curer" title="Dribbble">Dribbble</a>
+		
+		
+		
+		
+		
+		
+		<a class="rss" href="/atom.xml" title="RSS">RSS</a>
+		
+	</div>
+</nav>
+<hgroup>
+  <aside class="sidebar">
+  
+    
+<section>
+  <h1>GitHub Repos</h1>
+  <ul id="gh_repos">
+    <li class="loading">Status updating...</li>
+  </ul>
+  
+  <script type="text/javascript">
+    $(document).ready(function(){
+        if (!window.jXHR){
+            var jxhr = document.createElement('script');
+            jxhr.type = 'text/javascript';
+            jxhr.src = '/javascripts/libs/jXHR.js';
+            var s = document.getElementsByTagName('script')[0];
+            s.parentNode.insertBefore(jxhr, s);
+        }
+
+        github.showRepos({
+            user: 'studentdeng',
+            count: 3,
+            skip_forks: true,
+            target: '#gh_repos'
+        });
+    });
+  </script>
+  <script src="/javascripts/github.js" type="text/javascript"> </script>
+</section>
+
+<section>
+<h1>Recent Comments</h1>
+<ul class="ds-recent-comments" data-num-items="5" data-show-avatars="0" data-show-time="0" data-show-title="0" data-show-admin="0" data-excerpt-length="18"></ul>
+
+</section>
+  
+</aside>
+</hgroup>
+
+</header>				
+			</div>
+		</div>	
+		<div class="mid-col">
+			
+				
+			
+			<div class="mid-col-container">
+				<div id="content" class="inner">
+<div itemscope itemtype="http://schema.org/Blog">
+
+
+    <article class="post" itemprop="blogPost" itemscope itemtype="http://schema.org/BlogPosting">
+	<div class="meta">
+		<div class="date">
+
+
+
+
+
+
+
+
+  
+
+
+<time datetime="2010-10-06T21:15:00+08:00" data-updated="true" itemprop="datePublished">Oct 6<span>th</span>, 2010</time></div>
+		<div class="tags">
+
+
+	<a class='category' href='/blog/categories/windows/'>windows</a>
+
+
+</div>
+		
+	</div>
+	<h1 class="title" itemprop="name"><a href="/blog/2010/10/06/pe2/" itemprop="url">PE文件初探二</a></h1>
+	<div class="entry-content" itemprop="articleBody">
+		<p>上一篇主要是很初略的总结了是什么，这篇要总结下为什么。以下部分参照了http://msdn.microsoft.com/en-us/magazine/cc301727.aspx和http://blog.donews.com/zwell/archive/2005/10/21/596302.aspx两位大牛的文章。和上述不同的是本文主要的涉及内容来自win7。当然我这里并没有真正的涉及win7，以及Vista所加入的新内容，（因为那些对现在的我来说实在是太复杂了）。win7 只是一个壳子，我描述的核心是在win2K，甚至是在windows3.1这些版本中就已经有的。当然为了能够更详细的理解整个过程。反汇编了部分loader的源代码。 pseudocode下载。</p>
+
+<p>当然，我看到的windows loader的代码对我来说依然是非常庞大，这里仅仅记录了程序正确路线，并没有完善错误路线，往往是return error来结束。当然，在代码中，难免有错误，特别是对我来说，这是第一次从汇编角度观察windows。也希望各位大牛，能够帮我指出里面的错误。</p>
+
+<p>一开始本来是想长篇大论的去写这一篇文章，因为涉及到的内容实在太多。而且大部分都是再重复大师们的内容。这里实在是不敢造次。仅仅记录一些自己认为有必要重复和自己所遇到的问题。上面2篇文章非常值得研究，如果你也对这方面感兴趣。</p>
+
+<p>最后，由于最近时间很紧，代码还是缺少了一些部分。还有相当一部分需要去完善细节，现在之所以记录，仅仅害怕时间长了。自己会懒惰而没有记下这个过程。当然，我会在这个《PE文件初探系列》的最后补全代码。</p>
+
+<p>当我们调用LoadLibraryEx LoadLibrary类似的函数，我们会进入到LdrpLoadDll，就让我们从它开始载入过程。</p>
+
+<p>LdrpLoadDll的大体思路Russ Osterlund，已经解释的很清楚了。为了查阅方便，原谅我这里只是简单翻译重复一下。</p>
+
+<p>检查这个module是否已经被载入过了
+将没有载入的module映射到地址空间
+遍历module的导入表，找到是否需要再导入其他的module。需要则导入并递归1。
+所有相关的module载入完毕后，更新module load count。
+初始化module
+清理一些结尾工作。更新module Flag。
+首先我们遇到的一个重要的函数是LdrApplyFileNameRedirection。这个函数主要是为了解决Dll hell。一种Side-by-Side Assembly的技术，相关的信息可以参考。http://dipplum.com/2009/11/09/side-by-side-assembly/。SxS已经大大超过了我所能解释的范围。原谅我先跳过这步。在STATUS_SXS_KEY_NOT_FOUND后，我们来到了一个非常重要的函数LdrpFindOrMapDll 。</p>
+
+<p>遍历进程LdrpHashTable，查找dll是否已经载入
+查找是否是系统已知KnownDll。
+查找dll文件名，并修正到完整路径名。
+遍历peb中的InLoadOrderModuleList查找dll是否已经载入
+没有找到则将dll映射到地址空间
+这个函数还是比较简单的。但是我却遇到了一个让我很费解的问题。</p>
+
+<pre><code>_KSYSTEM_TIME
+   +0x000 LowPart          : Uint4B
+   +0x004 High1Time        : Int4B
+   +0x008 High2Time        : Int4B
+#define MM_SHARED_USER_DATA_VA      0x7FFE0000
+#define USER_SHARED_DATA ((KUSER_SHARED_DATA * const)MM_SHARED_USER_DATA_VA)
+KUSER_SHARED_DATA ksd;
+
+eax=ksd.SystemTime.High1Time;
+ecx=ksd.SystemTime;
+edx=ksd.SystemTime.High2Time;
+
+KSYSTEM_TIME ktime;
+//real code     
+//eax=[0x7ffe0018];
+//ecx=[0x7ffe0014];
+//edx=[0x7ffe001c];
+do
+{
+    ktime.High1Time= ().High1Time;
+    ktime.LowPart=().LowPart;
+    ktime.High2Time= ().High2Time;
+}
+while(ktime.High1Time!=ktime.High2Time);
+//code end
+typedef struct _KUSER_SHARED_DATA {
+
+    /* Current low 32-bit of tick count and tick count multiplier.
+     * N.B. The tick count is updated each time the clock ticks.
+     */
+    volatile ULONG TickCountLow;
+    UINT32 TickCountMultiplier;
+
+    /* Current 64-bit interrupt time in 100ns units. */
+    volatile KSYSTEM_TIME InterruptTime;
+
+    /* Current 64-bit system time in 100ns units. */
+    volatile KSYSTEM_TIME SystemTime;
+
+    /* Current 64-bit time zone bias. */
+    volatile KSYSTEM_TIME TimeZoneBias;
+} KUSER_SHARED_DATA, *PKUSER_SHARED_DATA;
+</code></pre>
+
+<p>以上结构是wrk上的代码，win7的比他复杂太多了，而且其他的数据成员我们也并不关心。</p>
+
+<p>这是在LdrpFindOrMapDll最后，把数据插入到InLoadOrderModuleList，InMemoryOrderModuleList中遇到的。</p>
+
+<p>这个其实是获得系统时间的过程。更为详细的地方在这里http://www.dcl.hpi.uni-potsdam.de/research/WRK/2007/08/getting-os-information-the-kuser_shared_data-structure/</p>
+
+<p>简单的说。当clock ISR 处理的时候是先更新High2Time，然后LowPart，High1Time。
+而用户程序读取的时候是反着的顺序。 而这一切都是为了同步。但构成这个成立的前提是volatile 关键字，也就是说这样虽然减少了lock的时间，但是却也放弃了CPU的缓冲机制，每次都写操作都必须通过内存。而这个时间更新的速度是如此之快（100ns？），那么是不是同样会对效率造成冲击呢？相信MS一定做了不少测试来衡量利弊，但是再面对现在的多CPU下。是否一定适合呢？这里面涉及到太多有关硬件的知识，缓存的算法。CPU调度等等。。。这个问题还是交给10年，甚至20年后的我吧。这里标记下。更希望大牛能给出解释。//TODO:</p>
+
+<p>如果我们的dll被载入了（原来没有，刚刚被映射），那么我们通常会遇到LdrpProcessStaticImports ，而LdrpCorProcessImports，我这里似乎没有遇到。//TODO这里需要完善。</p>
+
+<p>BasepProbeForDllManifest ,原谅我再次跳过一个函数依然和dll hell有关，这些高级的东东，还是等我们弄清楚基本的东西回过来再解决他们。</p>
+
+<pre><code>LdrpProcessStaticImports
+</code></pre>
+
+<p>修改相应页面为PAGE_READWRITE。
+如果dll 绑定 则采用绑定方式载入dll
+如果没有dll 绑定或绑定失败则已普通方式载入dll
+恢复相应页面。
+先看普通方式载入。我们来到了LdrpHandleOldFormatImportDescriptors。这里我们遍历导入表，对每个导入表的module调用LdrpHandleOneOldFormatImportDescriptor。</p>
+
+<p>LdrpLoadImportModule 将相应的module导入
+调用LdrpProcessStaticImports。查找ped的ldr的StaticLink。找到则更新load count。没有找到则初始化并插入链表首部。
+更新IAT表。
+LdrpLoadImportModule 这是一个非常重要的函数。</p>
+
+<pre><code>LdrpApplyFileNameRedirection。
+LdrpFindOrMapDll
+LdrpProcessStaticImports
+LdrpHandleTlsData //这里相关dll初始化的部分，会在下一篇文章中总结。目前，我们只是关心载入。
+</code></pre>
+
+<p>完毕后插入InInitializationOrderModuleLis
+这里就有点麻烦了。这里面涉及到了很多的递归。让我们重新理解下。</p>
+
+<p>当我们程序编译链接成可执行程序后。loader会检查我们程序,通常可是.exe的文件。操作系统发现有一些dll文件需要载入（我们程序中使用了dll的函数，最通常的例子就是我们使用的系统API，那些函数的代码并不在我们.exe里，而在系统dll中，如ntdll，gdi32.dll等，所以我们必须把他们载入CPU才能执行代码），那么我们需要首先从dll导入表中查找我们需要的dll。去寻找那些我们调用的函数。就和上一篇文章中提到的MessageBox函数。但是，我们发现我们的MessageBox函数地址并不是真正函数的地址，loader 需要遍历dll的导出表。而在那里，我们找到了函数的地址，然后经过计算，loader帮我们把函数真实地址添入。而这个真实添入的地址所构成的表则为IAT表。MS的编译器还会保存另一个表，是在IAT添入之前的样子，叫做INT表。而其他的编译器可能并没有这个表生成。比如Borland。为什么保留这个INT表，等绑定之后再解释。</p>
+
+<p>OK，看样子十分完美，我们找到了我们所需要的dll的地址，但是事实上却很复杂。因为我们所导入的dll，很可能使用了另外的dll的代码中的函数。那么我们必须递归的调用，来把我们.exe中所有有关系的dll，都载入才能保证我们执行时，IAT表中的代码地址，真实的是我们需要的代码。有了这个大体的感觉。让我们查看整个过程的细节。</p>
+
+<p>LdrpSnapIAT</p>
+
+<p>LdrpSnapIAT做的事情也很简单，遍历导入表内容，并查找导出表内容，再调用LdrpSnapThunk。</p>
+
+<p>LdrpSnapThunk</p>
+
+<p>遍历导入表，根据序号或名字查找导入函数。
+遍历导出表，查找相应导入函数的地址。
+将计算好的函数地址添入IAT表。
+函数很好理解，当我们使用函数名字查找时，会遇到一个很重要的函数LdrpNameToOrdinal，Russ Osterlund的precode给出了详细代码，我觉得win7在这里并没有太大改动。LdrpNameToOrdinal是一个简单的二分法在导出表中查找匹配函数位置。而如果我们使用序号来查找，则可以直接定位到函数地址，而不需要经过这么一个字符串查找过程。当然不管是按照名字还是序号查找之前，有一个编译器给我们的提示，hint来查找函数。（不过这个真的没什么用。面对那么多的导出函数，就提示一个。怎么可能满足要求？）。</p>
+
+<p>不管用什么方法，我们总算是朝着我们的目标前进了。但是另一个问题来了。有些函数的地址却在导出表中，这就是dll函数的转发问题。</p>
+
+<p>什么是转发？</p>
+
+<p>我们之前说我们需要查找一个函数的地址，我们找到了这个xxx.dll。但是这个xxx.dll却告诉我们，这个函数地址也不在他那里，而在xxxx.dll里。这个就是转发的过程。用那个破的再不能破的例子就是kernel32 的HeapAlloc 转发到了ntdll中。</p>
+
+<p>那么为什么要有转发？</p>
+
+<p>看样子，似乎是MS在给我们打马虎眼，通过转发来保证他的源代码不被泄露。给我们一个表面的公开函数，然后去调用它不公开的函数。除了这一点，转发函数的另一个重要的特点是，他割断了部分dll之间的关系。</p>
+
+<p>让我们首先回头看一下，会发现，loader在做这个添入IAT表的时候是十分辛苦的。</p>
+
+<p>即便是使用了二分法来查找。但是面对字符串的挨个比较。这个效率是无法接受的。如果有些dll导出了上百了dll。还有一些长长的名字（事实上会更长，因为如果用c++，编译器还要加名字）。
+IAT处在代码段，是可读的。会在多个进程之间共享。一个进程对共享数据页面做了修改，操作系统会启动copy_on_write机制去创建另一个页面然后把修改的数据保存下来。为这个修改页面后的进程保留一个private的页面。如果我们的dll在多个进程载入的地址相同。那么我们就会有一大堆的private页面，但是却完全一样。这确实浪费了我们的资源，操作系统分配页面的时候，可不会去比较页面是否一样。（//TODO:check windows也许会在某些时间真的去比较这些页面是否相同，然后相同会修改成共享，但是由于我英文太差，不知道老外是瞎扯还是真有，时间也很长了，页面也一时找不到了。。。无奈）。
+当然我们一般的应用程序，不会有那么多的函数去做，但是MS自己却是地地道道的需要做。面对那么多的API函数。MS提供了一系列的优化载入dll的措施，分别节省了link时间（转发），重定位时间（rebase），添入IAT表时间（bind），延迟了载入时间（delay load）。同样也适用于我们的应用程序。（不过效率有多大的提高呢？反正肯定是有的）。当然，每一个解决都不是完美的方案，都有自己的缺陷。</p>
+
+<p>我们首先遇到了转发。</p>
+
+<p>转发的直白意思是，这个函数我提供一个入口，但是实现的代码却在别的dll中。那么他是如何提高我们的dll载入效率呢？</p>
+
+<p>如果我们在程序中调用了A.dll，A.dll 使用了func1 ，func2，func3。而func1被转发到了B.dll中的Bfunc1。如果我们在A.dll中使用了func1那么，我们必须载入B.dll。但是如果我们在A.dll中，没有使用func1，那么如果func1是转发到B.dll的，那么我们就不会载入B.dll，而如果我们是通过导入的方式做func1,那么不管是否使用，我们都要载入B.dll。为什么？因为我们的.exe和A.dll建立的关系，而A.dll的导入表中有B.dll,A和B的这种紧密关系，使我们不得不把B.dll载入进来，但我们的.exe却永远不会使用B.dll中的任何函数。（如果我们不使用A.dll中的func1）。而转发，则可以避免这个情况。因为在A.dll的导入表中，没有Bfunc1。</p>
+
+<p>OK，转发函数。割断了部分DLL之间的联系。他直接减少了link的时间。这个好。彻底不用载入了。</p>
+
+<p>让我们继续LdrpSnapThunk。的转发处理</p>
+
+<p>查找是否是转发函数，在export table中。
+比较是否是ntdll（不管是大写还是小写还是都有，反正都算）。相等则直接获得ntdll的 forwardEntry。//TODO:这里总觉得有种很怪的感觉，很怪很怪的感觉。
+如果不是ntdll，那么我们回到了原点调用LdrpLoadDll。
+（可选）调用LdrpRecordForwarder，查找ldr的ForwarderLinks。没有则添加。并更新load count。
+最后调用LdrGetProcedureAddressEx，获得相应函数地址。
+由于LdrGetProcedureAddressEx涉及到了dll的初始化问题。所以这篇不细说，下一篇再总结他。</p>
+
+<p>转发给我们解决了一个问题。那些不使用的没关系的dll，并没有被我们载入进来。但是如果我们使用了函数，依然会有IAT表的添入，查找，那一系列的问题。OK。让我们来看看另一个解决方案。绑定。不过在这个之前，需要理解下重定位。</p>
+
+<p>重定位部分的代码，Russ Osterlund没有写，我也没有写（希望后面我能完善了）。有关的知识网上很多。这里不重复了。只是解释下原因。我们在程序中的绝大部分数据都是相对的偏移量。因为我们不能确定我们的PE文件最终会被操作系统载入到那个位置上去。在编译和链接的过程，我们是相对一个默认的位置来生成相应的代码。这些默认值，会被写到PE头文件中去。windows loader在载入的时候，如果发现有冲突，则会重新计算这些偏移量。当然，为了减少这个运算。我们可以通过rebase来处理。</p>
+
+<p>还是让我们把注意力集中在bind上面。</p>
+
+<p>我们看到loader首先就是查找是不是可以使用bind来做。</p>
+
+<p>LdrpHandleNewFormatImportDescriptors</p>
+
+<p>遍历绑定描述符表，和导入描述符表。查找是否匹配
+成功则调用LdrpHandleOneNewFormatImportDescriptor，否则返回INVALID_IMAGE_FORMAT(0xC000007B)，直到0。
+  LdrpHandleOneNewFormatImportDescriptor</p>
+
+<p>LdrpLoadImportModule，加载module
+LdrpRecordStaticImport 加载导入的一系列东东
+如果bind失败，则调用LdrpSnapIAT。
+如果bind成功，则遍历绑定转发表。IMAGE_BOUND_FORWARDER_REF，依次调用LdrpLoadImportModule， LdrpRecordStaticImport。
+最后不管bind是否成功调用LdrpFixupIATForRelocatedImport。
+//TODO LdrpFixupIATForRelocatedImport,没有全部完成，真不知道MS搞一个这个巨大的函数名字有什么深意。看来是逼我把这个重定位做了，: ) 。</p>
+
+<p>bind这部分比较难。LdrpFixupIATForRelocatedImport的部分我没有完成，所以这部分应该是有很多值得推敲的地方。</p>
+
+<p>等最近不忙了。再彻底搞定他。</p>
+
+<p>最后剩下了一部分。就是INT的问题。这个问题的出现是为了我们在处理bind失败所必须的。当bind被失败后，我们不得不和原来一样去做。这是INT表作用体现处理了。当然如果没有INT表。整个载入则会直接down掉。</p>
+
+<p>使用bind，我们将避免了动态添入IAT所需要花费的空间和时间。这的确是一个是非优秀的设计。但是同样的。他的条件实在太苛刻了。如果其中有部分更新的操作系统，某个系统的dll被更新了。那么这一切也随之破灭了。他实在是太脆弱了。</p>
+
+<p>最后写给自己的</p>
+
+<p>这的确不是一篇完整的文章。因为有太多太多的知识对我来说是一个空白。每一个函数后面都可能是给我打开一个新的世界。在没有对已经存在的世界有一个清醒的认识前，非常容易造成溢出。有时候，真想找一个事情，可以就像操作系统分配物理内存一样。你什么时候使用给你一点，而且还能具有不错的缓存性能。而在这整个过程最郁闷的就是要不什么也没有，要不多的你放不下。而且各种跳转，冲击着我可怜的缓存。。。如果把我比作一个运作的很困难的操作系统。那么这篇文章就是我其中的一个页文件再适合不过了。</p>
+
+<p>//////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////</p>
+
+<p>　　哎，也许我的实力太差了。这篇的姊妹篇，初探一已经被博客园从首页上抹去了。这篇也可能和上一篇同样的命运。我可能要创一个记录了，虽然不是那么光彩，10篇文章2篇都被毙掉。如果加上这一篇，就是第三篇了。哈哈。我只知道Matt Pietrek 在2002年的MSJ上写道。</p>
+
+<p>“You might be wondering why you should care about the executable file format. The answer is the same now as it was then: an operating system&#8217;s executable format and data structures reveal quite a bit about the underlying operating system. By understanding what&#8217;s in your EXEs and DLLs, you&#8217;ll find that you&#8217;ve become a better programmer all around.”。</p>
+
+<p>　　当然，我不该提Matt Pietrek，因为我把“我”和他的名字放到一起就是其实就是对他的一种不尊敬。我也不敢扯我懂PE。我甚至只能皮毛都不了解。因为涉及到太多有关操纵系统、编译器、连接器的细节。对于我这个菜鸟来说也的确没有这个资本谈论这个问题。我也不想说别的。只是想发泄下自己的情绪。仅此而已。</p>
+
+		
+		
+	</div>
+
+</article>
+
+
+    <article class="post" itemprop="blogPost" itemscope itemtype="http://schema.org/BlogPosting">
+	<div class="meta">
+		<div class="date">
+
+
+
+
+
+
+
+
+  
+
+
+<time datetime="2010-10-06T20:55:00+08:00" data-updated="true" itemprop="datePublished">Oct 6<span>th</span>, 2010</time></div>
+		<div class="tags">
+
+
+	<a class='category' href='/blog/categories/windows/'>windows</a>
+
+
+</div>
+		
+	</div>
+	<h1 class="title" itemprop="name"><a href="/blog/2010/10/06/pe1/" itemprop="url">PE文件初探一</a></h1>
+	<div class="entry-content" itemprop="articleBody">
+		<p>最近一直在学习PE文件的相关知识。随着了解的增多，我不得不改变之前的学习方式。以前总是再理解更进一步后， 才总结上一层的知识。而且理解知识的时候总是喜欢从难到易得方式去理解知识。因为如果漫无目的的去学习，实在是 一个体力活。如果把一系列相关的知识比作一颗倒置的二叉树的话，我总是喜欢从根节点开始，然后再去遍历每个叶子 节点。只可惜我并没有掌握非递归算法。好吧，再没有处理尾递归的情况下，随着二叉树深度的增加。我的堆栈也果断溢 出。并导致一度中断学习过程。。。。。。。。。虽然我不断地去增加堆栈空间。但是总会有不能再增加的时候。好吧， 就是现在。该让我好好处理这个尾递归的问题。这也就是这篇文章的目的了。</p>
+
+<p>　　闲话扯得太多了。这篇文章主要内容是DLL的载入过程分析。以下部分主要来自《windows核心编程》和一些网上资料。 当然，如果想仔细理解相关内容。那么这3篇文章你是不该错过的。http://msdn.microsoft.com/zh-cn/magazine/cc301727(en-us).aspx， http://msdn.microsoft.com/en-us/magazine/cc301808.aspx ， http://msdn.microsoft.com/en-us/magazine/cc301805.aspx 事实上，你可能 还需要非常非常多的延伸知识需要帮助理解。如果对这部分知识不是很了解。而且英文也不是很好的话，《软件加密 技术内 幕》中的前几章的相关讲解，可能会更加易懂，还有老罗的书《Windows环境下32位汇编语言》，当然。这里讲的是最最基础 的部分。而且事实上，那3篇英文的分量对我来说还是很重的。这也是造成我堆栈溢出的原因。而且我脑子现在还没从错误中 恢复过来。。。。。</p>
+
+<h2>1.1 简短的背景知识</h2>
+
+<p>在操作系统中，执行的代码在载入内存之前，是以文件的方式存放在磁盘中。为了灵活的使用代码，在代码之前增加 一个文件头，在文件头中包括各种数据，文件入口，重定位表等信息。操作系统根据给定的信息，将部分代码载入内存，初始 化必要数据后，最后从指定位置开始执行。</p>
+
+<h2>1.2 开始了解PE</h2>
+
+<p>PE文件基本结构如下图。</p>
+
+<p><img src="/images/pm1.png" alt="alt text" /></p>
+
+<p>在PE文件中，代码、资源，导入表等信息被按照属性（可读，可读写，可执行等）分类放到了不同的节（section）中（上图是段）。每一个section的属性和位置用IMAGE_SECTION_HEADER结构描述。许多的IMAGE_SECTION_HEADER组成一个节表。由于数据是按照属性在节中放置，不同用途的数据可能被放在同一个节中。但是我们更关心数据的用途而属性是操作系统更为关心的。所以又有一个IMAGE_DATA_DIRECTORY来指明这些数据的位置。</p>
+
+<p>PE文件是如何映射到内存的</p>
+
+<p>windows并不在一开始将整个文件读入内存。windows在装载程序时，仅仅建立好虚拟地址和PE文件之前的映射关系，只有执行 到某个内存页中的指令或访问某页数据时，页面才会被提交到物理内存。这个机制类似于内存映射文件。但是不同的是，装载 可执行文件时，有些数据会被重新处理，装入到的数据相对位置也不一样，而且也有些数据是不会载入到内存中。</p>
+
+<p>原因</p>
+
+<p>windows按照节的属性载入，同一个节中所对应的内存页有相同的页属性。而windows对内存属性的设置是以页为单位进行，所以也在内存中的对齐单位至少是一个页的大小。在32位下，为默认为4KB。</p>
+
+<p>磁盘文件并没有这个设置，文件的对齐单位一般为200h。具体数据在IMAGE_OPTIONAL_HEADER32结构体中的SectionAlignment和FileAlignment设定。PE文件中的重要概念RVA（Relative Virtual Address）RVA是相对虚拟地址。由于数据可能发生重定向，所以所有数据都是保存为相对地址，而为了在运行时效率最大化，PE文件中保存的地址都是在内存中的虚拟地址偏移量。如果PE文件装入0x40000000h中的内存，而某个节中的某个数据被装入了0x40001000h，那么这个数据的RVA为1000h。下面了解下DLL的静态信息。</p>
+
+<p>如果需要调用DLL中的函数，那么DLL的imag必须映射到调用线程的进程地址空间中，我们可以通过2种方法处理。</p>
+
+<p>1、在源代码中引入DLL的符号。当应用程序启动运行时，loader会隐式加载链接需要的DLL。</p>
+
+<p>2、在程序运行时显示加载需要的DLL（调用LoadLibraryEx or LoadLibrary 卸载FreeLibrary），并显示链接到需要的输出符</p>
+
+<p>（GetProcAddress）。</p>
+
+<p>3、延迟加载DLL。这部分后面会解释。</p>
+
+<p>另外还有一些了解DLL必须的知识。这里罗列出来。</p>
+
+<h2>2、导入表</h2>
+
+<p>我们在编写程序的时候，几乎全部用到了导入函数的概念。导入函数就是程序执行的这段代码不在程序中，这些程序在</p>
+
+<p>一个或多个DLL中，而调用者仅仅保留一些必要的信息。主要是函数名和DLL名等。</p>
+
+<p>但是对于存储在磁盘上的PE文件来说，是无法得知导入函数会在内存的那个地方。只有PE文件被装入内存的时候，</p>
+
+<p>windows loader将DLL装入，并将执行导入函数的指令和函数真正的地址联系起来。有些抽象。让我们来看下代码真正执行</p>
+
+<p>的情况。</p>
+
+<p>让我们来试下最简单的Win32 HelloWorld，但是很让我“失望”，不得不佩服现在的vs，以前的可能影响效率的问题可能</p>
+
+<p>现在不是很重要了。 不过如果创建的是DLL文件，那么vs不会改变。依然是通过跳转表来实现。这里有一点不同是因为</p>
+
+<pre><code>int symbol(char *);
+__declspec(dllimport) int symbol2(char*);
+.text:10001000                 push    offset aBar     ; "bar"
+.text:10001005                 call    ?symbol@@YAHPAD@Z_0 ; 10001020
+.text:1000100A                 push    offset aBaz     ; "baz"
+.text:1000100F                 call    ds:__imp_?symbol2@@YAHPAD@Z ; symbol2(char *)
+.text:10001020                 jmp     ds:__imp_?symbol@@YAHPAD@Z ; symbol(char *).idata:10002080                 
+extrn __imp_?symbol2@@YAHPAD@Z:dword.idata:10002084                 
+extrn __imp_?symbol@@YAHPAD@Z:dword
+</code></pre>
+
+<p>我们告诉了编译器，symbol2是一个外部的函数调用，那么编译器将不生成跳转，而直接找到函数的入口地址。而symbol并</p>
+
+<p>没有指定是外部定义 函数，那么编译器默认生成一个跳转表，然后再跳转到真正执行的函数入口地址。看来vs还不是无</p>
+
+<p>所不能的。至于为什么.exe和.DLL vs的对待方式不同。没有想明白。不过，在dll中使用__declspec将大大缩短代码量，也</p>
+
+<p>不会降低缓存性能。而且如果我们需要共享一个变量（好吧，我承认这个的确不是一个好的主意）也只能使用__declspec，</p>
+
+<p>因为变量访问是不可能通过jmp来实现的。</p>
+
+<p>注：DLL的理解。为什么DLL默认不被优化。</p>
+
+<p>编译器在编译DLL文件的时候，为了提高效率，遇到调用函数的地方，并不回去查找这个函数是普通的内部函数，</p>
+
+<p>还是外部导入的函数，编译器统一生成一个指令 call xxxxxxx。而xxxxxx指令的地址将被linker修改。而对于外部导入函数</p>
+
+<p>的地址在载入内存的时候添入，而且还有可能要被修改。为了效率，而且linker不能随便修改compiler的数据，所以这些需</p>
+
+<p>要修改的函数入口需要集中放在一起，那么在每个call xxxxx指令下，最快速，简单的方法就是jmp到那个集中在一起的表</p>
+
+<p>的位置。这个位置，就是下面提到的IAT表。如果使用__declspec(dllimport)来标示函数，那么编译器将知道这个函数是由</p>
+
+<p>外部导入，那么生成的代码则是call    ds:<strong>imp_funcname, 而:</strong>imp_funcname在IAT表中也存在一样的函数符号。那么</p>
+
+<pre><code>call    ds:__imp_funcname将直接找到函数的真正入口。由于DLL是可以分开编译的，所以编译器不可能直接生成优化后的
+</code></pre>
+
+<p>代码（再考虑效率的情况下），在不加__declspec(dllimport)标号情况下。</p>
+
+<p>TODO：那么为什么.exe文件编译器会默认直接优化呢？</p>
+
+<p>好在使用一个老的编译器，在写好一段MessageBox(…); 会汇编成如下代码</p>
+
+<pre><code>.text:00401000                 public start
+.text:00401000 start           proc near
+.text:00401000                 push    0               ; uType
+.text:00401002                 push    offset Caption  ; "A MessageBox !"
+.text:00401007                 push    offset Text     ; "Hello, World !"
+.text:0040100C                 push    0               ; hWnd
+.text:0040100E                 call    MessageBoxA     ; 0040101A
+.text:00401013                 push    0               ; uExitCode
+.text:00401015                 call    ExitProcess
+.text:0040101A MessageBoxA     proc near               ; CODE XREF: start
+.text:0040101A                 jmp     ds:__imp_MessageBoxA; jmp 00402008
+.text:0040101A MessageBoxA     endp.idata:00402008                 
+extrn __imp_MessageBoxA:dword ;MessageBoxA
+</code></pre>
+
+<p>在老的编译器下，会生成2步去调用MessageBox。首先跳转到一个“跳转表”中，再根据跳转指令后，才能找到真正的</p>
+
+<p>函数入口。没有优化。</p>
+
+<p>但是现在的vs（我使用的是vs2008），很不好，它把这一部分直接给优化掉了。我们看到的代码是直接</p>
+
+<pre><code>call    ds:__imp__MessageBoxW@16。
+</code></pre>
+
+<p>vs真不是一个用来学习的编译器，太有进取心了。不过用来开发倒是不错。 ：）。</p>
+
+<p>回到正题，虽然这里有些改变，但是核心的东西并没有改变。</p>
+
+<pre><code>#include &lt;windows.h&gt;
+int WINAPI WinMain (HINSTANCE hInstance, HINSTANCE hPrevInstance,PSTR szCmdLine, int iCmdShow) 
+{
+　　TCHAR *t=L"HelloWorld";
+　　TCHAR *t2=L"hello";MessageBox(NULL,t,t2,NULL);
+　　return 0;
+}
+</code></pre>
+
+<p>让我们看下现在编译器的结果</p>
+
+<pre><code>.text:00401000                 push    0               ; uType
+.text:00401002                 push    offset Caption  ; "hello"
+.text:00401007                 push    offset Text     ; "HelloWorld"
+.text:0040100C                 push    0               ; hWnd.text:0040100E                 
+call    ds:__imp__MessageBoxW@16 ; 004020AC.idata:004020AC                 
+extrn __imp__MessageBoxW@16:dword
+很简单的代码，让我们先看看他的二进制文件。自己也可以做一个查看PE文件头信息的小程序。
+
+Machine 0000014C
+SecNum  00000005
+prop    00000102
+ImageBase       00400000
+**********************************************************
+session name            .text
+session size            0000087E
+session VirtualAddress  00001000
+session SizeOfRawData   00000A00
+session Raw_offset      00000400
+session prop            60000020
+**********************************************************
+session name            .rdata
+session size            0000062E
+session VirtualAddress  00002000
+session SizeOfRawData   00000800
+session Raw_offset      00000E00
+session prop            40000040
+**********************************************************
+session name            .data
+session size            00000384
+session VirtualAddress  00003000
+session SizeOfRawData   00000200
+session Raw_offset      00001600
+session prop            C0000040
+**********************************************************
+session name            .rsrc
+session size            000002B0
+session VirtualAddress  00004000
+session SizeOfRawData   00000400
+session Raw_offset      00001800
+session prop            40000040
+**********************************************************
+session name            .reloc
+session size            00000192
+session VirtualAddress  00005000
+session SizeOfRawData   00000200
+session Raw_offset      00001C00
+session prop            42000040
+**********************************************************
+</code></pre>
+
+<p>也可以查看DLL的数据，特别是kernel32.dll user32.dll等信息，会发现这些系统DLL加载的默认位置是不同的。 kernel32.dll 位于0x77DE0000 user32.dll 0x77D10000。定义不同的默认值将不会减慢载入的速度。具体会在重定位节中说明。 默认载入的地址是0x00400000，所以函数004020AC的RVA为AC，查看各节数据后发现，这段数据位于.rdata段， （VirtualAddress  00002000），而Raw_offset      00000E00，那么我们查看下 E00+AC = 0EAC在PE文件中的值是00002330。 这个显然不可能是函数的入口，但是如果把这个数字继续当成RVA来看，那么00002330-00002000=0330，再加上Raw_offset 0E00, 为1130，再跳过2个字节，那么正好是“MessageBoxW”。是个巧合么？当然不是。为什么后面会说明。 但是这里还有一个问题，我们在call   ds:<strong>imp</strong>MessageBoxW@16时，得到的东西是一个跳过2个字节然后是这个函数名。 这个显然不能正确执行。当然我们这里是在硬盘的文件，没有载入内存。在我们这个情况下，在载入内存中的时候， windows loader 会根据这个地址，并找到这个函数名，然后找到这个函数的真正地址，并写入004020AC位置，那么程序 就能正确运行了。那么问题似乎回到原点了，windows loader如何能够根据函数名来找到函数的真正地址呢？ 导入表的作用就体现出来了。</p>
+
+<p>首先找到导入表的信息</p>
+
+<p>PE文件的导入表的位置和大小可以从PE文件头中IMAGE_OPTIONAL_HEADER32结构的数据目录字段中获取，对应的项目是DataDirectory字段的第2个IMAGE_DATA_DIRECTORY结构。</p>
+
+<p>导入表是通过一系列的IMAGE_IMPORT_DESCRIPTOR结构组成。每一个结构描述一个DLL。最后以一个全0为这个结构 数组的结束。</p>
+
+<pre><code>typedef struct _IMAGE_IMPORT_DESCRIPTOR {
+    union {
+        DWORD   Characteristics;            // 0 for terminating null import descriptor
+        DWORD   OriginalFirstThunk;         // RVA to original unbound IAT (PIMAGE_THUNK_DATA)
+    } DUMMYUNIONNAME;
+    DWORD   TimeDateStamp;  // 0 if not bound,
+                                            // -1 if bound, and real date\time stamp
+                                            //     in IMAGE_DIRECTORY_ENTRY_BOUND_IMPORT (new BIND)
+                                            // O.W. date/time stamp of DLL bound to (Old BIND)
+
+    DWORD   ForwarderChain;                 // -1 if no forwarders
+    DWORD   Name;
+    DWORD   FirstThunk;                     // RVA to IAT (if bound this IAT has actual addresses)
+} IMAGE_IMPORT_DESCRIPTOR;
+typedef IMAGE_IMPORT_DESCRIPTOR UNALIGNED *PIMAGE_IMPORT_DESCRIPTOR;
+
+IMAGE_THUNK_DATA 是一个DWORD大小的共用体，包括以下含义。
+
+typedef struct _IMAGE_THUNK_DATA32 {
+    union {
+        DWORD ForwarderString;      // //转发函数字符串的RVA
+        DWORD Function;             //     导入函数的内存地址
+        DWORD Ordinal;              // 导入函数的序数
+        DWORD AddressOfData;        // IMAGE_IMPORT_BY_NAME和导入函数名称的RVA
+
+    } u1;
+} IMAGE_THUNK_DATA32;
+</code></pre>
+
+<p>IMAGE_THUNK_DATA  如何判断是序号还是RVA呢？ 通过IMAGE_THUNK_DATA的最高位来判断，如果为1， 那么就是导入函数的序数否则就是RVA。IAT 指向的IMAGE_THUNK_DATA 有2种。导入函数的序号数和IMAGE_IMPORT_BY_NAME结构的RVA</p>
+
+<pre><code>typedef struct _IMAGE_IMPORT_BY_NAME {
+    WORD    Hint;     //告诉loader带入函数的序号可能是什么。loader会在加载的时候检测这个值。并根据值来做查找
+
+字符串比较。
+    BYTE    Name[1]; //指向DLL名字字符串
+} IMAGE_IMPORT_BY_NAME, *PIMAGE_IMPORT_BY_NAME;
+</code></pre>
+
+<p>INT和IAT的内容一致，当文件没有加载进内存时。当文件加载进内存时(这个其实也不是很准确，后面会解释)，他并不覆盖INT。而IAT则会被覆盖成函数真正的地址。但是程序运行的时候是不需要INT的（我们只关心地址）。这里面涉及到一个绑定的概念，当绑定失败后，则需要根据INT中的信息，重新构建IAT OriginalFirstThunk 和FirstThunk在文件中指向同一地方。但是当载入内存中FirstThunk指向了函数真正的入口地址。</p>
+
+<p><img src="/images/pm2.png" alt="alt text" /></p>
+
+<p>我们看到的FirstThunk指向的位置，其实就是之前看到的jmp指令跳到的位置。是一个个顺序排列的&#8221;__impxxxx的函数入口地址，这部分数据也被IMAGE_DIRECTORY_ENTRY_IAT指向。在IMAGE_DIRECTORY的12号索引。</p>
+
+<p>2、导出表</p>
+
+<p><img src="/images/pm3.png" alt="alt text" /></p>
+
+<p>同导入表类似，当PE文件导出函数或变量的时候，这些信息被保存在了导出表中。这里导出的函数和变量统称为“符号”。</p>
+
+<pre><code>typedef struct _IMAGE_EXPORT_DIRECTORY {
+    DWORD   Characteristics;
+    DWORD   TimeDateStamp;
+    WORD    MajorVersion;
+    WORD    MinorVersion;
+    DWORD   Name;                                //RVA to 导出的DLL名字字符串
+    DWORD   Base;                                  //导出符号的起始值
+    DWORD   NumberOfFunctions;           //导出函数的总数
+    DWORD   NumberOfNames;              // 名称导出的函数总数
+    DWORD   AddressOfFunctions;     // RVA to 导出函数EAT    
+    DWORD   AddressOfNames;         // RVA to 导出函数名EAT
+    DWORD   AddressOfNameOrdinals;  // RVA to 导出函数序号表
+} IMAGE_EXPORT_DIRECTORY, *PIMAGE_EXPORT_DIRECTORY;
+</code></pre>
+
+<p>让我们模拟下如何找到函数的入口地址。通过函数名来查找，AddressOfNames遍历的函数名称地址表，并根据字符串找到对应的在AddressOfNames的序数，在根据这个序数，作为AddressOfFunctions的index，然后找到对应函数的RVA，在和dll的基地址相加，就得到了函数的真实地址。当然直接通过函数序数来查找函数将得到最快的性能。但是MS并不推荐这么做。因为函数导出的序数很可能在以后的系统中被改写。那么这个程序就不能在日后的操作系统下运行。导出表中还有一个重要概念是导出转发。 必须在windows 2000 windows XP中，kernel32 的HeapAlloc函数执行是被转发到了NTDLL中的RtlAllocHeap函数上。也就是说当执行HeapAlloc函数是，其实函数的真实地址不在kernel32 中，而是需要再次查找到NTDLL中的RtlAllocHeap，才能找到真正地址。而这实现着一切也很简单。只要把导出函数的RVA位于导出表中就可以。当转发一个符号时，首先找到的RVA指向了一个由DLL和转发的符号名称组成的字符串。比如“NTDLL.RtlAllocateHeap”。然后在通过递归的方式，在NTDLL的导出表中的RtlAllocateHeap找到真实地址。</p>
+
+<p>3、重定位。</p>
+
+<p>在IMAGE_OPTIONAL_HEADER32 结构中，有一个非常重要的字段ImageBase，他指明了可执行文件最希望载入的地址，而且任何涉及到直接操作地址的操作（比如全局变量，函数调用），所涉及到的地址都是根据这个imageBase算出来的。但是如果载入到内存的时候，ImageBase上已经有了其他的映射。那么必须要重新修正这些地址。而重定位表正式为了解决这个问题。它保存了这些需要修正的代码的地址。如果直接存储地址，在32位下。要花费4个字节，n个重定向，需要4n个字节。这将会大大的增加文件的长度，并浪费更多的空间。所以重定位表存储地址做了优化。在一组靠近的代码，32位中的高位地址总是相同，所以可以将高位地址统一标示来节省空间。当按照一个内存页来分隔时，一个页面寻址空间为4K，12位。把这12位凑齐16位并放入一个字类型数据，在加一个双字保存页的起始地址。 另一个双字表示重定位项数，那么大小会是4+4+2*n。</p>
+
+<pre><code>typedef struct _IMAGE_BASE_RELOCATION {
+    DWORD   VirtualAddress; //RVA to页面起始
+    DWORD   SizeOfBlock;    //重定位块长度，包括IMAGE_BASE_RELOCATION自身的大小
+//  WORD    TypeOffset[1];
+} IMAGE_BASE_RELOCATION; 
+</code></pre>
+
+<p>这个结构后面，将是n个重定位项，n可以根据SizeOfBlock算出。当然，根据一贯的设计风格，那高4位，不会被浪费。他被用来描述重定项种类。看过了以上的介绍，那么就初步明白了一个DLL是如何被载入的。而且这里面中有很多降低效率的部分。如，字符串比较，重定位数据，修改数据所引发的copy on write等。所以这引出了下面的部分。（我这里的资料都比较旧，以下的2个部分，MS可能又做了新的优化，所以可能和实际情况有些出入）首先解决重定位数据。可以使用Rebase.exe程序，它将修正多个DLL数据的imageBase。关于更多详细的介绍。MSDN。还剩下一个问题是字符串的比较。而这个处理的原因是在导入表中查到了DLLName，然后再在导出表中找到响应的函数名。最后把地址写入IAT中。好的。如果能找到一个方式在载入之前就把IAT建好，那么就不用载入的时候算这些数据了。而这个过程就是绑定。将.exe和DLL绑定起来，将会大大减少程序载入的时间。当然这也会带来一些问题。如何能够确定是被正确绑定的呢？windows loader载入的时候会判断绑定的合法性，如果不合法，他会根据之前的INT表重新查找那些地址再填入IAT中。而这一切和未绑定数据的情况一样，也就是没有额外的开销。</p>
+
+<pre><code>typedef struct _IMAGE_BOUND_IMPORT_DESCRIPTOR {
+    DWORD   TimeDateStamp;                     //导入dll的时间
+    WORD    OffsetModuleName;                 //指向导入DLL名字字符串偏移地址的值，这个值相对于首个结构体
+    WORD    NumberOfModuleForwarderRefs; //指向转发的DLL信息 //reserved?
+// Array of zero or more IMAGE_BOUND_FORWARDER_REF follows
+} IMAGE_BOUND_IMPORT_DESCRIPTOR,  *PIMAGE_BOUND_IMPORT_DESCRIPTOR;
+
+typedef struct _IMAGE_BOUND_FORWARDER_REF {
+    DWORD   TimeDateStamp;
+    WORD    OffsetModuleName;
+    WORD    Reserved;
+} IMAGE_BOUND_FORWARDER_REF, *PIMAGE_BOUND_FORWARDER_REF;
+</code></pre>
+
+<p>当然，构建一个正确的binding，需要的条件还是相当苛刻的。</p>
+
+<p>1、DLL需要加载到期望加载的基地址上。</p>
+
+<p>2、绑定成功后，DLL的导出表中的符号位置不能变。而且每个DLL的时间也必须和绑定时写入的时间一致。</p>
+
+<p>哦，差点忘记一个重要的话题，延迟加载DLL。这个概念依然是围绕如何加快程序载入速度这个问题上来的。当使用多个DLL的时候，由于loader需要把所有的需要的DLL映射到进程的地址空间中，那么它的初始化时间会变长。当然，我们可以手动控制DLL的装入，当他需要执行的时候。当然这么做会增加程序的复杂度。而延迟加载就是MS提供的一个非常好的方案。而且它的控制也很方便，在DLL载入失败时，可以由自己的选择，而不是想隐式加载而直接down掉。它的思想是，首先在载入的时候，添入一些基本信息，当这个DLL被真正调用时，根据这些添入的代码，去加载DLL。当完毕后将信息保存下来。那么下次加载的时候就可以直接找到函数的地址。而这个整个过程，最有趣的是这个过程是由编译器加入的代码完成。所以操作系统是不会分别出来的。现在，我们可以遍历整个导入表的项目。但这并没结束。这里需要的知识实在是太多了。下一篇一定要好好理解下函数导入的整个过程。我查到的PE文件的资料是在1994年，而直到现在从32位到64位数据执行文件加载，到.net的metadata IL，都有它的身影。能够经得起10多年的变化。真是不得不佩服。</p>
+
+		
+		
+	</div>
+
+</article>
+
+
+    <article class="post" itemprop="blogPost" itemscope itemtype="http://schema.org/BlogPosting">
+	<div class="meta">
+		<div class="date">
+
+
+
+
+
+
+
+
+  
+
+
+<time datetime="2010-06-07T20:50:00+08:00" data-updated="true" itemprop="datePublished">Jun 7<span>th</span>, 2010</time></div>
+		<div class="tags">
+
+
+	<a class='category' href='/blog/categories/c-plus-plus/'>c++</a>
+
+
+</div>
+		
+	</div>
+	<h1 class="title" itemprop="name"><a href="/blog/2010/06/07/c-plus-plus-vtable2/" itemprop="url">再谈C++虚继承</a></h1>
+	<div class="entry-content" itemprop="articleBody">
+		<p>上一篇只是初步的写了一下虚继承，很不清楚而且有的地方自己理解也不到位。这回详细总结一下。以下内容来自vs2008 默认设置下。类的布局可以通过-d1reportSingleClassLayout查看。</p>
+
+<p>让我们从最简单的类结构开始。</p>
+
+<pre><code>class A
+{
+public:
+    int a;
+    void af();
+    void virtual vaf(); 
+};
+void A::vaf(){printf("vaf\n");}
+void A::af(){printf("af\n");}
+class B
+{
+public:
+    int b;
+    void bf();
+    void virtual vbf();
+};
+void B::vbf(){printf("vbf\n");};
+void B::bf(){printf("bf\n");};
+class C:public A,public B
+{
+public:
+    int c;
+    void cf();
+    void virtual vcf();    
+};
+void C::vcf(){printf("vcf\n");}
+void C::cf(){printf("cf\n");}
+</code></pre>
+
+<p>　　内存中这个例子是这样的。</p>
+
+<pre><code>class A    size(8):
+    +---
+    | {vfptr}
+    | a
+    +---
+
+A::$vftable@:
+    | &amp;A_meta
+    |  0
+    | &amp;A::vaf
+
+
+class B    size(8):
+    +---
+    | {vfptr}
+    | b
+    +---
+
+B::$vftable@:
+    | &amp;B_meta
+    |  0
+    | &amp;B::vbf
+
+class C    size(20):
+    +---
+    | +--- (base class A)
+    | | {vfptr}
+    | | a
+    | +---
+    | +--- (base class B)
+    | | {vfptr}
+    | | b
+    | +---
+    | c
+    +---
+
+C::$vftable@A@:
+    | &amp;C_meta
+    |  0
+    | &amp;A::vaf
+    | &amp;C::vcf
+
+C::$vftable@B@:
+    | -8
+    | &amp;B::vbf
+</code></pre>
+
+<p>这里我们总结一下，类中有虚函数布局。</p>
+
+<p>若是类中有虚函数，那么类中第一个元素是指向虚表的指针（这个情况只有vftable）。
+基类数据成员
+本身类成员
+最左边的基类和本类公用同一个虚函数表，从而可以简化一些操作。
+　　一个简单的例子，让我们看一下虚函数运行时的样子。</p>
+
+<pre><code>C *pc= new C;
+pc-&gt;af();
+pc-&gt;vaf();
+pc-&gt;vcf();
+pc-&gt;vbf();
+delete pc;
+.text:00401059                 push    offset aAf      ; "af\n";这里调用非虚函数，之前有一个给ecx赋值语句
+.text:0040105E                 call    ds:__imp__printf
+.text:00401064                 mov     eax, [esi]
+.text:00401066                 mov     edx, [eax]
+.text:00401068                 add     esp, 4
+.text:0040106B                 mov     ecx, esi         ;这里ecx指向类A，这里因为A和C相同的开始地址
+.text:0040106D                 call    edx              ;这里节省了一次类的转化
+.text:0040106F                 mov     eax, [esi]
+.text:00401071                 mov     edx, [eax+4]     ;这里调用vcf，在虚表中我们看到了他的offset 4
+.text:00401074                 mov     ecx, esi
+.text:00401076                 call    edx
+.text:00401078                 mov     eax, [esi+8]     ;这里调用vbf,这里需要首先调整this指针
+.text:0040107B                 mov     edx, [eax]       ;在找到相应的函数偏移量（这里为0）
+.text:0040107D                 lea     ecx, [esi+8]
+.text:00401080                 call    edx
+</code></pre>
+
+<p>有了前面的铺垫，我们步入正题，依然是一个简单的例子。</p>
+
+<pre><code>class D :virtual public A
+{
+    int d;
+    void df();
+    void virtual vdf();
+};
+void D::vdf(){printf("vdf\n");}
+void D::df(){printf("df\n");}
+class E :virtual public A
+{
+public:
+    int e;
+    void ef();
+    void virtual vef();
+};
+void E::vef(){printf("vef\n");}
+void E::ef(){printf("ef\n");}
+class F :public A,public B
+{
+public:
+    int f;
+    void ff();
+    void virtual vff();
+};
+void F::vff(){printf("vff\n");}
+void F::ff(){printf("ff\n");}
+</code></pre>
+
+<p>让我们再看一下class F在内存中的布局</p>
+
+<pre><code>class F    size(36):
+    +---
+    | +--- (base class D)
+    | | {vfptr}
+    | | {vbptr}
+    | | d
+    | +---
+    | +--- (base class E)
+    | | {vfptr}
+    | | {vbptr}
+    | | e
+    | +---
+    | f
+    +---
+    +--- (virtual base A)
+    | {vfptr}
+    | a
+    +---
+
+F::$vftable@D@:
+    | &amp;F_meta
+    |  0
+    | &amp;D::vdf
+    | &amp;F::vff
+
+F::$vftable@E@:
+    | -12
+    | &amp;E::vef
+
+F::$vbtable@D@:
+    | -4
+    | 24 (Fd(D+4)A)
+
+F::$vbtable@E@:
+    | -4
+    | 12 (Fd(E+4)A)
+
+F::$vftable@A@:
+    | -28
+    | &amp;A::vaf
+</code></pre>
+
+<p>这里又增加了一个指向虚基表的指针vbptr，我们可以看出这个指针的目的在于计算包含虚继承的类的位置（有直接虚继承和间接虚继承）。让我们总结下有虚继承下的布局。</p>
+
+<p>将类中非虚继承的基类放置最前面。这样访问非虚继承函数不需再计算偏移量。
+在派生类中若是没有vbtable则增加一个，除非能从原来的非虚继承类继承到了vbtable。
+派生类数据成员
+虚基类
+　　可见，虚基类始终在类的尾部，那么当类生长的时候，也就是继续被继承时，则很有可能使虚基的偏移量变大。</p>
+
+<p>比如在class D的虚基表中，D与A偏移量为0，而在class F中D与A偏移量变为了24，所以只能加入一个vbptr指向虚基表。</p>
+
+<p>有了前面的知识，那么运行时的情况就好分析了。</p>
+
+<pre><code>.text:0040104F     mov     dword ptr [eax+4], offset ??_8F@@7BD@@@ ; const F::`vbtable'{for `D'}
+.text:00401056     mov     dword ptr [eax+10h], offset ??_8F@@7BE@@@ ; const F::`vbtable'{for `E'}
+                                                         ;首先将虚基表初始化 eax=this
+.text:0040105D     mov     dword ptr [eax+1Ch], offset ??_7A@@6B@ ; const A::`vftable'
+.text:00401064     mov     ecx, [eax+4]      ;*ecx=vbtableFD
+.text:00401067     mov     dword ptr [eax], offset ??_7D@@6B0@@ ; const D::`vftable'{for `D'}
+.text:0040106D     mov     edx, [ecx+4]      ;获得vbtableFD表中第2项，也就是D和A虚函数表的offset
+.text:00401070     mov     dword ptr [edx+eax+4], offset ??_7D@@6BA@@@ ; const D::`vftable'{for `A'}
+                                             ;根据和虚基表的offset+虚基表中和虚函数的offset+this找到虚函数位置以下类推
+.text:00401078     mov     ecx, [eax+10h]
+.text:0040107B     mov     dword ptr [eax+0Ch], offset ??_7E@@6B0@@ ; const E::`vftable'{for `E'}
+.text:00401082     mov     edx, [ecx+4]
+.text:00401085     mov     dword ptr [edx+eax+10h], offset ??_7E@@6BA@@@ ; const E::`vftable'{for `A'}
+.text:0040108D     mov     ecx, [eax+4]
+.text:00401090     mov     dword ptr [eax], offset ??_7F@@6BD@@@ ; const F::`vftable'{for `D'}
+.text:00401096     mov     dword ptr [eax+0Ch], offset ??_7F@@6BE@@@ ; const F::`vftable'{for `E'}
+.text:0040109D     mov     edx, [ecx+4]
+.text:004010A0     mov     dword ptr [edx+eax+4], offset ??_7F@@6BA@@@ ; const F::`vftable'{for `A'}
+.text:004010A8     mov     esi, eax
+
+.text:004010AE     mov     eax, [esi+4]            ;eax=*vbtableFD
+.text:004010B1     mov     ecx, [eax+4]            ;ecx=虚基表中和虚函数的offset
+.text:004010B4     mov     edx, [ecx+esi+4]        ;*edx=vftable
+.text:004010B8     mov     eax, [edx]              
+.text:004010BA     lea     ecx, [ecx+esi+4]        ;this=class A的开始
+.text:004010BE     call    eax                     ;pf-&gt;vaf();
+.text:004010C0     mov     edx, [esi]
+.text:004010C2     mov     eax, [edx]
+.text:004010C4     mov     ecx, esi                ;classD和classF公用虚表
+.text:004010C6     call    eax
+.text:004010C8     mov     edx, [esi+0Ch]
+.text:004010CB     mov     eax, [edx]
+.text:004010CD     lea     ecx, [esi+0Ch]          ;修正this，指向class E
+.text:004010D0     call    eax
+.text:004010D2     mov     edx, [esi]
+.text:004010D4     mov     eax, [edx+4]
+.text:004010D7     mov     ecx, esi
+.text:004010D9     call    eax
+</code></pre>
+
+<p>　　再看下虚函数覆盖的问题。</p>
+
+<pre><code>class G
+{
+public:
+    int g;
+    void gf();
+    void virtual vgf();
+    void virtual vaf();
+};
+void G::gf(){printf("gf\n");}
+void G::vgf(){printf("vgf\n");}
+void G::vaf(){printf("vaf_g\n");}
+class H:public A,public G
+{
+public:
+    int h;
+    void hf();
+    void vaf();
+    void vgf();
+    void virtual vhf();
+};
+void H::hf(){printf("hf\n");}
+void H::vaf(){printf("vaf_H\n");}
+void H::vgf(){printf("vgf_h\n");}
+void H::vhf(){printf("vhf\n");}
+
+
+class H    size(20):
+    +---
+    | +--- (base class A)
+    | | {vfptr}
+    | | a
+    | +---
+    | +--- (base class G)
+    | | {vfptr}
+    | | g
+    | +---
+    | h
+    +---
+
+H::$vftable@A@:
+    | &amp;H_meta
+    |  0
+    | &amp;H::vaf
+    | &amp;H::vhf
+
+H::$vftable@G@:
+    | -8
+    | &amp;H::vgf
+    | &amp;thunk: this-=8; goto H::vaf
+</code></pre>
+
+<p>由于A类和G类的函数vaf都被子类H覆盖，由于A和H共用虚函数表，那么如果在G类中依然保留被覆盖的函数则浪费空间。实际是通过以下代码实现的。</p>
+
+<pre><code>.text:004010B0 ; [thunk]:public: virtual void __thiscall H::vaf`adjustor{8}' (void)
+.text:004010B0 ?vaf@H@@W7AEXXZ proc near               ; DATA XREF: .rdata:00402158o
+.text:004010B0                 sub     ecx, 8          ;这里调整this指针，指向class G=class A
+.text:004010B3                 jmp     ?vaf@H@@UAEXXZ  ; H::vaf(void);转向到G表中的vaf()
+.text:004010B3 ?vaf@H@@W7AEXXZ endp
+</code></pre>
+
+<p>可见要是要使用thunk，根本上是处理以达到节省函数表大小，通过修改this指针去调用子类表项，那么也就是当子类覆盖父类多个方法时，只保留一份，其他的则跳转执行。</p>
+
+<pre><code>mov     ecx, esi
+call    edx                   ;调用vaf
+mov     eax, [esi+8]          ;*eax=vftable_G
+mov     edx, [eax]
+lea     ecx, [esi+8]
+call    edx                   ;vgf
+mov     eax, [esi]
+mov     edx, [eax+4] 
+mov     ecx, esi
+call    edx                   ;vhf
+</code></pre>
+
+<p>虚函数中还有2个非常重要的部分一个纯虚函数,一个虚析构函数。由于析构函数和构造函数结合的实在是太紧密了。下一篇先总结下虚析构函数当然也包括构造函数的部分。</p>
+
+		
+		
+	</div>
+
+</article>
+
+
+    <article class="post" itemprop="blogPost" itemscope itemtype="http://schema.org/BlogPosting">
+	<div class="meta">
+		<div class="date">
+
+
+
+
+
+
+
+
+  
+
+
+<time datetime="2010-06-01T20:30:00+08:00" data-updated="true" itemprop="datePublished">Jun 1<span>st</span>, 2010</time></div>
+		<div class="tags">
+
+
+	<a class='category' href='/blog/categories/c-plus-plus/'>c++</a>
+
+
+</div>
+		
+	</div>
+	<h1 class="title" itemprop="name"><a href="/blog/2010/06/01/c-plus-plus-vtable/" itemprop="url">C++虚继承初探</a></h1>
+	<div class="entry-content" itemprop="articleBody">
+		<p>昨天和同学对c++虚继承这部分 产生了一些争论，发觉自己对技术越来越浮躁了。不得不痛下决心。一看c++虚继承的内部实现（很浅很浅的看看）。</p>
+
+<p>以下内容来自自己实验，希望各位大哥指点。当然要想获得权威的解释，看《Inside C++ Object Model》</p>
+
+<p>让我们从最简单的开始。以下测试代码。</p>
+
+<pre><code>class Base
+{
+public:
+    Base()
+    {
+        printf("Base construct!\n");
+    }
+    //virtual void Test()=0;
+    virtual void f()
+    {
+        printf("Base\n");
+    }
+    virtual void f2()
+    {
+        printf("Base2\n");
+    }
+    virtual void f3()
+    {
+        printf("Base3\n");
+    }
+    void f4()
+    {
+        printf("Base4\n");
+    }
+};
+class Derived: public Base
+{
+public:
+    Derived()
+    {
+        printf("Derived construct!\n");
+    }
+    virtual void f()
+    {
+        printf("Derived\n");
+    }
+    virtual void f2()
+    {
+        printf("Derived2\n");
+    }
+    virtual void f3()
+    {
+        printf("Derived3\n");
+    }
+    void f4()
+    {
+        printf("Derived4\n");
+    }
+    /*virtual void Test()
+    {
+        printf("test\n");
+    }*/
+};
+int main()
+{
+    Base *p=new Base;
+    p-&gt;f();
+    p-&gt;f2();
+    p-&gt;f3();
+    p-&gt;f4();
+    /*Base *p = new Derived;*/
+    p = new Derived;
+    p-&gt;f();
+    p-&gt;f2();
+    p-&gt;f3();
+    p-&gt;f4();
+    //p-&gt;Test();
+    delete p;
+    return 0;
+}
+</code></pre>
+
+<p>以下是在我的环境下反汇编的部分代码。我的环境是vs2008 默认的Release。</p>
+
+<pre><code>.text:00401060 ; int __cdecl main(int argc, const char **argv, const char **envp)
+.text:00401060 _main           proc near               ; CODE XREF: __tmainCRTStartup+10Ap
+.text:00401060
+.text:00401060 argc            = dword ptr  4
+.text:00401060 argv            = dword ptr  8
+.text:00401060 envp            = dword ptr  0Ch
+.text:00401060
+.text:00401060                 push    esi
+.text:00401061                 push    edi
+.text:00401062                 push    4               ; unsigned int
+.text:00401064                 call    ??2@YAPAXI@Z_0  ; operator new(uint)
+.text:00401069                 mov     edi, ds:__imp__printf
+.text:0040106F                 mov     esi, eax
+.text:00401071                 add     esp, 4
+.text:00401074                 test    esi, esi
+.text:00401076                 jz      short loc_40108A
+.text:00401078                 push    offset aBaseConstruct ; "Base construct!\n"
+.text:0040107D                 mov     dword ptr [esi], offset ??_7Base@@6B@ ; const Base::`vftable'
+.text:00401083                 call    edi ; __imp__printf
+.text:00401085                 add     esp, 4
+.text:00401088                 jmp     short loc_40108C
+
+
+.text:0040107D mov dword ptr [esi], offset ??_7Base@@6B@ ; const Base::`vftable' 
+</code></pre>
+
+<p>是关键，根据上面分析，将指向Base类
+的虚表的指针保存到了向堆中分配的空间中，也就是 esi=**base_vtbl</p>
+
+<pre><code>.text:0040108C                 mov     eax, [esi]
+.text:0040108E                 mov     edx, [eax]   ;这里就好理解了，eax=*base_vtbl，edx=base_vtbl
+.text:00401090                 mov     ecx, esi
+.text:00401092                 call    edx          ;调用虚表中的第一个函数以下类推
+.text:00401094                 mov     eax, [esi]
+.text:00401096                 mov     edx, [eax+4]
+.text:00401099                 mov     ecx, esi
+.text:0040109B                 call    edx
+.text:0040109D                 mov     eax, [esi]
+.text:0040109F                 mov     edx, [eax+8]
+.text:004010A2                 mov     ecx, esi
+.text:004010A4                 call    edx
+.text:004010A6                 push    offset aBase4   ; "Base4\n" ;这里看出了非虚函数的优势，效率高，直接调用函数
+.text:004010AB                 call    edi ; __imp__printf
+</code></pre>
+
+<p>这是Base虚表内容</p>
+
+<pre><code>.rdata:0040216C ; const Base::`vftable'
+.rdata:0040216C ??_7Base@@6B@   dd offset ?f@Base@@UAEXXZ ; DATA XREF: _main+1Do  ;这里每个标号都指向相应函数
+.rdata:0040216C                                         ; _main+62o
+.rdata:0040216C                                         ; Base::f(void)
+.rdata:00402170                 dd offset ?f2@Base@@UAEXXZ ; Base::f2(void)
+.rdata:00402174                 dd offset ?f3@Base@@UAEXXZ ; Base::f3(void)
+.rdata:00402178                 dd offset ??_R4Derived@@6B@ ; const Derived::`RTTI Complete Object Locator' ;这个不懂
+</code></pre>
+
+<p>Base 还是比较简单的，让我们看Derived</p>
+
+<pre><code>.text:004010BD                 push    offset aBaseConstruct ; "Base construct!\n"
+.text:004010C2                 mov     dword ptr [esi], offset ??_7Base@@6B@ ; const Base::`vftable'
+.text:004010C8                 call    edi ; __imp__printf
+.text:004010CA                 push    offset aDerivedConstru ; "Derived construct!\n"
+.text:004010CF                 mov     dword ptr [esi], offset ??_7Derived@@6B@ ; const Derived::`vftable'
+.text:004010D5                 call    edi ; __imp__printf
+.text:004010D7                 add     esp, 8
+</code></pre>
+
+<p>可见在构造函数中和我们想象的完全一样，从基类开始，不过需要注意一点，最后esi=**Derived_vtbl
+ 以后的代码完全和在基类中调用函数一致。看来在VS2008中，c++的虚表其实就是数组（原来居然还以为是链表，不过似乎也有的编译器
+ 是用链表实现的）。这个例子的确不复杂，但是事实上却没有这么简单。看下一个稍微复杂一点的。</p>
+
+<pre><code>class A
+{
+public:
+    A()
+    {
+        printf("A construct\n");
+    }
+    virtual void f(){printf("A_F\n");}
+};
+class B
+{
+public:
+    B()
+    {
+        printf("B construct\n");
+    }
+    virtual void f(){printf("B_F\n");}
+    virtual void g(){printf("B_G\n");}
+};
+class C: public A,public B
+{
+public:
+    C()
+    {
+        printf("C construct\n");
+    }
+    void f(){printf("C_f\n");}
+};
+
+int _tmain(int argc, _TCHAR* argv[])
+{
+    A *a=new A;
+    B *b=new B;
+    C *c=new C;
+    a-&gt;f();
+    b-&gt;f();
+    b-&gt;g();
+    c-&gt;f();
+    return 0;
+}
+</code></pre>
+
+<p>先不看结果，花几分钟思考一下，class C 的虚表结构是什么？</p>
+
+<p>首先看代码，发现在class C中首先有一点不同，这个是之前的在class A,classB,classC中都是默认构造函数的代码</p>
+
+<pre><code>.text:00401077                 push    8               ; unsigned int      ;以前class只放一个指针，现在2个了。
+.text:00401079                 call    ??2@YAPAXI@Z_0  ; operator new(uint)
+.text:0040107E                 add     esp, 4
+.text:00401081                 test    eax, eax
+.text:00401083                 jz      short loc_40109D
+.text:00401085                 mov     dword ptr [eax+4], offset ??_7B@@6B@ ; const B::`vftable'
+.text:0040108C                 mov     dword ptr [eax], offset ??_7C@@6BA@@@ ; const C::`vftable'{for `A'}
+.text:00401092                 mov     dword ptr [eax+4], offset ??_7C@@6BB@@@ ; const C::`vftable'{for `B'}
+.text:00401099                 mov     edi, eax
+.text:0040109B                 jmp     short loc_40109F
+</code></pre>
+
+<p>这个是上面代码真正的反汇编代码，对比下，就可能对上面代码为什么有一个这么冗余的代码，似乎有些感觉了。</p>
+
+<pre><code>.text:004010A6                 push    offset aAConstruct ; "A construct\n"
+.text:004010AB                 mov     dword ptr [esi], offset ??_7A@@6B@ ; const A::`vftable'
+.text:004010B1                 call    edi ; __imp__printf
+.text:004010B3                 push    offset aBConstruct ; "B construct\n"
+.text:004010B8                 mov     dword ptr [esi+4], offset ??_7B@@6B@ ; const B::`vftable'
+.text:004010BF                 call    edi ; __imp__printf
+.text:004010C1                 push    offset aCConstruct ; "C construct\n"
+.text:004010C6                 mov     dword ptr [esi], offset ??_7C@@6BA@@@ ; const C::`vftable'{for `A'}
+.text:004010CC                 mov     dword ptr [esi+4], offset ??_7C@@6BB@@@ ; const C::`vftable'{for `B'}
+.text:004010D3                 call    edi ; __imp__printf
+.text:004010D5                 add     esp, 0Ch
+</code></pre>
+
+<p>下面的大部分容易理解，关键的是在class B的虚表中的f()。</p>
+
+<pre><code>; [thunk]:public: virtual void __thiscall C::f`adjustor{4}' (void)
+?f@C@@W3AEXXZ proc near               ;这时ecx 也就是this是指向class B的
+sub     ecx, 4                        ;这里很明显将原来的指向B:f()，指向了class C的虚表的开始部分。ecx放的是this指针
+jmp     ?f@C@@UAEXXZ    ; C::f(void)  ;这里顺理成章的变成了C::f()，this也在上部改变了
+?f@C@@W3AEXXZ endp
+</code></pre>
+
+<p>这里似乎就是传说中的“形式转换程序”，这个的确减少了虚表的体积。
+再看后面的代码，函数调用的时候和之前完全一致，也就是在class C中定义的f()，虽然没有被显示的声明为virtual，但vs2008已经
+把他默认当成虚函数调用了。至此，和同学的争论就此结束。</p>
+
+		
+		
+	</div>
+
+</article>
+
+
+    <article class="post" itemprop="blogPost" itemscope itemtype="http://schema.org/BlogPosting">
+	<div class="meta">
+		<div class="date">
+
+
+
+
+
+
+
+
+  
+
+
+<time datetime="2010-05-22T18:49:00+08:00" data-updated="true" itemprop="datePublished">May 22<span>nd</span>, 2010</time></div>
+		<div class="tags">
+
+
+	<a class='category' href='/blog/categories/asm/'>asm</a>
+
+
+</div>
+		
+	</div>
+	<h1 class="title" itemprop="name"><a href="/blog/2010/05/22/asm-win32/" itemprop="url">Win32汇编学习（1）</a></h1>
+	<div class="entry-content" itemprop="articleBody">
+		<p>终于把学校里面让人无语的论文搞定了。周末终于有时间干些自己想干的事了。想起了这2周做的关于编译原理的实验，代码优化这部分的确是个难题。哎，我实在是太笨了，其实答案就在自己电脑里。将c程序反汇编后，终于第一次感受到了debug 和release的区别。兴奋之余让我又产生了忧虑，自己汇编的能力太弱了，面对稍微复杂点的算法再加上编译优化后的汇编代码，真是欲哭无泪。痛下决心，准备好好学学汇编了。为了给自己一个动力，准备学习Win32汇编（和学校那个8086再见了）。</p>
+
+<p>　　第一天，不准备上难度了。从最简单的&#8221;HelloWorld&#8221;开始。</p>
+
+<pre><code>; HelloWorld.asm
+
+comment * ----------------------------------------------
+                 The First Assemble Application
+                ---------------------------------------------- *
+
+.386
+.model flat, stdcall
+option casemap:none
+
+include \masm32\include\windows.inc
+
+include \masm32\include\user32.inc
+include \masm32\include\kernel32.inc
+
+includelib \masm32\lib\user32.lib
+includelib \masm32\lib\kernel32.lib
+
+    .data
+szCaption   db 'MessageBox', 0
+szText      db 'Hello, World!', 0
+
+    .code
+start:
+    invoke MessageBox,\     ; 调用函数名
+        NULL,\                      ; 父窗口句柄
+        offset szText,\           ; 文字
+        offset szCaption,\      ; 标题
+        MB_OK                    ; 按钮类型
+
+    invoke ExitProcess, NULL
+end start
+</code></pre>
+
+<p>一个简单的窗口就创建好了。一眼看上去发现和以前的8086还是有很多不同的。</p>
+
+<p>首先8086和80386在寻址方式不同。</p>
+
+<p>8086 通过 段地址*0x10 +偏移地址确定的。只能寻址1M，而80386 32根地址线寻址，空间达到了4G而且80386 通用寄存器大小为32位，所以不需要分段就能访问到地址。</p>
+
+<p>那么.data,.code不是段的意思么？ 不是。因为808386有分页机制，每个页可以自由制定属性，已经和8086代码和数据分段处理完全不同，实际上是把不同类型的数据或代码归类，再放到不同属性的内存页。</p>
+
+<p> 其次，8086的不安全，不方便的调用中断的方式改为了调用系统API的方式。我这里是采用的MASM，所以有invoke伪指令，其实这个指令也没别的，就是为我们编程省去了函数参数入栈的那些push。</p>
+
+<p>最后，发现win32汇编和使用c/c++似乎没有复杂很多。</p>
+
+		
+		
+	</div>
+
+</article>
+
+</div>
+<nav id="pagenavi">
+    
+        <a href="/blog/page/8/" class="prev">Prev</a>
+    
+    
+        <a href="/blog/page/10/" class="next">Next</a>
+    
+    <div class="center"><a href="/blog/archives">Blog Archives</a></div>
+</nav></div>
+			</div>
+			<footer id="footer" class="inner"><p>
+  2013 - @studentdeng  
+  <span class="credit">Powered by <a href="http://octopress.org">Octopress</a></span>
+</p>
+
+Design credit: <a href="http://shashankmehta.in/archive/2012/greyshade.html">Shashank Mehta</a></footer>
+			<script src="/javascripts/slash.js"></script>
+<script src="/javascripts/jquery.fancybox.pack.js"></script>
+<script type="text/javascript">
+(function($){
+	$('.fancybox').fancybox();
+})(jQuery);
+</script> <!-- Delete or comment this line to disable Fancybox -->
+
+
+
+
+
+
+
+		</div>
+	</div>
+</body>
+</html>

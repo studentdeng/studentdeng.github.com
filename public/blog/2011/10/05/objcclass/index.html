@@ -1,0 +1,232 @@
+
+<!DOCTYPE HTML>
+<html>
+<head>
+	<meta charset="utf-8">
+	<title>objcclass - 不会开机的男孩</title>
+	<meta name="author" content="studentdeng">
+
+	
+	<meta name="description" content="Objcclass 之前一直做C++开发，最近2个多月转 Objective-C， 入门的时候，遇到了很多的困惑。现在过节，正是解决他们的好时机。 主要参考来自http://www.sealiesoftware.com/blog/archive/2009/04/14/ &hellip;">
+	
+
+  <!-- http://t.co/dKP3o1e -->
+  <meta name="HandheldFriendly" content="True">
+  <meta name="MobileOptimized" content="320">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+
+	<link href="/atom.xml" rel="alternate" title="不会开机的男孩" type="application/atom+xml">
+	
+	<link rel="canonical" href="http://studentdeng.github.com/blog/2011/10/05/objcclass/">
+	<link href="/favicon.png" rel="shortcut icon">
+	<link href="/stylesheets/screen.css" media="screen, projection" rel="stylesheet" type="text/css">
+	<!--[if lt IE 9]><script src="//html5shiv.googlecode.com/svn/trunk/html5.js"></script><![endif]-->
+	<script src="//ajax.googleapis.com/ajax/libs/jquery/1.7.2/jquery.min.js"></script>
+	<link href='http://fonts.googleapis.com/css?family=Open+Sans:400italic,400,700' rel='stylesheet' type='text/css'>
+	<!--Fonts from Google"s Web font directory at http://google.com/webfonts -->
+<link href="http://fonts.googleapis.com/css?family=PT+Serif:regular,italic,bold,bolditalic" rel="stylesheet" type="text/css">
+<link href="http://fonts.googleapis.com/css?family=PT+Sans:regular,italic,bold,bolditalic" rel="stylesheet" type="text/css">
+
+<script type="text/javascript">var switchTo5x=false;</script>
+<script type="text/javascript" src="http://w.sharethis.com/button/buttons.js"></script>
+<script type="text/javascript">stLight.options({publisher: "496dac80-40ba-487b-b557-af2d3629eb28", doNotHash: false, doNotCopy: false, hashAddressBar: false});</script>
+</head>
+
+
+<body>
+	<div class="container">
+		<div class="left-col">
+			<div class="intrude-less">
+			<header id="header" class="inner"><div class="profilepic">	
+	<script src="/javascripts/md5.js"></script>
+	<script type="text/javascript">
+		document.write("<img src='http://www.gravatar.com/avatar/" + MD5("studentdeng@hotmail.com") + "?s=160' alt='Profile Picture' style='width: 160px;' />");
+	</script>
+</div>
+<h1><a href="/">不会开机的男孩</a></h1>
+<p class="subtitle"></p>
+<nav id="main-nav"><ul class="main-navigation">
+  <li><a href="/">Blog</a></li>
+  <li><a href="/tags">tags</a></li>
+  <li><a href="/blog/archives">Archives</a></li>
+  <li><a href="/about">About</a></li>
+  <li><a href="/favorite">favorite</a></li>
+</ul>
+</nav>
+<nav id="sub-nav">
+	<div class="social">
+		
+		<a class="weibo" href="http://www.weibo.com/studentdeng" title="Weibo">Weibo</a>
+		
+		
+		
+		
+		
+		<a class="github" href="https://github.com/studentdeng" title="GitHub">GitHub</a>
+		
+		
+		<a class="dribbble" href="http://www.dribbble.com/curer" title="Dribbble">Dribbble</a>
+		
+		
+		
+		
+		
+		
+		<a class="rss" href="/atom.xml" title="RSS">RSS</a>
+		
+	</div>
+</nav>
+<hgroup>
+  <aside class="sidebar">
+  
+    
+<section>
+  <h1>GitHub Repos</h1>
+  <ul id="gh_repos">
+    <li class="loading">Status updating...</li>
+  </ul>
+  
+  <script type="text/javascript">
+    $(document).ready(function(){
+        if (!window.jXHR){
+            var jxhr = document.createElement('script');
+            jxhr.type = 'text/javascript';
+            jxhr.src = '/javascripts/libs/jXHR.js';
+            var s = document.getElementsByTagName('script')[0];
+            s.parentNode.insertBefore(jxhr, s);
+        }
+
+        github.showRepos({
+            user: 'studentdeng',
+            count: 3,
+            skip_forks: true,
+            target: '#gh_repos'
+        });
+    });
+  </script>
+  <script src="/javascripts/github.js" type="text/javascript"> </script>
+</section>
+
+<section>
+<h1>Recent Comments</h1>
+<ul class="ds-recent-comments" data-num-items="5" data-show-avatars="0" data-show-time="0" data-show-title="0" data-show-admin="0" data-excerpt-length="18"></ul>
+
+</section>
+  
+</aside>
+</hgroup>
+
+</header>				
+			</div>
+		</div>	
+		<div class="mid-col">
+			
+				
+			
+			<div class="mid-col-container">
+				<div id="content" class="inner"><article class="post" itemscope itemtype="http://schema.org/BlogPosting">
+	<h1 class="title" itemprop="name">Objcclass</h1>
+	<div class="entry-content" itemprop="articleBody"><p>之前一直做C++开发，最近2个多月转 Objective-C， 入门的时候，遇到了很多的困惑。现在过节，正是解决他们的好时机。</p>
+
+<p>主要参考来自http://www.sealiesoftware.com/blog/archive/2009/04/14/objc_explain_Classes_and_metaclasses.html</p>
+
+<p> Objective-C 也是面向对象的语言，那么，首先需要知道的就是什么是class。</p>
+
+<p>C++ 的class相对 Objective-C 中的class，就简单明了很多了。C++ 中class简单的说，就是一个大的struct， 绝大部分的class可以在编译时决定好class的布局（通过虚继承来的class成员变量只能动态确定）。当然，最关键的是，你不可能在运行时创建一个class，因为所有的class在运行之前已经确定下来，并保存在二进制文件中。</p>
+
+<p>但是， Objective-C 确不同， Objective-C 可以在运行中创建class，修改class等等。那么，改如何定义 Objective-C 中的class呢。</p>
+
+<p>在这之前，我们先看一个简单的，class的实例对象。</p>
+
+<pre><code>@interface Object 
+{
+
+    //typedef struct objc_class *Class; 
+    Class isa;    /* A pointer to the instance's class structure */ 
+}
+</code></pre>
+
+<p>对象包含一个指向class的指针，而这也就意味着，任何包含class 的指针都可以被看做是对象（object）。</p>
+
+<pre><code>struct objc_class {            
+    struct objc_class *isa;    //这里也有isa指针 
+    struct objc_class *super_class;    //这里还有一个指向基类的指针 
+    const char *name;        
+    long version; 
+    long info; 
+    long instance_size; 
+    struct objc_ivar_list *ivars;
+
+    struct objc_method_list **methodLists;
+
+    struct objc_cache *cache; 
+     struct objc_protocol_list *protocols; 
+};
+
+//新的定义
+typedef struct class_t {
+
+    struct class_t *isa;
+
+    struct class_t *superclass;
+
+    Cache cache;
+
+    IMP *vtable;
+
+    class_rw_t *data;
+
+} class_t;
+</code></pre>
+
+<p>显然，在 Objective-C 眼中，一切都是对象，甚至包括我们的class。而对象就是class的实例，那么，class是什么的实例呢，metaclass。</p>
+
+<p>事实上，我们并没有解决问题。metaclass 事实上又是root metaclass 的实例，而root metaclass 自己又是 root metaclass 的实例，一图胜千言，不做赘述。</p>
+
+<p><img src="/images/objc.png" alt="alt text" /></p>
+</div>
+
+</article>
+
+	<div class="share">
+	<div class="addthis_toolbox addthis_default_style addthis_16x16_style">
+	
+	<a class="addthis_button_sinaweibo"></a>
+	
+	
+	
+	
+	
+	<a class="addthis_button_compact"></a>
+	<a class="addthis_counter addthis_bubble_style"></a>
+	</div>
+  <script type="text/javascript" src="http://s7.addthis.com/js/300/addthis_widget.js#pubid="></script>
+</div>
+
+
+</div>
+			</div>
+			<footer id="footer" class="inner"><p>
+  2013 - @studentdeng  
+  <span class="credit">Powered by <a href="http://octopress.org">Octopress</a></span>
+</p>
+
+Design credit: <a href="http://shashankmehta.in/archive/2012/greyshade.html">Shashank Mehta</a></footer>
+			<script src="/javascripts/slash.js"></script>
+<script src="/javascripts/jquery.fancybox.pack.js"></script>
+<script type="text/javascript">
+(function($){
+	$('.fancybox').fancybox();
+})(jQuery);
+</script> <!-- Delete or comment this line to disable Fancybox -->
+
+
+
+
+
+
+
+		</div>
+	</div>
+</body>
+</html>

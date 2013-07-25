@@ -1,0 +1,570 @@
+
+<!DOCTYPE HTML>
+<html>
+<head>
+	<meta charset="utf-8">
+	<title>不会开机的男孩</title>
+	<meta name="author" content="studentdeng">
+
+	
+	<meta name="description" content="Jul 22nd, 2013 box2D, game Box2d 04 多边形刚体和鼠标连接器 我们在真正做一些物体的时候，有一些情况不是标准的圆形，矩形。这时我们需要创建多边形的刚体。这里推荐一个工具VertexHelper来帮我们生成刚体的定义。 今天的东西似乎有一点太少了， &hellip;">
+	
+
+  <!-- http://t.co/dKP3o1e -->
+  <meta name="HandheldFriendly" content="True">
+  <meta name="MobileOptimized" content="320">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+
+	<link href="/atom.xml" rel="alternate" title="不会开机的男孩" type="application/atom+xml">
+	
+	<link rel="canonical" href="http://studentdeng.github.com/">
+	<link href="/favicon.png" rel="shortcut icon">
+	<link href="/stylesheets/screen.css" media="screen, projection" rel="stylesheet" type="text/css">
+	<!--[if lt IE 9]><script src="//html5shiv.googlecode.com/svn/trunk/html5.js"></script><![endif]-->
+	<script src="//ajax.googleapis.com/ajax/libs/jquery/1.7.2/jquery.min.js"></script>
+	<link href='http://fonts.googleapis.com/css?family=Open+Sans:400italic,400,700' rel='stylesheet' type='text/css'>
+	<!--Fonts from Google"s Web font directory at http://google.com/webfonts -->
+<link href="http://fonts.googleapis.com/css?family=PT+Serif:regular,italic,bold,bolditalic" rel="stylesheet" type="text/css">
+<link href="http://fonts.googleapis.com/css?family=PT+Sans:regular,italic,bold,bolditalic" rel="stylesheet" type="text/css">
+
+<script type="text/javascript">var switchTo5x=false;</script>
+<script type="text/javascript" src="http://w.sharethis.com/button/buttons.js"></script>
+<script type="text/javascript">stLight.options({publisher: "496dac80-40ba-487b-b557-af2d3629eb28", doNotHash: false, doNotCopy: false, hashAddressBar: false});</script>
+</head>
+
+
+<body>
+	<div class="container">
+		<div class="left-col">
+			<div class="intrude-less">
+			<header id="header" class="inner"><div class="profilepic">	
+	<script src="/javascripts/md5.js"></script>
+	<script type="text/javascript">
+		document.write("<img src='http://www.gravatar.com/avatar/" + MD5("studentdeng@hotmail.com") + "?s=160' alt='Profile Picture' style='width: 160px;' />");
+	</script>
+</div>
+<h1><a href="/">不会开机的男孩</a></h1>
+<p class="subtitle"></p>
+<nav id="main-nav"><ul class="main-navigation">
+  <li><a href="/">Blog</a></li>
+  <li><a href="/tags">tags</a></li>
+  <li><a href="/blog/archives">Archives</a></li>
+  <li><a href="/about">About</a></li>
+  <li><a href="/favorite">favorite</a></li>
+</ul>
+</nav>
+<nav id="sub-nav">
+	<div class="social">
+		
+		<a class="weibo" href="http://www.weibo.com/studentdeng" title="Weibo">Weibo</a>
+		
+		
+		
+		
+		
+		<a class="github" href="https://github.com/studentdeng" title="GitHub">GitHub</a>
+		
+		
+		<a class="dribbble" href="http://www.dribbble.com/curer" title="Dribbble">Dribbble</a>
+		
+		
+		
+		
+		
+		
+		<a class="rss" href="/atom.xml" title="RSS">RSS</a>
+		
+	</div>
+</nav>
+<hgroup>
+  <aside class="sidebar">
+  
+    
+<section>
+  <h1>GitHub Repos</h1>
+  <ul id="gh_repos">
+    <li class="loading">Status updating...</li>
+  </ul>
+  
+  <script type="text/javascript">
+    $(document).ready(function(){
+        if (!window.jXHR){
+            var jxhr = document.createElement('script');
+            jxhr.type = 'text/javascript';
+            jxhr.src = '/javascripts/libs/jXHR.js';
+            var s = document.getElementsByTagName('script')[0];
+            s.parentNode.insertBefore(jxhr, s);
+        }
+
+        github.showRepos({
+            user: 'studentdeng',
+            count: 3,
+            skip_forks: true,
+            target: '#gh_repos'
+        });
+    });
+  </script>
+  <script src="/javascripts/github.js" type="text/javascript"> </script>
+</section>
+
+<section>
+<h1>Recent Comments</h1>
+<ul class="ds-recent-comments" data-num-items="5" data-show-avatars="0" data-show-time="0" data-show-title="0" data-show-admin="0" data-excerpt-length="18"></ul>
+
+</section>
+  
+</aside>
+</hgroup>
+
+</header>				
+			</div>
+		</div>	
+		<div class="mid-col">
+			
+				
+			
+			<div class="mid-col-container">
+				<div id="content" class="inner">
+<div itemscope itemtype="http://schema.org/Blog">
+
+
+    <article class="post" itemprop="blogPost" itemscope itemtype="http://schema.org/BlogPosting">
+	<div class="meta">
+		<div class="date">
+
+
+
+
+
+
+
+
+  
+
+
+<time datetime="2013-07-22T13:34:00+08:00" data-updated="true" itemprop="datePublished">Jul 22<span>nd</span>, 2013</time></div>
+		<div class="tags">
+
+
+	<a class='category' href='/blog/categories/box2d/'>box2D</a>, <a class='category' href='/blog/categories/game/'>game</a>
+
+
+</div>
+		
+	</div>
+	<h1 class="title" itemprop="name"><a href="/blog/2013/07/22/box2d-04/" itemprop="url">Box2d 04 多边形刚体和鼠标连接器</a></h1>
+	<div class="entry-content" itemprop="articleBody">
+		<p>我们在真正做一些物体的时候，有一些情况不是标准的圆形，矩形。这时我们需要创建多边形的刚体。这里推荐一个工具<a href="https://github.com/jfahrenkrug/VertexHelper">VertexHelper</a>来帮我们生成刚体的定义。</p>
+
+<p>今天的东西似乎有一点太少了，再瞅瞅另一种连接器，b2MouseJoint——鼠标连接器。
+在使用鼠标连接器之前，我们需要找到我们选择的是那一个物体。</p>
+
+<ul>
+<li>获取手势的位置，也就是坐标向量</li>
+<li>创建一个小的物体，小到只是一个点，然后通过这个物体在物理世界中查找包含这个物体的刚体</li>
+</ul>
+
+
+<p>鼠标连接器的使用步骤
+当检测到碰撞时，创建连接器</p>
+
+<pre><code>b2MouseJointDef mouseJointDef;
+mouseJointDef.bodyA = groundBody; //通常连接地面
+mouseJointDef.bodyB = body;       //需要移动的刚体
+mouseJointDef.target = locationWorld; //当前位置
+mouseJointDef.maxForce = 1000 * body-&gt;GetMass(); //移动的最大力，这个决定移动的灵敏度
+//mouseJointDef.collideConnected = true; //这个场景不需要
+
+self.mouseJoint = (b2MouseJoint *) world-&gt;CreateJoint(&amp;mouseJointDef);
+//body-&gt;SetAwake(true);         //很多地方指定了这个，但是我实际测试，这个场景也不需要
+</code></pre>
+
+<p>在手势移动的时候重新设置</p>
+
+<pre><code>world-&gt;DestroyJoint(self.mouseJoint);
+self.mouseJoint = NULL;
+</code></pre>
+
+<p>在手势取消和结束时销毁</p>
+
+<pre><code>world-&gt;DestroyJoint(_mouseJoint);
+</code></pre>
+
+<p><a href="https://github.com/studentdeng/box2d-tutorials/tree/master/04">demo</a></p>
+
+<p><a href="http://v.youku.com/v_show/id_XNTg2NDQxNzAw.html">demo演示</a></p>
+
+		
+		
+	</div>
+
+</article>
+
+
+    <article class="post" itemprop="blogPost" itemscope itemtype="http://schema.org/BlogPosting">
+	<div class="meta">
+		<div class="date">
+
+
+
+
+
+
+
+
+  
+
+
+<time datetime="2013-07-20T13:30:00+08:00" data-updated="true" itemprop="datePublished">Jul 20<span>th</span>, 2013</time></div>
+		<div class="tags">
+
+
+	<a class='category' href='/blog/categories/box2d/'>box2D</a>, <a class='category' href='/blog/categories/game/'>game</a>
+
+
+</div>
+		
+	</div>
+	<h1 class="title" itemprop="name"><a href="/blog/2013/07/20/box2d-03/" itemprop="url">Box2d 03 b2Joint 连接器</a></h1>
+	<div class="entry-content" itemprop="articleBody">
+		<p>在真实世界中，一个物体很难孤立的存在，比如一个我们的自行车，2个轮子除了可以自由滚动以外，还必须保证2个轮子之间的距离不变，而保证这个距离不变的就是自行车的大梁。我们的胳膊，需要保证在一定范围的情况下围绕一个点旋转等等。Box2D中 连接器就是用来保证刚体和刚体之间的某种关系而出现的。</p>
+
+<p>我们先认识b2DistanceJoint——距离连接器。</p>
+
+<p><img src="http://www.ladeng6666.com/blog/wp-content/uploads/2012/08/zixingche.jpg" alt="image" /></p>
+
+<p>这是一个自行车的模型bodyA bodyB 就是之前熟悉的圆形刚体，中间的红线是我们的距离连接，anchorA，anchorB 则是连接器连接2个刚体的位置。非常的直观。</p>
+
+<pre><code>b2DistanceJointDef jointDef;
+jointDef.Initialize(ballA, ballB, ballA-&gt;GetPosition(), ballB-&gt;GetPosition());
+
+b2DistanceJoint *join = (b2DistanceJoint *)world-&gt;CreateJoint(&amp;jointDef);
+CGFloat distance = 30.0 / PTM_RATIO;
+join-&gt;SetLength(distance);
+</code></pre>
+
+<p>非常的直观，制定连接的位置和距离，就创建完毕了。下面是一个demo，每当触摸屏幕的时候给自行车一个向右的冲量。</p>
+
+<p><a href="https://github.com/studentdeng/box2d-tutorials/tree/master/03">demo代码</a></p>
+
+<p><a href="http://v.youku.com/v_show/id_XNTg1MjU2MTQ4.html">demo演示</a></p>
+
+		
+		
+	</div>
+
+</article>
+
+
+    <article class="post" itemprop="blogPost" itemscope itemtype="http://schema.org/BlogPosting">
+	<div class="meta">
+		<div class="date">
+
+
+
+
+
+
+
+
+  
+
+
+<time datetime="2013-07-19T15:30:00+08:00" data-updated="true" itemprop="datePublished">Jul 19<span>th</span>, 2013</time></div>
+		<div class="tags">
+
+
+	<a class='category' href='/blog/categories/box2d/'>box2D</a>, <a class='category' href='/blog/categories/game/'>game</a>
+
+
+</div>
+		
+	</div>
+	<h1 class="title" itemprop="name"><a href="/blog/2013/07/19/box2d-02/" itemprop="url">Box2D 02 刚体</a></h1>
+	<div class="entry-content" itemprop="articleBody">
+		<p>刚体的属性有3种。</p>
+
+<ul>
+<li>staticBody</li>
+<li>kinematicBody</li>
+<li><p>dynamicBody</p>
+
+<p>  staticzero mass, zero velocity, may be manually moved</p>
+
+<p>  kinematic: zero mass, non-zero velocity set by user, moved by solver</p>
+
+<p>  dynamic: positive mass, non-zero velocity determined by forces, moved by solver</p></li>
+</ul>
+
+
+<p>简单说就是static 的刚体没有质量，没有速度。
+kinematic 的刚体没有质量，但是可以设置速度。
+dynamic 的刚体就是之前我们写的小球。有质量有速度。</p>
+
+<p>static 的常常用于游戏中的墙，这种不会移动的，而且不会受到力的作用改变他的位置，速度等。
+kinematic 的常常用于游戏中的跳板这些，他们会移动，但是同样不会受到力的作用改变原来的运动轨迹。
+dynamic 通常是我们的玩家，敌人。他们会移动，而且会受到力的作用，旋转，碰撞，加速等。</p>
+
+<p>刚写好了几个demo，用来做这几种类型的区分，</p>
+
+<p><a href="https://github.com/studentdeng/box2d-tutorials/tree/master/02">demo代码</a>
+<a href="http://v.youku.com/v_show/id_XNTg0OTM0OTg4.html">demo演示</a></p>
+
+		
+		
+	</div>
+
+</article>
+
+
+    <article class="post" itemprop="blogPost" itemscope itemtype="http://schema.org/BlogPosting">
+	<div class="meta">
+		<div class="date">
+
+
+
+
+
+
+
+
+  
+
+
+<time datetime="2013-07-18T16:05:00+08:00" data-updated="true" itemprop="datePublished">Jul 18<span>th</span>, 2013</time></div>
+		<div class="tags">
+
+
+	<a class='category' href='/blog/categories/box2d/'>box2D</a>, <a class='category' href='/blog/categories/game/'>game</a>
+
+
+</div>
+		
+	</div>
+	<h1 class="title" itemprop="name"><a href="/blog/2013/07/18/box2d-01/" itemprop="url">Box2D 01 基本概念</a></h1>
+	<div class="entry-content" itemprop="articleBody">
+		<p>首先几个概念需要了解一下。</p>
+
+<p><strong>world</strong>
+就是engin需要模拟的世界，他有一个大家都很熟悉的重力</p>
+
+<p><strong>body(刚体)</strong>
+刚体的定义大家在物理中都熟悉了，在box2D世界中，刚体定义了物体一些重要的属性，比如质点位置，旋转角度，角速度，线性阻尼，等</p>
+
+<p><strong>shape(形状)</strong>这里定义我们的物体的形状是圆的，方的还是多边形等</p>
+
+<p><strong>fixture(材质？这个好难翻译中文)</strong>光是上面的东西，我们不能够完成物理世界的碰撞，fixture定义了几个重要的属性，包括摩擦系数，恢复系数，密度</p>
+
+<p>回想当初学习的物理知识也就这么多了，当然后面还会介绍其他新的东西。有个形状，和密度我们可以计算质量，有了位置，速度，角速度，足够我们计算高中学到的简单碰撞了，在有恢复系数和线性阻尼，我们也能更好的模拟更真实的物理情景，而这也是大学物理的部分了。</p>
+
+<p>好多的背景知识，让我们再看看如何在程序里面做一个真实的世界出来。</p>
+
+<pre><code>b2Vec2 gravity;
+gravity.Set(0.0f, -10.0f);
+world = new b2World(gravity);
+</code></pre>
+
+<p>box2D的坐标是和笛卡尔坐标系一样的，向量 (0, -10) 表示我们真实世界的重力，大约为10米每秒</p>
+
+<p>创建我们的第一个物体，一个圆球。
+这里Box2D采用了工厂模式来创建一个我们需要的物体。我们首先描述一个需求，然后通过一个工厂来生产我们需要的产品。</p>
+
+<pre><code>b2BodyDef bodyDef;//
+bodyDef.type = b2_dynamicBody; //这里定义为动态刚体
+bodyDef.position.Set(pt.x/PTM_RATIO, pt.y/PTM_RATIO);
+body = world-&gt;CreateBody(&amp;bodyDef);
+
+b2CircleShape bodyShape;
+bodyShape.m_radius = 26.0 / PTM_RATIO; //定义球的半径
+
+b2FixtureDef fixtureDef;
+fixtureDef.shape = &amp;bodyShape;
+fixtureDef.density = 0.1f;  //密度
+fixtureDef.friction = 0.1f; //摩擦力
+fixtureDef.restitution = 0.9f; //恢复系数
+body-&gt;CreateFixture(&amp;fixtureDef);
+</code></pre>
+
+<p>还急得之前的概念么？在定义好body，shape，创建好fixture之后。这些信息已经足够模拟真实运动了。因为是真实的世界，独立各个平台，box2D的单位是米，而不是程序图形图像的单位像素，PTM_RATIO这个宏用于转换单位。</p>
+
+<p>当然，这些物理数据还不能让我们在程序中看到，为了美观，增加一点小东西，希望大家了解cocos2d。这里创建一个CCPhysicsSprite</p>
+
+<pre><code>CCPhysicsSprite *sprite = [CCPhysicsSprite spriteWithFile:@"ball.png"];
+[self addChild:sprite];
+
+[sprite setPTMRatio:PTM_RATIO];
+[sprite setB2Body:body];
+
+//CCPhysicsSprite 的操作一定要在设置PTMRatio 和 body之后
+[sprite setPosition: ccp(pt.x, pt.y)];
+</code></pre>
+
+<p>这时我们就可以看到一个小球自由落体，然后淡出世界，不过似乎有一种淡淡的忧伤，太无趣了这个世界。</p>
+
+<p>让我们为这个世界创建一个边界，让小球不要运动超过屏幕。</p>
+
+<pre><code>// Define the ground body.
+b2BodyDef groundBodyDef;
+groundBodyDef.position.Set(0, 0); // bottom-left corner
+
+// Call the body factory which allocates memory for the ground body
+// from a pool and creates the ground box shape (also from a pool).
+// The body is also added to the world.
+b2Body* groundBody = world-&gt;CreateBody(&amp;groundBodyDef);
+
+// Define the ground box shape.
+b2EdgeShape groundBox;      
+
+// bottom
+
+groundBox.Set(b2Vec2(0,0), b2Vec2(s.width/PTM_RATIO,0));
+groundBody-&gt;CreateFixture(&amp;groundBox,0);
+
+// top
+groundBox.Set(b2Vec2(0,s.height/PTM_RATIO), b2Vec2(s.width/PTM_RATIO,s.height/PTM_RATIO));
+groundBody-&gt;CreateFixture(&amp;groundBox,0);
+
+// left
+groundBox.Set(b2Vec2(0,s.height/PTM_RATIO), b2Vec2(0,0));
+groundBody-&gt;CreateFixture(&amp;groundBox,0);
+
+// right
+groundBox.Set(b2Vec2(s.width/PTM_RATIO,s.height/PTM_RATIO), b2Vec2(s.width/PTM_RATIO,0));
+groundBody-&gt;CreateFixture(&amp;groundBox,0);
+</code></pre>
+
+<p>这里没有指定其他属性，默认创建的刚体是静态的，不会移动的。而这正是我们想要的。</p>
+
+<p>这时小球会自由落体然后反弹，这时可以调整restitution，如果对这些不是很熟悉的话。但是总体感觉还是有一点无聊，让我们再来一点新东西。</p>
+
+<pre><code>b2Vec2 force = b2Vec2(-30, 30);
+body-&gt;ApplyLinearImpulse(force, body-&gt;GetPosition());
+</code></pre>
+
+<p>body是我们其中的一个小球。ApplyLinearImpulse的意思就是对body施加一个冲量。</p>
+
+<p><a href="https://github.com/studentdeng/box2d-tutorials/tree/master/01">demo地址</a></p>
+
+<p><a href="http://v.youku.com/v_show/id_XNTg0NTU4NzQ0.html">demo演示地址</a></p>
+
+		
+		
+	</div>
+
+</article>
+
+
+    <article class="post" itemprop="blogPost" itemscope itemtype="http://schema.org/BlogPosting">
+	<div class="meta">
+		<div class="date">
+
+
+
+
+
+
+
+
+  
+
+
+<time datetime="2013-07-09T08:02:00+08:00" data-updated="true" itemprop="datePublished">Jul 9<span>th</span>, 2013</time></div>
+		<div class="tags">
+
+
+	<a class='category' href='/blog/categories/emotion/'>emotion</a>, <a class='category' href='/blog/categories/exercise/'>exercise</a>
+
+
+</div>
+		
+	</div>
+	<h1 class="title" itemprop="name"><a href="/blog/2013/07/09/exercise/" itemprop="url">运动小结</a></h1>
+	<div class="entry-content" itemprop="articleBody">
+		<p>有很多人觉得我能用1年的时间减肥30斤，并保持下来很牛，也许是有一点点的不容易吧。我这里纪录一下自己的心得。</p>
+
+<h2>动力</h2>
+
+<p>改变很难，减肥的确是一件非常难的事情，需要极大的意志力和时间的投入。我最开始的动力，可能说出来挺丢人，是因为自己喜欢的一个女孩，表白失败。然后顿时觉得浑身充满负能量没有地方发泄。再加上那会工作压力不大。然后便开始减肥。办了1年的会员，我告诉所有人，我要把肚子上的赘肉练下去，把胳膊上的肌肉练出来。几乎所有人都告诉我，这是不可能的，可能我脾气倔吧，我就越要把这件事情做好。</p>
+
+<h2>第一个月减了20斤</h2>
+
+<p>开始的第一个月是大家最容易坚持下来的，那会浑身都是负能量，我每天游泳1.5到2km，周末会游的远一点。运动了整整一个月，减了20斤。这个对于当时170斤的我来说，这个运动量已经是身体负荷的极限了，要知道铁人三项其中的游泳项目也就是1.5km。这会计算都有一点害怕，那会我一周累计起来要游泳1W米。。。</p>
+
+<p>另外时间上的成本也很高，那会体力不好，基本上要游泳1个半小时多，加上洗澡的时间和收拾东西的时间，即便游泳池就在楼下这么近的位置，每天都需要花费至少2个小时。所以，可见我当时是有多么的闲。: (</p>
+
+<h2>接下来的10个月</h2>
+
+<p>我的经验是当运动到1个月的时候，是身体最疲劳的时候，懒惰情绪抬头，同时身体的疲劳积累越来越多，1个月就是这样的一个拐点。</p>
+
+<p>1个月后，我不得不调整我的计划，我没有办法再坚持每天游泳的运动量了，我减少了1半，一个星期保证至少去3次，一般4次，每次1.5km，1个小时。体重没有变化，一直在保持，这里有一点很重要，中间因为一些假期休息导致反弹了至少3次，每次至少5斤。</p>
+
+<p>有一些有趣的事情，比如情人节那天，大家都出去约妹子了，孤单的我一个人去游了3km，回来整个人就瘦了7斤。当时自己觉得那些运动节目弱爆了，一个星期减个7斤还要好意思觉得效果不错。当然，副作用非常明显，第二天我就起不了床，连续2天都没有去游泳。: D</p>
+
+<p>在我运动了大概6-7个月的时候，我开始做腹部的训练。之前也曾经做过很多，但都没有能够坚持下来，而这次我准备来真的。一开始我只能做30个，用了一个月的时间到每天180个。和我之前说的一样，1个月是一个门槛，</p>
+
+<p>然后又发生了一件事情，可以说是我人生的又一个拐点吧，和一个女孩分手，大量的负能量转换为了健身的动力，又坚持了4个月，而且加大游泳的运动量，于是我又减了5斤。</p>
+
+<h2>最近5个月</h2>
+
+<p>慢慢快1年了，我减了25斤，并保持了下来。这让我的精神状态得到了超级大的改观，我开始意识到运动给我带来的好处不仅仅是排解负能量。由于投入了大量的时间并形成习惯之后，我觉得我需要做一点变化，来提高我的健身效率。然后我找了健身教练来帮助我制定运动计划。</p>
+
+<p>这个可以说是一个魔鬼计划吧，我先锻炼的是腹部，从一些比较入门的动作，当然这些动作已经比我之前做的动作要难好多了，而且数量也增加，每次做的动作都在200个以上，一周至少3次。一般4次。一个月后，达到了520个。然后随着每次运动量增加，我减少到了每周3次，其中1周2次私教课，我自己练一次，间隔游泳1.5km。也就是每天至少花1个小时健身。</p>
+
+<p>1个月后果然是最难熬的腹部下去了一大块，腰围小了1寸，其实好多时候我都想把运动量减少到一周2次腹肌，其他时间游泳，因为练腹肌实在是太苦逼了，撕裂的疼。</p>
+
+<p>我其实挺不好意思的，因为在我快要坚持不下去的时候，又遇到一个妹子，可能是我还没有从之前的那个人走出来，对妹子挺冷淡的，当我准备进入状态的时候，妹子觉得不合适走了。然后我就又获得了不少负能量，然后又坚持了一个月，每周3-4次，一次520个腹部动作。</p>
+
+<p>然后还是吃素，尽量不吃肉，我需要改善我的体质，否则我坚持不下来这么大的运动量。
+这2个月，我又减了5斤。非常不容易的5斤。非常开心，这时候所有人见到我都不得不相信我做到了1年前我说的，我要把肚子上的肉移动到胳膊上面。而且我的确是瘦了好多。</p>
+
+<p>然后我开始纪录我的健身时间和计划。到现在正好3个月。上个月我开始更科学的健身，腹部训练我降到了一周2次，每次300个动作（我更换了新的动作，这300个比之前的520个难多了）。增加了胳膊，肩膀，腿部，背部，肩膀的训练。每天基本上身体挨个部位轮流练，坚持不下去了就去游个1.5km。最近开始做yoga。</p>
+
+<p>这3个月，每个月都锻炼25天以上，每次不少于45分钟，</p>
+
+<p>健身的误区有很多，比如很多妹子都不敢练器械，因为害怕练出肌肉，作为一个坚持做腹肌5个月的家伙来看，练出肌肉绝对没有想象的那么容易，抛开休息，饮食不说，只说运动量，我之前500多个的时候只是热身，如果想要有6块，运动量至少得增加1倍每天差不多1000个，当然，最好换动作，要不太浪费时间。</p>
+
+<p>回头看，我能坚持下来，“妹子”的原因虽然上不了台面，但是的确是真真正正的导火索，感谢她们，让我养成了这样一个好习惯。</p>
+
+<p>写到这里，我又看了一边我的运动时间表。很有意思的，有一周，我几乎从早上忙到晚上12点，每天大概15个小时工作，而我那周，居然健身375分钟.所以忙，只是借口而已。</p>
+
+<p>希望我可以再坚持1年。</p>
+
+		
+		
+	</div>
+
+</article>
+
+</div>
+<nav id="pagenavi">
+    
+    
+        <a href="/blog/page/2/" class="next">Next</a>
+    
+    <div class="center"><a href="/blog/archives">Blog Archives</a></div>
+</nav></div>
+			</div>
+			<footer id="footer" class="inner"><p>
+  2013 - @studentdeng  
+  <span class="credit">Powered by <a href="http://octopress.org">Octopress</a></span>
+</p>
+
+Design credit: <a href="http://shashankmehta.in/archive/2012/greyshade.html">Shashank Mehta</a></footer>
+			<script src="/javascripts/slash.js"></script>
+<script src="/javascripts/jquery.fancybox.pack.js"></script>
+<script type="text/javascript">
+(function($){
+	$('.fancybox').fancybox();
+})(jQuery);
+</script> <!-- Delete or comment this line to disable Fancybox -->
+
+
+
+
+
+
+
+		</div>
+	</div>
+</body>
+</html>
