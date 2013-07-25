@@ -4,7 +4,7 @@
   <title><![CDATA[不会开机的男孩]]></title>
   <link href="http://studentdeng.github.com/atom.xml" rel="self"/>
   <link href="http://studentdeng.github.com/"/>
-  <updated>2013-07-25T23:50:09+08:00</updated>
+  <updated>2013-07-25T23:59:19+08:00</updated>
   <id>http://studentdeng.github.com/</id>
   <author>
     <name><![CDATA[studentdeng]]></name>
@@ -357,15 +357,6 @@ okay， 这个idea最大的区别在于，你需要跳出你之前对那个女�
 <p>看着眼前的小蜡烛， 只要还没有完全熄灭，他总会重新燃烧起来。fabulous！</p>
 
 <p>我去，真得好像继续写下去，但是实在是太困了，在跳完之后，更加身体疼得厉害， 胸部，胳膊，腿，除了没有训练得腹部以外，都在疼。 fuck，明天可能没法走楼梯了。 而刚才喝得酒，显然让我把这周得运动量提前透支了，anyway， 困得实在是不行了。</p>
-]]></content>
-  </entry>
-  
-  <entry>
-    <title type="html"><![CDATA[template]]></title>
-    <link href="http://studentdeng.github.com/blog/2013/06/16/template/"/>
-    <updated>2013-06-16T17:26:00+08:00</updated>
-    <id>http://studentdeng.github.com/blog/2013/06/16/template</id>
-    <content type="html"><![CDATA[
 ]]></content>
   </entry>
   
@@ -1176,6 +1167,276 @@ $ sudo umount /mnt/floppy
 <p>调试方法很多，这里介绍最简单的方式之一。bochs 配置中增加 magic_break:enabled=1</p>
 
 <p>代码中增加xchg bx, bx，bochs会停在代码出。当然，前提是bochs需要支持debug</p>
+]]></content>
+  </entry>
+  
+  <entry>
+    <title type="html"><![CDATA[Objective-C block]]></title>
+    <link href="http://studentdeng.github.com/blog/2012/02/03/objblock/"/>
+    <updated>2012-02-03T23:47:00+08:00</updated>
+    <id>http://studentdeng.github.com/blog/2012/02/03/objblock</id>
+    <content type="html"><![CDATA[<p>block 有什么意义，特点等等，这些东西，实在是太复杂了，这里只是简单的总结一下block的内存管理。而且也仅仅限于objective-C的部分</p>
+
+<h1>Block memory</h1>
+
+<p>block 的内存管理，应该是最头疼的地方,就用这个来自WWDC的例子来解释一下吧。</p>
+
+<p><img src="http://studentdeng.github.com/images/objblock-1.png" alt="alt text" /></p>
+
+<p>当程序运行到这里时，stack 空间中有 shared 变量和 captured 变量。</p>
+
+<p>这里可以看出，__block 变量开始是处于stack上的。</p>
+
+<p><img src="http://studentdeng.github.com/images/objblock-2.png" alt="alt text" /></p>
+
+<p>当程序运行到这里时，stack 空间中有 shared 变量，captured 变量和block1。</p>
+
+<p>这里可以看出，block 类型的变量开始时也是处在stack上的。</p>
+
+<p><img src="http://studentdeng.github.com/images/objblock-3.png" alt="alt text" /></p>
+
+<p>当程序运行到这里时，stack 空间中有 shared 变量，captured 变量和block1。</p>
+
+<p>这里值得注意的就是当我们直接修改stack 上的captured变量时，block1中的captured变量仍然是原来的数值10。事实上，从const 我们就可以看出，block1中的captured变量是不能被修改的而且是从stack原有变量的一个const 拷贝。在block1中访问的captured变量是const拷贝的，也就是说block1中captured = 10，而不是原有的stack上的值 20。当然，在block1中，我们也不能修改captured变量。</p>
+
+<h1>Copy block</h1>
+
+<p>block在一开始是处在stack上的，这是为了考虑到效率的原因，但是，有时候是需要block的生命周期长于一开始的stack，这时，我们就通过copy block 来将block复制到heap。</p>
+
+<p><img src="http://studentdeng.github.com/images/objblock-4.png" alt="alt text" /></p>
+
+<p>当程序执行完 block2 = [block1 copy];时，__block 类型变量shared，被复制到了heap中，很显然，shared变量需要被block和block2共享(当然还有stack也要共享)，而block2被移动到heap中，很可能生命周期会长于stack，所以，shared也被复制到了heap中。而block2中的captured 也被复制到了heap中。</p>
+
+<p><img src="http://studentdeng.github.com/images/objblock-5.png" alt="alt text" /></p>
+
+<p>当程序执行完 block3 = [block2 copy];时, 我们看到的是，block2 和block3 其实指向的是同一片内存空间。事实上，block的数据结构中，保存了引用计数，而对于copy到heap中的block 再copy时，行为同普通对象retain一样，会使引用计数+1。那么如果我们对[block retain]会如何呢？ 实际上什么都没有发生，至少在现在的runtime版本下。因为retain中，不仅有引用计数+1在，而且retain的返回值，必须同返回调用对象的地址一样，而block的地址是可能变化的（stack or heap），所以，这里retain的行为几乎是被忽略掉的。</p>
+
+<p>当heap中的block变量先于stack被销毁时，如调用 [block2 release]; [block3 release];，heap中的block2，block3 由于引用计数为0 而被销毁，而 __block 变量shared则还在heap中，因为stack还要使用，block1 也要使用。</p>
+
+<p><img src="http://studentdeng.github.com/images/objblock-6.png" alt="alt text" /></p>
+
+<p>当heap中的block变量晚于stack时，显然，stack 被清除，function中也啥都没了。</p>
+
+<p><img src="http://studentdeng.github.com/images/objblock-7.png" alt="alt text" /></p>
+
+<p>最后，当block2 和block3 都被release之后。则恢复到最初状态</p>
+
+<p><img src="http://studentdeng.github.com/images/objblock-8.png" alt="alt text" /></p>
+
+<h1>block details</h1>
+
+<p>当我们写出一个Block literal expression</p>
+
+<pre><code>^ { printf("hello world\n"); }
+</code></pre>
+
+<p>事实上，编译器为我们生成了如下结构</p>
+
+<pre><code>struct __block_literal_1 {
+    void *isa;
+    int flags;
+    int reserved; 
+    void (*invoke)(struct __block_literal_1 *);
+    struct __block_descriptor_1 *descriptor;
+};void __block_invoke_1(struct __block_literal_1 *_block) {
+    printf("hello world\n");
+}static struct __block_descriptor_1 {
+    unsigned long int reserved;
+    unsigned long int Block_size;
+} __block_descriptor_1 = { 0, sizeof(struct __block_literal_1)}; 当Block literal expression 使用时 __block_literal_1 则会被初始化为：struct __block_literal_1 _block_literal = {
+    &amp;_NSConcreteStackBlock,
+    (1&lt;&lt;29), &lt;uninitialized&gt;,
+    __block_invoke_1,
+    &amp;__block_descriptor_1
+   };
+</code></pre>
+
+<p>下一个例子</p>
+
+<pre><code>int x = 10;
+void (^vv)(void) = ^{printf("x is %d\n", x);};
+x = 11;
+vv();
+编译器会生成如下结构
+struct __block_literal_2{
+    void *isa;
+    int flags;
+    int reserved;
+    void (*invoke)(struct __block_literal_2 *);
+    struct __block_descriptor_2 *descriptor;
+    const int x;
+};
+void __block_invoke_2(struct __block_literal_2 *_block){
+    printf("x is %d\n", _block-&gt;x);
+}
+void struct __block_descriptor_2{
+    unsigned long int reserved;
+    unsigned long int block_size;
+}__block_descriptor_2 = {0, sizeof(struct __block_literal_2)};
+struct __block_literal_2 __block_literal_2 = {
+    &amp;NSConcreteStackBlock,
+    (1&lt;&lt;29),
+    __block_invoke_2,
+    &amp;__block_descriptor_2,
+    x
+};
+</code></pre>
+
+<p>block中使用的普通变量（int， char *）导入是const copy。普通对象则会retain。__block 类型变量则什么不做，只是保存一个指针，全局变量也只是保存一个简单的指针。</p>
+
+<p>当然，block 可能也会嵌套block，那么又会是什么样子？其实不复杂，复杂的只是增加了复制函数，和释放函数，这一点很像C++的拷贝构造函数，在必要时生成。</p>
+
+<pre><code>void (^existingBlock)(void) = …;
+void (^vv)(void) = ^{existingBlock();};
+vv();
+struct __block_literal_3{
+    ...;//esisting block
+};
+struct __block_literal_4{
+    void *isa;
+    int flags;
+    int reserved;
+    void (*invoke)(struct __block_literal_4 *);
+    struct __block_literal_3 *const existingBlock;
+};
+void __block_invoke_4(struct __block_literal_3 *__block) {
+   __block-&gt;existingBlock-&gt;invoke(__block-&gt;existingBlock);
+}
+void __block_copy_4(struct __block_literal_4 *dst, struct __block_literal_4 *src) {
+     //_Block_copy_assign(&amp;dst-&gt;existingBlock, src-&gt;existingBlock, 0);
+     _Block_object_assign(&amp;dst-&gt;existingBlock, src-&gt;existingBlock, BLOCK_FIELD_IS_BLOCK);
+}
+void __block_dispose_4(struct __block_literal_4 *src) {
+     // was _Block_destroy
+     _Block_object_dispose(src-&gt;existingBlock, BLOCK_FIELD_IS_BLOCK);
+}
+static struct __block_descriptor_4 {
+    unsigned long int reserved;
+    unsigned long int Block_size;
+    void (*copy_helper)(struct __block_literal_4 *dst, struct __block_literal_4 *src);
+    void (*dispose_helper)(struct __block_literal_4 *);
+} __block_descriptor_4 = {
+    0,
+    sizeof(struct __block_literal_4),
+    __block_copy_4,
+    __block_dispose_4,
+};
+</code></pre>
+
+<p>初始化</p>
+
+<pre><code>  struct __block_literal_4 _block_literal = {
+    &amp;_NSConcreteStackBlock,
+    (1&lt;&lt;25)|(1&lt;&lt;29), &lt;uninitialized&gt;
+    __block_invoke_4,
+    &amp; __block_descriptor_4
+        existingBlock,
+   };
+
+
+__block storage variables
+
+__block  变量是一种很特殊的数据类型，有自己的特有的数据结构
+
+struct _block_byref_xxxx {
+    void *isa;
+    struct _block_byref_xxxx *forwarding;
+    int flags;   //refcount;
+    int size;
+    // helper functions called via Block_copy() and Block_release()
+    void (*byref_keep)(void  *dst, void *src); //需要时被生成
+    void (*byref_dispose)(void *);//需要时被生成
+    typeof(marked_variable) marked_variable;
+};
+</code></pre>
+
+<p>看看__block 类型变量的使用</p>
+
+<pre><code>int __block i = 10;
+i = 11;
+struct _block_byref_i {
+    void *isa;
+    struct _block_byref_i *forwarding;
+    int flags;   //refcount;
+    int size;
+    int captured_i;
+} i = { NULL, &amp;i, 0, sizeof(struct _block_byref_i), 10 };
+i.forwarding-&gt;captured_i = 11;
+</code></pre>
+
+<p>显然，当block中增加了<strong>block 类型变量之后，嵌套block 的拷贝函数也会增加对</strong>block 变量的复制。</p>
+
+<pre><code>__block void (voidBlock)(void) = blockA;
+voidBlock = blockB;
+struct _block_byref_voidBlock {
+    void *isa;
+    struct _block_byref_voidBlock *forwarding;
+    int flags;   //refcount;
+    int size;
+    void (*byref_keep)(struct _block_byref_voidBlock *dst, struct _block_byref_voidBlock *src);
+    void (*byref_dispose)(struct _block_byref_voidBlock *);
+    void (^captured_voidBlock)(void);
+};
+void _block_byref_keep_helper(struct _block_byref_voidBlock *dst, struct _block_byref_voidBlock *src) {
+    //_Block_copy_assign(&amp;dst-&gt;captured_voidBlock, src-&gt;captured_voidBlock, 0);
+    _Block_object_assign(&amp;dst-&gt;captured_voidBlock, src-&gt;captured_voidBlock, BLOCK_FIELD_IS_BLOCK | BLOCK_BYREF_CALLER);
+}
+void _block_byref_dispose_helper(struct _block_byref_voidBlock *param) {
+    //_Block_destroy(param-&gt;captured_voidBlock, 0);
+    _Block_object_dispose(param-&gt;captured_voidBlock, BLOCK_FIELD_IS_BLOCK | BLOCK_BYREF_CALLER)}
+struct _block_byref_voidBlock voidBlock = {( .forwarding=&amp;voidBlock, .flags=(1&lt;&lt;25), .size=sizeof(struct _block_byref_voidBlock *),
+      .byref_keep=_block_byref_keep_helper, .byref_dispose=_block_byref_dispose_helper,
+      .captured_voidBlock=blockA )};
+voidBlock.forwarding-&gt;captured_voidBlock = blockB;
+</code></pre>
+
+<p>block中，引入了__block 会是什么情况</p>
+
+<pre><code>int __block i = 2;
+functioncall(^{ i = 10; });
+struct _block_byref_i {
+    void *isa;  // set to NULL
+    struct _block_byref_voidBlock *forwarding;
+    int flags;   //refcount;
+    int size;
+    void (*byref_keep)(struct _block_byref_i *dst, struct _block_byref_i *src);
+    void (*byref_dispose)(struct _block_byref_i *);
+    int captured_i;
+};
+struct __block_literal_5 {
+    void *isa;
+    int flags;
+    int reserved; 
+    void (*invoke)(struct __block_literal_5 *);
+    struct __block_descriptor_5 *descriptor;
+    struct _block_byref_i *i_holder;
+};
+void __block_invoke_5(struct __block_literal_5 *_block) {
+   _block-&gt;i_holder-&gt;forwarding-&gt;captured_i = 10;
+}
+void __block_copy_5(struct __block_literal_5 *dst, struct __block_literal_5 *src) {
+     _Block_object_assign(&amp;dst-&gt;i_holder, src-&gt;i_holder, BLOCK_FIELD_IS_BYREF | BLOCK_BYREF_CALLER);
+}
+void __block_dispose_5(struct __block_literal_5 *src) {
+     _Block_object_dispose(src-&gt;i_holder, BLOCK_FIELD_IS_BYREF | BLOCK_BYREF_CALLER);
+}
+static struct __block_descriptor_5 {
+    unsigned long int reserved;
+    unsigned long int Block_size;
+    void (*copy_helper)(struct __block_literal_5 *dst, struct __block_literal_5 *src);
+    void (*dispose_helper)(struct __block_literal_5 *);
+} __block_descriptor_5 = { 0, sizeof(struct __block_literal_5) __block_copy_5, __block_dispose_5 };
+struct _block_byref_i i = {( .forwarding=&amp;i, .flags=0, .size=sizeof(struct _block_byref_i) )};
+struct __block_literal_5 _block_literal = {
+    &amp;_NSConcreteStackBlock,
+    (1&lt;&lt;25)|(1&lt;&lt;29), &lt;uninitialized&gt;,
+    __block_invoke_5,
+    &amp;__block_descriptor_5,
+        2,
+   };
+</code></pre>
+
+<p>block 中的太多细节这里不做赘述，有兴趣的可以参考Block—ABI-Apple，也可以直接<a href="http://llvm.org/svn/llvm-project/compiler-rt/trunk/BlocksRuntime/runtime.c">这里</a>去看。</p>
 ]]></content>
   </entry>
   

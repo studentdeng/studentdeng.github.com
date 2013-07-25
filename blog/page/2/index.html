@@ -233,37 +233,6 @@ okay， 这个idea最大的区别在于，你需要跳出你之前对那个女�
   
 
 
-<time datetime="2013-06-16T17:26:00+08:00" data-updated="true" itemprop="datePublished">Jun 16<span>th</span>, 2013</time></div>
-		<div class="tags">
-
-</div>
-		
-	</div>
-	<h1 class="title" itemprop="name"><a href="/blog/2013/06/16/template/" itemprop="url">Template</a></h1>
-	<div class="entry-content" itemprop="articleBody">
-		
-
-		
-		
-	</div>
-
-</article>
-
-
-    <article class="post" itemprop="blogPost" itemscope itemtype="http://schema.org/BlogPosting">
-	<div class="meta">
-		<div class="date">
-
-
-
-
-
-
-
-
-  
-
-
 <time datetime="2013-06-12T20:25:00+08:00" data-updated="true" itemprop="datePublished">Jun 12<span>th</span>, 2013</time></div>
 		<div class="tags">
 
@@ -347,6 +316,56 @@ okay， 这个idea最大的区别在于，你需要跳出你之前对那个女�
 </code></pre>
 
 <p>It&#8217;s really fascinated feature and avoid retype the same piece of code again and again.</p>
+
+		
+		
+	</div>
+
+</article>
+
+
+    <article class="post" itemprop="blogPost" itemscope itemtype="http://schema.org/BlogPosting">
+	<div class="meta">
+		<div class="date">
+
+
+
+
+
+
+
+
+  
+
+
+<time datetime="2013-04-24T19:21:00+08:00" data-updated="true" itemprop="datePublished">Apr 24<span>th</span>, 2013</time></div>
+		<div class="tags">
+
+
+	<a class='category' href='/blog/categories/apple-script/'>apple_script</a>
+
+
+</div>
+		
+	</div>
+	<h1 class="title" itemprop="name"><a href="/blog/2013/04/24/apple-script-1/" itemprop="url">Apple Script 可执行的伪代码</a></h1>
+	<div class="entry-content" itemprop="articleBody">
+		<p>apple script 这种脚本语言就是精炼, 可执行的伪代码</p>
+
+<pre><code>tell application "Finder"
+
+display dialog "选择源文件目录"
+set sourcepath to quoted form of POSIX path of (choose folder)
+
+display dialog "选择输出目录"
+set destinationpath to quoted form of POSIX path of (choose folder)
+
+end tell
+
+do shell script "/usr/bin/php /Users/ygcurer/apigen/apigen.php --source " &amp; sourcepath &amp; " --destination " &amp; destinationpath &amp; " --title curer --charset UTF-8 --access-levels public,protected --internal no --php yes --tree yes --deprecated no --todo no --download no --source-code yes --colors yes --progressbar no --update-check no"
+</code></pre>
+
+<p>这里把php document generate 的shell command 包装进了application中</p>
 
 		
 		
