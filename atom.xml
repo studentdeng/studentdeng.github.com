@@ -1,0 +1,1443 @@
+<?xml version="1.0" encoding="utf-8"?>
+<feed xmlns="http://www.w3.org/2005/Atom">
+
+  <title><![CDATA[不会开机的男孩]]></title>
+  <link href="http://studentdeng.github.com/atom.xml" rel="self"/>
+  <link href="http://studentdeng.github.com/"/>
+  <updated>2013-07-25T16:19:41+08:00</updated>
+  <id>http://studentdeng.github.com/</id>
+  <author>
+    <name><![CDATA[studentdeng]]></name>
+    <email><![CDATA[studentdeng@hotmail.com]]></email>
+  </author>
+  <generator uri="http://octopress.org/">Octopress</generator>
+
+  
+  <entry>
+    <title type="html"><![CDATA[box2d 04 多边形刚体和鼠标连接器]]></title>
+    <link href="http://studentdeng.github.com/blog/2013/07/22/box2d-04/"/>
+    <updated>2013-07-22T13:34:00+08:00</updated>
+    <id>http://studentdeng.github.com/blog/2013/07/22/box2d-04</id>
+    <content type="html"><![CDATA[<p>我们在真正做一些物体的时候，有一些情况不是标准的圆形，矩形。这时我们需要创建多边形的刚体。这里推荐一个工具<a href="https://github.com/jfahrenkrug/VertexHelper">VertexHelper</a>来帮我们生成刚体的定义。</p>
+
+<p>今天的东西似乎有一点太少了，再瞅瞅另一种连接器，b2MouseJoint——鼠标连接器。
+在使用鼠标连接器之前，我们需要找到我们选择的是那一个物体。</p>
+
+<ul>
+<li>获取手势的位置，也就是坐标向量</li>
+<li>创建一个小的物体，小到只是一个点，然后通过这个物体在物理世界中查找包含这个物体的刚体</li>
+</ul>
+
+
+<p>鼠标连接器的使用步骤
+当检测到碰撞时，创建连接器</p>
+
+<pre><code>b2MouseJointDef mouseJointDef;
+mouseJointDef.bodyA = groundBody; //通常连接地面
+mouseJointDef.bodyB = body;       //需要移动的刚体
+mouseJointDef.target = locationWorld; //当前位置
+mouseJointDef.maxForce = 1000 * body-&gt;GetMass(); //移动的最大力，这个决定移动的灵敏度
+//mouseJointDef.collideConnected = true; //这个场景不需要
+
+self.mouseJoint = (b2MouseJoint *) world-&gt;CreateJoint(&amp;mouseJointDef);
+//body-&gt;SetAwake(true);         //很多地方指定了这个，但是我实际测试，这个场景也不需要
+</code></pre>
+
+<p>在手势移动的时候重新设置</p>
+
+<pre><code>world-&gt;DestroyJoint(self.mouseJoint);
+self.mouseJoint = NULL;
+</code></pre>
+
+<p>在手势取消和结束时销毁</p>
+
+<pre><code>world-&gt;DestroyJoint(_mouseJoint);
+</code></pre>
+
+<p><a href="https://github.com/studentdeng/box2d-tutorials/tree/master/04">demo</a></p>
+
+<p><a href="http://v.youku.com/v_show/id_XNTg2NDQxNzAw.html">demo演示</a></p>
+]]></content>
+  </entry>
+  
+  <entry>
+    <title type="html"><![CDATA[box2d 03 b2Joint 连接器]]></title>
+    <link href="http://studentdeng.github.com/blog/2013/07/20/box2d-03/"/>
+    <updated>2013-07-20T13:30:00+08:00</updated>
+    <id>http://studentdeng.github.com/blog/2013/07/20/box2d-03</id>
+    <content type="html"><![CDATA[<p>在真实世界中，一个物体很难孤立的存在，比如一个我们的自行车，2个轮子除了可以自由滚动以外，还必须保证2个轮子之间的距离不变，而保证这个距离不变的就是自行车的大梁。我们的胳膊，需要保证在一定范围的情况下围绕一个点旋转等等。Box2D中 连接器就是用来保证刚体和刚体之间的某种关系而出现的。</p>
+
+<p>我们先认识b2DistanceJoint——距离连接器。</p>
+
+<p><img src="http://www.ladeng6666.com/blog/wp-content/uploads/2012/08/zixingche.jpg" alt="image" /></p>
+
+<p>这是一个自行车的模型bodyA bodyB 就是之前熟悉的圆形刚体，中间的红线是我们的距离连接，anchorA，anchorB 则是连接器连接2个刚体的位置。非常的直观。</p>
+
+<pre><code>b2DistanceJointDef jointDef;
+jointDef.Initialize(ballA, ballB, ballA-&gt;GetPosition(), ballB-&gt;GetPosition());
+
+b2DistanceJoint *join = (b2DistanceJoint *)world-&gt;CreateJoint(&amp;jointDef);
+CGFloat distance = 30.0 / PTM_RATIO;
+join-&gt;SetLength(distance);
+</code></pre>
+
+<p>非常的直观，制定连接的位置和距离，就创建完毕了。下面是一个demo，每当触摸屏幕的时候给自行车一个向右的冲量。</p>
+
+<p><a href="https://github.com/studentdeng/box2d-tutorials/tree/master/03">demo代码</a></p>
+
+<p><a href="http://v.youku.com/v_show/id_XNTg1MjU2MTQ4.html">demo演示</a></p>
+]]></content>
+  </entry>
+  
+  <entry>
+    <title type="html"><![CDATA[Box2D 02 刚体]]></title>
+    <link href="http://studentdeng.github.com/blog/2013/07/19/box2d-02/"/>
+    <updated>2013-07-19T15:30:00+08:00</updated>
+    <id>http://studentdeng.github.com/blog/2013/07/19/box2d-02</id>
+    <content type="html"><![CDATA[<p>刚体的属性有3种。</p>
+
+<ul>
+<li>staticBody</li>
+<li>kinematicBody</li>
+<li><p>dynamicBody</p>
+
+<p>  staticzero mass, zero velocity, may be manually moved</p>
+
+<p>  kinematic: zero mass, non-zero velocity set by user, moved by solver</p>
+
+<p>  dynamic: positive mass, non-zero velocity determined by forces, moved by solver</p></li>
+</ul>
+
+
+<p>简单说就是static 的刚体没有质量，没有速度。
+kinematic 的刚体没有质量，但是可以设置速度。
+dynamic 的刚体就是之前我们写的小球。有质量有速度。</p>
+
+<p>static 的常常用于游戏中的墙，这种不会移动的，而且不会受到力的作用改变他的位置，速度等。
+kinematic 的常常用于游戏中的跳板这些，他们会移动，但是同样不会受到力的作用改变原来的运动轨迹。
+dynamic 通常是我们的玩家，敌人。他们会移动，而且会受到力的作用，旋转，碰撞，加速等。</p>
+
+<p>刚写好了几个demo，用来做这几种类型的区分，</p>
+
+<p><a href="https://github.com/studentdeng/box2d-tutorials/tree/master/02">demo代码</a>
+<a href="http://v.youku.com/v_show/id_XNTg0OTM0OTg4.html">demo演示</a></p>
+]]></content>
+  </entry>
+  
+  <entry>
+    <title type="html"><![CDATA[Box2D 01 基本概念]]></title>
+    <link href="http://studentdeng.github.com/blog/2013/07/18/box2d-01/"/>
+    <updated>2013-07-18T16:05:00+08:00</updated>
+    <id>http://studentdeng.github.com/blog/2013/07/18/box2d-01</id>
+    <content type="html"><![CDATA[<p>首先几个概念需要了解一下。</p>
+
+<p><strong>world</strong>
+就是engin需要模拟的世界，他有一个大家都很熟悉的重力</p>
+
+<p><strong>body(刚体)</strong>
+刚体的定义大家在物理中都熟悉了，在box2D世界中，刚体定义了物体一些重要的属性，比如质点位置，旋转角度，角速度，线性阻尼，等</p>
+
+<p><strong>shape(形状)</strong>这里定义我们的物体的形状是圆的，方的还是多边形等</p>
+
+<p><strong>fixture(材质？这个好难翻译中文)</strong>光是上面的东西，我们不能够完成物理世界的碰撞，fixture定义了几个重要的属性，包括摩擦系数，恢复系数，密度</p>
+
+<p>回想当初学习的物理知识也就这么多了，当然后面还会介绍其他新的东西。有个形状，和密度我们可以计算质量，有了位置，速度，角速度，足够我们计算高中学到的简单碰撞了，在有恢复系数和线性阻尼，我们也能更好的模拟更真实的物理情景，而这也是大学物理的部分了。</p>
+
+<p>好多的背景知识，让我们再看看如何在程序里面做一个真实的世界出来。</p>
+
+<pre><code>b2Vec2 gravity;
+gravity.Set(0.0f, -10.0f);
+world = new b2World(gravity);
+</code></pre>
+
+<p>box2D的坐标是和笛卡尔坐标系一样的，向量 (0, -10) 表示我们真实世界的重力，大约为10米每秒</p>
+
+<p>创建我们的第一个物体，一个圆球。
+这里Box2D采用了工厂模式来创建一个我们需要的物体。我们首先描述一个需求，然后通过一个工厂来生产我们需要的产品。</p>
+
+<pre><code>b2BodyDef bodyDef;//
+bodyDef.type = b2_dynamicBody; //这里定义为动态刚体
+bodyDef.position.Set(pt.x/PTM_RATIO, pt.y/PTM_RATIO);
+body = world-&gt;CreateBody(&amp;bodyDef);
+
+b2CircleShape bodyShape;
+bodyShape.m_radius = 26.0 / PTM_RATIO; //定义球的半径
+
+b2FixtureDef fixtureDef;
+fixtureDef.shape = &amp;bodyShape;
+fixtureDef.density = 0.1f;  //密度
+fixtureDef.friction = 0.1f; //摩擦力
+fixtureDef.restitution = 0.9f; //恢复系数
+body-&gt;CreateFixture(&amp;fixtureDef);
+</code></pre>
+
+<p>还急得之前的概念么？在定义好body，shape，创建好fixture之后。这些信息已经足够模拟真实运动了。因为是真实的世界，独立各个平台，box2D的单位是米，而不是程序图形图像的单位像素，PTM_RATIO这个宏用于转换单位。</p>
+
+<p>当然，这些物理数据还不能让我们在程序中看到，为了美观，增加一点小东西，希望大家了解cocos2d。这里创建一个CCPhysicsSprite</p>
+
+<pre><code>CCPhysicsSprite *sprite = [CCPhysicsSprite spriteWithFile:@"ball.png"];
+[self addChild:sprite];
+
+[sprite setPTMRatio:PTM_RATIO];
+[sprite setB2Body:body];
+
+//CCPhysicsSprite 的操作一定要在设置PTMRatio 和 body之后
+[sprite setPosition: ccp(pt.x, pt.y)];
+</code></pre>
+
+<p>这时我们就可以看到一个小球自由落体，然后淡出世界，不过似乎有一种淡淡的忧伤，太无趣了这个世界。</p>
+
+<p>让我们为这个世界创建一个边界，让小球不要运动超过屏幕。</p>
+
+<pre><code>// Define the ground body.
+b2BodyDef groundBodyDef;
+groundBodyDef.position.Set(0, 0); // bottom-left corner
+
+// Call the body factory which allocates memory for the ground body
+// from a pool and creates the ground box shape (also from a pool).
+// The body is also added to the world.
+b2Body* groundBody = world-&gt;CreateBody(&amp;groundBodyDef);
+
+// Define the ground box shape.
+b2EdgeShape groundBox;      
+
+// bottom
+
+groundBox.Set(b2Vec2(0,0), b2Vec2(s.width/PTM_RATIO,0));
+groundBody-&gt;CreateFixture(&amp;groundBox,0);
+
+// top
+groundBox.Set(b2Vec2(0,s.height/PTM_RATIO), b2Vec2(s.width/PTM_RATIO,s.height/PTM_RATIO));
+groundBody-&gt;CreateFixture(&amp;groundBox,0);
+
+// left
+groundBox.Set(b2Vec2(0,s.height/PTM_RATIO), b2Vec2(0,0));
+groundBody-&gt;CreateFixture(&amp;groundBox,0);
+
+// right
+groundBox.Set(b2Vec2(s.width/PTM_RATIO,s.height/PTM_RATIO), b2Vec2(s.width/PTM_RATIO,0));
+groundBody-&gt;CreateFixture(&amp;groundBox,0);
+</code></pre>
+
+<p>这里没有指定其他属性，默认创建的刚体是静态的，不会移动的。而这正是我们想要的。</p>
+
+<p>这时小球会自由落体然后反弹，这时可以调整restitution，如果对这些不是很熟悉的话。但是总体感觉还是有一点无聊，让我们再来一点新东西。</p>
+
+<pre><code>b2Vec2 force = b2Vec2(-30, 30);
+body-&gt;ApplyLinearImpulse(force, body-&gt;GetPosition());
+</code></pre>
+
+<p>body是我们其中的一个小球。ApplyLinearImpulse的意思就是对body施加一个冲量。</p>
+
+<p><a href="https://github.com/studentdeng/box2d-tutorials/tree/master/01">demo地址</a></p>
+
+<p><a href="http://v.youku.com/v_show/id_XNTg0NTU4NzQ0.html">demo演示地址</a></p>
+]]></content>
+  </entry>
+  
+  <entry>
+    <title type="html"><![CDATA[运动小结]]></title>
+    <link href="http://studentdeng.github.com/blog/2013/07/09/exercise/"/>
+    <updated>2013-07-09T08:02:00+08:00</updated>
+    <id>http://studentdeng.github.com/blog/2013/07/09/exercise</id>
+    <content type="html"><![CDATA[<p>有很多人觉得我能用1年的时间减肥30斤，并保持下来很牛，也许是有一点点的不容易吧。我这里纪录一下自己的心得。</p>
+
+<h2>动力</h2>
+
+<p>改变很难，减肥的确是一件非常难的事情，需要极大的意志力和时间的投入。我最开始的动力，可能说出来挺丢人，是因为自己喜欢的一个女孩，表白失败。然后顿时觉得浑身充满负能量没有地方发泄。再加上那会工作压力不大。然后便开始减肥。办了1年的会员，我告诉所有人，我要把肚子上的赘肉练下去，把胳膊上的肌肉练出来。几乎所有人都告诉我，这是不可能的，可能我脾气倔吧，我就越要把这件事情做好。</p>
+
+<h2>第一个月减了20斤</h2>
+
+<p>开始的第一个月是大家最容易坚持下来的，那会浑身都是负能量，我每天游泳1.5到2km，周末会游的远一点。运动了整整一个月，减了20斤。这个对于当时170斤的我来说，这个运动量已经是身体负荷的极限了，要知道铁人三项其中的游泳项目也就是1.5km。这会计算都有一点害怕，那会我一周累计起来要游泳1W米。。。</p>
+
+<p>另外时间上的成本也很高，那会体力不好，基本上要游泳1个半小时多，加上洗澡的时间和收拾东西的时间，即便游泳池就在楼下这么近的位置，每天都需要花费至少2个小时。所以，可见我当时是有多么的闲。: (</p>
+
+<h2>接下来的10个月</h2>
+
+<p>我的经验是当运动到1个月的时候，是身体最疲劳的时候，懒惰情绪抬头，同时身体的疲劳积累越来越多，1个月就是这样的一个拐点。</p>
+
+<p>1个月后，我不得不调整我的计划，我没有办法再坚持每天游泳的运动量了，我减少了1半，一个星期保证至少去3次，一般4次，每次1.5km，1个小时。体重没有变化，一直在保持，这里有一点很重要，中间因为一些假期休息导致反弹了至少3次，每次至少5斤。</p>
+
+<p>有一些有趣的事情，比如情人节那天，大家都出去约妹子了，孤单的我一个人去游了3km，回来整个人就瘦了7斤。当时自己觉得那些运动节目弱爆了，一个星期减个7斤还要好意思觉得效果不错。当然，副作用非常明显，第二天我就起不了床，连续2天都没有去游泳。: D</p>
+
+<p>在我运动了大概6-7个月的时候，我开始做腹部的训练。之前也曾经做过很多，但都没有能够坚持下来，而这次我准备来真的。一开始我只能做30个，用了一个月的时间到每天180个。和我之前说的一样，1个月是一个门槛，</p>
+
+<p>然后又发生了一件事情，可以说是我人生的又一个拐点吧，和一个女孩分手，大量的负能量转换为了健身的动力，又坚持了4个月，而且加大游泳的运动量，于是我又减了5斤。</p>
+
+<h2>最近5个月</h2>
+
+<p>慢慢快1年了，我减了25斤，并保持了下来。这让我的精神状态得到了超级大的改观，我开始意识到运动给我带来的好处不仅仅是排解负能量。由于投入了大量的时间并形成习惯之后，我觉得我需要做一点变化，来提高我的健身效率。然后我找了健身教练来帮助我制定运动计划。</p>
+
+<p>这个可以说是一个魔鬼计划吧，我先锻炼的是腹部，从一些比较入门的动作，当然这些动作已经比我之前做的动作要难好多了，而且数量也增加，每次做的动作都在200个以上，一周至少3次。一般4次。一个月后，达到了520个。然后随着每次运动量增加，我减少到了每周3次，其中1周2次私教课，我自己练一次，间隔游泳1.5km。也就是每天至少花1个小时健身。</p>
+
+<p>1个月后果然是最难熬的腹部下去了一大块，腰围小了1寸，其实好多时候我都想把运动量减少到一周2次腹肌，其他时间游泳，因为练腹肌实在是太苦逼了，撕裂的疼。</p>
+
+<p>我其实挺不好意思的，因为在我快要坚持不下去的时候，又遇到一个妹子，可能是我还没有从之前的那个人走出来，对妹子挺冷淡的，当我准备进入状态的时候，妹子觉得不合适走了。然后我就又获得了不少负能量，然后又坚持了一个月，每周3-4次，一次520个腹部动作。</p>
+
+<p>然后还是吃素，尽量不吃肉，我需要改善我的体质，否则我坚持不下来这么大的运动量。
+这2个月，我又减了5斤。非常不容易的5斤。非常开心，这时候所有人见到我都不得不相信我做到了1年前我说的，我要把肚子上的肉移动到胳膊上面。而且我的确是瘦了好多。</p>
+
+<p>然后我开始纪录我的健身时间和计划。到现在正好3个月。上个月我开始更科学的健身，腹部训练我降到了一周2次，每次300个动作（我更换了新的动作，这300个比之前的520个难多了）。增加了胳膊，肩膀，腿部，背部，肩膀的训练。每天基本上身体挨个部位轮流练，坚持不下去了就去游个1.5km。最近开始做yoga。</p>
+
+<p>这3个月，每个月都锻炼25天以上，每次不少于45分钟，</p>
+
+<p>健身的误区有很多，比如很多妹子都不敢练器械，因为害怕练出肌肉，作为一个坚持做腹肌5个月的家伙来看，练出肌肉绝对没有想象的那么容易，抛开休息，饮食不说，只说运动量，我之前500多个的时候只是热身，如果想要有6块，运动量至少得增加1倍每天差不多1000个，当然，最好换动作，要不太浪费时间。</p>
+
+<p>回头看，我能坚持下来，“妹子”的原因虽然上不了台面，但是的确是真真正正的导火索，感谢她们，让我养成了这样一个好习惯。</p>
+
+<p>写到这里，我又看了一边我的运动时间表。很有意思的，有一周，我几乎从早上忙到晚上12点，每天大概15个小时工作，而我那周，居然健身375分钟.所以忙，只是借口而已。</p>
+
+<p>希望我可以再坚持1年。</p>
+]]></content>
+  </entry>
+  
+  <entry>
+    <title type="html"><![CDATA[唯一有益的怀旧是想像未来的自己怀旧现在]]></title>
+    <link href="http://studentdeng.github.com/blog/2013/06/24/remember/"/>
+    <updated>2013-06-24T13:34:00+08:00</updated>
+    <id>http://studentdeng.github.com/blog/2013/06/24/remember</id>
+    <content type="html"><![CDATA[<p>豆瓣的CEO阿北说过，唯一有益的怀旧是想像未来的自己怀旧现在。很奇葩的，就在几天前，这个事情真真切切的发生在了我的身上。这是我几天前写的，当时以为自己已经工作3年了。我从07年毕业开始计算工作正好2年，从创业的时间开始计算，也就是2年7个月。也就是说，我在半年后的“未来”，回头看了一下自己，瞬间觉得浑身充满正能量，我还有半年的时间去改变。</p>
+
+<p>3年的工作是一个门槛，我这里也算是总结自己3年的经历，也可以说是分享吧。</p>
+
+<p>毕业那会我也许有步入外企的机会，但是最后被cube这个家伙忽悠来了北京，我和cube认识很长时间，我在学校的时候，就和他一起工作了。后来他去了微软，等我大四了，他给我描述了一下他的idea，介绍了一起创业的团队，然后我就被他“骗”来了北京。cube是一个对工作有洁癖的人，他对自己的要求非常高，对parter的要求也非常高，事实上，这个最后被证明对团队是非常错误的。但是，对于一个即将毕业的我来说，则是一段非常好的经历。他为了激发我的热情，总是把有挑战的东西交给我来做，而他则负责扫尾。我们2个算是“结对编程”的经典例子————这是一种在IT领域非常高效的合作方式。而且我的团队给予了我充分的自由空间，真的没有任何要求和约束，完全靠着激情在工作。当然，最后这个也被证明是错误的。</p>
+
+<p>时间飞快的就过了1年，cube当时有一句话，我记得非常清楚，也是我很认同的事情“我要在1年里积累别人3年的经验”。cube对工作非常认真，而且非常喜欢总结和分享。我受他影响很大，也非常喜欢写blog和分享，所以我们在创业的小圈圈里面还算有一点小名气，中间还有出版社找过我问我是否出书，后来也极大的方便我们招人。这是好的事情。</p>
+
+<p>坏的事情就是，这1年过的也算是苦了。没有假期，没有周末，每天工作超过15个小时。但这1年也是我过的最快乐的1年。我的职业规划，完全在我的设想之中。从技能的提高角度来看，几乎不可能比这个做得更好。但是也为我们后来的失败埋下了伏笔，我们的team从来没有一个正式的公司架构，没有想过挣钱，只是觉得，几个哥们一起干，然后拿投资、融资，坐着一夜暴富的白日梦。</p>
+
+<p>我们team算是中国第一批移动互联网创业的小公司了，我们的产品是要做一个类似wechart，米聊的东西。呵呵，现在想起来都觉得疯狂。当然，很现实，我们失败了，我们不得不转去做另一个东西，而且我们还遇到了一个更严重的问题，没钱了，因为激情不能当饭吃，有哥们开始离开了，因为各种各样的原因。而我也慢慢在团队中扮演更重要的角色，我才意识到，我那过去的1年是多么的幸运，我是team中唯一一个在做自己喜欢做的事情，而且只有一件事情。</p>
+
+<p>创业第二个年头了，功夫不负有心人，在熬了不知道多少个通宵之后，在我们钱彻底完全花完之前，我们的东西还算得到了认可，拿到了200W的天使投资，我只能说，我的老大的“忽悠”能力的确很厉害，而且运气好得不得了。因为当时的资本市场已经很冷了，拿到投资之后，我们team还在创业的小圈圈里面风光了一把。太大的压力，导致我们休息了大概2个月的时间，我们挑新的办公室，布置新的生活工作环境，招人。我当时老开心了，我面试比我年纪大的人。呵呵。看到这里，一般人可能会觉得，终于雨过天晴了。没钱的日子终于结束了。但实际上却是一个新的深渊。在拿到投资之后，我们9个月，没有发布新产品，没有做软件更新。年底，老大和投资人谈崩，问我怎么想，我说本来就是追求自由的，没有自由，和他就别干了。在差，还能差过之前的日子。哈哈，可见我当时是多么幼稚，更坑的日子果然还在后面。。。。</p>
+
+<p>俗话说得好，由俭入奢易，由奢入俭难。在放弃好的办公环境，不得已的情况下裁员，而且我们显然也没有什么好的计划，接不到项目，产品也没有打算。迷茫等消极情绪又开始蔓延。更糟的是cube要走了，也是因为女朋友的问题，要结婚了。之前有一个大哥对我很好很好的，我在北京第一年的房租都是他替我偷偷垫付的。也因为女朋友的问题离开了。然后team就这么半死不活的干熬。我的状态还没有很糟，我从EF那里得到了不少正能量，从游泳中发泄了不少负能量，但是team还是处在没有希望的状态。一切问题在我失恋之后彻底爆发了，所有的负面情绪完全淹没了我。我第一次和老大谈，我不干了。我想出国玩玩，或是回家睡觉。总之不想在北京待了。这让我老大疯了，说他认识的都是一群什么人啊，都是因为女人散伙？呵呵，当然，我们都很清楚，这个只是给自己一个听上去不错的借口而已。</p>
+
+<p>在京城，对于像我们这种team的很多很多，大家都过的很苦，每天奋斗着只是为了能够在北京活下去，听上去很残酷，但现实的确是这样，好多好多次，都没钱活下去了，但是事情又有了转机，整个生活就是不断的从一个坑里面爬出来，再掉另一个坑里。come on, 当初怀着改变世界想法来到北京，显然被现实残酷的践踏掉了。因为创业，我和老大的关系很特别，我甚至知道他银行账户有多少钱，我也知道他发工资就是靠信用卡拆借，无抵押贷款这种非常危险的行为过着。更让我害怕的是，从他的身上我看到了我的未来，我在他手下做，到他的年纪，不会比他做得更好，看不到未来，那我为什么还要继续呢？</p>
+
+<p>创业第三个年头，一天我和老大谈了很长很长时间，我质问他你30了，你觉得咱们继续这样下去，还有意义么？而且我也很冷静的表达出我的意愿，我觉得是该中止我们的创业了，老大表示他也累了。我们都希望大家能有一个好的结局吧，毕竟一起这么长时间了，然后我们team又开始很努力的做事情，很累，在1个月搞定了4个项目，然后我们挣到了后半年的生活费，但谁也没再提散伙了。</p>
+
+<p>从我工作3年的结果来看，我除了第一年的进步很大以外，后2年几乎就是在原地踏步。听上去好像经历了不少事情，但是其实也没有什么价值，没有能够量化的价值，只是知道了什么是错误的而已，还是不知道以后该怎么办，未来在那里。</p>
+
+<p>我曾经觉得我很清楚自己要做什么，不需要其他人的任何意见，只是聆听自己内心的声音就好，但是我却发现我居然浑浑噩噩的过了9个月。</p>
+
+<p>我曾经觉得我一个非常有毅力的人，我想做的没有什么是执行不下去的，但是我却几乎要放弃我最喜欢的事情，而且还不只一次。</p>
+]]></content>
+  </entry>
+  
+  <entry>
+    <title type="html"><![CDATA[一些早该知道的东西]]></title>
+    <link href="http://studentdeng.github.com/blog/2013/06/20/something-should-already-known/"/>
+    <updated>2013-06-20T22:18:00+08:00</updated>
+    <id>http://studentdeng.github.com/blog/2013/06/20/something-should-already-known</id>
+    <content type="html"><![CDATA[<p>今天真NM是个奇葩的一天，我居然在泡吧之后，开始写blog，我去，刚刚小区门我都没有想明白到底应该是拉还是推。但是我的确想把我的所思所想纪录下来，我的确不知道，在睡醒一觉之后，我还是否能够记住我现在的想法。</p>
+
+<p>最近面试了好多人，也有和我同样年龄的家伙，让我不禁感叹，我的运气实在是好的不得了，我在一开始工作的时候，和一个对工作有洁癖的人－－cube 一起工作。一开始我做重复的活，干得我实在是荡漾得不行。没想到最后居然是cube来帮我做那些琐碎得事情，而我自己去做那些我真正感兴趣得，复杂的，有挑战得活。Oh my god， 我得运气的确是好的不得了，就像普通人一样，我遇到了我个人发展得瓶颈，当然，只不过是早了那么一点，只用了1年。</p>
+
+<p>sometimes I just wonder why did it happen，就在今天，我看了一本非常非常非常好得书，里面正好讲到这个personal wall， 其实我一直在思考这个问题，这堵墙已经堵了我2年，就在前几天，我突然意识到我已经毕业3年了。我在思考为什么会有这么一个wall在那里。为什么我总是想不开。</p>
+
+<p>有一个观点非常有趣，传统得教育，让我们已经习惯于独立承担压力，个人的努力换取分数，换取排名。而考试则作为一个人能力的最终评价标准。能够考一个牛B的分数，而这个排名，无疑形成了一个非常恶略的影响，其中的关键在于，过于强调了个人利益的得失。而且往往提供了一个唯一的正确的通往成功的路子。而这个schema则是非常致命的一个问题，当我们第一次步入社会的时候。</p>
+
+<p>离开学校意味着，现在已经不存在正确答案这样的命题了，这个意味着不会有人来告诉你，你的选择是否正确。尽管你会有一大堆的朋友，一大堆的亲人，老师，学长 whatever， 很愿意告诉你，或是提供一些建议。但事实上，这些都是一些别人嚼过的馒头，是在精神上对你的强奸。因为你最后必须要靠自己作出决定。而且有趣的是，在社会这个环境中，一个团队的成功，才是个人成功的体现。你需要带领一个团队，你需要去share你的idea给你团队，也就是你不是像学校那样独立战斗。what&#8217;s more, 这个的正确答案，往往不是一个。</p>
+
+<p>当然，有所失，也就意味这有所得。当结果不变得那么确定时， 也就意味着有很多惊奇得方法，可以去更加多元化去看待问题，用你得天赋，技巧和热情。</p>
+
+<p>我相信到我这个年级得男孩，都努力得追过那么一个女孩子。这个就是TMD一个非常好得例子。这个不想学习那样是你一个人得事情，至少是2个人得事情。你需要学会share。当然，有人情商高，可以很轻松得搞定，但我也相信有很多想我这样得屌丝，始终搞不定，你可能已经用尽了所有得方法，努力，但仍然是没有打动那个女孩，有人会告诉你，这是你们2个人不合适。嗯，可能吧，这是一个挺好得答案，但这个始终不是一个我想要得答案。</p>
+
+<p>就在今天，在听着DJ舞曲，强烈的beat在敲击我的心脏的时候，我突然想明白了。当你所有的思维都放在“如何让XXX喜欢上你”这个命题时，你已经将自己陷入到了一个非常大的误区，而当你确定用尽所有的方法，但还不能奏效时，你就遇到了那个wall， 就像你在工作中遇到的，技术瓶颈，技能瓶颈，对未来没有希望的想法一样。</p>
+
+<p>而这个时候，一般人会绕过去，我去旅游，我去换一个工作，我去换一个女孩，我就会找到那个看上去更加“合适”的，岂不知，无论下一个是多么的好，看上去是多么的时候，你是还会遇到那堵墙。</p>
+
+<p>聪明人的看法，则是是一个更加包容，广泛的看法。 我需要做的不只是让这个女孩子喜欢我， 我应该做的是如何才能成为一个让更多一女孩子喜欢的人。
+okay， 这个idea最大的区别在于，你需要跳出你之前对那个女孩所作的一切，而且，还需要一个更加宽广的视野，这样才会发现，你可以做的事情，还有很多很多很多很多。而这里面得关键,就在于改变。</p>
+
+<p>工作，爱情，任何事情都会遇到wall， 你copeed， 成长收获，逃避，分手，换工作。 当然这个比喻不是那么恰当。但是，在遇到困难的时候，用一个更加宽广的视野，的确可以把一件不可能再继续的事情， 再继续下去。</p>
+
+<p>我的脑袋好晕好晕， 今天和老大喝了不算多，但是却还是晕，我们在想一个问题， 五道口这里，每天晚上都在high， 我在17楼都可以听到楼下happy的声音， 这里面有多少人是每天都来这里混的。 毫无疑问，这些人都是弱者。 有那些怀着改变世界梦想的人会在这里混的？</p>
+
+<p>看着眼前的小蜡烛， 只要还没有完全熄灭，他总会重新燃烧起来。fabulous！</p>
+
+<p>我去，真得好像继续写下去，但是实在是太困了，在跳完之后，更加身体疼得厉害， 胸部，胳膊，腿，除了没有训练得腹部以外，都在疼。 fuck，明天可能没法走楼梯了。 而刚才喝得酒，显然让我把这周得运动量提前透支了，anyway， 困得实在是不行了。</p>
+]]></content>
+  </entry>
+  
+  <entry>
+    <title type="html"><![CDATA[《20个月赚130亿》笔记]]></title>
+    <link href="http://studentdeng.github.com/blog/2013/06/12/note-book/"/>
+    <updated>2013-06-12T20:25:00+08:00</updated>
+    <id>http://studentdeng.github.com/blog/2013/06/12/note-book</id>
+    <content type="html"><![CDATA[<p>今天花整个中午读完得，不禁感叹一下自己。当时从老妈书柜里无意找到得一本编程书，让我写下了生平第一个程序，一个非常简单的计算器，同样是在小学6年级。甚至语言都是同样的Basic，当作者写到因为没有硬盘而无法保存程序时，很搞笑的是，我当时还不知道什么叫做硬盘，所有的程序也没有办法保存。</p>
+
+<p>我也曾有一段时间沉浸在寻找肉鸡，寻找系统后门，黑别人电脑，盗窃别人qq号码等等一些现在想起来都很dt的事情。但是也许是上天和我开的一个玩笑吧，我并没有想作者那样努力的学习编程，而是走向了另一条路，沉迷电子游戏，游戏人生。</p>
+
+<p>我不知道是幸运还是不幸，我从小的教育和大多数同龄人都不一样，我是完全完全自由发展的，我母亲或是没有时间，或是也不想过多的约束我，就像朋友一样，她玩我玩过的电子游戏，到最后，甚至和我一样沉迷网络。还说过“游戏谁不上瘾，只是因为玩得太烂”这样搞笑的话。</p>
+
+<p>但是，最后，我肯定让她失望透顶了。她也对我说过，如果小时候要求严格一点是不是会很不一样。</p>
+
+<p>有人多人认为作者实在是太幸运，我也是这么想的。在叛逆期，没有游戏更好的去发泄那些多余的精力了。但是作者显然找到了一个更加科学的方式，而且作者足够有天赋，而且也真的超级超级超级努力。不是一般的努力。完全源自内心的力量趋势作者每周工作超过80个小时，突击时甚至超过100个小时。在高中的时候就已经在计算机公司实习，等等的一切。让他能够在足够短的时间里面，在很年轻的时候，积累比别人多的多的多的能力，认识一帮一起改变世界的人。</p>
+
+<p>现实就是非常残酷的，资源总是集中在那一帮少数人手中，不管是在国内还是在国外。而且那帮人还是极其有天赋，而且还在比我这种屌丝还在努力的进步。</p>
+
+<p>所以说，看这种自传对我来说，只是自取其辱而已，但是今天却不一样了。</p>
+
+<pre><code>每一个创业的成功当然都免不了运气的成分，但是现在回想起来，最重要的是你得抓得住这些运气，也就是俗称的“在正确的时间做正确的事情”
+</code></pre>
+
+<p>但是这个真的好难判断，神马是正确的事情。因为可以简单的回想一下，自己的人生中有没有那么认为是正确的时间做了正确的事情。一个例子，我在大学的大部分时间逃课掉了，要不是玩游戏，要不就是自学编程。这个最后造成的结果是，我彻底对游戏丧失了之前的狂热————因为我认为在游戏上面已经不可能做的更好，而自学编程，让我的计算机基础扎实无比，这为我后面1年积累别人3年的技术积累分不开。但是，这个惨烈的GPA，也让我现在决定是否出国上学无比头疼。</p>
+
+<p>呼，总之，这本书让我产生了好多共鸣。<a href="http://book.douban.com/subject/6920100/">《20个月赚130亿》</a></p>
+]]></content>
+  </entry>
+  
+  <entry>
+    <title type="html"><![CDATA[code snippets]]></title>
+    <link href="http://studentdeng.github.com/blog/2013/05/08/code-snippets/"/>
+    <updated>2013-05-08T11:30:00+08:00</updated>
+    <id>http://studentdeng.github.com/blog/2013/05/08/code-snippets</id>
+    <content type="html"><![CDATA[<p>Recently I found a fascinated feature of Xcode is the Code Snippets feature. It allows you to just type few characters instead of requiring you retype them over and over.</p>
+
+<p>In my opinion, this is feature is not very obvious. The snippets library is fairly well hidden. Luckily, I&#8217;ve found it. There&#8217;s no sort of + button or something on the bottom of IDE. Apple just add a gesture to it. The only way you add a new snippet is to write a chunk of code and drag it into the Code Snippet Library window, and then it creates a default snippet and you can modify it, do whatever you want.</p>
+
+<p>add dynamic fields</p>
+
+<pre><code>&lt;#something...#&gt;
+</code></pre>
+
+<p>Finally I also found the same feature of Netbeans. It&#8217;s called Code Templates. and this feature is much easier to use than xcode.</p>
+
+<p>add dynamic fields</p>
+
+<pre><code>${something...}
+</code></pre>
+
+<p>It&#8217;s really fascinated feature and avoid retype the same piece of code again and again.</p>
+]]></content>
+  </entry>
+  
+  <entry>
+    <title type="html"><![CDATA[Apple Script 可执行的伪代码]]></title>
+    <link href="http://studentdeng.github.com/blog/2013/04/24/apple-script-1/"/>
+    <updated>2013-04-24T19:21:00+08:00</updated>
+    <id>http://studentdeng.github.com/blog/2013/04/24/apple-script-1</id>
+    <content type="html"><![CDATA[<p>apple script 这种脚本语言就是精炼, 可执行的伪代码</p>
+
+<pre><code>tell application "Finder"
+
+display dialog "选择源文件目录"
+set sourcepath to quoted form of POSIX path of (choose folder)
+
+display dialog "选择输出目录"
+set destinationpath to quoted form of POSIX path of (choose folder)
+
+end tell
+
+do shell script "/usr/bin/php /Users/ygcurer/apigen/apigen.php --source " &amp; sourcepath &amp; " --destination " &amp; destinationpath &amp; " --title curer --charset UTF-8 --access-levels public,protected --internal no --php yes --tree yes --deprecated no --todo no --download no --source-code yes --colors yes --progressbar no --update-check no"
+</code></pre>
+
+<p>这里把php document generate 的shell command 包装进了application中</p>
+]]></content>
+  </entry>
+  
+  <entry>
+    <title type="html"><![CDATA[numb]]></title>
+    <link href="http://studentdeng.github.com/blog/2013/03/31/numb/"/>
+    <updated>2013-03-31T16:31:00+08:00</updated>
+    <id>http://studentdeng.github.com/blog/2013/03/31/numb</id>
+    <content type="html"><![CDATA[<p>前几天运气很好和一大堆朋友吃饭和一个老外boss吃饭, 他很牛, 20岁从MIT毕业, 第一份工作是参与波音777的设计制作, 做了当时波音第一个用电脑辅助设计飞机的软件. 在控制项目的时候, 他们当时犯了相当大的错误, 18个月30W行的C代码, 被重新推倒重来, 再用18个月一个team从头学习然后最后项目上线, 他说777是当时最安全的飞机. 因为在这个之前,的飞机一直是手写设计稿做的, 不是通过计算机. 然后我问他为什么要离开波音呢? 他说因为他觉得没有意思, 他在波音继续待下去,也就是一个非常出色的工程师, 这个不是他想要的, 他想去做一点更新的,更cool的东西, 但是这个似乎很矛盾的, 因为我知道他现在是做传统行业石油的, 每天都是谈论石头, 这个和做飞机根本不是一个概念啊.我问他这个似乎很矛盾啊, 他说恩,是的. 他离开波音之后, 花了6,7年. 知道了什么事情是不对的.2000年那会, 他做自己第一个公司, 是做电商, 当时风投给他们了$1500W, 最后还是没做下去, 没想到最后居然被NSA看中了, 因为这里面他们实现了一个根据兴趣爱好推荐内容的算法, 而这个算法,正好适合间谍交易的使用场景. =. =!</p>
+
+<p>最后bob说了一句非常感动我的话, 想得到自己想要的东西, 非常难, 即便自己很努力的去做, 最后得到的和之前想象的完全不一样. 是的, 如果让我来总结我这2年来的收获,用一句话来说就是 &#8220;很多东西觉得真心过不去这个坎了, 但是这个事情却做到了, 而有些东西觉得挺简单的,但最后却一直没有做到&#8221;.而有意思的是,我再写这篇blogs之前的2个小时之前, 还在愁一个项目无法交付,但是,有时候运气就这样子砸下来了.</p>
+
+<p>2年来, 就是不断地在从一个坑里爬出来,然后跌进去,再爬出来,再跌进去. 昨天晚上和老大聊到晚上3点.呵呵, 真得, 我们只是知道了什么事情是不对的.</p>
+
+<p>2年前,我觉得我虽然是一个很diaosi的家伙,但是我有一点是觉得很少人能够做到我这点的, 就是我知道我想要做什么, 我喜欢做什么,我适合做什么, 能够在22岁的时候想明白这个事情,让我非常开心,而且也一直向这个目标前进, 而为了这个,当然, 我放弃了非常多的东西, 其实我现在也不知道,因为一个东西,你付出了大量的时间,即便是没啥天赋, 也会做得不错, 这个世界上有太多的东西,我没有做过, 甚至都没有听到, 我凭什么说我适合做这个呢?</p>
+
+<p>唯一能确定的就是,&#8221;天道酬勤&#8221;,&#8221;机会只会留给有准备的人&#8221;</p>
+]]></content>
+  </entry>
+  
+  <entry>
+    <title type="html"><![CDATA[mysql 源代码 第二天 ]]></title>
+    <link href="http://studentdeng.github.com/blog/2013/03/21/mysql-source-code-2/"/>
+    <updated>2013-03-21T23:48:00+08:00</updated>
+    <id>http://studentdeng.github.com/blog/2013/03/21/mysql-source-code-2</id>
+    <content type="html"><![CDATA[<p>昨天搭建好环境, 今天怀着无比兴奋的心情看一下, 一条简单的sql 背后有那些有趣的事情发生, 当然, 我们先从最简单的sql 开始.</p>
+
+<pre><code>select * from example
+</code></pre>
+
+<p>当然, 对于这么庞大的项目, 我只能小小的大略一下代码结构了.</p>
+
+<h2>SQL Interface</h2>
+
+<p>首先启动mysqld, mysql的 server 部分</p>
+
+<p>mysqld.cc</p>
+
+<pre><code>int main(int argc, char **argv) 
+</code></pre>
+
+<p>传说中一切世界的源头. 在处理一些参数或是配置什么的, whatever, 先不关心这个,跳转到</p>
+
+<pre><code>int win_main(int argc, char **argv)
+</code></pre>
+
+<p>还是一些配置, 读取my.ini, 日志, socket, 什么的. 然后创建一大堆的thread, 这里面大部分暂时没用
+在很多的thread callback 函数中, 有一个必须要了解一下了它是</p>
+
+<pre><code>handle_one_connection // sql_connect.cc
+</code></pre>
+
+<p>它是client 请求server callback的开始 然后依次调用</p>
+
+<pre><code>my_real_read -&gt; do_command -&gt; my_net_read 
+</code></pre>
+
+<p>这里等待socket</p>
+
+<p>client 部分</p>
+
+<p>通过mysql 我们连接到 mysqld, 这里我们先跳过其他命令过程. 直接步入今天的主题, 我事先已经创建好一个简单的数据库, 里面2个字段, 3条数据.</p>
+
+<pre><code>select * from example
+</code></pre>
+
+<p>回到之前的server</p>
+
+<p>这时, mysqld 收到的socket, 在检查一些错误之后, 我们来到</p>
+
+<pre><code>dispatch_command -&gt; mysql_parse
+</code></pre>
+
+<h2>mysql Query Parser</h2>
+
+<p>这里我们进入了mysql Query Parser 部分, mysql 首先需要词法分析,语法分析 SQL 语句, 把我们的SQL 转变成一个个token 语法树什么的 要做一些编译器类似的前端部分, whatever, 对这部分不感兴趣, 我现在可没有扩展SQL 语句的想法.我们这条语句是select 所以, 我们最后跳到了 handle_select部分</p>
+
+<pre><code>mysql_parse -&gt; mysql_execute_command -&gt; execute_sqlcom_select -&gt; handle_select -&gt; mysql_select
+</code></pre>
+
+<h2>Query Optimizer</h2>
+
+<p>这里我们来到了mysql Query Optimizer 部分, 3个主要的事情</p>
+
+<pre><code> prepare
+ optimize
+ exec
+</code></pre>
+
+<p>这个将是之后重点要学的, 现在先跳过啦</p>
+
+<h2>Query Execution</h2>
+
+<pre><code>do_select -&gt; sub_select -&gt; sub_select ....
+</code></pre>
+
+<p>这里我们看到了很多类似的函数, 从名字上来看, 基本上是处理递归的, 而且,事实上也的确是这样子的&#8230;.(真是废话), mysql 这里不断地读取一行行数据,
+判断是否嵌套查询等等.最后 一系列的clear unlock. free, release</p>
+
+<pre><code>net_end_statement
+</code></pre>
+
+<p>这里将数据返回client, server 继续</p>
+
+<pre><code>do_command -&gt; my_net_read ... 
+</code></pre>
+
+<p>最后结构图
+<img src="http://studentdeng.github.com/images/mysql_1_1.gif" alt="alt text" />
+<img src="http://studentdeng.github.com/images/mysql_1_2.gif" alt="alt text" /></p>
+]]></content>
+  </entry>
+  
+  <entry>
+    <title type="html"><![CDATA[调试 mysql源代码 环境搭建]]></title>
+    <link href="http://studentdeng.github.com/blog/2013/03/20/mysql-source-code-setup/"/>
+    <updated>2013-03-20T22:06:00+08:00</updated>
+    <id>http://studentdeng.github.com/blog/2013/03/20/mysql-source-code-setup</id>
+    <content type="html"><![CDATA[<p>下载源代码 <a href="http://dev.mysql.com/downloads/mysql/">mysql</a></p>
+
+<p>下载CMAKE <a href="http://www.cmake.org/">download</a></p>
+
+<p>代码根目录 执行下面代码, 确定生成configure.data 文件</p>
+
+<pre><code>wscript win\configure.js WITH_INNOBASE_STORAGE_ENGINE WITH_PARTITION_STORAGE_ENGINE MYSQL_SERVER_SUFFIX=-pro
+</code></pre>
+
+<p>找到 win 目录下的 XXX.bat 文件复制到源代码根目录下, 我这里使用vs2008 ,所以复制 build-vs9.bat 到源代码根目录
+在系统根目录 C:/windows 下 增加一个 my.ini 用于 mysql 配置, 我的mysql 源代码目录在 C:/mysql_code/mysql-5-1.1.68</p>
+
+<pre><code>[mysqld]
+# set basedir to your installation path
+basedir=C:/mysql_code/mysql-5-1.1.68
+# set datadir to the location of your data directory
+datadir=C:/mysql_code/mysql-5-1.1.68/win/data
+</code></pre>
+
+<p>将sql目录下的share文件夹复制到源代码根目录下</p>
+
+<p>修改sql_locale.cc 文件, 把文件编码改成 UTF8 with BOM, windows 你懂的</p>
+
+<p>然后可以调试了, 不过这里我遇到一个问题, 在 sql_locale.cc 函数 test_lc_time_sz 函数, 这里DEBUG_ASSERT(0)了一下, 目前先暂时注释掉它 : (
+现在可以跑</p>
+
+<pre><code>mysqld
+</code></pre>
+
+<p>然后在</p>
+
+<pre><code>mysql -u root -p 
+</code></pre>
+
+<p>over!</p>
+]]></content>
+  </entry>
+  
+  <entry>
+    <title type="html"><![CDATA[情商太低, 伤不起]]></title>
+    <link href="http://studentdeng.github.com/blog/2013/03/05/emotion-unknown/"/>
+    <updated>2013-03-05T00:25:00+08:00</updated>
+    <id>http://studentdeng.github.com/blog/2013/03/05/emotion-unknown</id>
+    <content type="html"><![CDATA[<p>这是我写过的最难的一篇, 是目前为止最困难的一篇, 我的思路非常的混乱, 只是想通过这个方式来帮助我理清自己, 找出可以收获的地方. 其实我很早就想写了, 但是有很多东西反反复复,相互牵引的, 我的思维也在不断的变化, 有太多的地方我不明白, 这让我现在非常难受, 而在这个时候写一篇这样子的东西,实在是一件非常痛苦的事情, anyway, 就当这一篇是我对抗自己完美主义的一部分啦.</p>
+
+<h2>先喷下自己吧, 展现一下负能量</h2>
+
+<p>我是一个天生的悲观主义者, 有的人天生就比其他人容易快乐, 幸福, 而有的人天生就容易比其他人焦虑, 抑郁.很不幸, 我是那种容易焦虑的, 我非常害怕失败,特别是自己在意的事情, 我经常自己YY出一大堆各种失败的场景和缘由, 有的甚至是非常低概率事情,一旦遇到失败又或是最后结果达不到我的期望,我还会深深的陷入自卑中. 不管是什么原因, 最后会被自己大量的消极情绪淹没.</p>
+
+<p>所以,我非常想改变, 我不想被那些大量的消极情绪,影响到我的效率. 因为这个要消耗掉我相当多的精力来应付这些我认为是累赘,但我又甩不掉的习惯 &#8212;- 就是不去思考那些产生烦心事的缘由, 不要去想或是分析自己的消极情绪的原因. 我一直希望我能够改掉, 直到我听到这个实验</p>
+
+<p>首先参与实验的家伙们需要回答一个问题, 他们是否希望能够摆脱自己性格方面的某些缺点, 比如古板, 或者容易亲信别人. 第二部分, 则是让这些家伙们去评估这些正面的性格, 言行一致是否对你很重要, 值得信赖是否很重要, 被认为是一个严肃认真的人, 是否很重要.</p>
+
+<p>而实验的结果也很有趣, 那些给这些正面性格打高分的人, 认为这些性格很重要的人, 反而比较不容易去改变自己的负面性格. 不如 容易相信别人 和 值得信赖.</p>
+
+<p>就拿我自己来说吧, 我觉得最大的优点就是喜欢思考, 思考问为什么, 如果说得难听一点, 就是喜欢钻牛角尖, 而且我一直赞同一个观点, 一个人的专注一件事情的时间越长, 那么越容易做好. 事实上, 如果我喜欢一件事情, 我可以每天超过15个小时在一件事情上面,并坚持至少半年,  我很开心, 我有比别人更多的精力去专注的做事情, 而且我自己的进步有很大的原因在于这里, 但是这个也带给了我一个非常大的缺点.就是钻牛角尖, 对自己在乎的事情, 太过于在意细节, 导致和人不好相处. 我带过一个刚毕业的小弟, 我能够从工作时间到下班回家地铁的路上, 不断的展现我的负能量, &#8220;这段代码不能这么写? 你知道这样有什么后果么?&#8221;, 而且这个时间相当的长,大概有半年多吧, 每天都要喷.</p>
+
+<p>我想该掉这些坏毛病, 但是我的潜意识告诉我, 细节是必须要扣的. 对于工作来说, 钻牛角尖能够让我学到更多, 而且对于Geek们来说, 面对枯燥的code都能看出花来, 或多或少都是些钻牛角尖的家伙,但是这些在人际交往中就是一个非常大的问题. 哎, 更别说,我还有完美主义问题,</p>
+
+<p>完美主义:一种充斥在我们生活中的对失败的失能性恐惧, 尤其是在我们最在意的方面. 失能性恐惧 指的是在面对失败时, 有这裹足不前的畏惧. 我的完美主义并不是在生活中的每一个方面, 每一个细节. 而是发生在我们在意的地方.</p>
+
+<p>从本质来看, 我的schema就是一个逐利者, 虽然很难听, 但这的确是事实. 我对自已在意的事情, 只是追求结果, 几乎不在乎过程.</p>
+
+<ul>
+<li><p>我看不到那个小弟的进步, 我一直以一个很高的要求(对他来说), 在他达到这个要求之前都是一文不值的.</p></li>
+<li><p>我看中一门考试, 那么如果这门考试我不是满分, 我就觉得非常难受, 因为我觉得我没有做到, 那么别人也不能做出来.</p></li>
+<li><p>在公司中,我的目标就是做问题的终结者, 如果这个问题我解决不了, 那么没人可以解决.</p></li>
+</ul>
+
+
+<p>这就是我的schema, 在达到这些标准之前, 所有的努力都没有价值. 因为我眼中, 只有一条路是正确的,</p>
+
+<p>典型的完美主义者, 完美主义者的确非常的痛苦, 因为很简单, 现实总是非常的残酷. 因为害怕心理上的失落而变得患得患失, 特别害怕失败.</p>
+
+<p>说到根底, 还是自己分不清出很多事情, 把太多的事情看成一件事情, all or nothing.</p>
+
+<h2>What should I do</h2>
+
+<p>答案很简单, 就是在遇到问题的时候, 选择面对, 不是逃避.去做, 去承担风险,承担责任.去尝试, 这里面有几个原因.</p>
+
+<p>首先, 我们是如何评价自己的,这个标准有些时候和评价其他人的方式是一样的.</p>
+
+<p>一个简单的例子, 比如,我们看到一个家伙, 敢于主动站出来, 表达自己的想法, 积极发言, 或是不断的失败,但依然不放弃,一直在努力坚持, 我们会认为这个家伙很有勇气, 有毅力.这个家伙心理一定很强大.勇于面对困难的家伙和普通人一样会有起起落落, 但是整体的幸福基线却在上升.我们很多时候通过行为来判断一个人的能力, 同样也适用于自己.</p>
+
+<p>那些勇于向喜欢的女孩表白的男孩, 虽然会有更多失败的经历, 但却越来越明白自己适合找那种类型的女孩, 那些能够在工作中敢于请教别人, 在上课时勇于回答老师问题, 向老师提出问题的家伙们, 也更容易学到并记住知识.很多时候, 我们害怕失败,以及失败以后带来的各种消极想法. 但当事情过去之后, 即使是失败了, 经历的痛苦情绪也并没有想象中的那么大. 就像我之前第一次喜欢一个女孩, 然后最后居然发现这个女孩已经结婚了?觉得这个心坎真的实在是迈不过去.但现在也迈过去了.等等, 越来越多的尝试, 成功固然好, 而且即使失败了,最后也会过去. 但如果没有尝试, 那么会一直认为这个事情会一直持续下去, 但事实上这是不可能的.而当我们意识到真正的失败的痛苦要比我们想象的失败的痛苦少时, 我们会变得更自信.</p>
+
+<p>如果说第一段感情我最大的收获是什么, 就是不管是多么美好的事情, 都会成为浮云, 不管是多么烂, 多么糟糕的事情, 也都会过去.</p>
+
+<p>以前和女孩说话都会脸红, 现在和美女聊天也不觉得有什么尴尬了, 所以每周的锻炼还是很有必要的.</p>
+
+<p>很多人都佩服我能够坚持半年健身, 保持体重, 但又有多少人知道我第一个月就减少了20斤, 后5个月加起来才少了5斤, 又有多少人知道我曾经减肥2次, 每次都不少于20斤, 但是反弹却超过了30斤. 我能做到今天的样子, 因为我经历了别人想象不到多的失败.</p>
+
+<p>所以, just do it.</p>
+
+<p>改变很难, 改变也不是灵丹妙药, 能够一下子解决问题. 我追求的只是不后悔, 做自己认为对的事情.</p>
+]]></content>
+  </entry>
+  
+  <entry>
+    <title type="html"><![CDATA[ARC 1]]></title>
+    <link href="http://studentdeng.github.com/blog/2013/03/03/arc/"/>
+    <updated>2013-03-03T13:43:00+08:00</updated>
+    <id>http://studentdeng.github.com/blog/2013/03/03/arc</id>
+    <content type="html"><![CDATA[<p>内容主要来自http://www.galloway.me.uk/2012/01/a-look-under-arcs-hood-episode-1/ 里面加入了一点点自己的吐槽和理解</p>
+
+<p>已经有很久很久没有写一些 under the hood 的东西了, 好久没有学习新的技术了, 不说废话了.
+ARC 是编译器的技术, 不知道为什么, 我对编译器增加额外代码有着非常大的恐惧, 是因为和C++ 相关么? 不知道, anyway ARC 的确帮我这样的码农减少了工作量, 对于一向懒惰的我来说, 我还是更倾向于省事.</p>
+
+<p>在之前写block 的时候, 有些好奇的家伙们问我,是怎么发现编译器增加代码的. 这个其实很简单, 就是看一些文档了,但是总是有些人比较好奇编译器到底做了什么,不想理所当然的接受.</p>
+
+<p>先瞅瞅我们的测试函数 test_arc.m</p>
+
+<pre><code>    @interface ClassA : NSObject
+    @interface ClassA : NSObject
+    {
+            NSNumber *_foo;
+    }
+    @property (nonatomic, retain) NSNumber *foo;
+    @end
+
+    @implementation ClassA
+
+    @synthesize foo = _foo;
+
+    - (void)changeFooDirect:(NSNumber*)inFoo {
+        _foo = inFoo;
+    }
+
+    - (void)changeFooSetter:(NSNumber*)inFoo {
+        self.foo = inFoo;
+    }
+
+    - (NSNumber*)newNumber {
+        return [[NSNumber alloc] initWithInt:10];
+    }
+
+    - (NSNumber*)getNumber {
+        return [[NSNumber alloc] initWithInt:10];
+    }
+
+    @end
+</code></pre>
+
+<p>Mac 环境比较让人dt, 安装Xcode 后 安装Command Line Tools 否则, 会遇到各种各样的问题. 首先关闭ARC</p>
+
+<pre><code>clang -isysroot /Applications/Xcode.app/Contents/Developer/Platforms/iPhoneOS.platform/Developer/SDKs/iPhoneOS6.1.sdk/ -arch armv7 -fno-objc-arc -O3 -S -o test_arc.s test_arc.m
+</code></pre>
+
+<p>这个是开启ARC的命令</p>
+
+<pre><code>clang -isysroot /Applications/Xcode.app/Contents/Developer/Platforms/iPhoneOS.platform/Developer/SDKs/iPhoneOS6.1.sdk/ -arch armv7 -fobjc-arc -O3 -S -o test_arc_on.s test_arc.m
+</code></pre>
+
+<p>让我们先看一下 changeFooDirect 在没有开启arc时的样子, 当然, 如果有人和我一起工作,敢写出这样的代码, 肯定会让我喷的体无完肤的: )</p>
+
+<pre><code>.align  2
+.code   16                      @ @"\01-[ClassA changeFooDirect:]"
+.thumb_func "-[ClassA changeFooDirect:]"
+"-[ClassA changeFooDirect:]":
+@ BB#0:
+    movw    r1, :lower16:(_OBJC_IVAR_$_ClassA.foo-(LPC0_0+4))
+    movt    r1, :upper16:(_OBJC_IVAR_$_ClassA.foo-(LPC0_0+4))
+LPC0_0:
+    add r1, pc
+    ldr r1, [r1]
+    str r2, [r0, r1]
+    bx  lr
+</code></pre>
+
+<p>这里可以看出, 只是简单的覆盖变量, 没有retain release, 非常容易产生内存问题.
+再看一下 changeFooDirect 开启ARC后的样子</p>
+
+<pre><code>.align  2
+.code   16                      @ @"\01-[ClassA changeFooDirect:]"
+.thumb_func "-[ClassA changeFooDirect:]"
+"-[ClassA changeFooDirect:]":
+@ BB#0:
+    push    {r4, r7, lr}
+    mov r4, r0                          
+    mov r0, r2
+    add r7, sp, #4
+    blx _objc_retain
+    movw    r1, :lower16:(_OBJC_IVAR_$_ClassA._foo-(LPC0_0+4))
+    movt    r1, :upper16:(_OBJC_IVAR_$_ClassA._foo-(LPC0_0+4))
+LPC0_0:
+    add r1, pc                          
+    ldr r2, [r1]            //r2 = 变量foo在类实例中的偏移量
+    ldr r1, [r4, r2]            //r4 = self 这句的意思就是 r1 = foo;
+    str r0, [r4, r2]            //r0 表示参数inFoo, 这里相当于_foo = inFoo;
+    mov r0, r1              
+    pop.w   {r4, r7, lr}            
+    b.w _objc_release           //release ro的变量 也就是 _foo
+</code></pre>
+
+<p>这里我们可以看出, ARC retain 新变量, 然后release 旧的变量, 而这个正是我们想要的结果.这段坑爹的代码在ARC下是可以正确运行的</p>
+
+<p><strong>这里我再次声明一下, 类似changeFooDirect 这样的代码 只是用于研究, 访问类实例成员变量时都应该使用property方法而不是直接访问或是修改</strong></p>
+
+<p>changeFooSetter 这里我们看到无论是否开启ARC 生成的代码都是一样的.调用自动生成的setter 方法</p>
+
+<pre><code>.align  2
+.code   16                      @ @"\01-[ClassA changeFooSetter:]"
+.thumb_func "-[ClassA changeFooSetter:]"
+"-[ClassA changeFooSetter:]":
+@ BB#0:
+    movw    r1, :lower16:(L_OBJC_SELECTOR_REFERENCES_-(LPC1_0+4))
+    movt    r1, :upper16:(L_OBJC_SELECTOR_REFERENCES_-(LPC1_0+4))
+LPC1_0:
+    add r1, pc
+    ldr r1, [r1]
+    b.w _objc_msgSend
+</code></pre>
+
+<p>然后我们再看看getNumber 函数 开启ARC后的代码</p>
+
+<pre><code>.align  2
+.code   16                      @ @"\01-[ClassA getNumber]"
+.thumb_func "-[ClassA getNumber]"
+"-[ClassA getNumber]":
+@ BB#0:
+push    {r7, lr}
+movw    r0, :lower16:(L_OBJC_SELECTOR_REFERENCES_2-(LPC3_0+4))
+mov r7, sp
+movt    r0, :upper16:(L_OBJC_SELECTOR_REFERENCES_2-(LPC3_0+4))
+movw    r2, :lower16:(L_OBJC_CLASSLIST_REFERENCES_$_-(LPC3_1+4))
+movt    r2, :upper16:(L_OBJC_CLASSLIST_REFERENCES_$_-(LPC3_1+4))
+LPC3_0:
+add r0, pc
+LPC3_1:
+add r2, pc
+ldr r1, [r0]
+ldr r0, [r2]
+blx _objc_msgSend
+movw    r1, :lower16:(L_OBJC_SELECTOR_REFERENCES_4-(LPC3_2+4))
+movs    r2, #10
+movt    r1, :upper16:(L_OBJC_SELECTOR_REFERENCES_4-(LPC3_2+4))
+LPC3_2:
+add r1, pc
+ldr r1, [r1]
+blx _objc_msgSend
+pop.w   {r7, lr}
+b.w _objc_autoreleaseReturnValue               //如果没有开启ARC 则没有 _objc_autoreleaseReturnValue
+</code></pre>
+
+<p>关于_objc_autoreleaseReturnValue 也有很多有趣的事情, 如果把这个家伙简单的理解成autorelease就大错特错了, 编译器会对这些做优化, 减少一些无谓的retain release 来提高代码效率</p>
+
+<p>newNumber 和我们想的也一样, 在开启ARC的时候, 并没有增加 类似autorelease 的函数, 而是将retain count 保持为1.</p>
+
+<p>如果是普通的临时变量又是什么样子呢?</p>
+
+<pre><code>- (void)test
+{
+        NSNumber *test = [[NSNumber alloc] initWithInt:1];
+
+        NSLog(@"%@", test);
+}
+</code></pre>
+
+<p>开启ARC 后的代码</p>
+
+<pre><code>.align  2
+.code   16                      @ @"\01-[ClassA test]"
+.thumb_func "-[ClassA test]"
+"-[ClassA test]":
+@ BB#0:
+push    {r4, r7, lr}
+movw    r0, :lower16:(L_OBJC_SELECTOR_REFERENCES_2-(LPC4_0+4))
+add r7, sp, #4
+movt    r0, :upper16:(L_OBJC_SELECTOR_REFERENCES_2-(LPC4_0+4))
+movw    r2, :lower16:(L_OBJC_CLASSLIST_REFERENCES_$_-(LPC4_1+4))
+movt    r2, :upper16:(L_OBJC_CLASSLIST_REFERENCES_$_-(LPC4_1+4))
+LPC4_0:
+add r0, pc
+LPC4_1:
+add r2, pc
+ldr r1, [r0]
+ldr r0, [r2]
+blx _objc_msgSend
+movw    r1, :lower16:(L_OBJC_SELECTOR_REFERENCES_4-(LPC4_2+4))
+movs    r2, #1
+movt    r1, :upper16:(L_OBJC_SELECTOR_REFERENCES_4-(LPC4_2+4))
+LPC4_2:
+add r1, pc
+ldr r1, [r1]
+blx _objc_msgSend
+mov r4, r0
+movw    r0, :lower16:(L__unnamed_cfstring_-(LPC4_3+4))
+movt    r0, :upper16:(L__unnamed_cfstring_-(LPC4_3+4))
+mov r1, r4
+LPC4_3:
+add r0, pc
+blx _NSLog
+mov r0, r4
+pop.w   {r4, r7, lr}
+b.w _objc_release           // 这里我们看出release 掉了 test 变量 也和我们想想的一样.ARC 这里对带类成员变量和普通的临时变量是不同的
+</code></pre>
+
+<p>寄存器变量在第一个例子中已经列举了一点, 这个就不赘述啦.</p>
+]]></content>
+  </entry>
+  
+  <entry>
+    <title type="html"><![CDATA[tips]]></title>
+    <link href="http://studentdeng.github.com/blog/2013/01/26/tips/"/>
+    <updated>2013-01-26T18:05:00+08:00</updated>
+    <id>http://studentdeng.github.com/blog/2013/01/26/tips</id>
+    <content type="html"><![CDATA[<ol>
+<li><a href="#A1">ARC 编译时遇到的相关问题</a></li>
+<li><a href="#A2">install cocoapods 问题</a></li>
+<li><a href="#A3">Adding Unit Tests to an existing iOS project with Xcode 4</a></li>
+<li><a href="#A4">NSDateFormatter 问题</a></li>
+<li><a href="#A5">写博客命令</a></li>
+<li><a href="#A6">php apigen command demo</a></li>
+</ol>
+
+
+
+
+<div name = "A1" id = "A1"></div>
+
+
+<h1>ARC 编译时遇到的相关问题</h1>
+
+<ol>
+<li>自己的项目没有使用ARC, 其他代码使用ARC</li>
+<li>自己项目使用ARC, 其他代码没有使用ARC</li>
+</ol>
+
+
+<p>在Xcode Build Phases 里面的 Compile Source 需要特殊处理的文件 增加 COmpiler Flags
+1. 第一种情况 添加 -fobjc-arc
+2. 第二种情况 添加 -fno-objc-arc</p>
+
+<div name = "A2" id = "A2"></div>
+
+
+<h1>install cocoapods 问题</h1>
+
+<p>In Preview of OS X Mountain Lion, Xcode has been distributed as X.app. And Commandline Tools are not installed by default. Commandline Tools contains cc/gcc that you must need to build environment.</p>
+
+<p>Open Xcode and cmd +, to open Preferences panel where you can install Commandline Tools:</p>
+
+<p><img src="http://studentdeng.github.com/images/commandline.jpg" alt="alt text" /></p>
+
+<p>then</p>
+
+<pre><code>gem install hpricot
+gem install cocoapods
+</code></pre>
+
+<div name = "A3" id = "A3"></div>
+
+
+<h1>Adding Unit Tests to an existing iOS project with Xcode 4</h1>
+
+<p>When you build a new iPhone or iPad app from scratch, you can generate a new project with tests using Xcode’s project templates, and the test dependency is set up correctly.</p>
+
+<p>However, if you add a unit test target to an existing iOS project, there are some manual steps required to set up the target correctly. Following these steps will get you up and running quickly:</p>
+
+<p>Project MyExistingApp -> + Add Target -> iOS -> Other -> Cocoa Unit Testing Bundle
+Name the new target something like “Unit Tests” or “MyAppTests”
+Select your new “Unit Tests” target and click the Build Phases tab, expand Target Dependencies and add MyExistingApp as as a Target Dependency
+Click the Build Settings tab and set the Bundle Loader setting to</p>
+
+<pre><code>$(BUILT_PRODUCTS_DIR)/MyExistingApp.app/MyExistingApp
+</code></pre>
+
+<p>Set the Test Host build setting to</p>
+
+<pre><code>$(BUNDLE_LOADER)
+</code></pre>
+
+<p>Go back to your app target (not the test target), set the Symbols Hidden by Default build setting to NO</p>
+
+<p>That should take care of it, and you can now start adding tests for your app. With this configuration, you continue to add application classes only to your app target, and add test classes only to your test target. Since the tests run in the app running in the simulator, the code under test can safely instantiate views and fonts, which would otherwise cause OCunit to crash when running without the Test Host setting.</p>
+
+<div name = "A4" id = "A4"></div>
+
+
+<h1>NSDateFormatter 问题</h1>
+
+<p>最近在使用新版本xcode4.6 或是 因为新版本的sdk6.1 日期转换出现了一个问题. 而且是在模拟器可以, 真机不行的问题.
+问题是 时间格式中的 &#8220;Thu Jan&#8221; 无法被识别出来. 这个挺奇怪的, 可能新版本修改了默认行为. 下面是解决方法</p>
+
+<pre><code>//time format: @"Thu Jan 17 13:59:11 +0000 2013"
+s_format = [[NSDateFormatter alloc] init];
+[s_format setDateFormat:@"eee MMM dd HH:mm:ss ZZZZ yyyy"];
+[s_format setLocale:[[NSLocale alloc] initWithLocaleIdentifier:@"en_US_POSIX"]]; //之前少了设定Locale
+</code></pre>
+
+<div name = "A5" id = "A5"></div>
+
+
+<h1>写博客命令</h1>
+
+<pre><code>rake new_post['filename'];
+rake generate 
+rake preview
+</code></pre>
+
+<div name = "A6" id = "A6"></div>
+
+
+<h1>apigen command demo</h1>
+
+<pre><code>/usr/bin/php /Users/ygcurer/apigen/apigen.php --source /Applications/XAMPP/xamppfiles/htdocs/curer/application/controllers/api --destination /Applications/XAMPP/xamppfiles/htdocs/curer/doc_test --title curer --charset UTF-8 --access-levels public,protected --internal no --php yes --tree yes --deprecated no --todo no --download no --source-code yes --colors yes --progressbar no --update-check no
+</code></pre>
+]]></content>
+  </entry>
+  
+  <entry>
+    <title type="html"><![CDATA[哈佛幸福课 杂感一]]></title>
+    <link href="http://studentdeng.github.com/blog/2013/01/15/happiness/"/>
+    <updated>2013-01-15T18:10:00+08:00</updated>
+    <id>http://studentdeng.github.com/blog/2013/01/15/happiness</id>
+    <content type="html"><![CDATA[<p>好长时间不写博客了, 可以说将近一年的时间里面,并没有多少技术上的积累, 甚至有点倒退的痕迹, 不管是从心气还是态度, 还是毅力上面.我曾经是<em><a href="http://mindhacks.cn/">刘未鹏</a></em>的粉丝,哈,当然现在也一样. 我一直好奇为什么会他会那么的专心在思维这部分.其实在1年前,我也无法想象我会放下我心爱的计算机的书籍而拿起这些曾经我看不上的东西.有些东西的确只有经历过,才会明白.好消息是,一切还来得及.文本和技术类文章毫无瓜葛, 只是我觉得对于Geek们来说,有些其他东西还是很重要的.</p>
+
+<p><em><a href="http://v.163.com/special/positivepsychology/">幸福课</a></em>来自豆瓣小组的推荐, 一开始觉得这个只是一个练习英文听力的一个好的途径, 因为相对电影来说,我觉得对时间的利用率更高, 但事实上, 却是我听过的最好的公开课, 没有之一</p>
+
+<h2>为什么要看这门课</h2>
+
+<p>Tal 也就是这门课的老师, 第一句话就深深的吸引了我, &#8220;我来这里讲这门课, 因为我在本科的时候非常希望能学习这样的一门课程&#8221;.Tal本科在哈佛大学读计算机, 学习成绩优秀 社交优秀, 运动优秀, 但还是有一种说不出来的压抑, 不幸福的感觉,然后他寻找问题的根源, 最后居然转向了哲学和心理学. 看到这里, 我就有一种特别的冲动, 想继续看下去, 想去了解Tal的动机. 我特别好奇的在于, 如何将一个理科思维转向哲学和心理学呢? 当然, 这是我当时的想法,科学本来就是理性,严谨的, 只是我当时对心理学,哲学这些有很多的偏见. 后面我才知道了这门课程讲的是积极心理学.</p>
+
+<p>积极心理学啊, 可能是涉及到一些积极的心理暗示的某些东西, 这是我当时的想法, 不过相比占卜啊,星座啊, 这些扯淡的东西,我还是比较有好感的, 因为我当初在高考前, 学校组织过一次考试时的减压方法的交流会,有一个专家说过, 在做题没有思路的时候, 深呼吸3次, 然后心理默念&#8221;我能行&#8221;, 3次, 然后再读题, 效果会很不错. 然后我当年在考理综的时候, 最后一道物理题,纠结了我挺长时间, 最后就是通过这个心理暗示搞定的.从那之后,从不信到半信半疑.</p>
+
+<p>为什么想学心理学, 主要原因还是,当自己的外部空间拓展收到阻碍, 这个包括 工作, 学习, 人际交往,各种都不顺利, 到达瓶颈, 突然觉得可以向自己内部空间探索.而这些正好和Tal第一节课讲的内容吻合, 我觉得这就是缘分, 一种在正确的时间学正确的东西的缘分.而且Tal是一个内向的心理学老师, 他自己也承认, 而且Tal很风趣幽默.他里面讲了很多自己的故事, 包括很多让自己很尴尬的事情, 感觉很真实, 而不是我看到的其他的那种特别热情, 有力量, 感觉就像江湖卖艺的那种老师.</p>
+
+<h2>什么是幸福</h2>
+
+<p>大家都知道现在社会充斥着浮躁的概念, 不仅在中国, 美国, 全世界都是, 各种各样的秘籍, 捷径, 只要就类似的语句, 还有那句经典的&#8221;移动互联网唯快不破&#8221;, 等等. 尽是些夸大其词, 效果甚微的言论.而这些言论却成了媒体追逐的主要理念, 追求快节奏, 什么都要快.一个个就像兴奋剂一样, 给我们短暂的快感, 但对长远收获来说, 都是弊大于利的.而这些也就是我们不断的感到焦虑,压抑的原因,那么应该如何看待这些信息呢.</p>
+
+<p>Tal 讲得最多的一句话,就是chip away 我们身上的限制, 消除掉我们心理的枷锁.很多人都没有做到permission to be human. 很多时候不能面对自己, 面对自己的情绪, 更别说控制情绪.疏导情绪. 不能合理的理解情绪, 则极大的影响到自己的个人成长, 不论是生活, 工作, 学习, 还是人际交往, 而且我也确确实实的遇到了这方面的困难.</p>
+
+<p>生活包括了起起落落, 这是一件说起来容易, 做起来难的事情, 大家都知道生活包括了失败, 振作, 成功, 迎接新的挑战. 但是人们往往给自己的预期则是和这个道理背驰的. 甚至很多家长自己的心理不成熟而导致孩子心理也不成熟, 比如一个经典的例子, 考上一个好的初中, 高中, 大学, 找到好的工作, 成家就怎怎怎么了, 这个好像一个充分必要条件似的强加在孩子心理上. 幸福没有那么容易获得,也不是一个等式可以解决的.</p>
+
+<p>说到幸福,呵呵,这门课的名字可是讲happiness的, 这里我想到了一个特别搞笑的段子, &#8220;你幸福么?&#8221; 我不在这里重复了, 我在这里其实一直很困惑这个问题. Tal 讲到, 幸福不是一个简单的比较, 0 或1 .要么幸福, 要不不幸福.幸福存在于一个连续的状态,这个很像物理中能量的概念, 我们更关注与能量的转化, 多了还是少了, 而不是在乎我到底具有多少能量.更准确的描述应该是,我们如何才能变得更幸福.</p>
+
+<p>Tal 讲述了一个这样子的观点. 是这样子的一个调查, 调查那些参加终身职位的教授们的心理, 这些教授们只能申请一次一所大学, 要么得到,也么没有. 调查的内容就是, &#8220;如果得到了终身职位,那么会有多开心?&#8221;, 教授们的绝大多数都是回答&#8221;会非常非常高兴, 这实现了很多很多很多年努力的目标, 梦想成真的一刻, 我余生都会非常快乐, 一切都会变得简单, 停止不成功变成仁的竞争, 他将改变我的人生云云&#8221;, 另一个调查是,&#8221;如果得不到终身职位会怎么样?&#8221;, 教授们绝大多数回答&#8221;我们会非常非常难过, 这是很多很多年奋斗的目标, 因为如果在一所学校无法获得终身职位, 就没有可能在更高的学府获得, 只能在低一等的学校获得,所以会难过很长很长时间&#8221;</p>
+
+<p>而在一段时间时候,再次调查教授们的感受, 其中有人得到了, 有人没有得到.&#8221;得到的说非常开心,余生都会非常开心&#8221;, 而那些没有得到的, 则是&#8221;我们很确认我们会难过很长时间&#8221;. 三个月后, 六个月后不管是得到职位的,还是没有得到职位的都恢复到之前的幸福水平.</p>
+
+<p>也就是说, 在得到职位 对他们的幸福感觉, 没有任何帮助, 在长久的角度来看.这既是一个好消息也是一个坏消息.坏消息是似乎无论我们怎么做,都无关紧要, 好消息是,无论这是一个多么糟糕的经历, 最后都会过去.</p>
+
+<p>但这就带来一个问题,为什么我们还要不断地设立目标,努力实现呢?</p>
+
+<p>很多时候我们通过降低我们的心理预期,降低自己的压力,去享受生活, 比如考试只是考了B, 然后我们不去想为什么不是A, A+, 而是想,恩,可以了,及格了,我不在乎成绩;我们的工作不好, 我不在乎我工作什么, 我只想快乐.有些时候,的确降低期望水平,会感到快乐一点.但长远来看却不行.</p>
+
+<p>真正的问题不是在于降低期望, 而是在于区分正确的和错误的期望.一个错误的期望例子,就是我之前提到的,&#8221;考上好大学, 找到好工作, 升职, 找到理想的伴侣,就能让自己更快乐&#8221;. 而让我们更快乐,是通过改变我们对问题,事物的看法,内在的认知,心境来做到的,而不是这些外部条件.(当然,外部条件肯定重要,如果每天都吃不饱, 没有住的地方, 外部条件的改善当然能提升幸福, 这里不考虑这种极端情况).</p>
+
+<p>一个自己的例子吧, 之前很很用心的喜欢过一个女孩子, 但是知道的, 对于我这样的低情商Geek们来说, 结局大多都是悲剧的,觉得自己真的迈不过这个坎, 没法在面对以后的生活了, 没法在北京待下去了, 要逃避. 但现在看来, 当时自己的想法就是哈哈一笑带过了. 现在不是好好的么, 还有一个例子, 当时做IOS开发, AppStore排名是相当的低, 一度AppStore都无法找到了, 当时过年的时候,就定下一个目标, 丫的一定能冲到第一, 而且, 最后的确到第一了, 但也没有觉得特别开心, 觉得自己很厉害什么的.</p>
+
+<h2>Give ourselves the permission to be human</h2>
+
+<p>学积极心理学,主要就是想让自己能够变得阳光, 积极, 不消极. 那么就吧思路聚焦在那些痛苦的,不愉快的经历上面.</p>
+
+<p>很多情绪是与生俱来的, 但是我却在内心里不断得在抵触, 在抗拒那种情绪.有一个简单的例子,就是 &#8220;现在开始,我们脑子里面不要想一个粉色的大象, 恩, 不要想一个粉色的大象, 一定不要想一个粉色的大象&#8221;.</p>
+
+<p>我自己的感受吧, 对于一个低情商男孩来说和一个女孩交往往往会有各种各样神奇的情绪产生, 而且我自己也却觉得不可思议, 不管是嫉妒,羡慕, 负罪感, 等等的情绪. 或是对于一个初步进入社会的男孩, 在工作中也会遇到各种各样的困难,不管是大目标,还是小目标,总是会各种各样的问题, 特别是对我这种有这强大的信心,自我,自恋, 把自己看得很重, 但实际上,别人根本不这么想, 没有那么在意自己.而有时候,发现自己能力的确不够,无力改变一些事情,而陷入一种挣扎.</p>
+
+<p>而且事实上,在现在的社会, 不管是西方还是东方的, 男人们往往不能想女人们一样去向别人倾诉自己的内心真实想法.而随着压力越来越大,而变得焦躁.</p>
+
+<p>Tal 讲述了一个自己的例子, 是当他和她的妻子有第一个孩子的情景. Tal在一个月的时候, 突然发现自己有一种嫉妒的情绪,他很嫉妒她的妻子和医生之间的关系, 因为在他的角度来看, 突然有个另一个人在Tal的妻子心中比Tal获得更多的关注,不管Tal怎么哭…..Tal感到非常的嫉妒.</p>
+
+<p>在看到这个例子的时候, 给我非常大的震惊, 因为看到很多表面现象, 很多人都是永远的宠辱不惊, 在大的压力也面不改色, 遇到再困难的事情都不会害怕,以至于我认为那些家伙们没有这些消极情绪, 而作为情商极高的Tal来说, 肯定不会有这种消极情绪存在,不会这么敏感.</p>
+
+<p>但事实上, 的确有, 那后来的故事是这样子的. Tal说, 在5分钟后,他就想通了这件事情,&#8221;这个医生真的好棒,让我体会到这种以前从来没有过的情绪&#8221; 额, 听到这个, 真的觉得好假. 这也太假了, 我反正是不信, 几分钟钱还充满嫉妒, 几分钟后就感谢他么,太扯了.但是Tal说, 完全正确, 各种各样的情绪就是作为一个human的一部分. 有人的确比另一部分人敏感, 几分钟就能够产生很多各种各样的情绪.Tal说, 我完全接受了我对医生的嫉妒这个情绪, 然后give myself the permission to be human, 然后自然而然的对医生产生了积极的情绪.</p>
+
+<p>这里边会有一种自相矛盾的感觉, 是一个反语的自然现象,就像我之前说过的粉色大象, 我相信大多数人脑子里面都会有一个粉色大象出来.因为当我们企图压抑一种自然现象时, 只会加强它.就像失恋后, 想忘记那个人, 然后不停得对自己说,忘掉,忘掉,但却越来越清晰是一个道理.</p>
+
+<p>在控制自己消极情绪出现的时候, 首先做的,不是压抑他, 而是学会接受他.<em><a href="http://book.douban.com/subject/4194978/">完整的成长</a></em>这本书里面也提到了类似的经历, 让情绪自然而然的流动.</p>
+
+<p>这是一件说起来容易, 做起来非常难的一件事情. 因为我们很多人对心理学有着很大的偏见, 总觉得我们可以控制自己很棒, 因为我们总认为自己很了解自己,但事实上, 我们对自己的理解, 对大脑是如何思维, 决断, 我们的潜意识,我们的基因等等的了解, 相对而来不会比宇宙多多少.</p>
+
+<p>我们不会有一天起来说, OK, 我拒绝万有引力,我不想每天爬楼梯, 我想直接飞过去.这样多简单, 多容易.相对其他科学,比如物理, 我们总是能够很容易的承认物理的基本定理并欣然接受, 而且还能接受他的不足, 比如在量子物理等等很多领域.</p>
+
+<p>但在心理学这里,却有了双重标准. <em><a href="http://book.douban.com/subject/1221479/">与“众”不同的心理学</a></em>这里面也提到了这个基本的道理.</p>
+
+<p>一个简单的例子,就是很多媒体鼓吹的东西,什么占星, 星座, 一些通过特别简单的一些tips, 就可以把一个人了解彻底.多容易,多么简单的捷径, 不需要花费很多时间就可以了解一个人的性格.心理学家似乎就可以通过一眼就可以把这个人了解明白.网上我记得看过一个笑话, 是一个学心理的男孩,在吐槽她的女朋友, 她女朋友有天突然问他, 你知道我现在在想什么, 他说不知道,然后她女朋友说, 你真没用,学心理的居然不知道我想什么.然后他就瞎了.</p>
+
+<p>拒绝自己内心的情绪, 就像不遵守物理中的万有引力定律一样, 会让自己到处碰壁, 而事实上, 我们可以利用万有引力做出很多好玩的游戏, 刺激精彩的运动.但在面对自己的情绪时, 我们却很难做到,甚至面对都很难, 而这里,我真的好佩服Tal的情商了.因为当我有这样的消极情绪,我会觉得一定是那里出了问题, 那里做的不对,然后陷入一大段无意义的思考中, 最后因疲倦而逃避,而不是面对它, 接受它, 甚至是改变它.时间一长,则变的更加焦虑, 抑郁.</p>
+
+<p>而学到这里, 我又有了新的疑惑, 那么就是,如何接受, 被动的接受么?就没有什么可以主动做的么.而事实上,Tal说出了一个非常重要的观点, 就是, 在改变自己, 改造自己之前, 我们需要先知道, 我们可以改变什么, 不可以改变什么.</p>
+
+<p>这里Tal 提出了一个很犀利的观点.心理学的A B C</p>
+
+<p>A: affect           情绪</p>
+
+<p>B: behavior       行为</p>
+
+<p>C: cognition      思想,认知</p>
+
+<p>permission to be human 主要是和情绪相关的. 比如,我们有愤怒的情绪,接受它但并不是意味着, 我们也要接受那些因为愤怒而做出伤害他人的行为.Tal嫉妒医生, 并不代表Tal是一个坏人, 这个没有好坏之分.很多时候,我们应该采用什么样的行为去表达情感, 这个才是问题的关键. 就像之前发生的一名男子失恋后, 在地铁里面划女孩脸. 我们承认失恋的确很难过, 但是通过这种行为表达自己的难过, 就是不能接受的.</p>
+
+<p>对于认知这部分同样. 我们可以有消极的情绪,但并不意味着我们必须屈从于消极情绪带来的消极的想法.而且事实上沉思,下功夫琢磨对消极情绪这里,并没有多大帮助, 通常会越来越糟. 比如一直在想,哦,我被女朋友甩了,这有多么的惨.</p>
+
+<p>举一个我的例子吧, 我很喜欢沉思,但是在对待消极情绪这里就遇到了极大的困难,恩, 算了, 我还是在改变里面讲这个吧.</p>
+
+<p>一个情商高, 内心强大的家伙, 不是没有那些消极的情绪, 就像一个强壮的身体, 不可能永远不得病, 而是因为更有抵抗能力, 在面对病症时,也可以更快的恢复.</p>
+]]></content>
+  </entry>
+  
+  <entry>
+    <title type="html"><![CDATA[Orange‘s 一个操作系统的实现 配置问题]]></title>
+    <link href="http://studentdeng.github.com/blog/2012/02/16/selfos/"/>
+    <updated>2012-02-16T23:57:00+08:00</updated>
+    <id>http://studentdeng.github.com/blog/2012/02/16/selfos</id>
+    <content type="html"><![CDATA[<p>最近在瞅《Orange‘s 一个操作系统的实现》，个人认为相当好的OS入门实践书籍，配合之前看过的大部分的理论书，容易理解那些抽象的概念（无代码无真相），</p>
+
+<p>和《Linux内核完全注释》都是相当不错的入门书籍。</p>
+
+<p>这里记录一下可能遇到的问题，主要是配置问题，实现逻辑书里面很详细，代码注释也很详细，仔细多想应该没啥问题。</p>
+
+<p>我这里环境是ubuntu 10 64bit， 而书中代码是32bit的。这里在编译链接的时候出了一点小问题。这里记录下。</p>
+
+<p>错误：</p>
+
+<pre><code>ld: i386 architecture of input file `kernel/kernel.o' is incompatible with i386:x86-64 output
+</code></pre>
+
+<p>需要修改makefile</p>
+
+<pre><code>CFLAGS          = -I include/ -c -fno-builtin -m32
+LDFLAGS         = -m elf_i386 -s -Ttext $(ENTRYPOINT)
+</code></pre>
+
+<p>错误：</p>
+
+<pre><code>klib.c:(.text+0xe5): undefined reference to `__stack_chk_fail'
+</code></pre>
+
+<p> 这里应该是少了c的标准库，还是需要修改makefile文件</p>
+
+<pre><code>LDFLAGS         = -m elf_i386 -s -Ttext $(ENTRYPOINT) -lc
+</code></pre>
+]]></content>
+  </entry>
+  
+  <entry>
+    <title type="html"><![CDATA[bochs-configure]]></title>
+    <link href="http://studentdeng.github.com/blog/2012/02/14/bochs-configure/"/>
+    <updated>2012-02-14T23:55:00+08:00</updated>
+    <id>http://studentdeng.github.com/blog/2012/02/14/bochs-configure</id>
+    <content type="html"><![CDATA[<h1>Bochs + freedos安装配置</h1>
+
+<pre><code>sudo apt-get install build-essential
+
+sudo apt-get install xorg-dev
+
+sudo apt-get install libgtk2.0-dev
+</code></pre>
+
+<p>下载</p>
+
+<pre><code>bochshttp://bochs.sourceforge.net/cgi-bin/topper.pl?name=See+All+Releases&amp;url=http://sourceforge.net/projects/bochs/files
+
+$ tar vxaf bochs-2.5.1.tar.gz
+
+$ cd bochs-2.5.1
+
+$ ./configure –enable-debugger-enable-disasm
+
+$ make
+
+$ sudo make install
+</code></pre>
+
+<p>下载freedoshttp://bochs.sourceforge.net/diskimages.html 复制到工作目录下</p>
+
+<h1>Bochs 配置 先通过dos引导，我们的软件复制在B盘下</h1>
+
+<pre><code>############################################################### 
+# Configuration file for Bochs 
+###############################################################
+
+# how much memory the emulated machine will have 
+megs: 32
+
+# filename of ROM images 
+romimage: file=/usr/share/bochs/BIOS-bochs-latest 
+vgaromimage: file=/usr/share/vgabios/vgabios.bin
+
+# what disk images will be used 
+floppya: 1_44=freedos.img, status=inserted 
+floppyb: 1_44=pm.img, status=inserted
+
+# choose the boot disk. 
+boot: a
+
+# where do we send log messages? 
+# log: bochsout.txt
+
+# disable the mouse 
+mouse: enabled=0
+
+# enable key mapping, using US layout as default. 
+keyboard_mapping: enabled=1, map=/usr/share/bochs/keymaps/x11-pc-us.map
+
+#enabled debug using xchg bx, bx
+
+magic_break:enabled=1
+
+可以通过下面方式来部署程序，当然，写成makefile最省事
+
+$ sudo mount –o loop pm.img /mnt/floppy
+
+$ sudo cp test.com /mnt/floppy
+
+$ sudo umount /mnt/floppy
+</code></pre>
+
+<h1>bochs 调试</h1>
+
+<p>调试方法很多，这里介绍最简单的方式之一。bochs 配置中增加 magic_break:enabled=1</p>
+
+<p>代码中增加xchg bx, bx，bochs会停在代码出。当然，前提是bochs需要支持debug</p>
+]]></content>
+  </entry>
+  
+  <entry>
+    <title type="html"><![CDATA[Objective-C block]]></title>
+    <link href="http://studentdeng.github.com/blog/2012/02/03/objblock/"/>
+    <updated>2012-02-03T23:47:00+08:00</updated>
+    <id>http://studentdeng.github.com/blog/2012/02/03/objblock</id>
+    <content type="html"><![CDATA[<p>block 有什么意义，特点等等，这些东西，实在是太复杂了，这里只是简单的总结一下block的内存管理。而且也仅仅限于objective-C的部分</p>
+
+<h1>Block memory</h1>
+
+<p>block 的内存管理，应该是最头疼的地方,就用这个来自WWDC的例子来解释一下吧。</p>
+
+<p><img src="http://studentdeng.github.com/images/objblock-1.png" alt="alt text" /></p>
+
+<p>当程序运行到这里时，stack 空间中有 shared 变量和 captured 变量。</p>
+
+<p>这里可以看出，__block 变量开始是处于stack上的。</p>
+
+<p><img src="http://studentdeng.github.com/images/objblock-2.png" alt="alt text" /></p>
+
+<p>当程序运行到这里时，stack 空间中有 shared 变量，captured 变量和block1。</p>
+
+<p>这里可以看出，block 类型的变量开始时也是处在stack上的。</p>
+
+<p><img src="http://studentdeng.github.com/images/objblock-3.png" alt="alt text" /></p>
+
+<p>当程序运行到这里时，stack 空间中有 shared 变量，captured 变量和block1。</p>
+
+<p>这里值得注意的就是当我们直接修改stack 上的captured变量时，block1中的captured变量仍然是原来的数值10。事实上，从const 我们就可以看出，block1中的captured变量是不能被修改的而且是从stack原有变量的一个const 拷贝。在block1中访问的captured变量是const拷贝的，也就是说block1中captured = 10，而不是原有的stack上的值 20。当然，在block1中，我们也不能修改captured变量。</p>
+
+<h1>Copy block</h1>
+
+<p>block在一开始是处在stack上的，这是为了考虑到效率的原因，但是，有时候是需要block的生命周期长于一开始的stack，这时，我们就通过copy block 来将block复制到heap。</p>
+
+<p><img src="http://studentdeng.github.com/images/objblock-4.png" alt="alt text" /></p>
+
+<p>当程序执行完 block2 = [block1 copy];时，__block 类型变量shared，被复制到了heap中，很显然，shared变量需要被block和block2共享(当然还有stack也要共享)，而block2被移动到heap中，很可能生命周期会长于stack，所以，shared也被复制到了heap中。而block2中的captured 也被复制到了heap中。</p>
+
+<p><img src="http://studentdeng.github.com/images/objblock-5.png" alt="alt text" /></p>
+
+<p>当程序执行完 block3 = [block2 copy];时, 我们看到的是，block2 和block3 其实指向的是同一片内存空间。事实上，block的数据结构中，保存了引用计数，而对于copy到heap中的block 再copy时，行为同普通对象retain一样，会使引用计数+1。那么如果我们对[block retain]会如何呢？ 实际上什么都没有发生，至少在现在的runtime版本下。因为retain中，不仅有引用计数+1在，而且retain的返回值，必须同返回调用对象的地址一样，而block的地址是可能变化的（stack or heap），所以，这里retain的行为几乎是被忽略掉的。</p>
+
+<p>当heap中的block变量先于stack被销毁时，如调用 [block2 release]; [block3 release];，heap中的block2，block3 由于引用计数为0 而被销毁，而 __block 变量shared则还在heap中，因为stack还要使用，block1 也要使用。</p>
+
+<p><img src="http://studentdeng.github.com/images/objblock-6.png" alt="alt text" /></p>
+
+<p>当heap中的block变量晚于stack时，显然，stack 被清除，function中也啥都没了。</p>
+
+<p><img src="http://studentdeng.github.com/images/objblock-7.png" alt="alt text" /></p>
+
+<p>最后，当block2 和block3 都被release之后。则恢复到最初状态</p>
+
+<p><img src="http://studentdeng.github.com/images/objblock-8.png" alt="alt text" /></p>
+
+<h1>block details</h1>
+
+<p>当我们写出一个Block literal expression</p>
+
+<pre><code>^ { printf("hello world\n"); }
+</code></pre>
+
+<p>事实上，编译器为我们生成了如下结构</p>
+
+<pre><code>struct __block_literal_1 {
+    void *isa;
+    int flags;
+    int reserved; 
+    void (*invoke)(struct __block_literal_1 *);
+    struct __block_descriptor_1 *descriptor;
+};void __block_invoke_1(struct __block_literal_1 *_block) {
+    printf("hello world\n");
+}static struct __block_descriptor_1 {
+    unsigned long int reserved;
+    unsigned long int Block_size;
+} __block_descriptor_1 = { 0, sizeof(struct __block_literal_1)}; 当Block literal expression 使用时 __block_literal_1 则会被初始化为：struct __block_literal_1 _block_literal = {
+    &amp;_NSConcreteStackBlock,
+    (1&lt;&lt;29), &lt;uninitialized&gt;,
+    __block_invoke_1,
+    &amp;__block_descriptor_1
+   };
+</code></pre>
+
+<p>下一个例子</p>
+
+<pre><code>int x = 10;
+void (^vv)(void) = ^{printf("x is %d\n", x);};
+x = 11;
+vv();
+编译器会生成如下结构
+struct __block_literal_2{
+    void *isa;
+    int flags;
+    int reserved;
+    void (*invoke)(struct __block_literal_2 *);
+    struct __block_descriptor_2 *descriptor;
+    const int x;
+};
+void __block_invoke_2(struct __block_literal_2 *_block){
+    printf("x is %d\n", _block-&gt;x);
+}
+void struct __block_descriptor_2{
+    unsigned long int reserved;
+    unsigned long int block_size;
+}__block_descriptor_2 = {0, sizeof(struct __block_literal_2)};
+struct __block_literal_2 __block_literal_2 = {
+    &amp;NSConcreteStackBlock,
+    (1&lt;&lt;29),
+    __block_invoke_2,
+    &amp;__block_descriptor_2,
+    x
+};
+</code></pre>
+
+<p>block中使用的普通变量（int， char *）导入是const copy。普通对象则会retain。__block 类型变量则什么不做，只是保存一个指针，全局变量也只是保存一个简单的指针。</p>
+
+<p>当然，block 可能也会嵌套block，那么又会是什么样子？其实不复杂，复杂的只是增加了复制函数，和释放函数，这一点很像C++的拷贝构造函数，在必要时生成。</p>
+
+<pre><code>void (^existingBlock)(void) = …;
+void (^vv)(void) = ^{existingBlock();};
+vv();
+struct __block_literal_3{
+    ...;//esisting block
+};
+struct __block_literal_4{
+    void *isa;
+    int flags;
+    int reserved;
+    void (*invoke)(struct __block_literal_4 *);
+    struct __block_literal_3 *const existingBlock;
+};
+void __block_invoke_4(struct __block_literal_3 *__block) {
+   __block-&gt;existingBlock-&gt;invoke(__block-&gt;existingBlock);
+}
+void __block_copy_4(struct __block_literal_4 *dst, struct __block_literal_4 *src) {
+     //_Block_copy_assign(&amp;dst-&gt;existingBlock, src-&gt;existingBlock, 0);
+     _Block_object_assign(&amp;dst-&gt;existingBlock, src-&gt;existingBlock, BLOCK_FIELD_IS_BLOCK);
+}
+void __block_dispose_4(struct __block_literal_4 *src) {
+     // was _Block_destroy
+     _Block_object_dispose(src-&gt;existingBlock, BLOCK_FIELD_IS_BLOCK);
+}
+static struct __block_descriptor_4 {
+    unsigned long int reserved;
+    unsigned long int Block_size;
+    void (*copy_helper)(struct __block_literal_4 *dst, struct __block_literal_4 *src);
+    void (*dispose_helper)(struct __block_literal_4 *);
+} __block_descriptor_4 = {
+    0,
+    sizeof(struct __block_literal_4),
+    __block_copy_4,
+    __block_dispose_4,
+};
+</code></pre>
+
+<p>初始化</p>
+
+<pre><code>  struct __block_literal_4 _block_literal = {
+    &amp;_NSConcreteStackBlock,
+    (1&lt;&lt;25)|(1&lt;&lt;29), &lt;uninitialized&gt;
+    __block_invoke_4,
+    &amp; __block_descriptor_4
+        existingBlock,
+   };
+
+
+__block storage variables
+
+__block  变量是一种很特殊的数据类型，有自己的特有的数据结构
+
+struct _block_byref_xxxx {
+    void *isa;
+    struct _block_byref_xxxx *forwarding;
+    int flags;   //refcount;
+    int size;
+    // helper functions called via Block_copy() and Block_release()
+    void (*byref_keep)(void  *dst, void *src); //需要时被生成
+    void (*byref_dispose)(void *);//需要时被生成
+    typeof(marked_variable) marked_variable;
+};
+</code></pre>
+
+<p>看看__block 类型变量的使用</p>
+
+<pre><code>int __block i = 10;
+i = 11;
+struct _block_byref_i {
+    void *isa;
+    struct _block_byref_i *forwarding;
+    int flags;   //refcount;
+    int size;
+    int captured_i;
+} i = { NULL, &amp;i, 0, sizeof(struct _block_byref_i), 10 };
+i.forwarding-&gt;captured_i = 11;
+</code></pre>
+
+<p>显然，当block中增加了<strong>block 类型变量之后，嵌套block 的拷贝函数也会增加对</strong>block 变量的复制。</p>
+
+<pre><code>__block void (voidBlock)(void) = blockA;
+voidBlock = blockB;
+struct _block_byref_voidBlock {
+    void *isa;
+    struct _block_byref_voidBlock *forwarding;
+    int flags;   //refcount;
+    int size;
+    void (*byref_keep)(struct _block_byref_voidBlock *dst, struct _block_byref_voidBlock *src);
+    void (*byref_dispose)(struct _block_byref_voidBlock *);
+    void (^captured_voidBlock)(void);
+};
+void _block_byref_keep_helper(struct _block_byref_voidBlock *dst, struct _block_byref_voidBlock *src) {
+    //_Block_copy_assign(&amp;dst-&gt;captured_voidBlock, src-&gt;captured_voidBlock, 0);
+    _Block_object_assign(&amp;dst-&gt;captured_voidBlock, src-&gt;captured_voidBlock, BLOCK_FIELD_IS_BLOCK | BLOCK_BYREF_CALLER);
+}
+void _block_byref_dispose_helper(struct _block_byref_voidBlock *param) {
+    //_Block_destroy(param-&gt;captured_voidBlock, 0);
+    _Block_object_dispose(param-&gt;captured_voidBlock, BLOCK_FIELD_IS_BLOCK | BLOCK_BYREF_CALLER)}
+struct _block_byref_voidBlock voidBlock = {( .forwarding=&amp;voidBlock, .flags=(1&lt;&lt;25), .size=sizeof(struct _block_byref_voidBlock *),
+      .byref_keep=_block_byref_keep_helper, .byref_dispose=_block_byref_dispose_helper,
+      .captured_voidBlock=blockA )};
+voidBlock.forwarding-&gt;captured_voidBlock = blockB;
+</code></pre>
+
+<p>block中，引入了__block 会是什么情况</p>
+
+<pre><code>int __block i = 2;
+functioncall(^{ i = 10; });
+struct _block_byref_i {
+    void *isa;  // set to NULL
+    struct _block_byref_voidBlock *forwarding;
+    int flags;   //refcount;
+    int size;
+    void (*byref_keep)(struct _block_byref_i *dst, struct _block_byref_i *src);
+    void (*byref_dispose)(struct _block_byref_i *);
+    int captured_i;
+};
+struct __block_literal_5 {
+    void *isa;
+    int flags;
+    int reserved; 
+    void (*invoke)(struct __block_literal_5 *);
+    struct __block_descriptor_5 *descriptor;
+    struct _block_byref_i *i_holder;
+};
+void __block_invoke_5(struct __block_literal_5 *_block) {
+   _block-&gt;i_holder-&gt;forwarding-&gt;captured_i = 10;
+}
+void __block_copy_5(struct __block_literal_5 *dst, struct __block_literal_5 *src) {
+     _Block_object_assign(&amp;dst-&gt;i_holder, src-&gt;i_holder, BLOCK_FIELD_IS_BYREF | BLOCK_BYREF_CALLER);
+}
+void __block_dispose_5(struct __block_literal_5 *src) {
+     _Block_object_dispose(src-&gt;i_holder, BLOCK_FIELD_IS_BYREF | BLOCK_BYREF_CALLER);
+}
+static struct __block_descriptor_5 {
+    unsigned long int reserved;
+    unsigned long int Block_size;
+    void (*copy_helper)(struct __block_literal_5 *dst, struct __block_literal_5 *src);
+    void (*dispose_helper)(struct __block_literal_5 *);
+} __block_descriptor_5 = { 0, sizeof(struct __block_literal_5) __block_copy_5, __block_dispose_5 };
+struct _block_byref_i i = {( .forwarding=&amp;i, .flags=0, .size=sizeof(struct _block_byref_i) )};
+struct __block_literal_5 _block_literal = {
+    &amp;_NSConcreteStackBlock,
+    (1&lt;&lt;25)|(1&lt;&lt;29), &lt;uninitialized&gt;,
+    __block_invoke_5,
+    &amp;__block_descriptor_5,
+        2,
+   };
+</code></pre>
+
+<p>block 中的太多细节这里不做赘述，有兴趣的可以参考Block—ABI-Apple，也可以直接<a href="http://llvm.org/svn/llvm-project/compiler-rt/trunk/BlocksRuntime/runtime.c">这里</a>去看。</p>
+]]></content>
+  </entry>
+  
+</feed>

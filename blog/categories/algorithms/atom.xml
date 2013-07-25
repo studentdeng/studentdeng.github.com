@@ -1,0 +1,1183 @@
+<?xml version="1.0" encoding="utf-8"?>
+<feed xmlns="http://www.w3.org/2005/Atom">
+
+  <title><![CDATA[Category: algorithms | 不会开机的男孩]]></title>
+  <link href="http://studentdeng.github.com/blog/categories/algorithms/atom.xml" rel="self"/>
+  <link href="http://studentdeng.github.com/"/>
+  <updated>2013-07-25T16:19:41+08:00</updated>
+  <id>http://studentdeng.github.com/</id>
+  <author>
+    <name><![CDATA[studentdeng]]></name>
+    <email><![CDATA[studentdeng@hotmail.com]]></email>
+  </author>
+  <generator uri="http://octopress.org/">Octopress</generator>
+
+  
+  <entry>
+    <title type="html"><![CDATA[hash]]></title>
+    <link href="http://studentdeng.github.com/blog/2011/08/26/hash/"/>
+    <updated>2011-08-26T23:28:00+08:00</updated>
+    <id>http://studentdeng.github.com/blog/2011/08/26/hash</id>
+    <content type="html"><![CDATA[<p>在应用程序中，常常需要将一个集合U（键值集合）和另一个集合T（数据集合）建立关系构造dictionary结构，来达到增删查改的需求。如果键值集合很小，那么可以直接采用Direct-address tables的方式实现。</p>
+
+<p>假如我们的集合 U = {0, 1, ..., m - 1}, 而且m并不大。如果我们的键和值对应唯一，那么我们可以通过构造一个大的数组来保存集合U，如下结构。</p>
+
+<p><img src="/images/hash-1.png" alt="alt text" /></p>
+
+<p>显然，当集合U增大，那么直接存储集合U变的不那么明智起来，而且，如果使用键的集合K变小是，我们浪费的空间也越来越大。当集合K比集合U小很多的时候，就是hash粉墨登场的时候了。hash将保存空间压缩到集合K的大小，并且控制查找元素的时间仍在O(1) 在平均情况下。</p>
+
+<p>hash 通过hash函数h，将集合U 映射到hash表T[0,…, m-1]中， 即 h : U → {0, 1, ..., m - 1}。显然，由于集合大小的限制，很可能造成有相同的key 指向了hash表中的同一项，如图。</p>
+
+<p><img src="/images/hash-2.png" alt="alt text" /></p>
+
+<p>我们将这一情况称为碰撞（Collision），解决碰撞的方法很多，最容易想到的是通过链表来保存碰撞的key。</p>
+
+<p><img src="/images/hash-3.png" alt="alt text" /></p>
+
+<p>一个简单的例子，linux2.4 在处理进程中，需要一个通过pid找到进程的要求，而具体实现则是利用了hash。在处理冲突时，采用的是链表的方法。不过由于是操作系统的代码，所以这里并不是通常意义的双向链表，pidhash_next 指向后一个进程，但是pidhash_pprev指向的是前一个进程的pidhash_next的地址。虽然不长，但是理解这段还是需要稍微动下脑筋，系统之所以这么实现，似乎是能够提高增加和删除时链表的效率。</p>
+
+<pre><code>/* PID hashing. (shouldnt this be dynamic?) */ 
+#define PIDHASH_SZ (4096 &gt;&gt; 2) 
+extern struct task_struct *pidhash[PIDHASH_SZ]; 
+#define pid_hashfn(x) ((((x) &gt;&gt; 8) ^ (x)) &amp; (PIDHASH_SZ - 1)) 
+
+static inline void hash_pid(struct task_struct *p) 
+{ 
+    struct task_struct **htable = &amp;pidhash[pid_hashfn(p-&gt;pid)]; 
+    if((p-&gt;pidhash_next = *htable) != NULL)//如果发生的冲突 
+        (*htable)-&gt;pidhash_pprev = &amp;p-&gt;pidhash_next;//这里可以看出，pprev是上一个进程的next指针的地址 
+    *htable = p; 
+    p-&gt;pidhash_pprev = htable;//新的进程的pprev是指向了hash表项中的自己的地址 
+} 
+static inline void unhash_pid(struct task_struct *p) 
+{ 
+    if(p-&gt;pidhash_next)//如果有冲突 
+        p-&gt;pidhash_next-&gt;pidhash_pprev = p-&gt;pidhash_pprev; 
+    *p-&gt;pidhash_pprev = p-&gt;pidhash_next;//当没有冲突时，就会置NULL 
+} 
+static inline struct task_struct *find_task_by_pid(int pid) 
+{ 
+    struct task_struct *p, **htable = &amp;pidhash[pid_hashfn(pid)]; 
+    for(p = *htable; p &amp;&amp; p-&gt;pid != pid; p = p-&gt;pidhash_next); 
+    return p; 
+}
+</code></pre>
+
+<p>SGI STL的例子 hash</p>
+
+<p>SGI STL中的hashtable 同样采用的是开链法设计，这里就是hashtable中节点的样子</p>
+
+<pre><code>template &lt;class _Val&gt; 
+struct _Hashtable_node 
+{ 
+    _Hashtable_node* _M_next; 
+    _Val _M_val; 
+};
+</code></pre>
+
+<p>这里可以看出，hashtable并没有利用现有的list等容器，而是自己简单的创建一个单向链表并维护。由于hashtable中的每一项元素都是一连串的数据（处理冲突而在一个链表中），所以将hashtable中的元素成为bucket，表示这个元素其实可能有“一桶子”东西，最后hashtable通过vector管理bucket，实现动态增长。</p>
+
+<p>同之前一样，首先从iterator开始了解。下面是hashtable的iterator实现。</p>
+
+<pre><code>template &lt;class _Val, class _Key, class _HashFcn,
+          class _ExtractKey, class _EqualKey, class _Alloc&gt;
+struct _Hashtable_iterator {
+  typedef hashtable&lt;_Val,_Key,_HashFcn,_ExtractKey,_EqualKey,_Alloc&gt;
+          _Hashtable;
+  typedef _Hashtable_iterator&lt;_Val, _Key, _HashFcn, 
+                              _ExtractKey, _EqualKey, _Alloc&gt;
+          iterator;
+  typedef _Hashtable_const_iterator&lt;_Val, _Key, _HashFcn, 
+                                    _ExtractKey, _EqualKey, _Alloc&gt;
+          const_iterator;
+  typedef _Hashtable_node&lt;_Val&gt; _Node;
+  typedef forward_iterator_tag iterator_category; 
+  typedef _Val value_type;
+  typedef ptrdiff_t difference_type;
+  typedef size_t size_type;
+  typedef _Val&amp; reference;
+  typedef _Val* pointer;
+  _Node* _M_cur;         //指向当前的节点
+  _Hashtable* _M_ht;     //指向hashtable容器
+  _Hashtable_iterator(_Node* __n, _Hashtable* __tab) 
+    : _M_cur(__n), _M_ht(__tab) {}
+  _Hashtable_iterator() {}
+  reference operator*() const { return _M_cur-&gt;_M_val; }
+#ifndef __SGI_STL_NO_ARROW_OPERATOR
+  pointer operator-&gt;() const { return &amp;(operator*()); }
+#endif /* __SGI_STL_NO_ARROW_OPERATOR */
+  iterator&amp; operator++();
+  iterator operator++(int);
+  bool operator==(const iterator&amp; __it) const
+    { return _M_cur == __it._M_cur; }
+  bool operator!=(const iterator&amp; __it) const
+    { return _M_cur != __it._M_cur; }
+};
+</code></pre>
+
+<p>可以看出，这里的迭代器设计成只能向后移动，在operator ++ 中，我们可以看到迭代器的移动。</p>
+
+<pre><code>template &lt;class _Val, class _Key, class _HF, class _ExK, class _EqK, 
+class _All&gt;
+_Hashtable_iterator&lt;_Val,_Key,_HF,_ExK,_EqK,_All&gt;&amp;
+_Hashtable_iterator&lt;_Val,_Key,_HF,_ExK,_EqK,_All&gt;::operator++()
+{
+    const _Node* __old = _M_cur;
+    _M_cur = _M_cur-&gt;_M_next;
+    if (!_M_cur) {
+        size_type __bucket = _M_ht-&gt;_M_bkt_num(__old-&gt;_M_val);
+        while (!_M_cur &amp;&amp; ++__bucket &lt; _M_ht-&gt;_M_buckets.size())
+           _M_cur = _M_ht-&gt;_M_buckets[__bucket];
+     }
+     return *this;
+}
+</code></pre>
+
+<p>首先在链表（一个bucket）中寻找下一个节点，如果是链表中的最后一个节点，那么寻找下一个链表（bucket）中的节点。了解迭代器之后，开始了解容器本身。</p>
+
+<p>之前可以看出，SGI STL 虽然采用的是开链法，但是在分配空间大小时，依然采用的是质数，这一点和.net framework 中的dictionary一样。大小差不多是2倍</p>
+
+<pre><code>static const int __stl_num_primes = 28;
+static const unsigned long __stl_prime_list[__stl_num_primes] =
+{
+  53ul,         97ul,         193ul,       389ul,       769ul,
+  1543ul,       3079ul,       6151ul,      12289ul,     24593ul,
+  49157ul,      98317ul,      196613ul,    393241ul,    786433ul,
+  1572869ul,    3145739ul,    6291469ul,   12582917ul,  25165843ul,
+  50331653ul,   100663319ul,  201326611ul, 402653189ul, 805306457ul, 
+  1610612741ul, 3221225473ul, 4294967291ul
+};
+//找到下一个大于n的质数，lower_bound是一个二分法查找。
+inline unsigned long __stl_next_prime(unsigned long __n)
+{
+  const unsigned long* __first = __stl_prime_list;
+  const unsigned long* __last = __stl_prime_list + __stl_num_primes;
+  const unsigned long* pos = lower_bound(__first, __last, __n);
+  return pos == __last ? *(__last - 1) : *pos;
+}
+</code></pre>
+
+<p>  hashTable 中最重要的部分是扩容。那么，我们看看，SGI STL是怎么做的</p>
+
+<pre><code>pair&lt;iterator, bool&gt; insert_unique(const value_type&amp; __obj) 
+{ 
+  resize(_M_num_elements + 1); 
+  return insert_unique_noresize(__obj); 
+}
+
+template &lt;class _Val, class _Key, class _HF, class _Ex, class _Eq, class _All&gt;
+void hashtable&lt;_Val,_Key,_HF,_Ex,_Eq,_All&gt;
+  ::resize(size_type __num_elements_hint)
+{
+  const size_type __old_n = _M_buckets.size();
+  if (__num_elements_hint &gt; __old_n) {
+    //如果需要扩容，我们找到下一个质数
+    const size_type __n = _M_next_size(__num_elements_hint);
+    if (__n &gt; __old_n) {
+      //搞一个新的buckets
+      vector&lt;_Node*, _All&gt; __tmp(__n, (_Node*)(0),
+                                 _M_buckets.get_allocator());
+      __STL_TRY {
+        for (size_type __bucket = 0; __bucket &lt; __old_n; ++__bucket) {
+          //遍历之旧的buckets
+          _Node* __first = _M_buckets[__bucket];
+          while (__first) {
+            //遍历旧的bucket，这里，我们根据新的大小找到了新的位置
+            size_type __new_bucket = _M_bkt_num(__first-&gt;_M_val, __n);
+            //将旧的bucket数据改为 我们正在处理的item的下一个 
+            _M_buckets[__bucket] = __first-&gt;_M_next;
+            //把我们现在处理的item 插入到新的buckets中。
+            __first-&gt;_M_next = __tmp[__new_bucket];
+            __tmp[__new_bucket] = __first;
+            //将我们当前处理的item，修改为旧数据的下一个
+            __first = _M_buckets[__bucket];          
+          }
+        }
+        //都搞定了，我们将buckets更换。
+        _M_buckets.swap(__tmp);
+      }
+#ifdef __STL_USE_EXCEPTIONS
+      catch(...) {
+        for (size_type __bucket = 0; __bucket &lt; __tmp.size(); ++__bucket) {
+          while (__tmp[__bucket]) {
+            _Node* __next = __tmp[__bucket]-&gt;_M_next;
+            _M_delete_node(__tmp[__bucket]);
+            __tmp[__bucket] = __next;
+          }
+        }
+        throw;
+      }
+#endif /* __STL_USE_EXCEPTIONS */
+    }
+  }
+}
+</code></pre>
+
+<p>当然，这个只是insert_unique ，insert_equal 类似，这里不做描述。</p>
+
+<p>除了resize，hashtable中还有一个吸引我们的就是hash func。但是，一般我们并不会指定hash func， 那么，我们看看SGI STL 是如何选择hash 函数的。</p>
+
+<pre><code>#ifndef __SGI_STL_HASH_FUN_H
+#define __SGI_STL_HASH_FUN_H
+#include &lt;stddef.h&gt;
+__STL_BEGIN_NAMESPACE
+template &lt;class _Key&gt; struct hash { };
+//字符串这里看来稍微有了一些操作
+inline size_t __stl_hash_string(const char* __s)
+{
+  unsigned long __h = 0; 
+  for ( ; *__s; ++__s)
+    __h = 5*__h + *__s;
+
+  return size_t(__h);
+}
+//这些东西，通过c++ 模板偏特化实现，我们看到，这些东西，啥都没做，只是返回而已。所以，如果
+//希望获得最佳的性能，实现仿函数。是非常必要的。
+__STL_TEMPLATE_NULL struct hash&lt;char*&gt;
+{
+  size_t operator()(const char* __s) const { return __stl_hash_string(__s); }
+};
+__STL_TEMPLATE_NULL struct hash&lt;const char*&gt;
+{
+  size_t operator()(const char* __s) const { return __stl_hash_string(__s); }
+};
+__STL_TEMPLATE_NULL struct hash&lt;char&gt; {
+  size_t operator()(char __x) const { return __x; }
+};
+__STL_TEMPLATE_NULL struct hash&lt;unsigned char&gt; {
+  size_t operator()(unsigned char __x) const { return __x; }
+};
+__STL_TEMPLATE_NULL struct hash&lt;signed char&gt; {
+  size_t operator()(unsigned char __x) const { return __x; }
+};
+__STL_TEMPLATE_NULL struct hash&lt;short&gt; {
+  size_t operator()(short __x) const { return __x; }
+};
+__STL_TEMPLATE_NULL struct hash&lt;unsigned short&gt; {
+  size_t operator()(unsigned short __x) const { return __x; }
+};
+__STL_TEMPLATE_NULL struct hash&lt;int&gt; {
+  size_t operator()(int __x) const { return __x; }
+};
+__STL_TEMPLATE_NULL struct hash&lt;unsigned int&gt; {
+  size_t operator()(unsigned int __x) const { return __x; }
+};
+__STL_TEMPLATE_NULL struct hash&lt;long&gt; {
+  size_t operator()(long __x) const { return __x; }
+};
+__STL_TEMPLATE_NULL struct hash&lt;unsigned long&gt; {
+  size_t operator()(unsigned long __x) const { return __x; }
+};
+</code></pre>
+
+<p>SQLite 的hash表。</p>
+
+<p>SQLite是在移动设备上普遍的一个家伙， 他用到了2种HASH， 一种和上面的SGI STL 类似，在PC端，在做增加的时候，判断了数据量大小（一般10个），如果小于，则采用双向链表的方式，不是则采用hash存储。只是，在移动分支中我没有找到，PC端的确有这样的设计，也许在mobile上做了精简。这种hash，用于SQLite底层的内存管理，缓存部分，SQLite采用的是LRU的方式缓存。</p>
+
+<p>另一种Hash是叫做perfect hash。这是一种在最坏情况下，依然能够达到O(1) 的能力，听上去似乎挺吓人的，但是大多数是指固定的表，当然，似乎有些能够做到动态保证，不过，不管他了，我可不是科学家。</p>
+
+<p>SQLite 的前端是需要做词法语法分析的。这部分就涉及到了关键字的保存，这里SQLite 通过perfect hash来达到快速查找。具体的策略了解编译原理的都比较明白，但是，这个的确比较有意思。</p>
+
+<p>构造关键字是通过一个起始位置和长度来获取的。如 “REINDEX 、 INDEXED 、 INDEX 、 DESC”；将保存成“REINDEXEDESC”。那么 REINDEX = （0， 7）。而剩下的工作可以交给一些程序，他们会帮助我们生成perfect hash。</p>
+
+<p>大数据量下，hash信息指纹的应用。可以参考 google黑板报  http://www.google.com.hk/ggblog/googlechinablog/2006/08/blog-post_8115.html</p>
+]]></content>
+  </entry>
+  
+  <entry>
+    <title type="html"><![CDATA[算法学习二三事]]></title>
+    <link href="http://studentdeng.github.com/blog/2011/02/03/algorithms/"/>
+    <updated>2011-02-03T23:02:00+08:00</updated>
+    <id>http://studentdeng.github.com/blog/2011/02/03/algorithms</id>
+    <content type="html"><![CDATA[<p>不得不说，有时候无知是福，看到一点有趣而深刻的东东，就能感觉到神奇。越是我们熟悉的东西，往往却是我们进一步理解深刻的障碍，而之所以是障碍是我们并不知道这个是我们理解问题的障碍。困惑中的每一次豁然开朗往往是从一点一滴的我们已经成为惯性思维中开始。越是深刻的原理，往往越是简单强大。就像爱因斯坦打破牛顿给我们原有的世界观一样。对于一个打破常规，让你重新理解问题的最简单的方法就是把你整个思考的前提否定。而带来的结果就是我们看问题的角度，层面有了更大的扩展。所以，有时候知道的太多反而不美，做一个白痴也很幸福。</p>
+
+<p>哎，又无病呻吟了半天。之所以有上述感想。还得感谢自己的同学。由于我没有看过MIT的经典课程《算法导论》而被鄙视，而且更无语的是，我的理由是“听不懂，如果有老师的课堂发音的记录”，而事实上。这个MIT早就提供了，为了照顾想我这样的听力不好的家伙。好吧，我是个白痴，不过就像上面讲的，白痴也有白痴的幸福。这个假期，无聊的时候，不仅可以看《爱情公寓2》也可以屡屡自己的数学常识了。：）</p>
+
+<p>《算法导论》是一名研究算法设计的课程。设计算法，我们关心的主要是2个方面，一个是性能，另一个是资源花费。当然，我们重点的是性能，我们总是希望我们的程序跑的更快。那么学习算法到底有什么用呢？这是一个经典的问题。Charles Leiserson 是这样给我们解答的。首先，列举了一大堆在实际编程中比性能更重要的东西：可维护性，模块化，功能，用户体验等等。特别是用户体验，那么既然有这么多的东东比算法重要，那么为什么我们还要学习算法呢？</p>
+
+<h2>算法决定了可行还是不可行。</h2>
+
+<p>在一些实时的情况下，比如机器人等嵌入式设备，我们不够快，那么就没有意义，如果我们用了太多的内存，同样不行。所以，算法这个东东，总是在我们计算机领域的最前沿部分，如人工智能，搜索引擎，数据挖掘。如果我们是在做10年前就已经实现了的东西，那么性能的确在一些情况下已经不重要了。但是，如果想做一些别人没有做过的东西，真正的实现从无到有的过程。那么其中遇到的绝大多数问题都是，数据太复杂了。没有能力在有限的资源下找到答案。这也就是为什么叫计算机科学，而不是计算机工程。（当然科学这个和名字是无关的，比如物理，从来没有那个学校叫个什么物理科学什么的。：））。不得不说，MIT的目标是为世界培养leader，而我们那破学校是为了培养farmer（这里并没有不敬在里面，而且事实上，做一个farmer挺好的，每年坐在家里，收个房租，年末村里再分个几十万，比那些城里白领好多了在物质上）。其实也不那么绝对，非要改变世界，只要是之前没有做过的程序，我们在实现之前，首先思考的一定是算法。其次，则是对他不断的优化，完善。</p>
+
+<p>对绝大多数的刚刚参加工作的同学，往往不能体会到整个产品的创建过程。参与的仅仅是完善，算法的设计或是大体设计已经完成，所以感觉不到算法的存在。而匆匆下了学校白学的定论。而随着工作时间变长，总会遇到没有或是不能直接利用原有设计的东东，那么算法也就体现出价值了。</p>
+
+<h2>算法是一种描述程序行为的通用语言。</h2>
+
+<p>我们可以通过算法去描述程序的运行流程，在任何地方。他不仅能在实践中得到体现，也能在理论中得到证明。而且能够得到大家一致的看法。而这是别的永远无法做到的，比如用户体验，每个人都有自己的想法，我们不可能让所有人都满意我们的设计，而算法却可以做到，因为快就是快。放到计算机上一跑结果自知。别人无法击败你，即便是再挑剔的对手，只要你足够出色。而能够满足这样条件的前提就是，算法是一个如此一般化，基础的东西。就像Charles Leiserson 所讲，算法就像钱，你可以用钱去买吃的，喝的。而衡量这些花费的就是钱的数目。在计算机上，则是，选择一个这样的策略，需要花费多少。选择另一个策略，需要花费多少。而衡量这2个选择谁的花费多呢？是算法。</p>
+
+<p>算法在计算机中的地位，就和数学在所有理科学科中的地位一样。我曾经问过我的数学老师一个问题，他的回答让我直到现在还记忆犹新。“老师，数学在您眼中是什么呢？”“数学是所有理科中是最奇妙的一个。因为他可以独立于其他任何学科存在而其他学科离开不了数学。”是的。能够想象物理化学离开数学之后是什么样子么？但是数学为什么能够独立存在？是因为他构建了一门语言，一门伟大的语言。使用这门语言可以让知识在任何领域中环绕，学好数学就好像有了一张无限透支的通用支票，可以在任何地方花费（黄金？）。作为一个可以让这么多地方都通用的原因中最重要的就是，他是超级稳定的。是一个说一不二的世界。一个公平的世界，绝对的世界（当然，现在数学这个概念也不准确了，这个充分体现了哲学思想，有正必有反啊：P）。他所确定的东西的结果是肯定的。没有歧义，而且不随时间变化而流动。比如，我们真实世界中交流的语言，比如“忽悠”，“猥琐”。等等。很多词义，随着时间的变化而改变了。使得很多年纪大的人，和我们这年轻人在交流上就产生了隔阂。而我们最熟悉另一个例子就是文言文，特别是其中的一些扭曲的字。但数学这种基础类学科是不会的。至少在一个可以预见的范围是稳定的，没有地域限制的。所以，数学才能站在人类科学发展的最前沿，他的每一次前进的一小步，都能改变世界。这就是数学之美。同样也是自己能够让绝大多数人接受的最大障碍。由于他改变的太慢，而且枯燥。绝大多数人无法深入的理解。当用世俗，腐烂，充满铜臭，功利的眼光看待纯净的数学世界，必然发现数学无用。而且，这的确是事实，因为大部分人，都不可能成为改变世界的家伙（这里的确不准确，因为改变世界话题太大，修理地球同样也是改变世界。）。</p>
+
+<p>算法，同样为我们计算机构建了一个纯净的世界。一个说一不二的世界，他所确定的，没有能够反驳的。当然，就和学习数学一样，我们不是去成为数学家，学习物理，不是去成为物理学家，然后去做哪些能够改变世界的东西。学习这些基础类学科的重要在于，他提供了一个让我们和那些站在人类史上最顶尖的家伙们交流的语言，从我的角度来看。如果没学好数学，能够和牛顿，爱因斯坦交流么？没有学好算法，能够和高爷爷交流么？作为一个普通人，我们只要学习到他们身上的一点点，也就足够了。当然，这不是对所有家伙都有效，有些人总是想，和那些老家伙有什么好交流的，给我一个周杰伦的签名吧。：）</p>
+
+<h2>学习算法还有一个原因，是的，就是兴趣。这个传说中最牛X的老师。</h2>
+
+<p>喜欢算法，没有别的原因，是的。我就是喜欢比别人快速的感觉。喜欢数学，是的。因为大部分人数学不好。所以我就喜欢数学。迎难而上，哥就是喜欢做别人做不了的东西。是的，虽然听上去很牵强，而且比较扭曲。比较符合印象中90后的想法。不知道90后是不是能产生更多的数学家呢？</p>
+
+<p>让我们回到我们的算法上，既然我们这么关注性能，那么什么是影响性能的因素呢？</p>
+
+<p>对于一个计算机外行来说，首先就是计算机硬件本身的运算能力。多一个超级牛的CPU，超大的内存，固态硬盘。肯定运算快。的确，如果你拿一个超级计算机和地摊上买的一个小的计算器比运算能力。这个实在是一个很显然的结果。是的，所以，我们有些情况下，需要思考在相同条件下，到底哪个算法的性能更高。这比较的是相对速度。但是我们却不能忘了这一点。有时，我们想使用一些很一般的计算机，通过优秀的算法，来打败那些拥有更高硬件的那些家伙们，而我们则必须关心算法性能的绝对速度。那么我们该如何描述这些看似互相矛盾的东西呢？不要忘记，算法可是基础啊，我们要的是一个确切的答案。我们如何给出一个确切的答案，而这个答案不管是超级计算机，还是普通PC都能够支持呢？这就是算法中最重要的一个概念，甚至是一切分析的大前提，一个可以把这些复杂的因素都考虑在内（或是都不考虑在内）的东东转换为可以用数学分析的对象。这就是渐进分析。</p>
+
+<p>渐进分析的基本思想是</p>
+
+<p>忽略硬件结构</p>
+
+<p>不使用真实世界的运行时间，而是关心运行时间的增长速度为对象</p>
+
+<p>渐进分析是一个非常庞大的概念，我们最熟悉的，也是大多数本科院校教我们的就是Θ,O,Ω等等类似的这些符号。这里只从Θ开始。</p>
+
+<p>对一个初学者，Θ-notation是比较容易接受的。对一个多项式，我们只需要删除掉所有的低次幂项，忽略掉常数，系数这些次要因素。就和Charles Leiserson 所讲的。这个描述，是工程方向的描述，并不是严格的数学上的定义。而对像我这样的小白来说，最大的误解就是把他当成了数学上的严格定义而产生了极大的困惑。</p>
+
+<p><img src="/images/algorithms.png" alt="alt text" /></p>
+
+<p>这个是一个相当经典的图，当n趋于无穷大时，Θ（n3）总能干掉Θ（n2）。不管是同样的硬件设备，还是不同的硬件设备。只是在不同的设备下，不同的算法下，我们有了一个不同的系数，低次幂项，和常数。但是，我们关心的是他随着数据输入长度的变大而产生的增速。当n超过n0时，任何的次要因素都是浮云了。我们就可以说Θ（n3）被Θ（n2）干掉了，即使Θ（n3）的硬件要比Θ（n2）好很多，在一开始的时候效率有多高。</p>
+
+<p>这是一个伟大，cool的概念。是的，他完美的既满足了我们追求的绝对速度，也能满足我们追求的相对速度。可以说，这给了我们继续学习算法的动力。但是，事实上，在实际开发中，我们有时候却使用那些在学校中认为是效率低的算法。难道这个理论错了？当然不是，错的是我们，我们忽略了一个很大的前提，n0。在我们多数开发过程中，很少接触那些海量数据的运算。我们的运算多数是在一个较少的数据上下浮动，这个也可以说我们的硬件，资金，产品，根本不需要我们整那么大的数据。也就是n0，我们根本达不到。事实上，只要是有脑子的，看到这个图，在小于n0的前提下，都会做成正确的判断。但对于刚刚步入IT的广大学生，却总是犯下屁股决定脑袋这样愚蠢的选择。而这其实，就是做科学和做工程师的最大区别。理论和实践相互掰手腕的结果。</p>
+
+<p>这几天，挖老赵的“坟”，找出了这么一篇。<a href="http://www.cnblogs.com/JeffreyZhao/archive/2009/05/29/1491692.html">写程序时该追求什么，什么是次要的？</a>里面有一段十分搞笑的代码，之所以这样说，是因为我自己也写过这样的代码。想想真是dt啊。回想事发现场，我记得是我看了个什么类似《面试宝典》东东，有一些题考察交换元素，事实上，你可以找到一大堆的，而且是更精妙的去交换2个元素。看到之后，如获至宝。只要是2个元素要换位置，就用。站在做科学的角度上看，这无可厚非。但是如果站在工程的角度来看。这就是明显的画蛇添足。往往花费80%的精力在提高%20的性能上，而不是去花费20%的精力提高80%的性能。这同样是刚刚步入IT的广大同学的问题。做科学需要严谨，但是在工程方面，考虑的事情非常复杂，多。我们必须要关注在核心，关键的部分。这样才能在有限的资源下，最大的做出东东来。实践中，没有任何项目的资源是足够的。MS，Google都会有资源不足的时候。我们需要学会抓住重点。当然这里并没有鄙视这些面试问题，事实上，这些问题的背后往往是考察数学思维的基本功，而不是鼓励大家这么做。就像那个经典的问题，12个小球一架天平。没有仔细，严谨的思考，能够想到这个东东能和排序问题扯上勾么？神啊，万恶的功利，给完美的数学模型批了一层邪恶的外套，使我们在追求本质的过程中迷失。</p>
+
+<p>有关n0的问题，不仅在算法设计上，也出现在我们的设计模式之中。《设计模式》这本神书，我是没看过，也不敢看。但也隐隐感觉到类似“设计过度”的言论。这同样都是在理论和实践结合上出了问题。当然，不少理论支持者，肯定会说，那是因为你没做过那么大的项目。但事实却是，不管设计多么复杂的，还是多么简单的，实践和理论永远不可能都得到满足。windows操作系统可以说是一个我们可见的最大的项目之一了。但是windows也并不是一个微内核，在内核中也绑定了非常多的“多余”的部分从理论上看。那无疑会降低系统稳定性，提高维护难度。但是我们却不能不说windows是最成功的一套软件之一（这个之一甚至都可以去掉）。</p>
+
+<p>当然，要想在做学问和实践找到平衡点。这个无疑是极大的挑战。只是分析理论，而不实践，那么永远不可能成为一个出色的工程师。除非你的目标是成为理论科学家。反过来，如果不理论而只是实践，不同的是，这个是可以成为一个出色的工程师。所以，这里有一句经典的话。</p>
+
+<p>If you want to be a good programmer, you just program ever day for two years, you will be an excellent programmer. If you want to be a world-class programmer, you can program every day for ten years, or you can program every day for two years and take an algorithms class.</p>
+
+<p>既然算法是如此的重要，那么我们该如何学呢？其实，这是一个很纠结的问题。甚至是一个鸡生蛋，蛋生鸡的问题。不学算法，你不会了解他，也不会认识到算法重要，反而。认为算法不重要，那么也就不会下功夫去学。这就又回到一开始的那个unknown unknown上了。所以，如果准备学习算法，也就意味着选择了一条坎坷的路。一开始特别迷茫，但是没有别的选择。唯有坚持，放下浮躁，功利的心态，沉浸在数学的世界中才能体会到数学的价值，数学的乐趣。也只有这样，才能坚持到最后。</p>
+
+<p>当然，能做到这一点的，敢说体会到数学之美的家伙，全世界也没有几个人。那么作为一个普通人，我们怎么才能最大的去提高自己，更好的掌握实践和科学的平衡点呢？这个问题，我自己也没有答案。因为我既没经验又没理论。这里只是扯下我自己的理解，可能很偏激。</p>
+
+<p>首先应该研究下<a href="http://mindhacks.cn/author/pongba/">刘未鹏</a>的很多博客内容，特别是<a href="http://mindhacks.cn/2009/01/16/hammers-and-nails/">锤子和钉子</a>。对我这样的新手来说，武器真的太少了。所以当捡到一个武器往往过于兴奋而忽视了这个武器的使用前提，往往杀鸡用牛刀，而且还达不到积极的效果。就是因为我们拿到锤子之后，所有东西看上去都像钉子。所以，我们唯有摆正心态，深入了解拥有的武器，并增加更多的武器，见更多的市面，才能坐怀不乱，达到手中有锤，心中无锤的最终境界。</p>
+
+<p>一个稍微实际的例子。对像我这样的菜鸟来讲，大部分都会遇到这样一个问题。而且困惑很久很久。“堆排序为什么比快速排序在大多数时要慢呢？”事实上，造成这个问题的主要原因（对我）就是，没有理解明白Θ-notation。那些被忽略掉的次要因素，当然还有更重要的是数学上对概率的薄弱理解。然后我们会再映射出一大堆的数学基础知识，然后大部分人死在沙滩上（真的，这是我从小以来最大的遗憾，就是没有学好概率，而造成这个的原因居然是，这些题目初学时往往是用日常用语出题，而由于本人语文太差，总不能理解清楚题意，而对这类题目产生了极大的抵触，可见小朋友们千万不要偏科:P）。从科学的角度去，完全可以证明这个问题，但是付出的代价就是没有硕士以上的数学能力的玩家，没有机会理解到那个层次。那么，其实我们可以从另一个角度看，直接放到计算机上跑一下就可以了么。是的，我不是科学家，我只需要知道结果就OK了。是啊，好在我们处在一个和谐的世界。让我们从这个庞然大物中得以解脱，所以，有时，我们需要根据自身情况，放弃一些东西，特别是那些比较能够通过实验来证明的东西。</p>
+
+<p>好吧，总不能啥也放弃吧，都放弃了那到底也简单了。这里，我只能说，我推荐SGI STL。在我看来，这是一个结合了设计模式，理论算法与实践最好的一个实例。他不仅是开源的，代码量也不多，命名也算规范，而且还有一本侯捷大师的著作来诠释，帮助我们理解，而且还能帮助我们具体实践过程中规避一些错误。我们每一个在学校学习的算法，我们都可以在这里找到答案（至少可以用来做作业拿高分对某些特别的女生），而且都会比一般大学讲的深刻，事实上，我认为，大学现在的教育为什么觉得无用，不是太难太理论，而是教的太简单了，简单到已经没有用的地步了，从而根本没有实际意义。（大学联合培训机构，是我所见过的，比大学扩招还要搞笑的事情）比如快速排序，SGI STL做了非常多的优化来保证无论在什么时候，都不会退化到n2，在分的过程总是分不好时，采用堆排序。在快速排序到做最后几步，为了减少开销而采用插入排序去做哪些马上就要排好序的部分。而这些策略，并不是凭空想象，都可以在高爷爷的著作中找到理论证明，以及网上的各种论文，前提是你的数学功底足够（当然这里实践在前还是理论在前这个实在是没有讨论的意义）。所以，理论不是没有用，只是自己学的太肤浅。实践也不是没有用，只是自己没有考虑那么多的情况，想的太简单而已。</p>
+
+<p>当然，这个可能又会引起另一个庞大的问题，“不要重复制作轮子”，不过这个已经大大超出这篇文章的范围了。我自己的看法是，STL是为了实现最基本的最通用的东东的，而实际过程中，我们往往有自己的特殊性。而这些特殊性是STL不可能设计时都给我们考虑周全的。也就是我们很可能需要扩展，重写部分以适合我们的需要。当然，现在离这些目标还很远很远很远。</p>
+]]></content>
+  </entry>
+  
+  <entry>
+    <title type="html"><![CDATA[SGI STL 学习笔记四 内存管理]]></title>
+    <link href="http://studentdeng.github.com/blog/2011/01/17/sgi-stl-memory/"/>
+    <updated>2011-01-17T22:46:00+08:00</updated>
+    <id>http://studentdeng.github.com/blog/2011/01/17/sgi-stl-memory</id>
+    <content type="html"><![CDATA[<p>SGI STL 在g++中默认的编译选项是构造2个分配器。</p>
+
+<h1>第一级分配器__malloc_alloc_template</h1>
+
+<p>这个一级分配器设计比较简单。由于SGI STL中分配内存没有使用C++推荐的 operator new/delete 而是使用malloc/delete。所以，并没有set_new_handler()。当面对内存不足的情况，这里模仿了c++的做法。</p>
+
+<pre><code>template &lt;int __inst&gt;
+void (* __malloc_alloc_template&lt;__inst&gt;::__malloc_alloc_oom_handler)() = 0;
+
+static void (* __set_malloc_handler(void (*__f)()))()
+{
+    void (* __old)() = __malloc_alloc_oom_handler;
+    __malloc_alloc_oom_handler = __f;
+    return(__old);
+}
+
+template &lt;int __inst&gt;
+void*
+__malloc_alloc_template&lt;__inst&gt;::_S_oom_malloc(size_t __n)
+{
+    void (* __my_malloc_handler)();
+    void* __result;
+
+    for (;;) {
+       //这里不断的调用处理分配不足的情况代码，如果有可能解决问题，那么OK，如果还是不行，那么
+         //只能抛出异常，当然，如果没有指定，默认为NULL，则会直接抛出异常。
+        __my_malloc_handler = __malloc_alloc_oom_handler;
+        if (0 == __my_malloc_handler) { __THROW_BAD_ALLOC; }
+        (*__my_malloc_handler)();
+        __result = malloc(__n);
+        if (__result) return(__result);
+    }
+}
+
+//这里，如果分配不足，则会调用_S_oom_malloc来救急。oom，就是out of memory的意思。
+static void* allocate(size_t __n)
+{
+    void* __result = malloc(__n);
+    if (0 == __result) __result = _S_oom_malloc(__n);
+    return __result;
+
+}
+</code></pre>
+
+<h1>二级分配器 __default_alloc_template</h1>
+
+<p>二级配置器多了很多机制，在分配小的内存上做了优化。</p>
+
+<p>粗略的分配策略。</p>
+
+<p>分配大小超过 _MAX_BYTES = 128bytes，使用一级分配器处理。当分配器大小小于128bytes时，则通过内存池管理。
+调整分配大小到8的倍数，从freeList中，分配内存。</p>
+
+<pre><code>template &lt;bool threads, int inst&gt;
+class __default_alloc_template {
+
+private:
+  // Really we should use static const int x = N
+  // instead of enum { x = N }, but few compilers accept the former.
+# ifndef __SUNPRO_CC
+    enum {_ALIGN = 8}; 
+    enum {_MAX_BYTES = 128};
+    enum {_NFREELISTS = _MAX_BYTES/_ALIGN}; //free_list 个数
+# endif
+  static size_t
+  _S_round_up(size_t __bytes)
+    { return (((__bytes) + _ALIGN-1) &amp; ~(_ALIGN - 1)); }
+
+__PRIVATE:
+  union _Obj {
+        union _Obj* _M_free_list_link;
+        char _M_client_data[1];    /* The client sees this.        */
+  };
+//根据大小，找到对应的index，从1开始。
+static  size_t _S_freelist_index(size_t __bytes) {
+        return (((__bytes) + _ALIGN-1)/_ALIGN - 1);
+}
+</code></pre>
+
+<p>可以看出，_Obj就是一个简单的单向链表，只是这个链表和我们之前学习的不一样。之前的链表数据只是链表节点的一部分，而这里当分配给client的时候是一整块的。</p>
+
+<h1>分配空间</h1>
+
+<pre><code>static void* allocate(size_t __n)
+  {
+    _Obj* __VOLATILE* __my_free_list;
+    _Obj* __RESTRICT __result;
+
+    if (__n &gt; (size_t) _MAX_BYTES) {
+        return(malloc_alloc::allocate(__n));
+    }
+    __my_free_list = _S_free_list + _S_freelist_index(__n);
+    // Acquire the lock here with a constructor call.
+    // This ensures that it is released in exit or during stack
+    // unwinding.
+#ifndef _NOTHREADS
+        /*REFERENCED*/
+        _Lock __lock_instance;
+#endif
+    __result = *__my_free_list;
+    if (__result == 0) { //没有找到freeList
+        void* __r = _S_refill(_S_round_up(__n)); //这里重新填充 freeList
+        return __r;
+    }
+    *__my_free_list = __result -&gt; _M_free_list_link;
+    return (__result);
+  };
+</code></pre>
+
+<p>如果能够获得freeList，情况很简单，将__my_free_list 的值，指向已经分配空间的下一块空间。</p>
+
+<pre><code>/* Returns an object of size __n, and optionally adds to size __n free list.*/
+/* We assume that __n is properly aligned.                                */
+/* We hold the allocation lock.                                         */
+template &lt;bool __threads, int __inst&gt;
+void*
+__default_alloc_template&lt;__threads, __inst&gt;::_S_refill(size_t __n)
+{
+    int __nobjs = 20;
+     //由他来分配空间，第二个参数为引用， 所以有可能出现分配不足，也就是__nobjs &lt; 20的情况。
+    char* __chunk = _S_chunk_alloc(__n, __nobjs); 
+    _Obj* __VOLATILE* __my_free_list;
+    _Obj* __result;
+    _Obj* __current_obj;
+    _Obj* __next_obj;
+    int __i;
+
+    if (1 == __nobjs) return(__chunk); //如果只能分配一个大小，那么我们不需要调整freeList了。
+    __my_free_list = _S_free_list + _S_freelist_index(__n);
+
+    /* Build free list in chunk */ //构造freeList
+      __result = (_Obj*)__chunk;
+      *__my_free_list = __next_obj = (_Obj*)(__chunk + __n);
+      for (__i = 1; ; __i++) { //从第二个开始构造freeList，因为第一个需要传给上层函数。
+        __current_obj = __next_obj;
+        __next_obj = (_Obj*)((char*)__next_obj + __n);
+        if (__nobjs - 1 == __i) {
+            __current_obj -&gt; _M_free_list_link = 0;
+            break;
+        } else {
+            __current_obj -&gt; _M_free_list_link = __next_obj;
+        }
+      }
+     //这里，我们发现，这个freeList，其实就是一个简单的单向链表，
+    //__my_free_list = _S_free_list + _S_freelist_index(__n); 这个就是获得这个链表的表头。
+    return(__result);
+}
+</code></pre>
+
+<h1>释放空间</h1>
+
+<pre><code>/* __p may not be 0 */
+  static void deallocate(void* __p, size_t __n)
+  {
+    _Obj* __q = (_Obj*)__p;
+    _Obj* __VOLATILE* __my_free_list;
+
+    if (__n &gt; (size_t) _MAX_BYTES) {
+        malloc_alloc::deallocate(__p, __n); //过大的block，我们通过1级分配器搞定
+        return;
+    }
+    __my_free_list = _S_free_list + _S_freelist_index(__n);
+    // acquire lock
+#       ifndef _NOTHREADS
+        /*REFERENCED*/
+        _Lock __lock_instance;
+#       endif /* _NOTHREADS */
+     //这里是典型的在listHead 的下一个位置添加的操作，这里看出，对于小的block，我们并没有给操作系统，而是
+    //链表保存起来。
+    __q -&gt; _M_free_list_link = *__my_free_list;
+    *__my_free_list = __q;
+    // lock is released here
+  }
+</code></pre>
+
+<h1>内存池分配</h1>
+
+<pre><code>/* We allocate memory in large chunks in order to avoid fragmenting     */
+/* the malloc heap too much.                                            */
+/* We assume that size is properly aligned.                             */
+/* We hold the allocation lock.                                         */
+template &lt;bool __threads, int __inst&gt;
+char*
+__default_alloc_template&lt;__threads, __inst&gt;::_S_chunk_alloc(size_t __size,
+                                                            int&amp; __nobjs)
+{
+    char* __result;
+    size_t __total_bytes = __size * __nobjs;
+    size_t __bytes_left = _S_end_free - _S_start_free;
+
+    if (__bytes_left &gt;= __total_bytes) {
+          //内存池足够，分配后返回
+        __result = _S_start_free;
+        _S_start_free += __total_bytes;
+        return(__result);
+    } else if (__bytes_left &gt;= __size) {
+          //内存池不够整个memory block，但是足够一个以上的block。
+        __nobjs = (int)(__bytes_left/__size);
+        __total_bytes = __size * __nobjs;
+        __result = _S_start_free;
+        _S_start_free += __total_bytes;
+        return(__result);
+    } else {
+          //内存池已经一个都不能满足memory block
+        size_t __bytes_to_get = 2 * __total_bytes + _S_round_up(_S_heap_size &gt;&gt; 4);
+        // Try to make use of the left-over piece.
+        if (__bytes_left &gt; 0) {
+               //内存池中还有剩余，找到这部分空间并填入相应的memory block list中。
+            _Obj* __VOLATILE* __my_free_list =
+                        _S_free_list + _S_freelist_index(__bytes_left);
+
+            ((_Obj*)_S_start_free) -&gt; _M_free_list_link = *__my_free_list;
+            *__my_free_list = (_Obj*)_S_start_free;
+        }
+          //内存池为空，我们从heap中找内存
+          //__bytes_to_get是一个不断增加的数字，也就是每次从heap分配的空间越来越多。
+        _S_start_free = (char*)malloc(__bytes_to_get);  
+        if (0 == _S_start_free) {
+                //极端情况， heap的空间不足。
+            size_t __i;
+            _Obj* __VOLATILE* __my_free_list;
+     _Obj* __p;
+            // Try to make do with what we have.  That can't
+            // hurt.  We do not try smaller requests, since that tends
+            // to result in disaster on multi-process machines.
+                //这部分不理解，为什么只能从大的block中分配呢？
+            for (__i = __size; __i &lt;= _MAX_BYTES; __i += _ALIGN) {
+                __my_free_list = _S_free_list + _S_freelist_index(__i);
+                __p = *__my_free_list;
+                if (0 != __p) {
+                          //在freeList 中，我们找到了一个大的block，并且里面有数据
+                    *__my_free_list = __p -&gt; _M_free_list_link;
+                    _S_start_free = (char*)__p;
+                    _S_end_free = _S_start_free + __i;
+                          //从大的freelist中，我们分配出一个来到内存池，然后递归。这次没有
+                              //意外，会找到足够的内存
+                    return(_S_chunk_alloc(__size, __nobjs));
+                    // Any leftover piece will eventually make it to the
+                    // right free list.
+                }
+            }
+                //还是没有满足要求，调用一级分配器看oom机制，是否能够帮助我们
+     _S_end_free = 0; // In case of exception.
+            _S_start_free = (char*)malloc_alloc::allocate(__bytes_to_get);
+            // This should either throw an
+            // exception or remedy the situation.  Thus we assume it
+            // succeeded.
+        }
+          //扩充了内存池大小
+        _S_heap_size += __bytes_to_get;
+        _S_end_free = _S_start_free + __bytes_to_get;
+        return(_S_chunk_alloc(__size, __nobjs));//根据新的内存池大小，修正__nobjs
+    }//end else
+     //这里我们看出了，为什么是8的倍数，所以，我们分配的大的block，肯定会在小的block中找到位置，而不会
+      //浪费掉当然，具体的理由肯定还有更多，需要去了解更多的内存方面的知识才能理解。
+}
+</code></pre>
+
+<p>内存管理这里仅仅是一个最最基本的梳理，事实上其实仅仅是照本宣科而已，因为这里面有太多的细节需要去琢磨。STL设计这样的原因是什么？他的分配回收机制为什么是这样？他的分配粒度，以及处理分配不足的手段。对我来说都是未知，不过好在目前的确不需要思考过多这些问题。仅仅是上层的封装和简单功能的实现就已经让我受益匪浅了。这些问题还是留给时间去沉淀这些未知吧。</p>
+]]></content>
+  </entry>
+  
+  <entry>
+    <title type="html"><![CDATA[SGI STL 学习笔记三 heap]]></title>
+    <link href="http://studentdeng.github.com/blog/2011/01/08/sgi-stl-heap/"/>
+    <updated>2011-01-08T21:44:00+08:00</updated>
+    <id>http://studentdeng.github.com/blog/2011/01/08/sgi-stl-heap</id>
+    <content type="html"><![CDATA[<p>heap，大家都非常了解。大学学的时候必须会的内容，要不考试很难过关。只是当时并没有学习明白。只是被老师和考试强了。完全是机械的记忆。觉得真是太对不起自己这个专业了。最近再看STL，也就有了这一篇老生重弹。</p>
+
+<p>在很多情况下，我们非常关心一个集合中的最大元素。并希望能够从集合中最快速度找到并删除。为了整体的效率，我们需要在这个集合中插入元素，查找最大元素，删除最大元素能够综合最快。使用binary heap便是一种不错的选择之一。而且能够在O(logN)插入，删除元素，查找最大元素在常数时间下。</p>
+
+<p>　　Binary heap 是一种complete binary tree（完全二叉树）。所以我们可以放心的使用简单的数组来保存数据而不需要担心浪费空间。维持树的父子关系也简单快速,而且整个过程都在原地进行。</p>
+
+<p>　　Heap 可以按照排列顺序分为大顶堆，小顶堆。 这里讨论的堆默认为大顶堆。每个节点的值大于等于其子节点的值。</p>
+
+<p>一个典型的大顶堆。</p>
+
+<p><img src="/images/stl-heap-1.png" alt="alt text" /></p>
+
+<p>了解heap，让我们从最简单的插入开始。</p>
+
+<p>push_heap
+　　在插入之前，首先确定的是，我们已经构成了一个完整的堆，为了保证完全二叉树的要求，我们只能在数组最后一个元素位置后增加元素。这个新家伙，显然有可能破坏了我们整个堆的结构。那么我们需要给这个新来的找到他的位置。</p>
+
+<p><img src="/images/stl-heap-2.png" alt="alt text" />
+<img src="/images/stl-heap-3.png" alt="alt text" />
+<img src="/images/stl-heap-4.png" alt="alt text" /></p>
+
+<p>　　总结这个过程。其实就是在整个树中增加一个叶子节点，然后，一直到比较到跟或是比父节点小为止。可以看出，整个这次比较最大次数为树的深度，O(logN)。</p>
+
+<pre><code>template &lt;class _RandomAccessIterator&gt;
+inline void
+push_heap(_RandomAccessIterator __first, _RandomAccessIterator __last)
+{
+  __push_heap_aux(__first, __last,
+                  __DISTANCE_TYPE(__first), __VALUE_TYPE(__first));
+}
+
+template &lt;class _RandomAccessIterator, class _Distance, class _Tp&gt;
+inline void
+__push_heap_aux(_RandomAccessIterator __first,
+                _RandomAccessIterator __last, _Distance*, _Tp*)
+{
+  __push_heap(__first, _Distance((__last - __first) - 1), _Distance(0), 
+              _Tp(*(__last - 1)));
+    //这里将最后一个元素设定为holeIndex。也就是说，这时新数据已经在底部的数组中了。
+}
+
+template &lt;class _RandomAccessIterator, class _Distance, class _Tp&gt;
+void
+__push_heap(_RandomAccessIterator __first,
+            _Distance __holeIndex, _Distance __topIndex, _Tp __value)
+{
+  _Distance __parent = (__holeIndex - 1) / 2;
+   //不断移动holeIndex，直到大于等于父节点或到达根。
+  while (__holeIndex &gt; __topIndex &amp;&amp; *(__first + __parent) &lt; __value) {
+    *(__first + __holeIndex) = *(__first + __parent);
+    __holeIndex = __parent;
+    __parent = (__holeIndex - 1) / 2;
+  }    
+  *(__first + __holeIndex) = __value;
+}
+</code></pre>
+
+<p>Pop_heap
+　　Pop_heap用来将最大值从堆中取走，当将顶部元素移动走之后，在根部就产生了一个hole。我们需要找到合适的数据将这个hole添上，而且我们还要尽可能的保存堆的性质（大小关系，和完全二叉树），所以，我们将顶部元素和最后一个元素交换。并将堆的大小减一。那么我们的新的根元素，显然违反了堆中大小关系的约定。所以，我们需要重新调整堆。而且，我们更爽的是，这个错误的堆的左右二个子树分别满足堆的性质，那么我需要找到hole节点的2个子节点中最大的和我们的hole 比较，并沿着大的子节点方向，直到叶子或是我们的这个hole满足大小关系。</p>
+
+<p><img src="/images/stl-heap-5.png" alt="alt text" />
+<img src="/images/stl-heap-6.png" alt="alt text" />
+<img src="/images/stl-heap-7.png" alt="alt text" />
+<img src="/images/stl-heap-8.png" alt="alt text" /></p>
+
+<pre><code>template &lt;class _RandomAccessIterator&gt;
+inline void pop_heap(_RandomAccessIterator __first, 
+                     _RandomAccessIterator __last)
+{
+  __pop_heap_aux(__first, __last, __VALUE_TYPE(__first));
+}
+
+template &lt;class _RandomAccessIterator, class _Tp&gt;
+inline void
+__pop_heap_aux(_RandomAccessIterator __first, _RandomAccessIterator __last,
+               _Tp*)
+{
+  __pop_heap(__first, __last - 1, __last - 1, 
+             _Tp(*(__last - 1)), __DISTANCE_TYPE(__first));
+}
+
+template &lt;class _RandomAccessIterator, class _Tp, class _Distance&gt;
+inline void
+__pop_heap(_RandomAccessIterator __first, _RandomAccessIterator __last,
+           _RandomAccessIterator __result, _Tp __value, _Distance*)
+{
+  *__result = *__first;
+   //这里将之前堆中最后一个元素的值保存在__value，并将根元素的值移动到最后一个元素
+  //然后将--last，也就是说，我们这里构造了一个更小的堆，并且只是根元素有问题。
+  //那么我们剩下的就是调整这个小堆。
+  __adjust_heap(__first, _Distance(0), _Distance(__last - __first), __value);
+}
+
+template &lt;class _RandomAccessIterator, class _Distance, class _Tp&gt;
+void
+__adjust_heap(_RandomAccessIterator __first, _Distance __holeIndex,
+              _Distance __len, _Tp __value)
+{
+  _Distance __topIndex = __holeIndex;
+  _Distance __secondChild = 2 * __holeIndex + 2; //找到hole节点的右子节点
+  while (__secondChild &lt; __len) {
+    if (*(__first + __secondChild) &lt; *(__first + (__secondChild - 1)))
+      __secondChild--;// __secondChild指向最大的子节点。
+    *(__first + __holeIndex) = *(__first + __secondChild);
+    //这里SGI STL并没有和我们的__value比较大小，所以，我们这里得到的holeIndex可能是错误的。或者说只是一
+    //个大概的位置。（很多优化的算法，并不是一次性完成的，而是去分情况或是其他什么的多种复合）。
+    //这里可能是SGI STL在这里优化，侯捷大师，似乎在这里打个一个盹。
+    __holeIndex = __secondChild;
+    __secondChild = 2 * (__secondChild + 1);
+  }
+  if (__secondChild == __len) {//当我们的根节点没有右节点时，就搞他左边的兄弟。
+    *(__first + __holeIndex) = *(__first + (__secondChild - 1));
+    __holeIndex = __secondChild - 1;
+  }
+  //侯捷大师注 ："将与调整值添入目前洞号内，注意，此时肯定满足次序特性"
+  //“依侯捷之见，下面直接改为 *(__first + __holeIndex) = value;应该可以”
+  //我这里认为侯捷大师在这里打盹了，这句话如果改了的话，整个过程就出错了。
+  //之前的优化，可以减少一些不必要的比较次数。但是如果把这个也省了。结果不能保证正确。
+  //我们的结果不一定满足次序特性。
+  __push_heap(__first, __holeIndex, __topIndex, __value);
+}
+</code></pre>
+
+<p>比如如下例子。</p>
+
+<p><img src="/images/stl-heap-9.png" alt="alt text" /></p>
+
+<p>当push_heap的时候，如果直接*(<strong>first + </strong>holeIndex) = VALUE,那么就会成为这个样子。</p>
+
+<p><img src="/images/stl-heap-10.png" alt="alt text" /></p>
+
+<p> 　　所以，必须要再一次经过__push_heap，再一次修正 24->16->65这条路径。保证真正的顺序。</p>
+
+<p>而SGI这样实现是为了减少一些不必要的比较。</p>
+
+<p>Sort_heap
+　　在搞定这些基本操作之后，我们发现，我们只需要执行一次次的pop_heap，我们就可以把数据按照一定的顺序跑列出来。而这也就是堆排序。</p>
+
+<pre><code>template &lt;class _RandomAccessIterator&gt;
+
+void sort_heap(_RandomAccessIterator __first, _RandomAccessIterator __last)
+
+{
+
+while (__last - __first &gt; 1)
+
+pop_heap(__first, __last--);
+
+}
+</code></pre>
+
+<p>　　我们发现，每一次pop_heap操作是O(logN)。整个数列排序结果是O(n*logN)。这已经达到比较方法的极限。而且是原地排序，而且最坏情况依然不变。heap sort的确是一个非常出色的算法。</p>
+
+<p>哦，扯了这么多，我们heap的好处不少，可是如何构造heap呢？</p>
+
+<p>Make_heap
+　　还记得<strong>adjust_heap， 这个函数，可以在左右子树满足条件情况下调整树，那么我们完全可以从下到上逐渐构造成一个符合我们要求的树。而且，树的叶子节点是没有孩子的。所以，我们可以更快的只是从中间开始。 初略的估算下，每一次</strong>adjust_heap，O(logN)，一半的节点，O(n*logN)，但其实我们可以做的更快。 建堆的复杂度可以达到O(n)的线性。</p>
+
+<pre><code>template &lt;class _RandomAccessIterator&gt;
+inline void
+make_heap(_RandomAccessIterator __first, _RandomAccessIterator __last)
+{
+  __make_heap(__first, __last,
+              __VALUE_TYPE(__first), __DISTANCE_TYPE(__first));
+}
+
+template &lt;class _RandomAccessIterator, class _Tp, class _Distance&gt;
+void
+__make_heap(_RandomAccessIterator __first,
+            _RandomAccessIterator __last, _Tp*, _Distance*)
+{
+  if (__last - __first &lt; 2) return;//当长度小于等于1时，我们就不需要排序了。
+  _Distance __len = __last - __first;
+  _Distance __parent = (__len - 2)/2;//找到第一个非叶子节点。
+
+  while (true) {
+    __adjust_heap(__first, __parent, __len, _Tp(*(__first + __parent)));
+    if (__parent == 0) return;
+    __parent--;
+  }
+}
+</code></pre>
+]]></content>
+  </entry>
+  
+  <entry>
+    <title type="html"><![CDATA[SGI STL 学习笔记二 vector]]></title>
+    <link href="http://studentdeng.github.com/blog/2011/01/01/sgi-stl-vector/"/>
+    <updated>2011-01-01T21:39:00+08:00</updated>
+    <id>http://studentdeng.github.com/blog/2011/01/01/sgi-stl-vector</id>
+    <content type="html"><![CDATA[<p>sequence containers</p>
+
+<pre><code>Array
+Vector
+Heap
+Priority_queue
+List
+sList（not in standard）
+Deque
+Stack
+Queue
+</code></pre>
+
+<p>Sequence Containers 其中的元素 都是可序的（ordered），但并不一定有序（sorted）。STL 中有vector ，list ，deque，stack，queue，priority_queue等序列容器。Stack queue 由于只是将deque重新封装而成，在技术上被归类为一种配接器(adapter)。</p>
+
+<p>Vector
+Vector 的数据为动态空间，随着元素的加入。内部会通过机制自行扩充空间，以容纳新元素。
+Vector 的效率，在于对大小的控制，重新分配时数据移动效率。当空间不足时，vector会选择策略扩充容量。
+Vector resize之后，很可能使所有迭代器均失效。 插入后，插入点之前的Iterator 有效，其他则无效。eraser迭代器失效。
+Vector实现
+Vector 实现比较简单。这里仅仅作为打开SGI STL的敲门砖。</p>
+
+<p>我这里的SGI STL 对vector有进行了进一步封装。在头文件中，也给出了我们的解释。</p>
+
+<p>// The vector base class serves two purposes. First, its constructor</p>
+
+<p>// and destructor allocate (but don't initialize) storage. This makes</p>
+
+<p>// exception safety easier. Second, the base class encapsulates all of</p>
+
+<p>// the differences between SGI-style allocators and standard-conforming</p>
+
+<p>// allocators.</p>
+
+<p>这里根据 宏 <strong>STL_USE_STD_ALLOCATORS 来决定是否资源分配器。如果定义了</strong>STL_USE_STD_ALLOCATORS， 则使用allocator&lt; _Tp >，否则为alloc</p>
+
+<pre><code>//这里的 _Vector_base 为我们隐藏了 使用STL 标准分配器，和SGI 自己特有的分配器之间的不同
+//我们现在先把这里具体的分配细节透明。
+//这是，使用SGI 自己的分配器
+template &lt;class _Tp, class _Alloc&gt; 
+class _Vector_base {
+public:
+  typedef _Alloc allocator_type;
+  allocator_type get_allocator() const { return allocator_type(); }
+
+  _Vector_base(const _Alloc&amp;)
+    : _M_start(0), _M_finish(0), _M_end_of_storage(0) {}
+  _Vector_base(size_t __n, const _Alloc&amp;)
+    : _M_start(0), _M_finish(0), _M_end_of_storage(0) 
+  {
+    _M_start = _M_allocate(__n);
+    _M_finish = _M_start;
+    _M_end_of_storage = _M_start + __n;
+  }
+
+  ~_Vector_base() { _M_deallocate(_M_start, _M_end_of_storage - _M_start); }
+
+protected:
+  _Tp* _M_start;
+  _Tp* _M_finish;
+  _Tp* _M_end_of_storage;
+
+  typedef simple_alloc&lt;_Tp, _Alloc&gt; _M_data_allocator;
+  _Tp* _M_allocate(size_t __n)
+    { return _M_data_allocator::allocate(__n); }
+  void _M_deallocate(_Tp* __p, size_t __n) 
+    { _M_data_allocator::deallocate(__p, __n); }
+};
+
+
+template &lt;class _Tp, class _Alloc = __STL_DEFAULT_ALLOCATOR(_Tp) &gt;
+class vector : protected _Vector_base&lt;_Tp, _Alloc&gt; 
+{
+private:
+  typedef _Vector_base&lt;_Tp, _Alloc&gt; _Base;
+public:
+  typedef _Tp value_type;
+  typedef value_type* pointer;
+  typedef const value_type* const_pointer;
+  typedef value_type* iterator;
+  typedef const value_type* const_iterator;
+  typedef value_type&amp; reference;
+  typedef const value_type&amp; const_reference;
+  typedef size_t size_type;
+  typedef ptrdiff_t difference_type;
+
+  typedef typename _Base::allocator_type allocator_type;
+  allocator_type get_allocator() const { return _Base::get_allocator(); }
+…
+...
+};
+</code></pre>
+
+<p>分析vector，首先看他的Iterator。</p>
+
+<p>typedef value_type* iterator;</p>
+
+<p>typedef const value_type* const_iterator;</p>
+
+<p>我们可以看出，vector的Iterator 就是一个指针。若是定义</p>
+
+<p>vector<int>:: iterator iter1;</p>
+
+<p>vector<RECT>:: iterator iter2;</p>
+
+<p>那么，Iter1 其实，就是int *， iter2其实就是RECT * 。</p>
+
+<p>看一下，部分的vector 函数，也是我们常常使用的。</p>
+
+<p>Vector 的数据，什么时候被释放。我们需要看析构函数。</p>
+
+<pre><code>~vector() { destroy(_M_start, _M_finish); }
+
+template &lt;class _ForwardIterator&gt;
+inline void destroy(_ForwardIterator __first, _ForwardIterator __last) {
+  __destroy(__first, __last, __VALUE_TYPE(__first));
+}
+
+#define __VALUE_TYPE(__i)        __value_type(__i)
+</code></pre>
+
+<p>下面是2个偏特化版本。可以看出，在一些特殊情况下，我们找到了最快速的方法。什么也不干。</p>
+
+<pre><code>inline void destroy(char*, char*) {}
+inline void destroy(wchar_t*, wchar_t*) {}
+
+template &lt;class _Iter&gt;
+inline typename iterator_traits&lt;_Iter&gt;::value_type*
+__value_type(const _Iter&amp;)
+{
+   //这里，仅仅构造一个临时对象（准确说是指针）来做返回值，事实上，我们不关心他到底是个什么，只是关心她的类型。
+    //用这个类型来激发函数重载，所以，用0来构造也无妨。
+  return static_cast&lt;typename iterator_traits&lt;_Iter&gt;::value_type*&gt;(0);
+}
+
+template &lt;class _ForwardIterator, class _Tp&gt;
+inline void
+__destroy(_ForwardIterator __first, _ForwardIterator __last, _Tp*)//这里多了一个接受这个类型对象参数
+{
+    //根据这个类型_Tp，我们根据__type_traits&lt;_Tp&gt;，找到了这个类型是否有has_trivial_destructor。
+  typedef typename __type_traits&lt;_Tp&gt;::has_trivial_destructor _Trivial_destructor;
+    //然后构造一个临时的对象来激发函数重载。
+  __destroy_aux(__first, __last, _Trivial_destructor());
+}
+
+//下面2个便是特化后的结果。
+//__false_type,我们老老实实的该干什么干什么。
+template &lt;class _ForwardIterator&gt;
+inline void
+__destroy_aux(_ForwardIterator __first, _ForwardIterator __last, __false_type)
+{
+  for ( ; __first != __last; ++__first)
+    destroy(&amp;*__first);
+}
+
+//__true_type 我们实在是没有这个必要和他纠结了。
+template &lt;class _ForwardIterator&gt;
+inline void __destroy_aux(_ForwardIterator, _ForwardIterator, __true_type) {}
+</code></pre>
+
+<p>这是可能怀疑，内存到那里释放呢？ 别忘了，我们的vector 是继承自_Vector_base，内存释放，管理都隐藏在他那里。</p>
+
+<p>~<em>Vector_base() { </em>M_deallocate(<em>M_start, </em>M_end_of_storage - _M_start); }</p>
+
+<p>这里才真正的执行内存的回收。但是这里又涉及到了SGI STL 的内存管理，这部分是给操作系统，还是给内存池呢？</p>
+
+<p>在没有研究过细致的内存管理之前。我们还是将这里透明吧。</p>
+
+<p>基本操作</p>
+
+<pre><code>iterator begin() { return _M_start; }
+const_iterator begin() const { return _M_start; }
+iterator end() { return _M_finish; }
+const_iterator end() const { return _M_finish; }
+size_type size() const { return size_type(end() - begin()); }
+size_type capacity() const { return size_type(_M_end_of_storage - begin()); }
+bool empty() const { return begin() == end(); }
+
+void push_back(const _Tp&amp; __x) {
+    if (_M_finish != _M_end_of_storage) {
+      construct(_M_finish, __x);
+      ++_M_finish;
+    }
+    else
+      _M_insert_aux(end(), __x);
+  }
+
+  void push_back() {
+    if (_M_finish != _M_end_of_storage) {
+      construct(_M_finish);
+      ++_M_finish;
+    }
+    else
+      _M_insert_aux(end());
+  }
+
+void resize(size_type __new_size, const _Tp&amp; __x) {
+    if (__new_size &lt; size()) 
+      erase(begin() + __new_size, end());
+    else
+      insert(end(), __new_size - size(), __x);
+  }
+
+  void resize(size_type __new_size) { resize(__new_size, _Tp()); }
+</code></pre>
+
+<p>删除 erase</p>
+
+<pre><code>iterator erase(iterator __position) {
+    if (__position + 1 != end())
+      copy(__position + 1, _M_finish, __position);
+    --_M_finish;
+    destroy(_M_finish);
+    return __position;
+  }
+  iterator erase(iterator __first, iterator __last) {
+    iterator __i = copy(__last, _M_finish, __first);
+    destroy(__i, _M_finish);
+    _M_finish = _M_finish - (__last - __first);
+    return __first;
+  }
+</code></pre>
+
+<p>Copy 是全局函数，操作简单，同样有多个特化版本。Vector 和一般数组的删除动作一样，将后面元素一个个往前搬。最后修改个数。</p>
+
+<p>插入 insert</p>
+
+<pre><code>iterator insert(iterator __position, const _Tp&amp; __x) {
+    size_type __n = __position - begin();
+    if (_M_finish != _M_end_of_storage &amp;&amp; __position == end()) {
+      construct(_M_finish, __x);
+      ++_M_finish;
+    }
+    else
+      _M_insert_aux(__position, __x);
+    return begin() + __n;
+  }
+  iterator insert(iterator __position) {
+    size_type __n = __position - begin();
+    if (_M_finish != _M_end_of_storage &amp;&amp; __position == end()) {
+      construct(_M_finish);
+      ++_M_finish;
+    }
+    else
+      _M_insert_aux(__position);
+    return begin() + __n;
+  }
+
+
+template &lt;class _Tp, class _Alloc&gt;
+void
+vector&lt;_Tp, _Alloc&gt;::_M_insert_aux(iterator __position)
+{
+  if (_M_finish != _M_end_of_storage) {
+    construct(_M_finish, *(_M_finish - 1));
+    ++_M_finish;
+    copy_backward(__position, _M_finish - 2, _M_finish - 1);
+    *__position = _Tp();
+  }
+  else {
+    const size_type __old_size = size();
+    const size_type __len = __old_size != 0 ? 2 * __old_size : 1;
+    iterator __new_start = _M_allocate(__len);
+    iterator __new_finish = __new_start;
+    __STL_TRY {
+      __new_finish = uninitialized_copy(_M_start, __position, __new_start);
+      construct(__new_finish);
+      ++__new_finish;
+      __new_finish = uninitialized_copy(__position, _M_finish, __new_finish);
+    }
+    __STL_UNWIND((destroy(__new_start,__new_finish), 
+                  _M_deallocate(__new_start,__len)));
+    destroy(begin(), end());
+    _M_deallocate(_M_start, _M_end_of_storage - _M_start);
+    _M_start = __new_start;
+    _M_finish = __new_finish;
+    _M_end_of_storage = __new_start + __len;
+  }
+}
+</code></pre>
+
+<p>的确很简单，和我们在学校学的并没有什么大的不同，只是在对新增元素的构造上不同。</p>
+
+<pre><code>construct(__new_finish)，
+
+construct(_M_finish, *(_M_finish - 1));
+
+以上construct是全局函数，同样有特化版本。将类的构造分成，资源分配 + 构造函数，来做到提高效率。这样在大量数据上效果应该很明显，并没有具体测试。
+
+对一次插入大量元素时，vector 的策略是。
+if (插入元素个数 == 0 ) return
+if (判断容量是否足够)
+{
+    if (插入点后的元素个数 &gt; 待插入元素个数)
+    {
+       按照最后一个元素，构造插入元素个数个元素。
+         向插入点数据向后搬运。
+         移动指针。
+         将待插入元素顺次插入。
+    }
+    else
+    {
+       先以__x构造元素，在不需要移动位置的地方。
+         将原来的元素，移动到最后。
+         在插入位置处，以__x构造元素。
+    }
+}
+else
+{
+    根据策略分配空间（这里至少PJ 和SGI的策略不同，这里应该和不同的内存管理策略有关）
+    将插入点之前的原有的数据复制到新空间
+    依次复制新元素到新空间。
+    依次复制原来数据到新空间
+}
+
+
+template &lt;class _Tp, class _Alloc&gt;
+void vector&lt;_Tp, _Alloc&gt;::insert(iterator __position, size_type __n, const _Tp&amp; __x)
+{
+  if (__n != 0) {
+    if (size_type(_M_end_of_storage - _M_finish) &gt;= __n) {
+      _Tp __x_copy = __x;
+      const size_type __elems_after = _M_finish - __position;
+      iterator __old_finish = _M_finish;
+      if (__elems_after &gt; __n) {
+        uninitialized_copy(_M_finish - __n, _M_finish, _M_finish);
+        _M_finish += __n;
+        copy_backward(__position, __old_finish - __n, __old_finish);
+        fill(__position, __position + __n, __x_copy);
+      }
+      else {
+        uninitialized_fill_n(_M_finish, __n - __elems_after, __x_copy);
+        _M_finish += __n - __elems_after;
+        uninitialized_copy(__position, __old_finish, _M_finish);
+        _M_finish += __elems_after;
+        fill(__position, __old_finish, __x_copy);
+      }
+    }
+    else {
+      const size_type __old_size = size();        
+      const size_type __len = __old_size + max(__old_size, __n);
+      iterator __new_start = _M_allocate(__len);
+      iterator __new_finish = __new_start;
+      __STL_TRY {
+        __new_finish = uninitialized_copy(_M_start, __position, __new_start);
+        __new_finish = uninitialized_fill_n(__new_finish, __n, __x);
+        __new_finish
+          = uninitialized_copy(__position, _M_finish, __new_finish);
+      }
+      __STL_UNWIND((destroy(__new_start,__new_finish), 
+                    _M_deallocate(__new_start,__len)));
+      destroy(_M_start, _M_finish);
+      _M_deallocate(_M_start, _M_end_of_storage - _M_start);
+      _M_start = __new_start;
+      _M_finish = __new_finish;
+      _M_end_of_storage = __new_start + __len;
+    }
+  }
+}
+</code></pre>
+]]></content>
+  </entry>
+  
+</feed>

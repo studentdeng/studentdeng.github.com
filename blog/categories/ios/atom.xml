@@ -1,0 +1,125 @@
+<?xml version="1.0" encoding="utf-8"?>
+<feed xmlns="http://www.w3.org/2005/Atom">
+
+  <title><![CDATA[Category: IOS | 不会开机的男孩]]></title>
+  <link href="http://studentdeng.github.com/blog/categories/ios/atom.xml" rel="self"/>
+  <link href="http://studentdeng.github.com/"/>
+  <updated>2013-07-25T16:19:41+08:00</updated>
+  <id>http://studentdeng.github.com/</id>
+  <author>
+    <name><![CDATA[studentdeng]]></name>
+    <email><![CDATA[studentdeng@hotmail.com]]></email>
+  </author>
+  <generator uri="http://octopress.org/">Octopress</generator>
+
+  
+  <entry>
+    <title type="html"><![CDATA[tips]]></title>
+    <link href="http://studentdeng.github.com/blog/2013/01/26/tips/"/>
+    <updated>2013-01-26T18:05:00+08:00</updated>
+    <id>http://studentdeng.github.com/blog/2013/01/26/tips</id>
+    <content type="html"><![CDATA[<ol>
+<li><a href="#A1">ARC 编译时遇到的相关问题</a></li>
+<li><a href="#A2">install cocoapods 问题</a></li>
+<li><a href="#A3">Adding Unit Tests to an existing iOS project with Xcode 4</a></li>
+<li><a href="#A4">NSDateFormatter 问题</a></li>
+<li><a href="#A5">写博客命令</a></li>
+<li><a href="#A6">php apigen command demo</a></li>
+</ol>
+
+
+
+
+<div name = "A1" id = "A1"></div>
+
+
+<h1>ARC 编译时遇到的相关问题</h1>
+
+<ol>
+<li>自己的项目没有使用ARC, 其他代码使用ARC</li>
+<li>自己项目使用ARC, 其他代码没有使用ARC</li>
+</ol>
+
+
+<p>在Xcode Build Phases 里面的 Compile Source 需要特殊处理的文件 增加 COmpiler Flags
+1. 第一种情况 添加 -fobjc-arc
+2. 第二种情况 添加 -fno-objc-arc</p>
+
+<div name = "A2" id = "A2"></div>
+
+
+<h1>install cocoapods 问题</h1>
+
+<p>In Preview of OS X Mountain Lion, Xcode has been distributed as X.app. And Commandline Tools are not installed by default. Commandline Tools contains cc/gcc that you must need to build environment.</p>
+
+<p>Open Xcode and cmd +, to open Preferences panel where you can install Commandline Tools:</p>
+
+<p><img src="/images/commandline.jpg" alt="alt text" /></p>
+
+<p>then</p>
+
+<pre><code>gem install hpricot
+gem install cocoapods
+</code></pre>
+
+<div name = "A3" id = "A3"></div>
+
+
+<h1>Adding Unit Tests to an existing iOS project with Xcode 4</h1>
+
+<p>When you build a new iPhone or iPad app from scratch, you can generate a new project with tests using Xcode’s project templates, and the test dependency is set up correctly.</p>
+
+<p>However, if you add a unit test target to an existing iOS project, there are some manual steps required to set up the target correctly. Following these steps will get you up and running quickly:</p>
+
+<p>Project MyExistingApp -> + Add Target -> iOS -> Other -> Cocoa Unit Testing Bundle
+Name the new target something like “Unit Tests” or “MyAppTests”
+Select your new “Unit Tests” target and click the Build Phases tab, expand Target Dependencies and add MyExistingApp as as a Target Dependency
+Click the Build Settings tab and set the Bundle Loader setting to</p>
+
+<pre><code>$(BUILT_PRODUCTS_DIR)/MyExistingApp.app/MyExistingApp
+</code></pre>
+
+<p>Set the Test Host build setting to</p>
+
+<pre><code>$(BUNDLE_LOADER)
+</code></pre>
+
+<p>Go back to your app target (not the test target), set the Symbols Hidden by Default build setting to NO</p>
+
+<p>That should take care of it, and you can now start adding tests for your app. With this configuration, you continue to add application classes only to your app target, and add test classes only to your test target. Since the tests run in the app running in the simulator, the code under test can safely instantiate views and fonts, which would otherwise cause OCunit to crash when running without the Test Host setting.</p>
+
+<div name = "A4" id = "A4"></div>
+
+
+<h1>NSDateFormatter 问题</h1>
+
+<p>最近在使用新版本xcode4.6 或是 因为新版本的sdk6.1 日期转换出现了一个问题. 而且是在模拟器可以, 真机不行的问题.
+问题是 时间格式中的 "Thu Jan" 无法被识别出来. 这个挺奇怪的, 可能新版本修改了默认行为. 下面是解决方法</p>
+
+<pre><code>//time format: @"Thu Jan 17 13:59:11 +0000 2013"
+s_format = [[NSDateFormatter alloc] init];
+[s_format setDateFormat:@"eee MMM dd HH:mm:ss ZZZZ yyyy"];
+[s_format setLocale:[[NSLocale alloc] initWithLocaleIdentifier:@"en_US_POSIX"]]; //之前少了设定Locale
+</code></pre>
+
+<div name = "A5" id = "A5"></div>
+
+
+<h1>写博客命令</h1>
+
+<pre><code>rake new_post['filename'];
+rake generate 
+rake preview
+</code></pre>
+
+<div name = "A6" id = "A6"></div>
+
+
+<h1>apigen command demo</h1>
+
+<pre><code>/usr/bin/php /Users/ygcurer/apigen/apigen.php --source /Applications/XAMPP/xamppfiles/htdocs/curer/application/controllers/api --destination /Applications/XAMPP/xamppfiles/htdocs/curer/doc_test --title curer --charset UTF-8 --access-levels public,protected --internal no --php yes --tree yes --deprecated no --todo no --download no --source-code yes --colors yes --progressbar no --update-check no
+</code></pre>
+]]></content>
+  </entry>
+  
+</feed>
