@@ -7,7 +7,7 @@
 	<meta name="author" content="studentdeng">
 
 	
-	<meta name="description" content="Oct 6th, 2010 windows PE文件初探一 最近一直在学习PE文件的相关知识。随着了解的增多，我不得不改变之前的学习方式。以前总是再理解更进一步后， 才总结上一层的知识。而且理解知识的时候总是喜欢从难到易得方式去理解知识。因为如果漫无目的的去学习，实在是 一个体力活。 &hellip;">
+	<meta name="description" content="Oct 6th, 2010 windows PE文件初探二 上一篇主要是很初略的总结了是什么，这篇要总结下为什么。以下部分参照了http://msdn.microsoft.com/en-us/magazine/cc301727.aspx和http://blog.donews.com/zwell/ &hellip;">
 	
 
   <!-- http://t.co/dKP3o1e -->
@@ -40,7 +40,7 @@
 			<header id="header" class="inner"><div class="profilepic">	
 	<script src="/javascripts/md5.js"></script>
 	<script type="text/javascript">
-		document.write("<img src='http://www.gravatar.com/avatar/" + MD5("studentdeng@hotmail.com") + "?s=160' alt='Profile Picture' style='width: 160px;' />");
+		document.write("<img src='http://tp4.sinaimg.cn/1984671427/180/40026435848/1' alt='Profile Picture' style='width: 160px;' />");
 	</script>
 </div>
 <h1><a href="/">不会开机的男孩</a></h1>
@@ -126,6 +126,235 @@
 			<div class="mid-col-container">
 				<div id="content" class="inner">
 <div itemscope itemtype="http://schema.org/Blog">
+
+
+    <article class="post" itemprop="blogPost" itemscope itemtype="http://schema.org/BlogPosting">
+	<div class="meta">
+		<div class="date">
+
+
+
+
+
+
+
+
+  
+
+
+<time datetime="2010-10-06T21:15:00+08:00" data-updated="true" itemprop="datePublished">Oct 6<span>th</span>, 2010</time></div>
+		<div class="tags">
+
+
+	<a class='category' href='/blog/categories/windows/'>windows</a>
+
+
+</div>
+		
+	</div>
+	<h1 class="title" itemprop="name"><a href="/blog/2010/10/06/pe2/" itemprop="url">PE文件初探二</a></h1>
+	<div class="entry-content" itemprop="articleBody">
+		<p>上一篇主要是很初略的总结了是什么，这篇要总结下为什么。以下部分参照了http://msdn.microsoft.com/en-us/magazine/cc301727.aspx和http://blog.donews.com/zwell/archive/2005/10/21/596302.aspx两位大牛的文章。和上述不同的是本文主要的涉及内容来自win7。当然我这里并没有真正的涉及win7，以及Vista所加入的新内容，（因为那些对现在的我来说实在是太复杂了）。win7 只是一个壳子，我描述的核心是在win2K，甚至是在windows3.1这些版本中就已经有的。当然为了能够更详细的理解整个过程。反汇编了部分loader的源代码。 pseudocode下载。</p>
+
+<p>当然，我看到的windows loader的代码对我来说依然是非常庞大，这里仅仅记录了程序正确路线，并没有完善错误路线，往往是return error来结束。当然，在代码中，难免有错误，特别是对我来说，这是第一次从汇编角度观察windows。也希望各位大牛，能够帮我指出里面的错误。</p>
+
+<p>一开始本来是想长篇大论的去写这一篇文章，因为涉及到的内容实在太多。而且大部分都是再重复大师们的内容。这里实在是不敢造次。仅仅记录一些自己认为有必要重复和自己所遇到的问题。上面2篇文章非常值得研究，如果你也对这方面感兴趣。</p>
+
+<p>最后，由于最近时间很紧，代码还是缺少了一些部分。还有相当一部分需要去完善细节，现在之所以记录，仅仅害怕时间长了。自己会懒惰而没有记下这个过程。当然，我会在这个《PE文件初探系列》的最后补全代码。</p>
+
+<p>当我们调用LoadLibraryEx LoadLibrary类似的函数，我们会进入到LdrpLoadDll，就让我们从它开始载入过程。</p>
+
+<p>LdrpLoadDll的大体思路Russ Osterlund，已经解释的很清楚了。为了查阅方便，原谅我这里只是简单翻译重复一下。</p>
+
+<p>检查这个module是否已经被载入过了
+将没有载入的module映射到地址空间
+遍历module的导入表，找到是否需要再导入其他的module。需要则导入并递归1。
+所有相关的module载入完毕后，更新module load count。
+初始化module
+清理一些结尾工作。更新module Flag。
+首先我们遇到的一个重要的函数是LdrApplyFileNameRedirection。这个函数主要是为了解决Dll hell。一种Side-by-Side Assembly的技术，相关的信息可以参考。http://dipplum.com/2009/11/09/side-by-side-assembly/。SxS已经大大超过了我所能解释的范围。原谅我先跳过这步。在STATUS_SXS_KEY_NOT_FOUND后，我们来到了一个非常重要的函数LdrpFindOrMapDll 。</p>
+
+<p>遍历进程LdrpHashTable，查找dll是否已经载入
+查找是否是系统已知KnownDll。
+查找dll文件名，并修正到完整路径名。
+遍历peb中的InLoadOrderModuleList查找dll是否已经载入
+没有找到则将dll映射到地址空间
+这个函数还是比较简单的。但是我却遇到了一个让我很费解的问题。</p>
+
+<pre><code>_KSYSTEM_TIME
+   +0x000 LowPart          : Uint4B
+   +0x004 High1Time        : Int4B
+   +0x008 High2Time        : Int4B
+#define MM_SHARED_USER_DATA_VA      0x7FFE0000
+#define USER_SHARED_DATA ((KUSER_SHARED_DATA * const)MM_SHARED_USER_DATA_VA)
+KUSER_SHARED_DATA ksd;
+
+eax=ksd.SystemTime.High1Time;
+ecx=ksd.SystemTime;
+edx=ksd.SystemTime.High2Time;
+
+KSYSTEM_TIME ktime;
+//real code     
+//eax=[0x7ffe0018];
+//ecx=[0x7ffe0014];
+//edx=[0x7ffe001c];
+do
+{
+    ktime.High1Time= ().High1Time;
+    ktime.LowPart=().LowPart;
+    ktime.High2Time= ().High2Time;
+}
+while(ktime.High1Time!=ktime.High2Time);
+//code end
+typedef struct _KUSER_SHARED_DATA {
+
+    /* Current low 32-bit of tick count and tick count multiplier.
+     * N.B. The tick count is updated each time the clock ticks.
+     */
+    volatile ULONG TickCountLow;
+    UINT32 TickCountMultiplier;
+
+    /* Current 64-bit interrupt time in 100ns units. */
+    volatile KSYSTEM_TIME InterruptTime;
+
+    /* Current 64-bit system time in 100ns units. */
+    volatile KSYSTEM_TIME SystemTime;
+
+    /* Current 64-bit time zone bias. */
+    volatile KSYSTEM_TIME TimeZoneBias;
+} KUSER_SHARED_DATA, *PKUSER_SHARED_DATA;
+</code></pre>
+
+<p>以上结构是wrk上的代码，win7的比他复杂太多了，而且其他的数据成员我们也并不关心。</p>
+
+<p>这是在LdrpFindOrMapDll最后，把数据插入到InLoadOrderModuleList，InMemoryOrderModuleList中遇到的。</p>
+
+<p>这个其实是获得系统时间的过程。更为详细的地方在这里http://www.dcl.hpi.uni-potsdam.de/research/WRK/2007/08/getting-os-information-the-kuser_shared_data-structure/</p>
+
+<p>简单的说。当clock ISR 处理的时候是先更新High2Time，然后LowPart，High1Time。
+而用户程序读取的时候是反着的顺序。 而这一切都是为了同步。但构成这个成立的前提是volatile 关键字，也就是说这样虽然减少了lock的时间，但是却也放弃了CPU的缓冲机制，每次都写操作都必须通过内存。而这个时间更新的速度是如此之快（100ns？），那么是不是同样会对效率造成冲击呢？相信MS一定做了不少测试来衡量利弊，但是再面对现在的多CPU下。是否一定适合呢？这里面涉及到太多有关硬件的知识，缓存的算法。CPU调度等等。。。这个问题还是交给10年，甚至20年后的我吧。这里标记下。更希望大牛能给出解释。//TODO:</p>
+
+<p>如果我们的dll被载入了（原来没有，刚刚被映射），那么我们通常会遇到LdrpProcessStaticImports ，而LdrpCorProcessImports，我这里似乎没有遇到。//TODO这里需要完善。</p>
+
+<p>BasepProbeForDllManifest ,原谅我再次跳过一个函数依然和dll hell有关，这些高级的东东，还是等我们弄清楚基本的东西回过来再解决他们。</p>
+
+<pre><code>LdrpProcessStaticImports
+</code></pre>
+
+<p>修改相应页面为PAGE_READWRITE。
+如果dll 绑定 则采用绑定方式载入dll
+如果没有dll 绑定或绑定失败则已普通方式载入dll
+恢复相应页面。
+先看普通方式载入。我们来到了LdrpHandleOldFormatImportDescriptors。这里我们遍历导入表，对每个导入表的module调用LdrpHandleOneOldFormatImportDescriptor。</p>
+
+<p>LdrpLoadImportModule 将相应的module导入
+调用LdrpProcessStaticImports。查找ped的ldr的StaticLink。找到则更新load count。没有找到则初始化并插入链表首部。
+更新IAT表。
+LdrpLoadImportModule 这是一个非常重要的函数。</p>
+
+<pre><code>LdrpApplyFileNameRedirection。
+LdrpFindOrMapDll
+LdrpProcessStaticImports
+LdrpHandleTlsData //这里相关dll初始化的部分，会在下一篇文章中总结。目前，我们只是关心载入。
+</code></pre>
+
+<p>完毕后插入InInitializationOrderModuleLis
+这里就有点麻烦了。这里面涉及到了很多的递归。让我们重新理解下。</p>
+
+<p>当我们程序编译链接成可执行程序后。loader会检查我们程序,通常可是.exe的文件。操作系统发现有一些dll文件需要载入（我们程序中使用了dll的函数，最通常的例子就是我们使用的系统API，那些函数的代码并不在我们.exe里，而在系统dll中，如ntdll，gdi32.dll等，所以我们必须把他们载入CPU才能执行代码），那么我们需要首先从dll导入表中查找我们需要的dll。去寻找那些我们调用的函数。就和上一篇文章中提到的MessageBox函数。但是，我们发现我们的MessageBox函数地址并不是真正函数的地址，loader 需要遍历dll的导出表。而在那里，我们找到了函数的地址，然后经过计算，loader帮我们把函数真实地址添入。而这个真实添入的地址所构成的表则为IAT表。MS的编译器还会保存另一个表，是在IAT添入之前的样子，叫做INT表。而其他的编译器可能并没有这个表生成。比如Borland。为什么保留这个INT表，等绑定之后再解释。</p>
+
+<p>OK，看样子十分完美，我们找到了我们所需要的dll的地址，但是事实上却很复杂。因为我们所导入的dll，很可能使用了另外的dll的代码中的函数。那么我们必须递归的调用，来把我们.exe中所有有关系的dll，都载入才能保证我们执行时，IAT表中的代码地址，真实的是我们需要的代码。有了这个大体的感觉。让我们查看整个过程的细节。</p>
+
+<p>LdrpSnapIAT</p>
+
+<p>LdrpSnapIAT做的事情也很简单，遍历导入表内容，并查找导出表内容，再调用LdrpSnapThunk。</p>
+
+<p>LdrpSnapThunk</p>
+
+<p>遍历导入表，根据序号或名字查找导入函数。
+遍历导出表，查找相应导入函数的地址。
+将计算好的函数地址添入IAT表。
+函数很好理解，当我们使用函数名字查找时，会遇到一个很重要的函数LdrpNameToOrdinal，Russ Osterlund的precode给出了详细代码，我觉得win7在这里并没有太大改动。LdrpNameToOrdinal是一个简单的二分法在导出表中查找匹配函数位置。而如果我们使用序号来查找，则可以直接定位到函数地址，而不需要经过这么一个字符串查找过程。当然不管是按照名字还是序号查找之前，有一个编译器给我们的提示，hint来查找函数。（不过这个真的没什么用。面对那么多的导出函数，就提示一个。怎么可能满足要求？）。</p>
+
+<p>不管用什么方法，我们总算是朝着我们的目标前进了。但是另一个问题来了。有些函数的地址却在导出表中，这就是dll函数的转发问题。</p>
+
+<p>什么是转发？</p>
+
+<p>我们之前说我们需要查找一个函数的地址，我们找到了这个xxx.dll。但是这个xxx.dll却告诉我们，这个函数地址也不在他那里，而在xxxx.dll里。这个就是转发的过程。用那个破的再不能破的例子就是kernel32 的HeapAlloc 转发到了ntdll中。</p>
+
+<p>那么为什么要有转发？</p>
+
+<p>看样子，似乎是MS在给我们打马虎眼，通过转发来保证他的源代码不被泄露。给我们一个表面的公开函数，然后去调用它不公开的函数。除了这一点，转发函数的另一个重要的特点是，他割断了部分dll之间的关系。</p>
+
+<p>让我们首先回头看一下，会发现，loader在做这个添入IAT表的时候是十分辛苦的。</p>
+
+<p>即便是使用了二分法来查找。但是面对字符串的挨个比较。这个效率是无法接受的。如果有些dll导出了上百了dll。还有一些长长的名字（事实上会更长，因为如果用c++，编译器还要加名字）。
+IAT处在代码段，是可读的。会在多个进程之间共享。一个进程对共享数据页面做了修改，操作系统会启动copy_on_write机制去创建另一个页面然后把修改的数据保存下来。为这个修改页面后的进程保留一个private的页面。如果我们的dll在多个进程载入的地址相同。那么我们就会有一大堆的private页面，但是却完全一样。这确实浪费了我们的资源，操作系统分配页面的时候，可不会去比较页面是否一样。（//TODO:check windows也许会在某些时间真的去比较这些页面是否相同，然后相同会修改成共享，但是由于我英文太差，不知道老外是瞎扯还是真有，时间也很长了，页面也一时找不到了。。。无奈）。
+当然我们一般的应用程序，不会有那么多的函数去做，但是MS自己却是地地道道的需要做。面对那么多的API函数。MS提供了一系列的优化载入dll的措施，分别节省了link时间（转发），重定位时间（rebase），添入IAT表时间（bind），延迟了载入时间（delay load）。同样也适用于我们的应用程序。（不过效率有多大的提高呢？反正肯定是有的）。当然，每一个解决都不是完美的方案，都有自己的缺陷。</p>
+
+<p>我们首先遇到了转发。</p>
+
+<p>转发的直白意思是，这个函数我提供一个入口，但是实现的代码却在别的dll中。那么他是如何提高我们的dll载入效率呢？</p>
+
+<p>如果我们在程序中调用了A.dll，A.dll 使用了func1 ，func2，func3。而func1被转发到了B.dll中的Bfunc1。如果我们在A.dll中使用了func1那么，我们必须载入B.dll。但是如果我们在A.dll中，没有使用func1，那么如果func1是转发到B.dll的，那么我们就不会载入B.dll，而如果我们是通过导入的方式做func1,那么不管是否使用，我们都要载入B.dll。为什么？因为我们的.exe和A.dll建立的关系，而A.dll的导入表中有B.dll,A和B的这种紧密关系，使我们不得不把B.dll载入进来，但我们的.exe却永远不会使用B.dll中的任何函数。（如果我们不使用A.dll中的func1）。而转发，则可以避免这个情况。因为在A.dll的导入表中，没有Bfunc1。</p>
+
+<p>OK，转发函数。割断了部分DLL之间的联系。他直接减少了link的时间。这个好。彻底不用载入了。</p>
+
+<p>让我们继续LdrpSnapThunk。的转发处理</p>
+
+<p>查找是否是转发函数，在export table中。
+比较是否是ntdll（不管是大写还是小写还是都有，反正都算）。相等则直接获得ntdll的 forwardEntry。//TODO:这里总觉得有种很怪的感觉，很怪很怪的感觉。
+如果不是ntdll，那么我们回到了原点调用LdrpLoadDll。
+（可选）调用LdrpRecordForwarder，查找ldr的ForwarderLinks。没有则添加。并更新load count。
+最后调用LdrGetProcedureAddressEx，获得相应函数地址。
+由于LdrGetProcedureAddressEx涉及到了dll的初始化问题。所以这篇不细说，下一篇再总结他。</p>
+
+<p>转发给我们解决了一个问题。那些不使用的没关系的dll，并没有被我们载入进来。但是如果我们使用了函数，依然会有IAT表的添入，查找，那一系列的问题。OK。让我们来看看另一个解决方案。绑定。不过在这个之前，需要理解下重定位。</p>
+
+<p>重定位部分的代码，Russ Osterlund没有写，我也没有写（希望后面我能完善了）。有关的知识网上很多。这里不重复了。只是解释下原因。我们在程序中的绝大部分数据都是相对的偏移量。因为我们不能确定我们的PE文件最终会被操作系统载入到那个位置上去。在编译和链接的过程，我们是相对一个默认的位置来生成相应的代码。这些默认值，会被写到PE头文件中去。windows loader在载入的时候，如果发现有冲突，则会重新计算这些偏移量。当然，为了减少这个运算。我们可以通过rebase来处理。</p>
+
+<p>还是让我们把注意力集中在bind上面。</p>
+
+<p>我们看到loader首先就是查找是不是可以使用bind来做。</p>
+
+<p>LdrpHandleNewFormatImportDescriptors</p>
+
+<p>遍历绑定描述符表，和导入描述符表。查找是否匹配
+成功则调用LdrpHandleOneNewFormatImportDescriptor，否则返回INVALID_IMAGE_FORMAT(0xC000007B)，直到0。
+  LdrpHandleOneNewFormatImportDescriptor</p>
+
+<p>LdrpLoadImportModule，加载module
+LdrpRecordStaticImport 加载导入的一系列东东
+如果bind失败，则调用LdrpSnapIAT。
+如果bind成功，则遍历绑定转发表。IMAGE_BOUND_FORWARDER_REF，依次调用LdrpLoadImportModule， LdrpRecordStaticImport。
+最后不管bind是否成功调用LdrpFixupIATForRelocatedImport。
+//TODO LdrpFixupIATForRelocatedImport,没有全部完成，真不知道MS搞一个这个巨大的函数名字有什么深意。看来是逼我把这个重定位做了，: ) 。</p>
+
+<p>bind这部分比较难。LdrpFixupIATForRelocatedImport的部分我没有完成，所以这部分应该是有很多值得推敲的地方。</p>
+
+<p>等最近不忙了。再彻底搞定他。</p>
+
+<p>最后剩下了一部分。就是INT的问题。这个问题的出现是为了我们在处理bind失败所必须的。当bind被失败后，我们不得不和原来一样去做。这是INT表作用体现处理了。当然如果没有INT表。整个载入则会直接down掉。</p>
+
+<p>使用bind，我们将避免了动态添入IAT所需要花费的空间和时间。这的确是一个是非优秀的设计。但是同样的。他的条件实在太苛刻了。如果其中有部分更新的操作系统，某个系统的dll被更新了。那么这一切也随之破灭了。他实在是太脆弱了。</p>
+
+<p>最后写给自己的</p>
+
+<p>这的确不是一篇完整的文章。因为有太多太多的知识对我来说是一个空白。每一个函数后面都可能是给我打开一个新的世界。在没有对已经存在的世界有一个清醒的认识前，非常容易造成溢出。有时候，真想找一个事情，可以就像操作系统分配物理内存一样。你什么时候使用给你一点，而且还能具有不错的缓存性能。而在这整个过程最郁闷的就是要不什么也没有，要不多的你放不下。而且各种跳转，冲击着我可怜的缓存。。。如果把我比作一个运作的很困难的操作系统。那么这篇文章就是我其中的一个页文件再适合不过了。</p>
+
+<p>//////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////</p>
+
+<p>　　哎，也许我的实力太差了。这篇的姊妹篇，初探一已经被博客园从首页上抹去了。这篇也可能和上一篇同样的命运。我可能要创一个记录了，虽然不是那么光彩，10篇文章2篇都被毙掉。如果加上这一篇，就是第三篇了。哈哈。我只知道Matt Pietrek 在2002年的MSJ上写道。</p>
+
+<p>“You might be wondering why you should care about the executable file format. The answer is the same now as it was then: an operating system&#8217;s executable format and data structures reveal quite a bit about the underlying operating system. By understanding what&#8217;s in your EXEs and DLLs, you&#8217;ll find that you&#8217;ve become a better programmer all around.”。</p>
+
+<p>　　当然，我不该提Matt Pietrek，因为我把“我”和他的名字放到一起就是其实就是对他的一种不尊敬。我也不敢扯我懂PE。我甚至只能皮毛都不了解。因为涉及到太多有关操纵系统、编译器、连接器的细节。对于我这个菜鸟来说也的确没有这个资本谈论这个问题。我也不想说别的。只是想发泄下自己的情绪。仅此而已。</p>
+
+		
+		
+	</div>
+
+</article>
 
 
     <article class="post" itemprop="blogPost" itemscope itemtype="http://schema.org/BlogPosting">
@@ -1154,174 +1383,6 @@ end start
 <p> 其次，8086的不安全，不方便的调用中断的方式改为了调用系统API的方式。我这里是采用的MASM，所以有invoke伪指令，其实这个指令也没别的，就是为我们编程省去了函数参数入栈的那些push。</p>
 
 <p>最后，发现win32汇编和使用c/c++似乎没有复杂很多。</p>
-
-		
-		
-	</div>
-
-</article>
-
-
-    <article class="post" itemprop="blogPost" itemscope itemtype="http://schema.org/BlogPosting">
-	<div class="meta">
-		<div class="date">
-
-
-
-
-
-
-
-
-  
-
-
-<time datetime="2010-04-24T18:46:00+08:00" data-updated="true" itemprop="datePublished">Apr 24<span>th</span>, 2010</time></div>
-		<div class="tags">
-
-
-	<a class='category' href='/blog/categories/c-plus-plus/'>c++</a>, <a class='category' href='/blog/categories/windows/'>windows</a>
-
-
-</div>
-		
-	</div>
-	<h1 class="title" itemprop="name"><a href="/blog/2010/04/24/mult-threading2/" itemprop="url">多线程程序设计笔记二</a></h1>
-	<div class="entry-content" itemprop="articleBody">
-		<p>当我们正式开始之前，我想再多说一点，上一篇最后的那个程序可能会给像我一样的菜鸟一个误解，这里解释下。</p>
-
-<p>程序启动后就执行的那个线程称为主线程（也就是那个程序中的执行main函数的线程），而其他线程则成为子线程。主线程和其他线程最大的区别是当主线程返回或是调用一些函数强制退出后，使得程序中的其他子线程强制结束。 在一篇中native code和Manager code 在遇到同样的问题时，.net给我们做了一个好的榜样，其实不管是否是UI子线程，.net 控制台在终止进程结束之前，都会保证所有子线程已经退出。虽然我们无法知道到底它采用的是什么机制（我的理解是在调用结束进程之前调用了WaitForMultipleObjects或是其他wait函数等待所有子线程返回），但是这体现了一个很重要的原则，对产生的子线程负责，无论什么时候，都不应该直接结束程序而不等待子线程结束。因为子线程没有机会做清理工作。这个是一个非常可怕的问题，想这样的一个情况，子线程比如正在申请一个堆空间，而正好锁住了那个区域，然后被强制结束了。那么就很可能产生了内存泄露（产生不了也会增大系统负担）。所以再次提醒自己主线程在退出的时候，必须保证所有的子线程已经退出。</p>
-
-<p>从上一篇《多线程程序设计笔记一》中，我们知道了多线程程序设计的最基础的知识。下面总结下线程之间的通讯和同步问题。不过这个问题实在是太大了，对我来说。这里先只涉及最简单的在同一进程下的用户方式下的同步问题。</p>
-
-<p>以下内容将包括：</p>
-
-<p>互锁函数
-临界区
-互锁函数</p>
-
-<p>互锁函数运行在用户模式。它能保证当一个线程访问一个变量时，其它线程无法访问此变量，以确保变量值的唯一性。</p>
-
-<p>下面是一个简单的例子。</p>
-
-<pre><code>DWORD WINAPI ThreadFunc1(PVOID n)
-{
-  while(InterlockedExchange(&amp;g_bResourceInUse,TRUE) == TRUE)
-    SwitchToThread();
-  printf("thread1 used\n");
-  InterlockedExchange(&amp;g_bResourceInUse,FALSE);
-  return 0;
-}
-DWORD WINAPI ThreadFunc2(PVOID n)
-{
-  while(InterlockedExchange(&amp;g_bResourceInUse,TRUE) == TRUE)
-    SwitchToThread();
-  printf("thread2 used\n");
-  InterlockedExchange(&amp;g_bResourceInUse,FALSE);    
-  return 0;
-}
-</code></pre>
-
-<p>这个例子通过不断地判断bResourceInUse中的信息来确定线程是否能够使用资源。但是使用这个方法必须小心。大量的循环运算会浪费宝贵的CPU时间。而且如果是在单CPU下，线程不可能真正的异步执行，在thread1判断while的时候，thread2并不能做什么（不能修改该值）。所以我们应该避免在单个CPU计算机上使用循环锁。</p>
-
-<p>这里面还有一个需要知道的是必须使用关键字volatile声明g_bResourceInUse。我们需要把循环锁变量和循环锁保护的数据维护在不同的高速缓存行中。通过高速缓存行CPU可以不必访问内存总线而获得数据，但是在多处理器环境中，高速缓存行使得内存更新更加困难。如下：</p>
-
-<p>CPU1读取一个字节，将该字节和相邻字节读入CPU1的高速缓存行。
-CPU2读取同一个字节。从而和第一步相同的内容读入了CPU2的高速缓存行。
-CPU1修改该字节，因为已经在高速缓存行中，所以修改后的内容写入CPU1的高速缓存行，这个信息还没有写入内存。
-CPU2再次入去同一个字节。因为已经放入了CPU2的高速缓存行，所以CPU2不会访问内存。那么问题出现了。这个字节并不是该字节的新值。
-这个问题的确很严重，不过硬件工作者已经给我们解决了这个问题，当一个CPU修改高速缓存行字节时，其他CPU会被告知这个情况，他们的高速缓存行将无效。所以第四步中，CPU1必须将高速缓存行转入内存，而CPU2必须再次访问内存。</p>
-
-<p>原因想说清楚这些我现在还不行，这又涉及到了多核编程（哎，愧对老师啊，《多核程序设计》那课是白学了）。不过这里还是必须解释下volatile。</p>
-
-<p>被定义为volatile的变量，每次从内存中读取，而不能把他放在cache或寄存器中重复使用。
-告知编译器不要对这个变量做优化。
-告知编译器，变量可以被应用程序本身以外的某个东西进行修改，这些东西包括操作系统，硬件或同时执行的线程等。</p>
-
-<p>当必须以原子操作方式修改32为，64位值时，我们可以使用互锁函数。他们很有效率。但是实际工作，我们需要面对更复杂的数据结构。而且他们的效率是不进入内核态而节省下的。如果等待资源时间过长，就变成对CPU极大的浪费了，我们需要一种机制，使线程在等待访问共享资源时不浪费CPU时间。</p>
-
-<p>临界区（Critical Section）又叫做关键代码段</p>
-
-<p>临界区的描述</p>
-
-<p>win32提供的一种轻量级的同步机制，它存在于进程的内存空间中。一次只有一个线程获准进入临界区执行代码段，（其实就是让若干行代码能够以原子操作方式来使用资源）。
-它并不总是执行向内核模式的控制转换，要是获得一个未被占用的临界区时，只需要在用户态内的很少运算就能完成，只有在尝试获得已占用临界区时，它才会跳至内核模式。
-只能在属于同一个进程的线程间同步。
-补充一点，比如当线程A试图进入线程B拥有的临界区时，线程A将被置于等待状态。线程B离开临界区，线程A将处于可调度状态。让线程A立即等待，并不一定立即切换到内核方式。MS为了提高关键代码段的运行性能，将循环锁加入了这些代码段。当调用 EnterCriticalSection 它使用循环锁进行循环，只有当每次尝试获取都失败时才转入内核方式，从而线程A进入等待状态。</p>
-
-<p>这里可能就又糊涂了。之前说的循环锁不是效率很低么？的确，但是如果和转入内核方式比所消耗的资源少的话，就是可行的。比如我们仅仅是想操作一个指针。当然，如果是在单CPU下，循环锁是没有意义的，会直接转入内核方式。</p>
-
-<p>临界区的使用方法</p>
-
-<pre><code>    通过 InitializeCriticalSection 或 InitializeCriticalSectionAndSpinCount 函数初始化一个 CRITICAL_SECTION 结构，使用 SetCriticalSectionSpinCount 函数设置临界区的Spin计数器（可选）。然后使用 EnterCriticalSection 或 TryEnterCriticalSection 获取临界区的所有权；完成需要同步的操作后，使用 LeaveCriticalSection 函数释放临界区。最后使用 DeleteCriticalSection 函数析构临界区结构（只是删除RTL_CRITICAL_SECTION_ DEBUG）。
-</code></pre>
-
-<p>讲了这么多理论，实践一下。</p>
-
-<p>下面是对上一篇List做的多线程改进。</p>
-
-<pre><code>typedef struct _Node
-{
-  struct _Node *next;
-  int data;
-}Node;
-typedef struct _List
-{
-  Node *head;
-  CRITICAL_SECTION sec;
-}List;
-List *CreateList()
-{
-  List *pList = (List *)malloc(sizeof(pList));
-  pList-&gt;head = NULL;
-  InitializeCriticalSection(&amp;pList-&gt;sec);
-  return pList;
-}
-void DeleteList(List *pList)
-{
-  DeleteCriticalSection(&amp;pList-&gt;sec);
-  free(pList);
-  pList = NULL;
-}
-void AddHead(List *pList,Node *node)
-{
-  EnterCriticalSection(&amp;pList-&gt;sec);
-  node-&gt;next = pList-&gt;head;
-  pList-&gt;head = node;
-  LeaveCriticalSection(&amp;pList-&gt;sec);
-}
-</code></pre>
-
-<p>当然事实上没有这么简单。比如当交换两个链表内容的函数</p>
-
-<pre><code>void SwapLists(List *list1,List *List2)
-{
-  List *temp_List;
-  EnterCriticalSection(list1-&gt;sec);
-  EnterCriticalSection(list2-&gt;sec);
-  tmp_List-&gt;list = list1-&gt;head;
-  list1-&gt;head = list2-&gt;head;
-  list2-&gt;head = temp-&gt;list;
-  LeaveCriticalSection(list1-&gt;sec);
-  LeaveCriticalSection(list2-&gt;sec);
-}
-</code></pre>
-
-<p>当threadA: SwapLists(list1,list2);threadB:SwapLists(list2,list1)。两个线程会落入“我等你，你等我”的轮回，这种情况称为死锁。</p>
-
-<p>任何时候当一段代码需要1个以上的资源时，都可能发生死锁。而我们防止死锁通常的做法是保证“all or nothing”，也就是要不全部拥有，要不什么也没有。</p>
-
-<p>其实上面的代码还隐藏了一个问题，SwapList函数在使用的时候无形的需要确保一个资源使用的顺序。也就是说这个函数的运程依赖于代码的执行顺序，这种设计本身就是很脆弱的。</p>
-
-<p>临界区需要注意的</p>
-
-<p>每个共享资源使用一个CRITICAL_SECTION。只有被临界区Enter和Leave“围起来”的资源才能获得保护，临界区维护的只是一段代码（代码中通常有一些资源）。
-当同时访问多个资源的时候，使用临界区非常容易造成死锁， EnterCriticalSection 的顺序是需要认真考虑的但是并不一定十分可靠， LeaveCriticalSection 顺序则没有关系。
-不要长时间运行临界区，也就是不要长时间锁住一个资源。但是时间到底多长很难确定在windows OS中，所以不要在一个CRITICAL_SECTION中调用Sleep或Wait….API函数，SendMessage。当你以一个同步机制保护一份资源时，必须牢记“这项资源被使用频率如何？线程必须多块释放资源，才能确保整个程序运作平顺”。
-无法获知进入临界区的线程状态。由于临界区不是核心对象，如果一个线程进入临界区后，没有Leave，系统没有办法清除临界区。而且如果一个线程在Enter时被等待，那么等待的最长时间也是不能设定的。（也减少了一个处理错误的方式）
-想要了解更多的关于临界区的，参考http://msdn.microsoft.com/zh-cn/magazine/cc164040(en-us).aspx</p>
-
-<p>中文http://www.microsoft.com/china/MSDN/library/enterprisedevelopment/softwaredev/ousCriticalSections.mspx?mfr=true</p>
 
 		
 		
