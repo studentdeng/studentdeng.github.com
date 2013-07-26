@@ -1,0 +1,28 @@
+<?xml version="1.0" encoding="utf-8"?>
+<feed xmlns="http://www.w3.org/2005/Atom">
+
+  <title><![CDATA[Category: ruby | 不会开机的男孩]]></title>
+  <link href="http://studentdeng.github.com/blog/categories/ruby/atom.xml" rel="self"/>
+  <link href="http://studentdeng.github.com/"/>
+  <updated>2013-07-26T17:35:27+08:00</updated>
+  <id>http://studentdeng.github.com/</id>
+  <author>
+    <name><![CDATA[studentdeng]]></name>
+    <email><![CDATA[studentdeng@hotmail.com]]></email>
+  </author>
+  <generator uri="http://octopress.org/">Octopress</generator>
+
+  
+  <entry>
+    <title type="html"><![CDATA[安装环境遇到的dt问题]]></title>
+    <link href="http://studentdeng.github.com/blog/2013/07/26/tips-install/"/>
+    <updated>2013-07-26T17:30:00+08:00</updated>
+    <id>http://studentdeng.github.com/blog/2013/07/26/tips-install</id>
+    <content type="html"><![CDATA[<h1>ruby on rails</h1>
+
+<p>mysql2 image not found
+<a href="http://stackoverflow.com/questions/4546698/library-not-loaded-libmysqlclient-16-dylib-error-when-trying-to-run-rails-serv">soluation</a></p>
+]]></content>
+  </entry>
+  
+</feed>

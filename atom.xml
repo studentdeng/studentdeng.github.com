@@ -4,7 +4,7 @@
   <title><![CDATA[不会开机的男孩]]></title>
   <link href="http://studentdeng.github.com/atom.xml" rel="self"/>
   <link href="http://studentdeng.github.com/"/>
-  <updated>2013-07-26T00:06:25+08:00</updated>
+  <updated>2013-07-26T17:35:27+08:00</updated>
   <id>http://studentdeng.github.com/</id>
   <author>
     <name><![CDATA[studentdeng]]></name>
@@ -12,6 +12,18 @@
   </author>
   <generator uri="http://octopress.org/">Octopress</generator>
 
+  
+  <entry>
+    <title type="html"><![CDATA[安装环境遇到的dt问题]]></title>
+    <link href="http://studentdeng.github.com/blog/2013/07/26/tips-install/"/>
+    <updated>2013-07-26T17:30:00+08:00</updated>
+    <id>http://studentdeng.github.com/blog/2013/07/26/tips-install</id>
+    <content type="html"><![CDATA[<h1>ruby on rails</h1>
+
+<p>mysql2 image not found
+<a href="http://stackoverflow.com/questions/4546698/library-not-loaded-libmysqlclient-16-dylib-error-when-trying-to-run-rails-serv">soluation</a></p>
+]]></content>
+  </entry>
   
   <entry>
     <title type="html"><![CDATA[box2d 04 多边形刚体和鼠标连接器]]></title>
@@ -357,6 +369,15 @@ okay， 这个idea最大的区别在于，你需要跳出你之前对那个女�
 <p>看着眼前的小蜡烛， 只要还没有完全熄灭，他总会重新燃烧起来。fabulous！</p>
 
 <p>我去，真得好像继续写下去，但是实在是太困了，在跳完之后，更加身体疼得厉害， 胸部，胳膊，腿，除了没有训练得腹部以外，都在疼。 fuck，明天可能没法走楼梯了。 而刚才喝得酒，显然让我把这周得运动量提前透支了，anyway， 困得实在是不行了。</p>
+]]></content>
+  </entry>
+  
+  <entry>
+    <title type="html"><![CDATA[template]]></title>
+    <link href="http://studentdeng.github.com/blog/2013/06/16/template/"/>
+    <updated>2013-06-16T17:26:00+08:00</updated>
+    <id>http://studentdeng.github.com/blog/2013/06/16/template</id>
+    <content type="html"><![CDATA[
 ]]></content>
   </entry>
   
@@ -1089,38 +1110,8 @@ LDFLAGS         = -m elf_i386 -s -Ttext $(ENTRYPOINT)
 ]]></content>
   </entry>
   
-  <entry>
-    <title type="html"><![CDATA[bochs-configure]]></title>
-    <link href="http://studentdeng.github.com/blog/2012/02/14/bochs-configure/"/>
-    <updated>2012-02-14T23:55:00+08:00</updated>
-    <id>http://studentdeng.github.com/blog/2012/02/14/bochs-configure</id>
-    <content type="html"><![CDATA[<h1>Bochs + freedos安装配置</h1>
-
-<pre><code>sudo apt-get install build-essential
-
-sudo apt-get install xorg-dev
-
-sudo apt-get install libgtk2.0-dev
-</code></pre>
-
-<p>下载</p>
-
-<pre><code>bochshttp://bochs.sourceforge.net/cgi-bin/topper.pl?name=See+All+Releases&amp;url=http://sourceforge.net/projects/bochs/files
-
-$ tar vxaf bochs-2.5.1.tar.gz
-
-$ cd bochs-2.5.1
-
-$ ./configure –enable-debugger-enable-disasm
-
-$ make
-
-$ sudo make install
-</code></pre>
-
-<p>下载freedoshttp://bochs.sourceforge.net/diskimages.html 复制到工作目录下</p>
-
-<h1>Bochs 配置 先通过dos引导，我们的软件复制在B盘下</h1>
+</feed>
+ 配置 先通过dos引导，我们的软件复制在B盘下</h1>
 
 <pre><code>############################################################### 
 # Configuration file for Bochs 

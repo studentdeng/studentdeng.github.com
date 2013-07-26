@@ -1,0 +1,214 @@
+
+<!DOCTYPE HTML>
+<html>
+<head>
+	<meta charset="utf-8">
+	<title>不会开机的男孩</title>
+	<meta name="author" content="studentdeng">
+
+	
+	<meta name="description" content="Jan 10th, 2010 WPF/SL WPF设计简单游戏初探 自从看了深蓝大哥的博客之后感触很多，于是花了一个多月学习WPF并模仿深蓝大哥的设计，并使用了一部分深蓝大哥的控件和代码，再加上_goods大哥对小弟的提示与帮助。做成了这个十分简陋的“迷你弹弹堂”，由于种种原因， &hellip;">
+	
+
+  <!-- http://t.co/dKP3o1e -->
+  <meta name="HandheldFriendly" content="True">
+  <meta name="MobileOptimized" content="320">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+
+	<link href="/atom.xml" rel="alternate" title="不会开机的男孩" type="application/atom+xml">
+	
+	<link rel="canonical" href="http://studentdeng.github.com/blog/page/11/">
+	<link href="/favicon.png" rel="shortcut icon">
+	<link href="/stylesheets/screen.css" media="screen, projection" rel="stylesheet" type="text/css">
+	<link href="http://fonts.googleapis.com/css?family=Open+Sans:regular,semibold,italic,italicsemibold|PT+Sans:400,700,400italic,700italic|PT+Serif:400,700,400italic,700italic" rel="stylesheet" />
+	<!--[if lt IE 9]><script src="//html5shiv.googlecode.com/svn/trunk/html5.js"></script><![endif]-->
+	<script src="//ajax.googleapis.com/ajax/libs/jquery/1.7.2/jquery.min.js"></script>
+
+	<link href='http://fonts.googleapis.com/css?family=Open+Sans:400italic,400,700' rel='stylesheet' type='text/css'>
+	<!--Fonts from Google"s Web font directory at http://google.com/webfonts -->
+<link href="http://fonts.googleapis.com/css?family=PT+Serif:regular,italic,bold,bolditalic" rel="stylesheet" type="text/css">
+<link href="http://fonts.googleapis.com/css?family=PT+Sans:regular,italic,bold,bolditalic" rel="stylesheet" type="text/css">
+
+<script type="text/javascript">var switchTo5x=false;</script>
+<script type="text/javascript" src="http://w.sharethis.com/button/buttons.js"></script>
+<script type="text/javascript">stLight.options({publisher: "496dac80-40ba-487b-b557-af2d3629eb28", doNotHash: false, doNotCopy: false, hashAddressBar: false});</script>
+</head>
+
+
+<body>
+	<div class="container">
+		<div class="left-col">
+			<div class="intrude-less">
+			<header id="header" class="inner"><div class="profilepic">	
+	<script src="/javascripts/md5.js"></script>
+	<script type="text/javascript">
+		document.write("<img src='http://tp4.sinaimg.cn/1984671427/180/40026435848/1' alt='Profile Picture' style='width: 160px;' />");
+	</script>
+</div>
+<h1><a href="/">不会开机的男孩</a></h1>
+<p class="subtitle"></p>
+<nav id="main-nav"><ul class="main-navigation">
+  <li><a href="/">Blog</a></li>
+  <li><a href="/tags">tags</a></li>
+  <li><a href="/blog/archives">Archives</a></li>
+  <li><a href="/about">About</a></li>
+  <li><a href="/favorite">favorite</a></li>
+</ul>
+</nav>
+<nav id="sub-nav">
+	<div class="social">
+		
+		<a class="weibo" href="http://www.weibo.com/studentdeng" title="Weibo">Weibo</a>
+		
+		
+		
+		
+		
+		<a class="github" href="https://github.com/studentdeng" title="GitHub">GitHub</a>
+		
+		
+		<a class="dribbble" href="http://www.dribbble.com/curer" title="Dribbble">Dribbble</a>
+		
+		
+		
+		
+		
+		
+		<a class="rss" href="/atom.xml" title="RSS">RSS</a>
+		
+	</div>
+</nav>
+<hgroup>
+  <aside class="sidebar">
+  
+    
+  
+</aside>
+</hgroup>
+
+</header>				
+			</div>
+		</div>	
+		<div class="mid-col">
+			
+				
+			
+			<div class="mid-col-container">
+				<div id="content" class="inner">
+<div itemscope itemtype="http://schema.org/Blog">
+
+
+    <article class="post" itemprop="blogPost" itemscope itemtype="http://schema.org/BlogPosting">
+	<div class="meta">
+		<div class="date">
+
+
+
+
+
+
+
+
+  
+
+
+<time datetime="2010-01-10T18:23:00+08:00" data-updated="true" itemprop="datePublished">Jan 10<span>th</span>, 2010</time></div>
+		<div class="tags">
+
+
+	<a class='category' href='/blog/categories/wpf-slash-sl/'>WPF/SL</a>
+
+
+</div>
+		
+	</div>
+	<h1 class="title" itemprop="name"><a href="/blog/2010/01/10/wpf-sample-game/" itemprop="url">WPF设计简单游戏初探</a></h1>
+	<div class="entry-content" itemprop="articleBody">
+		<p>自从看了深蓝大哥的博客之后感触很多，于是花了一个多月学习WPF并模仿深蓝大哥的设计，并使用了一部分深蓝大哥的控件和代码，再加上_goods大哥对小弟的提示与帮助。做成了这个十分简陋的“迷你弹弹堂”，由于种种原因，仅仅实现了最基本的功能，即实现了模拟弹坑，和在弹坑中移动。由于小弟没有在公司做过项目，遇到代码难看的地方或是我理解不到位的地方请大家不要一笑而过，给小弟提出来，万分感谢。</p>
+
+<p>【实验名称】
+迷你弹弹堂</p>
+
+<p>【实验目的】
+通过对迷你弹弹堂的编写，深入了解面向对象的程序的思想，熟悉WPF事件驱动，动画以及多媒体应用，了解XAML， 逐步了解多线程编程，了解windows 新的图形系统。</p>
+
+<p>【掌握内容】
+了解位图文件在系统中的保存方法和处理方法，熟悉根据图形点阵图对图形以像素单位修改，逐步了解WPF中UI线程控制，了解BackgroundWorker应用。
+通过实际编码，逐步了解游戏编程中精灵对象的设计以及使用，逐步了解网页游戏地图设计，熟练掌握基本美工技巧。</p>
+
+<p>【问题描述及基本要求】
+本程序为一个弹弹堂单机版，可自由设定玩家人数（不要太多，影响速度），
+玩家控制和网络上的弹弹堂一样，通过space控制发射，上下左右控制移动。
+由于时间原因，并没有增加武器，头像，道具等工具，也没有加入风向的影响。</p>
+
+<p>【游戏设计】
+游戏地图部分设计
+游戏地图包括3部分，游戏的背景，游戏的障碍物遮罩层，游戏地图副本。
+游戏背景：为一个简单的图片。没有过多的说法。
+游戏的障碍物：大小与游戏背景大小一致，并根据图片byte流，将不遮挡部分的图片像素alpha设为0，但是由于对WPF图形渲染的过程没有非常清楚的了解，要想保证完全透明，必须将对应像素值的RGB一次同A一样设为0。（这里很不明白，希望大家能给点提示）。
+游戏地图副本：大小同游戏背景大小一致，并结合背景，主角，遮罩层等等设计，通过不同的颜色来区分不同的对象，游戏运行期间的数据处理都依赖于游戏地图副本的计算。
+游戏精灵设计
+游戏精灵包括了游戏主角，游戏中的子弹。
+游戏精灵：由一个DispatcherTimer为核心的有许多属性封装成的类，
+DispatcherTimer被称为生命线程，用来控制该类对象的状态和在UI线程刷新的优先级。</p>
+
+<p>【关键算法描述】
+游戏主角移动：在整个游戏地图副本中取出主角的碰撞体积大小的byte流，并保存在数组中，通过对数组遍历，根据游戏地图副本颜色的不同而区分出游戏主角的行进路线及状态。
+游戏弹坑实现：通过子弹精灵中取得的子弹弹坑的形状，将游戏地图副本中找到弹坑的位置并根据弹坑颜色更新游戏地图副本，同时并将修改反应到游戏遮罩层中，使遮罩层和游戏副本地图保持一致。
+将大量的运算放在UI线程则会阻塞UI线程，故通过合理的应用后台工作者（BackgroundWorker）可以将复杂的运算放在后台，在后台线程中则每隔一段时间调用Dispatcher.BeginInvoke来异步调用更新UI线程的控件。（这里是整个程序运行效率的关键，1、不能一直占用cpu去调用，也就是必须对调用时间或间隔或优先级进行约定，2、beginInvoke虽然能异步执行，但是修改不能过大，一次性的赋值时间过长也会将UI线程阻塞，也就是说遇到大的数据量需要分时间段执行等，好在现在的v1.0版本没有非常多的魔法效果，爆炸效果，飞行效果，人物的头像，衣服等等，数据量很小，所以好坏这里并不明显）。</p>
+
+<p>【调试结果及说明】
+由于采用了vs2008 sp1补丁和.net3.5 sp1补丁，所以没打补丁的不能对程序编译，程序也不能运行，又由于游戏中有声音，而我没有使用win32的声音函数，wpf的声音播放是基于Media Player 10的，所以若是没有Media Player10以上版本则没有声音，但不影响程序中其他部分正常运行。（这里提供的链接没有声音）</p>
+
+<p>【结论及问题讨论】
+通过编写此程序，发现了很多问题，也知道了自己的不足，缺乏对.Net的设计架构的理解，而且缺乏对CLR的清楚理解，归根到底还是特别缺乏对.Net的基础认识，特别是对IL认知的缺乏，使自己无法真正了解整个.Net的程序的真实运行情况。所编的程序对GC的压力较大。从实际出发则是长时间运行下，急剧增长的内存（主要是在不断的new，再null），如果不加处理内存会直线上升比原来增大数倍，虽然MS说全交给GC处理，但是如果程序员不行，程序也不可能实用化，只能是个花瓶。</p>
+
+<p>虽然程序现在的设计为将来如果增加武器系统，人物属性系统，伤害系统，道具系统，魔法特效装饰系统预留了扩展空间，但是当真正的程序计算量翻翻后这种设计是否能经得主考验我也说不清楚。</p>
+
+<p>这里有个技术问题没有想明白希望能得到大家的帮助：</p>
+
+<p>在WPF下怎么通过透明图片来初始化WB，SL中可以使用writeablebitmap.SetSource，那么WPF中应该是什么呢？ 我这里是用的很笨的方法BitmapFrame.Create(&#8230;).CopyPixels得到一个数组，但是奇怪的是图片中原来透明的部分就变成白色了。</p>
+
+<p>最后还是那句话，遇到代码难看的地方或是我理解不到位的地方请大家不要一笑而过，给小弟提出来，万分感谢。</p>
+
+<p><a href="http://files.cnblogs.com/studentdeng/MyWorm4_2.rar">源代码</a></p>
+
+		
+		
+	</div>
+
+</article>
+
+</div>
+<nav id="pagenavi">
+    
+        <a href="/blog/page/10/" class="prev">Prev</a>
+    
+    
+    <div class="center"><a href="/blog/archives">Blog Archives</a></div>
+</nav></div>
+			</div>
+			<footer id="footer" class="inner"><p>
+  2013 - @studentdeng  
+  <span class="credit">Powered by <a href="http://octopress.org">Octopress</a></span>
+</p>
+
+Design credit: <a href="http://shashankmehta.in/archive/2012/greyshade.html">Shashank Mehta</a></footer>
+			<script src="/javascripts/slash.js"></script>
+<script src="/javascripts/jquery.fancybox.pack.js"></script>
+<script type="text/javascript">
+(function($){
+	$('.fancybox').fancybox();
+})(jQuery);
+</script> <!-- Delete or comment this line to disable Fancybox -->
+
+
+
+
+
+
+
+		</div>
+	</div>
+</body>
+</html>
