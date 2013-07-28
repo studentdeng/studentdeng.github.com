@@ -4,7 +4,7 @@
   <title><![CDATA[不会开机的男孩]]></title>
   <link href="http://studentdeng.github.com/atom.xml" rel="self"/>
   <link href="http://studentdeng.github.com/"/>
-  <updated>2013-07-28T13:22:39+08:00</updated>
+  <updated>2013-07-28T13:48:18+08:00</updated>
   <id>http://studentdeng.github.com/</id>
   <author>
     <name><![CDATA[studentdeng]]></name>
@@ -68,7 +68,12 @@ self.mouseJoint = NULL;
 
 <p><a href="https://github.com/studentdeng/box2d-tutorials/tree/master/04">demo</a></p>
 
-<p><a href="http://v.youku.com/v_show/id_XNTg2NDQxNzAw.html">demo演示</a></p>
+<div class="video-container">
+    <iframe height=498 width=510 src="http://player.youku.com/embed/XNTg2NDQxNzAw" frameborder=0 allowfullscreen></iframe>
+</div>
+
+
+
 ]]></content>
   </entry>
   
@@ -97,7 +102,12 @@ join-&gt;SetLength(distance);
 
 <p><a href="https://github.com/studentdeng/box2d-tutorials/tree/master/03">demo代码</a></p>
 
-<p><a href="http://v.youku.com/v_show/id_XNTg1MjU2MTQ4.html">demo演示</a></p>
+<div class="video-container">
+    <iframe height=498 width=510 src="http://player.youku.com/embed/XNTg1MjU2MTQ4" frameborder=0 allowfullscreen></iframe>
+</div>
+
+
+
 ]]></content>
   </entry>
   
@@ -131,8 +141,12 @@ dynamic 通常是我们的玩家，敌人。他们会移动，而且会受到力
 
 <p>刚写好了几个demo，用来做这几种类型的区分，</p>
 
-<p><a href="https://github.com/studentdeng/box2d-tutorials/tree/master/02">demo代码</a>
-<a href="http://v.youku.com/v_show/id_XNTg0OTM0OTg4.html">demo演示</a></p>
+<p><a href="https://github.com/studentdeng/box2d-tutorials/tree/master/02">demo代码</a></p>
+
+<div class="video-container">
+<iframe height=498 width=510 src="http://player.youku.com/embed/XNTg0OTM0OTg4" frameborder=0 allowfullscreen></iframe>
+</div>
+
 ]]></content>
   </entry>
   
@@ -243,7 +257,10 @@ body-&gt;ApplyLinearImpulse(force, body-&gt;GetPosition());
 
 <p><a href="https://github.com/studentdeng/box2d-tutorials/tree/master/01">demo地址</a></p>
 
-<p><a href="http://v.youku.com/v_show/id_XNTg0NTU4NzQ0.html">demo演示地址</a></p>
+<div class="video-container">
+<iframe height=498 width=510 src="http://player.youku.com/embed/XNTg0NTU4NzQ0" frameborder=0 allowfullscreen></iframe>
+</div>
+
 ]]></content>
   </entry>
   
