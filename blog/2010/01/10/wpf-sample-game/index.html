@@ -7,68 +7,59 @@
 	<meta name="author" content="studentdeng">
 
 	
-	<meta name="description" content="WPF设计简单游戏初探 自从看了深蓝大哥的博客之后感触很多，于是花了一个多月学习WPF并模仿深蓝大哥的设计，并使用了一部分深蓝大哥的控件和代码，再加上_goods大哥对小弟的提示与帮助。做成了这个十分简陋的“迷你弹弹堂”，由于种种原因，仅仅实现了最基本的功能，即实现了模拟弹坑，和在弹坑中移动。 &hellip;">
+	<meta name="description" content="自从看了深蓝大哥的博客之后感触很多，于是花了一个多月学习WPF并模仿深蓝大哥的设计，并使用了一部分深蓝大哥的控件和代码，再加上_goods大哥对小弟的提示与帮助。做成了这个十分简陋的“迷你弹弹堂”，由于种种原因，仅仅实现了最基本的功能，即实现了模拟弹坑，和在弹坑中移动。由于小弟没有在公司做过项目， &hellip;">
 	
-
-  <!-- http://t.co/dKP3o1e -->
-  <meta name="HandheldFriendly" content="True">
-  <meta name="MobileOptimized" content="320">
-  <meta name="viewport" content="width=device-width, initial-scale=1">
+	<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1">
 
 	<link href="/atom.xml" rel="alternate" title="不会开机的男孩" type="application/atom+xml">
-	
-	<link rel="canonical" href="http://studentdeng.github.com/blog/2010/01/10/wpf-sample-game/">
+	<link rel="canonical" href="">
 	<link href="/favicon.png" rel="shortcut icon">
 	<link href="/stylesheets/screen.css" media="screen, projection" rel="stylesheet" type="text/css">
-	<link href="http://fonts.googleapis.com/css?family=Open+Sans:regular,semibold,italic,italicsemibold|PT+Sans:400,700,400italic,700italic|PT+Serif:400,700,400italic,700italic" rel="stylesheet" />
 	<!--[if lt IE 9]><script src="//html5shiv.googlecode.com/svn/trunk/html5.js"></script><![endif]-->
-	<script src="//ajax.googleapis.com/ajax/libs/jquery/1.7.2/jquery.min.js"></script>
-
-	<link href='http://fonts.googleapis.com/css?family=Open+Sans:400italic,400,700' rel='stylesheet' type='text/css'>
-	<!--Fonts from Google"s Web font directory at http://google.com/webfonts -->
-<link href="http://fonts.googleapis.com/css?family=PT+Serif:regular,italic,bold,bolditalic" rel="stylesheet" type="text/css">
-<link href="http://fonts.googleapis.com/css?family=PT+Sans:regular,italic,bold,bolditalic" rel="stylesheet" type="text/css">
-
-<script type="text/javascript">var switchTo5x=false;</script>
-<script type="text/javascript" src="http://w.sharethis.com/button/buttons.js"></script>
-<script type="text/javascript">stLight.options({publisher: "496dac80-40ba-487b-b557-af2d3629eb28", doNotHash: false, doNotCopy: false, hashAddressBar: false});</script>
+	<script async="true" src="//ajax.googleapis.com/ajax/libs/jquery/1.7.2/jquery.min.js"></script>
+	
 </head>
 
 
 <body>
-	<div class="container">
-		<div class="left-col">
-			<div class="intrude-less">
-			<header id="header" class="inner"><div class="profilepic">	
-	<script src="/javascripts/md5.js"></script>
-	<script type="text/javascript">
-		document.write("<img src='http://tp4.sinaimg.cn/1984671427/180/40026435848/1' alt='Profile Picture' style='width: 160px;' />");
-	</script>
-</div>
-<h1><a href="/">不会开机的男孩</a></h1>
-<p class="subtitle"></p>
-<nav id="main-nav"><ul class="main-navigation">
-  <li><a href="/">Blog</a></li>
-  <li><a href="/tags">tags</a></li>
-  <li><a href="/blog/archives">Archives</a></li>
-  <li><a href="/about">About</a></li>
-  <li><a href="/favorite">favorite</a></li>
+	<header id="header" class="inner"><h1><a href="/">不会开机的男孩</a></h1>
+<nav id="main-nav"><ul class="main">
+	<li><a href="/">Blog</a></li>
+	<li><a href="/blog/archives">Archives</a></li>
+	<li id="ajax"><a href="/favorite/index.html">Favorite</a></li>
+	<li id="ajax"><a href="/about/index.html">About</a></li>
 </ul>
 </nav>
-<nav id="sub-nav">
+<nav id="mobile-nav">
+	<div class="alignleft menu">
+		<a class="button">Menu</a>
+		<div class="container"><ul class="main">
+	<li><a href="/">Blog</a></li>
+	<li><a href="/blog/archives">Archives</a></li>
+	<li id="ajax"><a href="/favorite/index.html">Favorite</a></li>
+	<li id="ajax"><a href="/about/index.html">About</a></li>
+</ul>
+</div>
+	</div>
+	<div class="alignright search">
+		<a class="button"></a>
+		<div class="container">
+			<form action="http://google.com/search" method="get">
+				<input type="text" name="q" results="0">
+				<input type="hidden" name="q" value="site:studentdeng.github.com">
+			</form>
+		</div>
+	</div>
+</nav>
+<nav id="sub-nav" class="alignright">
 	<div class="social">
-		
-		<a class="weibo" href="http://www.weibo.com/studentdeng" title="Weibo">Weibo</a>
-		
 		
 		
 		
 		
 		<a class="github" href="https://github.com/studentdeng" title="GitHub">GitHub</a>
 		
-		
-		<a class="dribbble" href="http://www.dribbble.com/curer" title="Dribbble">Dribbble</a>
-		
+    
 		
 		
 		
@@ -76,27 +67,21 @@
 		
 		<a class="rss" href="/atom.xml" title="RSS">RSS</a>
 		
-	</div>
-</nav>
-<hgroup>
-  <aside class="sidebar">
-  
     
-  
-</aside>
-</hgroup>
+	</div>
+	<form class="search" action="http://google.com/search" method="get">
+		<input class="alignright" type="text" name="q" results="0">
+		<input type="hidden" name="q" value="site:studentdeng.github.com">
+	</form>
+</nav>
 
-</header>				
-			</div>
-		</div>	
-		<div class="mid-col">
-			
-				
-			
-			<div class="mid-col-container">
-				<div id="content" class="inner"><article class="post" itemscope itemtype="http://schema.org/BlogPosting">
-	<h1 class="title" itemprop="name">WPF设计简单游戏初探</h1>
-	<div class="entry-content" itemprop="articleBody"><p>自从看了深蓝大哥的博客之后感触很多，于是花了一个多月学习WPF并模仿深蓝大哥的设计，并使用了一部分深蓝大哥的控件和代码，再加上_goods大哥对小弟的提示与帮助。做成了这个十分简陋的“迷你弹弹堂”，由于种种原因，仅仅实现了最基本的功能，即实现了模拟弹坑，和在弹坑中移动。由于小弟没有在公司做过项目，遇到代码难看的地方或是我理解不到位的地方请大家不要一笑而过，给小弟提出来，万分感谢。</p>
+</header>
+	
+		
+	
+	<div id="content" class="inner"><article class="post">
+	<h2 class="title">WPF设计简单游戏初探</h2>
+	<div class="entry-content"><p>自从看了深蓝大哥的博客之后感触很多，于是花了一个多月学习WPF并模仿深蓝大哥的设计，并使用了一部分深蓝大哥的控件和代码，再加上_goods大哥对小弟的提示与帮助。做成了这个十分简陋的“迷你弹弹堂”，由于种种原因，仅仅实现了最基本的功能，即实现了模拟弹坑，和在弹坑中移动。由于小弟没有在公司做过项目，遇到代码难看的地方或是我理解不到位的地方请大家不要一笑而过，给小弟提出来，万分感谢。</p>
 
 <p>【实验名称】
 迷你弹弹堂</p>
@@ -146,33 +131,50 @@ DispatcherTimer被称为生命线程，用来控制该类对象的状态和在UI
 <p><a href="http://files.cnblogs.com/studentdeng/MyWorm4_2.rar">源代码</a></p>
 </div>
 
+
+<div class="meta">
+	<div class="date">
+
+
+
+
+
+
+
+
+  
+
+
+<time datetime="2010-01-10T18:23:00+08:00" pubdate data-updated="true">Jan 10<span>th</span>, 2010</time></div>
+	<div class="tags">
+
+
+	<a class='category' href='/blog/categories/wpf-slash-sl/'>WPF/SL</a>
+
+
+</div>
+	
+</div>
 </article>
 
 	<div class="share">
-	<div class="addthis_toolbox addthis_default_style addthis_16x16_style">
-	
-	<a class="addthis_button_sinaweibo"></a>
-	
-	
-	
-	
-	
-	<a class="addthis_button_compact"></a>
-	<a class="addthis_counter addthis_bubble_style"></a>
+	<div class="addthis_toolbox addthis_default_style ">
+		
+		
+		
+		
 	</div>
-  <script type="text/javascript" src="http://s7.addthis.com/js/300/addthis_widget.js#pubid="></script>
+	
 </div>
 
 
 </div>
-			</div>
-			<footer id="footer" class="inner"><p>
-  2013 - @studentdeng  
-  <span class="credit">Powered by <a href="http://octopress.org">Octopress</a></span>
-</p>
+	<footer id="footer" class="inner">Copyright &copy; 2013
 
-Design credit: <a href="http://shashankmehta.in/archive/2012/greyshade.html">Shashank Mehta</a></footer>
-			<script src="/javascripts/slash.js"></script>
+    studentdeng
+
+</footer>
+	<script src="/javascripts/slash.js"></script>
 <script src="/javascripts/jquery.fancybox.pack.js"></script>
 <script type="text/javascript">
 (function($){
@@ -185,8 +187,5 @@ Design credit: <a href="http://shashankmehta.in/archive/2012/greyshade.html">Sha
 
 
 
-
-		</div>
-	</div>
 </body>
 </html>

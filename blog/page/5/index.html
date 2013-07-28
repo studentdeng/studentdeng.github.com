@@ -7,68 +7,59 @@
 	<meta name="author" content="studentdeng">
 
 	
-	<meta name="description" content="Feb 14th, 2012 configure Bochs-configure Bochs + freedos安装配置 sudo apt-get install build-essential sudo apt-get install xorg-dev sudo apt-get install &hellip;">
+	<meta name="description" content="block 有什么意义，特点等等，这些东西，实在是太复杂了，这里只是简单的总结一下block的内存管理。而且也仅仅限于objective-C的部分 Block memory block 的内存管理，应该是最头疼的地方,就用这个来自WWDC的例子来解释一下吧。 当程序运行到这里时，stack &hellip;">
 	
-
-  <!-- http://t.co/dKP3o1e -->
-  <meta name="HandheldFriendly" content="True">
-  <meta name="MobileOptimized" content="320">
-  <meta name="viewport" content="width=device-width, initial-scale=1">
+	<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1">
 
 	<link href="/atom.xml" rel="alternate" title="不会开机的男孩" type="application/atom+xml">
-	
-	<link rel="canonical" href="http://studentdeng.github.com/blog/page/5/">
+	<link rel="canonical" href="">
 	<link href="/favicon.png" rel="shortcut icon">
 	<link href="/stylesheets/screen.css" media="screen, projection" rel="stylesheet" type="text/css">
-	<link href="http://fonts.googleapis.com/css?family=Open+Sans:regular,semibold,italic,italicsemibold|PT+Sans:400,700,400italic,700italic|PT+Serif:400,700,400italic,700italic" rel="stylesheet" />
 	<!--[if lt IE 9]><script src="//html5shiv.googlecode.com/svn/trunk/html5.js"></script><![endif]-->
-	<script src="//ajax.googleapis.com/ajax/libs/jquery/1.7.2/jquery.min.js"></script>
-
-	<link href='http://fonts.googleapis.com/css?family=Open+Sans:400italic,400,700' rel='stylesheet' type='text/css'>
-	<!--Fonts from Google"s Web font directory at http://google.com/webfonts -->
-<link href="http://fonts.googleapis.com/css?family=PT+Serif:regular,italic,bold,bolditalic" rel="stylesheet" type="text/css">
-<link href="http://fonts.googleapis.com/css?family=PT+Sans:regular,italic,bold,bolditalic" rel="stylesheet" type="text/css">
-
-<script type="text/javascript">var switchTo5x=false;</script>
-<script type="text/javascript" src="http://w.sharethis.com/button/buttons.js"></script>
-<script type="text/javascript">stLight.options({publisher: "496dac80-40ba-487b-b557-af2d3629eb28", doNotHash: false, doNotCopy: false, hashAddressBar: false});</script>
+	<script async="true" src="//ajax.googleapis.com/ajax/libs/jquery/1.7.2/jquery.min.js"></script>
+	
 </head>
 
 
 <body>
-	<div class="container">
-		<div class="left-col">
-			<div class="intrude-less">
-			<header id="header" class="inner"><div class="profilepic">	
-	<script src="/javascripts/md5.js"></script>
-	<script type="text/javascript">
-		document.write("<img src='http://tp4.sinaimg.cn/1984671427/180/40026435848/1' alt='Profile Picture' style='width: 160px;' />");
-	</script>
-</div>
-<h1><a href="/">不会开机的男孩</a></h1>
-<p class="subtitle"></p>
-<nav id="main-nav"><ul class="main-navigation">
-  <li><a href="/">Blog</a></li>
-  <li><a href="/tags">tags</a></li>
-  <li><a href="/blog/archives">Archives</a></li>
-  <li><a href="/about">About</a></li>
-  <li><a href="/favorite">favorite</a></li>
+	<header id="header" class="inner"><h1><a href="/">不会开机的男孩</a></h1>
+<nav id="main-nav"><ul class="main">
+	<li><a href="/">Blog</a></li>
+	<li><a href="/blog/archives">Archives</a></li>
+	<li id="ajax"><a href="/favorite/index.html">Favorite</a></li>
+	<li id="ajax"><a href="/about/index.html">About</a></li>
 </ul>
 </nav>
-<nav id="sub-nav">
+<nav id="mobile-nav">
+	<div class="alignleft menu">
+		<a class="button">Menu</a>
+		<div class="container"><ul class="main">
+	<li><a href="/">Blog</a></li>
+	<li><a href="/blog/archives">Archives</a></li>
+	<li id="ajax"><a href="/favorite/index.html">Favorite</a></li>
+	<li id="ajax"><a href="/about/index.html">About</a></li>
+</ul>
+</div>
+	</div>
+	<div class="alignright search">
+		<a class="button"></a>
+		<div class="container">
+			<form action="http://google.com/search" method="get">
+				<input type="text" name="q" results="0">
+				<input type="hidden" name="q" value="site:studentdeng.github.com">
+			</form>
+		</div>
+	</div>
+</nav>
+<nav id="sub-nav" class="alignright">
 	<div class="social">
-		
-		<a class="weibo" href="http://www.weibo.com/studentdeng" title="Weibo">Weibo</a>
-		
 		
 		
 		
 		
 		<a class="github" href="https://github.com/studentdeng" title="GitHub">GitHub</a>
 		
-		
-		<a class="dribbble" href="http://www.dribbble.com/curer" title="Dribbble">Dribbble</a>
-		
+    
 		
 		
 		
@@ -76,161 +67,29 @@
 		
 		<a class="rss" href="/atom.xml" title="RSS">RSS</a>
 		
-	</div>
-</nav>
-<hgroup>
-  <aside class="sidebar">
-  
     
-  
-</aside>
-</hgroup>
-
-</header>				
-			</div>
-		</div>	
-		<div class="mid-col">
-			
-				
-			
-			<div class="mid-col-container">
-				<div id="content" class="inner">
-<div itemscope itemtype="http://schema.org/Blog">
-
-
-    <article class="post" itemprop="blogPost" itemscope itemtype="http://schema.org/BlogPosting">
-	<div class="meta">
-		<div class="date">
-
-
-
-
-
-
-
-
-  
-
-
-<time datetime="2012-02-14T23:55:00+08:00" data-updated="true" itemprop="datePublished">Feb 14<span>th</span>, 2012</time></div>
-		<div class="tags">
-
-
-	<a class='category' href='/blog/categories/configure/'>configure</a>
-
-
-</div>
-		
 	</div>
-	<h1 class="title" itemprop="name"><a href="/blog/2012/02/14/bochs-configure/" itemprop="url">Bochs-configure</a></h1>
-	<div class="entry-content" itemprop="articleBody">
-		<h1>Bochs + freedos安装配置</h1>
+	<form class="search" action="http://google.com/search" method="get">
+		<input class="alignright" type="text" name="q" results="0">
+		<input type="hidden" name="q" value="site:studentdeng.github.com">
+	</form>
+</nav>
 
-<pre><code>sudo apt-get install build-essential
-
-sudo apt-get install xorg-dev
-
-sudo apt-get install libgtk2.0-dev
-</code></pre>
-
-<p>下载</p>
-
-<pre><code>bochshttp://bochs.sourceforge.net/cgi-bin/topper.pl?name=See+All+Releases&amp;url=http://sourceforge.net/projects/bochs/files
-
-$ tar vxaf bochs-2.5.1.tar.gz
-
-$ cd bochs-2.5.1
-
-$ ./configure –enable-debugger-enable-disasm
-
-$ make
-
-$ sudo make install
-</code></pre>
-
-<p>下载freedoshttp://bochs.sourceforge.net/diskimages.html 复制到工作目录下</p>
-
-<h1>Bochs 配置 先通过dos引导，我们的软件复制在B盘下</h1>
-
-<pre><code>############################################################### 
-# Configuration file for Bochs 
-###############################################################
-
-# how much memory the emulated machine will have 
-megs: 32
-
-# filename of ROM images 
-romimage: file=/usr/share/bochs/BIOS-bochs-latest 
-vgaromimage: file=/usr/share/vgabios/vgabios.bin
-
-# what disk images will be used 
-floppya: 1_44=freedos.img, status=inserted 
-floppyb: 1_44=pm.img, status=inserted
-
-# choose the boot disk. 
-boot: a
-
-# where do we send log messages? 
-# log: bochsout.txt
-
-# disable the mouse 
-mouse: enabled=0
-
-# enable key mapping, using US layout as default. 
-keyboard_mapping: enabled=1, map=/usr/share/bochs/keymaps/x11-pc-us.map
-
-#enabled debug using xchg bx, bx
-
-magic_break:enabled=1
-
-可以通过下面方式来部署程序，当然，写成makefile最省事
-
-$ sudo mount –o loop pm.img /mnt/floppy
-
-$ sudo cp test.com /mnt/floppy
-
-$ sudo umount /mnt/floppy
-</code></pre>
-
-<h1>bochs 调试</h1>
-
-<p>调试方法很多，这里介绍最简单的方式之一。bochs 配置中增加 magic_break:enabled=1</p>
-
-<p>代码中增加xchg bx, bx，bochs会停在代码出。当然，前提是bochs需要支持debug</p>
-
+</header>
+	
 		
+	
+	<div id="content" class="inner">
+
+
+    <article class="post">
+	<h2 class="title">
 		
-	</div>
-
-</article>
-
-
-    <article class="post" itemprop="blogPost" itemscope itemtype="http://schema.org/BlogPosting">
-	<div class="meta">
-		<div class="date">
-
-
-
-
-
-
-
-
-  
-
-
-<time datetime="2012-02-03T23:47:00+08:00" data-updated="true" itemprop="datePublished">Feb 3<span>rd</span>, 2012</time></div>
-		<div class="tags">
-
-
-	<a class='category' href='/blog/categories/objective-c/'>Objective-C</a>
-
-
-</div>
+		<a href="/blog/2012/02/03/objblock/">
 		
-	</div>
-	<h1 class="title" itemprop="name"><a href="/blog/2012/02/03/objblock/" itemprop="url">Objective-C Block</a></h1>
-	<div class="entry-content" itemprop="articleBody">
+			Objective-C Block</a>
+	</h2>
+	<div class="entry-content">
 		<p>block 有什么意义，特点等等，这些东西，实在是太复杂了，这里只是简单的总结一下block的内存管理。而且也仅仅限于objective-C的部分</p>
 
 <h1>Block memory</h1>
@@ -498,12 +357,9 @@ struct __block_literal_5 _block_literal = {
 		
 	</div>
 
-</article>
 
-
-    <article class="post" itemprop="blogPost" itemscope itemtype="http://schema.org/BlogPosting">
-	<div class="meta">
-		<div class="date">
+<div class="meta">
+	<div class="date">
 
 
 
@@ -515,18 +371,27 @@ struct __block_literal_5 _block_literal = {
   
 
 
-<time datetime="2012-01-13T23:46:00+08:00" data-updated="true" itemprop="datePublished">Jan 13<span>th</span>, 2012</time></div>
-		<div class="tags">
+<time datetime="2012-02-03T23:47:00+08:00" pubdate data-updated="true">Feb 3<span>rd</span>, 2012</time></div>
+	<div class="tags">
 
 
-	<a class='category' href='/blog/categories/emotion/'>emotion</a>
+	<a class='category' href='/blog/categories/objective-c/'>Objective-C</a>
 
 
 </div>
+	
+</div>
+</article>
+
+
+    <article class="post">
+	<h2 class="title">
 		
-	</div>
-	<h1 class="title" itemprop="name"><a href="/blog/2012/01/13/plan/" itemprop="url">Plan</a></h1>
-	<div class="entry-content" itemprop="articleBody">
+		<a href="/blog/2012/01/13/plan/">
+		
+			Plan</a>
+	</h2>
+	<div class="entry-content">
 		<p>不知不觉又是一年，又大了一岁，呵呵，说的很假，因为自己并没有真正的意识到自己又大了一岁，甚至自己现在的年龄都不能一口说出来，过去的一年，甚至之前，我都不能准确的说出我自己到底做了什么，混沌，浑浑噩噩的一生，没有目标，一切都是随心，一切都是随心而发，没有目的，达成不达成，似乎都不重要。那么自己心里到底有什么在乎的了？不知道，那么还有什么感兴趣的呢？</p>
 
 <p>庄子是我最佩服的人，千年前的古人，都可以去猜测天道，追逐天地之本，而做为现代人的我，从小都希望自己能够成为其中的一员，哪怕只是能够感知到一点，为此沉沦数学，物理。</p>
@@ -555,12 +420,9 @@ struct __block_literal_5 _block_literal = {
 		
 	</div>
 
-</article>
 
-
-    <article class="post" itemprop="blogPost" itemscope itemtype="http://schema.org/BlogPosting">
-	<div class="meta">
-		<div class="date">
+<div class="meta">
+	<div class="date">
 
 
 
@@ -572,18 +434,27 @@ struct __block_literal_5 _block_literal = {
   
 
 
-<time datetime="2012-01-13T23:45:00+08:00" data-updated="true" itemprop="datePublished">Jan 13<span>th</span>, 2012</time></div>
-		<div class="tags">
+<time datetime="2012-01-13T23:46:00+08:00" pubdate data-updated="true">Jan 13<span>th</span>, 2012</time></div>
+	<div class="tags">
 
 
 	<a class='category' href='/blog/categories/emotion/'>emotion</a>
 
 
 </div>
+	
+</div>
+</article>
+
+
+    <article class="post">
+	<h2 class="title">
 		
-	</div>
-	<h1 class="title" itemprop="name"><a href="/blog/2012/01/13/knownless/" itemprop="url">转 从无知到有知</a></h1>
-	<div class="entry-content" itemprop="articleBody">
+		<a href="/blog/2012/01/13/knownless/">
+		
+			转 从无知到有知</a>
+	</h2>
+	<div class="entry-content">
 		<p>人的一生是要不断学习的。这里面的动力很简单：因为我们在有些方面还“无知”， 无知是做事情的一个障碍。我们如果想做好事情，就要求知，要改变这种无知的状况。</p>
 
 <p>可是大多数人不知道的是，“无知” (ignorance) 其实不是一个状态，而是两个截然不同的状态，一种叫做不知道型无知 (uninformed ignorance)，另一种叫做知道型无知 (informed ignorance)。 相信很多人都有这个体会：某天看到一本书，一篇文章，觉得这里面的学问知识，是自己从来没有想过或者接触过的，是一个崭新的领域，这就代表了你突然发现了自己的无知，而且知道自己的这种无知，也就是，从 uninformed ignorance 跨入了 informed ignorance. 这两种无知的另一个不同在于，第一种无知可以让人无知无畏，因为自己不会认识到这种无知。第二种反而让人小心翼翼，知道自己不懂这方面的知识，或者咨询专业人士，或者恶补相关的知识。我们人生下来，所有的知识都在脑袋的外部，所以，我们最初处于一个纯粹的 uninformed ignorance 状态, 所以，从无知到有知，必然要经过两个过程，第一个过程是从第一种无知变到第二种无知；第二种是消灭部分的第二类无知，达到部分有知。 这两个过程其实截然不同，但是实际上我们常常把他们混淆。</p>
@@ -598,12 +469,9 @@ struct __block_literal_5 _block_literal = {
 		
 	</div>
 
-</article>
 
-
-    <article class="post" itemprop="blogPost" itemscope itemtype="http://schema.org/BlogPosting">
-	<div class="meta">
-		<div class="date">
+<div class="meta">
+	<div class="date">
 
 
 
@@ -615,18 +483,27 @@ struct __block_literal_5 _block_literal = {
   
 
 
-<time datetime="2012-01-12T23:39:00+08:00" data-updated="true" itemprop="datePublished">Jan 12<span>th</span>, 2012</time></div>
-		<div class="tags">
+<time datetime="2012-01-13T23:45:00+08:00" pubdate data-updated="true">Jan 13<span>th</span>, 2012</time></div>
+	<div class="tags">
 
 
-	<a class='category' href='/blog/categories/objective-c/'>Objective-C</a>
+	<a class='category' href='/blog/categories/emotion/'>emotion</a>
 
 
 </div>
+	
+</div>
+</article>
+
+
+    <article class="post">
+	<h2 class="title">
 		
-	</div>
-	<h1 class="title" itemprop="name"><a href="/blog/2012/01/12/objcbase/" itemprop="url">Objective-C 一些很基础的总结</a></h1>
-	<div class="entry-content" itemprop="articleBody">
+		<a href="/blog/2012/01/12/objcbase/">
+		
+			Objective-C 一些很基础的总结</a>
+	</h2>
+	<div class="entry-content">
 		<p>学习 Objective-C大概4个月了，居然给一个还没毕业的家伙吹了吹，呼，希望不要误人子弟。这里总结一下，毕竟这是第一次完整的讲一个东西。</p>
 
 <p>附上PPT<a href="http://files.cnblogs.com/studentdeng/Objective-CPrimary.pptx">Objective-C Primary</a> 。资源99%来自WWDC 2010 session 113。</p>
@@ -702,9 +579,214 @@ autorelease 应该是初学者最容易糊涂的地方，一开始我也非常�
 		
 	</div>
 
-</article>
+
+<div class="meta">
+	<div class="date">
+
+
+
+
+
+
+
+
+  
+
+
+<time datetime="2012-01-12T23:39:00+08:00" pubdate data-updated="true">Jan 12<span>th</span>, 2012</time></div>
+	<div class="tags">
+
+
+	<a class='category' href='/blog/categories/objective-c/'>Objective-C</a>
+
 
 </div>
+	
+</div>
+</article>
+
+
+    <article class="post">
+	<h2 class="title">
+		
+		<a href="/blog/2011/10/16/objcsel/">
+		
+			Objective C SEL</a>
+	</h2>
+	<div class="entry-content">
+		<p>上一篇http://www.cnblogs.com/studentdeng/archive/2011/10/06/2199873.html，总结了一点关于Objective C message send 的有意思的东西，中间穿插了一点关于SEL有趣的东西，之前，我们知道Objective-C runtime 在处理selector时，是做一个unique hash set， 那么今天，我们看看这个set 是如何产生的。这篇文章参考了<a href="http://www.sealiesoftware.com/blog/archive/2009/09/01/objc_explain_Selector_uniquing_in_the_dyld_shared_cache.html">link</a></p>
+
+<p>unique set的好处是，字符串的比较可以非常迅速，但是也带来一个棘手的问题，创建一个这样的集合，真的不容易。虽然我们能够在compiler和 link的时候保证我们程序中唯一，但是这还远远不够，因为我们并不是生活在真空中，我们的程序需要和各种各样的其他程序协同工作，那么如何能够在这种繁杂的各种情况下，保证唯一呢？</p>
+
+<p>简单说，就是在程序A中，有一个@selector（customInit），但在程序A中引入了程序B，而B中也有一个@selector（customInit），那么，显然，我们需要修正这2个selector，使他们指向同一个内存地址，这样才能保证消息发送正确。</p>
+
+<p>好吧，我们程序员又要惊呼了，这是一个非常非常大的开销，因为</p>
+
+<p>1、我们只能在运行时做这些工作。</p>
+
+<p>2、这些工作是不可能不绕过strcmp（创建hash表时，如果发生了冲突，我们为了保证绝对正确，只能strcmp）。</p>
+
+<p>3、当我们修正之后，也意味着，我们浪费了空间，而实际上就是我们创建了一个更大的hashtable（元素越多，发生碰撞的概率越大，空间的开销越大），</p>
+
+<p>4、代码段在被映射到内存地址空间时，都在可读地址空间上，那么修正，意味着我们又多做了copy-on-write，同样意味着更多的空间开销</p>
+
+<p>5、事实上，这样的函数还非常多，那些界面库函数等等，几乎被所有app引用 e.g. init，initWithFrame:。</p>
+
+<p>更多的空间，更多的比较，导致了性能下降，特别是在程序载入时。事实上，runtime 和os 为我们的selector unique 做了下面的优化，大体可以理解成2个部分</p>
+
+<h2>1、减少需要修正的selector 集合</h2>
+
+<p>之前，我们看到的只有一个hash set，在runtime 载入时创建，但是，现在我们有了2个set（这个set是在Snow Leopard被加入的）。</p>
+
+<p>一个是之前我们知道的，另一个也是一个hash set 当然，特别的是，这是一个perfect hash set。</p>
+
+<p>从之前的5条件中，我们知道了，这些常用的如系统库函数，cocoa.framework中的selector 几乎被所有app引用，而且，我们非常开心的看到了，这些函数，都是可以确定的固定集合。事实上，dyld（dynamic loader and linker），给我们build了一个dyld shared cache，而且是一个perfect hash。而这个被映射到了各种app内存地址空间，并被共享。当我们创建unique selector set 时，我们可以先查找这个perfect hash set，来判断，我们是不是需要动态扩展我们的程序自己的selector hash set。而且，由于是perfect hash，使我们能够拥有在最坏情况下常数时间的开销。</p>
+
+<h2>2、延迟加载</h2>
+
+<p>对于这个，我们已经不陌生了，不管是windows dll 中的延时加载，还是各种在linux中的动态模块的延时载入，原理都是一样的。这些工作，只有在认为是必要条件时，才被真正的加载并初始化。</p>
+
+<p>说的实在是太空了，让我们来看代码吧。</p>
+
+<p>当类被调用或是说在被发送消息之前，类，需要被初始化一下，做的工作就是一些，运行时必要的空间分配，初始化，修正selector，methodlist， propertylist，categorylist等等的工作，我们这里，只是关注selector部分。</p>
+
+<p>prepareForMethodLookup->realizeClass –> methodizeClass->attachMethodLists->fixupMethodList.</p>
+
+<p>经过一系列的东东，修正我们的methodlist时，我们需要将methodlist中的SEL 修正，而这个过程就是我们关注的select unique。</p>
+
+<p>不知道，大家还记得不记得，上一篇讲的 method结构</p>
+
+<pre><code>typedef struct method_list_t {
+
+uint32_t entsize_NEVER_USE;  // low 2 bits used for fixup markers
+
+uint32_t count;
+
+struct method_t first;
+
+} method_list_t;
+
+typedef struct method_t {
+
+SEL name;
+
+const char *types;
+
+IMP imp;
+
+} method_t
+
+
+
+
+static void 
+fixupMethodList(method_list_t *mlist, BOOL bundleCopy) 
+{ 
+    assert(!isMethodListFixedUp(mlist));
+
+    // fixme lock less in attachMethodLists ? 
+    sel_lock();
+
+    uint32_t m; 
+    for (m = 0; m &lt; mlist-&gt;count; m++) {
+
+        //studentdeng note：fixup selector and make sure selector unique 
+        method_t *meth = method_list_nth(mlist, m); 
+        SEL sel = sel_registerNameNoLock((const char *)meth-&gt;name, bundleCopy); 
+        meth-&gt;name = sel;
+
+        if (sel == (SEL)kIgnore) { 
+            meth-&gt;imp = (IMP)&amp;_objc_ignored_method; 
+        } 
+    }
+
+    sel_unlock();
+
+    setMethodListFixedUp(mlist); 
+}
+
+
+
+
+
+
+sel_registerNameNoLock-&gt;__sel_registerName
+
+
+static SEL __sel_registerName(const char *name, int lock, int copy) 
+{ 
+    SEL result = 0;
+
+    if (lock) rwlock_assert_unlocked(&amp;selLock); 
+    else rwlock_assert_writing(&amp;selLock);
+
+    if (!name) return (SEL)0; 
+    result = _objc_search_builtins(name); //studentdeng note:这里就是查找perfect hash set build by dyld cache 
+    if (result) return result; 
+
+    if (lock) rwlock_read(&amp;selLock); 
+    if (_objc_selectors) { 
+        result = __objc_sel_set_get(_objc_selectors, (SEL)name); //studentdeng note: 这里就是查找我们程序自己的hash set 
+    } 
+    if (lock) rwlock_unlock_read(&amp;selLock); 
+    if (result) return result;
+
+    // No match. Insert.
+
+    if (lock) rwlock_write(&amp;selLock);
+
+    if (!_objc_selectors) { 
+        _objc_selectors = __objc_sel_set_create(NUM_NONBUILTIN_SELS); 
+    } 
+    if (lock) { 
+        // Rescan in case it was added while we dropped the lock 
+        result = __objc_sel_set_get(_objc_selectors, (SEL)name); 
+    } 
+    if (!result) { 
+        result = (SEL)(copy ? _strdup_internal(name) : name); 
+        __objc_sel_set_add(_objc_selectors, result); 
+#if defined(DUMP_UNKNOWN_SELECTORS) 
+        printf("\t\"%s\",\n", name); 
+#endif 
+    }
+
+    if (lock) rwlock_unlock_write(&amp;selLock); 
+    return result; 
+}
+</code></pre>
+
+<p>牛b的代码，从来都是自解释的。</p>
+
+		
+		
+	</div>
+
+
+<div class="meta">
+	<div class="date">
+
+
+
+
+
+
+
+
+  
+
+
+<time datetime="2011-10-16T23:37:00+08:00" pubdate data-updated="true">Oct 16<span>th</span>, 2011</time></div>
+	<div class="tags">
+
+
+	<a class='category' href='/blog/categories/objective-c/'>Objective-C</a>
+
+
+</div>
+	
+</div>
+</article>
+
 <nav id="pagenavi">
     
         <a href="/blog/page/4/" class="prev">Prev</a>
@@ -714,14 +796,12 @@ autorelease 应该是初学者最容易糊涂的地方，一开始我也非常�
     
     <div class="center"><a href="/blog/archives">Blog Archives</a></div>
 </nav></div>
-			</div>
-			<footer id="footer" class="inner"><p>
-  2013 - @studentdeng  
-  <span class="credit">Powered by <a href="http://octopress.org">Octopress</a></span>
-</p>
+	<footer id="footer" class="inner">Copyright &copy; 2013
 
-Design credit: <a href="http://shashankmehta.in/archive/2012/greyshade.html">Shashank Mehta</a></footer>
-			<script src="/javascripts/slash.js"></script>
+    studentdeng
+
+</footer>
+	<script src="/javascripts/slash.js"></script>
 <script src="/javascripts/jquery.fancybox.pack.js"></script>
 <script type="text/javascript">
 (function($){
@@ -734,8 +814,5 @@ Design credit: <a href="http://shashankmehta.in/archive/2012/greyshade.html">Sha
 
 
 
-
-		</div>
-	</div>
 </body>
 </html>
