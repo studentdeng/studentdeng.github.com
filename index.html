@@ -7,8 +7,7 @@
 	<meta name="author" content="studentdeng">
 
 	
-	<meta name="description" content=" ruby on rails mysql2 image not found
-soluation Jul 26th, 2013 configure, ruby, tips ">
+	<meta name="description" content="之前常用的部署代码就是用svn，或是更老土的ftp。今天在写一个新玩具的时候，突然发现，每次的git pull实在是一个让人烦躁的东西，就网上查找了一下，整理在这里。参考原文 实现原理是当我们push 代码到remote repository时，通过git的post-receive hooks。 &hellip;">
 	
 	<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1">
 
@@ -81,6 +80,94 @@ soluation Jul 26th, 2013 configure, ruby, tips ">
 		
 	
 	<div id="content" class="inner">
+
+
+    <article class="post">
+	<h2 class="title">
+		
+		<a href="/blog/2013/07/30/git-deploy/">
+		
+			Git 部署代码到服务器</a>
+	</h2>
+	<div class="entry-content">
+		<p>之前常用的部署代码就是用svn，或是更老土的ftp。今天在写一个新玩具的时候，突然发现，每次的git pull实在是一个让人烦躁的东西，就网上查找了一下，整理在这里。<a href="http://toroid.org/ams/git-website-howto">参考原文</a></p>
+
+<p>实现原理是当我们push 代码到remote repository时，通过git的<a href="https://www.kernel.org/pub/software/scm/git/docs/githooks.html">post-receive hooks</a>。执行</p>
+
+<pre><code>git checkout -f
+</code></pre>
+
+<p>来帮助我们实现自动部署</p>
+
+<p>让我们从最简单的开始，现在<strong>本地创建</strong>一个git repository</p>
+
+<pre><code>$ mkdir test &amp;&amp; cd test
+$ git init 
+$ echo 'Hello, world!' &gt; index.html
+$ echo 'Hello, world!' &gt; index.html
+$ git add index.html
+$ git commit -q -m "The humble beginnings of my web site."
+</code></pre>
+
+<p>index.html 就是我们希望能够部署到服务器的代码</p>
+
+<p>然后在<strong>服务器</strong>创建一个repository, 这里可不是服务器部署代码的位置</p>
+
+<pre><code>$ mkdir test &amp;&amp; cd test
+$ git init --bare
+$ cat &gt; hooks/post-receive
+#!/bin/sh
+GIT_WORK_TREE=/mnt/www/test git checkout -f
+$ chmod +x hooks/post-receive
+</code></pre>
+
+<p>这里的 &#8216;/mnt/www/test&#8217; 就是我们将要部署服务器代码的位置，一般的lamp，我们喜欢放在www里，当然这里需要根据不同的环境更换就好了。</p>
+
+<p>这里我们在<strong>本地</strong>的git目录下增加一个remote</p>
+
+<pre><code>$ git remote add prod ssh://server_address/mnt/www/test
+$ git push prod +master:refs/heads/master
+</code></pre>
+
+<p>server_address 可以ip，域名。</p>
+
+<p>我不太喜欢用这个命令行，我喜欢用<a href="http://www.sourcetreeapp.com">SourceTree</a>来做这个增加remote和最后的commit push 部分。</p>
+
+<p>这时我们切换到<strong>服务器</strong>目录下，就可以看到我们的index.html 在我们向prod push的之后，已经自动check out 到我们指定目录下了。</p>
+
+<p>之后我们只需要修改完成之后，git push prod 就可以自动部署代码了。</p>
+
+<p>第一次用，这里标记一下，看看后面当发生冲突的时候，时一个什么样的情况。： ）</p>
+
+		
+		
+	</div>
+
+
+<div class="meta">
+	<div class="date">
+
+
+
+
+
+
+
+
+  
+
+
+<time datetime="2013-07-30T22:34:00+08:00" pubdate data-updated="true">Jul 30<span>th</span>, 2013</time></div>
+	<div class="tags">
+
+
+	<a class='category' href='/blog/categories/git/'>git</a>, <a class='category' href='/blog/categories/tips/'>tips</a>
+
+
+</div>
+	
+</div>
+</article>
 
 
     <article class="post">
@@ -347,82 +434,33 @@ dynamic 通常是我们的玩家，敌人。他们会移动，而且会受到力
 </div>
 </article>
 
+<nav id="pagenavi">
+    
+    
+        <a href="/blog/page/2/" class="next">Next</a>
+    
+    <div class="center"><a href="/blog/archives">Blog Archives</a></div>
+</nav></div>
+	<footer id="footer" class="inner">Copyright &copy; 2013
 
-    <article class="post">
-	<h2 class="title">
-		
-		<a href="/blog/2013/07/18/box2d-01/">
-		
-			Box2D 01 基本概念</a>
-	</h2>
-	<div class="entry-content">
-		<p>首先几个概念需要了解一下。</p>
+    studentdeng
 
-<p><strong>world</strong>
-就是engin需要模拟的世界，他有一个大家都很熟悉的重力</p>
+</footer>
+	<script src="/javascripts/slash.js"></script>
+<script src="/javascripts/jquery.fancybox.pack.js"></script>
+<script type="text/javascript">
+(function($){
+	$('.fancybox').fancybox();
+})(jQuery);
+</script> <!-- Delete or comment this line to disable Fancybox -->
 
-<p><strong>body(刚体)</strong>
-刚体的定义大家在物理中都熟悉了，在box2D世界中，刚体定义了物体一些重要的属性，比如质点位置，旋转角度，角速度，线性阻尼，等</p>
 
-<p><strong>shape(形状)</strong>这里定义我们的物体的形状是圆的，方的还是多边形等</p>
 
-<p><strong>fixture(材质？这个好难翻译中文)</strong>光是上面的东西，我们不能够完成物理世界的碰撞，fixture定义了几个重要的属性，包括摩擦系数，恢复系数，密度</p>
 
-<p>回想当初学习的物理知识也就这么多了，当然后面还会介绍其他新的东西。有个形状，和密度我们可以计算质量，有了位置，速度，角速度，足够我们计算高中学到的简单碰撞了，在有恢复系数和线性阻尼，我们也能更好的模拟更真实的物理情景，而这也是大学物理的部分了。</p>
 
-<p>好多的背景知识，让我们再看看如何在程序里面做一个真实的世界出来。</p>
 
-<pre><code>b2Vec2 gravity;
-gravity.Set(0.0f, -10.0f);
-world = new b2World(gravity);
-</code></pre>
-
-<p>box2D的坐标是和笛卡尔坐标系一样的，向量 (0, -10) 表示我们真实世界的重力，大约为10米每秒</p>
-
-<p>创建我们的第一个物体，一个圆球。
-这里Box2D采用了工厂模式来创建一个我们需要的物体。我们首先描述一个需求，然后通过一个工厂来生产我们需要的产品。</p>
-
-<pre><code>b2BodyDef bodyDef;//
-bodyDef.type = b2_dynamicBody; //这里定义为动态刚体
-bodyDef.position.Set(pt.x/PTM_RATIO, pt.y/PTM_RATIO);
-body = world-&gt;CreateBody(&amp;bodyDef);
-
-b2CircleShape bodyShape;
-bodyShape.m_radius = 26.0 / PTM_RATIO; //定义球的半径
-
-b2FixtureDef fixtureDef;
-fixtureDef.shape = &amp;bodyShape;
-fixtureDef.density = 0.1f;  //密度
-fixtureDef.friction = 0.1f; //摩擦力
-fixtureDef.restitution = 0.9f; //恢复系数
-body-&gt;CreateFixture(&amp;fixtureDef);
-</code></pre>
-
-<p>还急得之前的概念么？在定义好body，shape，创建好fixture之后。这些信息已经足够模拟真实运动了。因为是真实的世界，独立各个平台，box2D的单位是米，而不是程序图形图像的单位像素，PTM_RATIO这个宏用于转换单位。</p>
-
-<p>当然，这些物理数据还不能让我们在程序中看到，为了美观，增加一点小东西，希望大家了解cocos2d。这里创建一个CCPhysicsSprite</p>
-
-<pre><code>CCPhysicsSprite *sprite = [CCPhysicsSprite spriteWithFile:@"ball.png"];
-[self addChild:sprite];
-
-[sprite setPTMRatio:PTM_RATIO];
-[sprite setB2Body:body];
-
-//CCPhysicsSprite 的操作一定要在设置PTMRatio 和 body之后
-[sprite setPosition: ccp(pt.x, pt.y)];
-</code></pre>
-
-<p>这时我们就可以看到一个小球自由落体，然后淡出世界，不过似乎有一种淡淡的忧伤，太无趣了这个世界。</p>
-
-<p>让我们为这个世界创建一个边界，让小球不要运动超过屏幕。</p>
-
-<pre><code>// Define the ground body.
-b2BodyDef groundBodyDef;
-groundBodyDef.position.Set(0, 0); // bottom-left corner
-
-// Call the body factory which allocates memory for the ground body
-// from a pool and creates the ground box shape (also from a pool).
-// The body is also added to the world.
+</body>
+</html>d.
 b2Body* groundBody = world-&gt;CreateBody(&amp;groundBodyDef);
 
 // Define the ground box shape.
