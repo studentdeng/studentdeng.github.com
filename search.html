@@ -26,8 +26,9 @@
 <nav id="main-nav"><ul class="main">
 	<li><a href="/">Blog</a></li>
 	<li><a href="/blog/archives">Archives</a></li>
-	<li id="ajax"><a href="/favorite/index.html">Favorite</a></li>
-	<li id="ajax"><a href="/about/index.html">About</a></li>
+	<li><a href="/tags/index.html">Tags</a></li>
+	<li><a href="/favorite/index.html">Favorite</a></li>
+	<li><a href="/about/index.html">About</a></li>
 </ul>
 </nav>
 <nav id="mobile-nav">
@@ -36,8 +37,9 @@
 		<div class="container"><ul class="main">
 	<li><a href="/">Blog</a></li>
 	<li><a href="/blog/archives">Archives</a></li>
-	<li id="ajax"><a href="/favorite/index.html">Favorite</a></li>
-	<li id="ajax"><a href="/about/index.html">About</a></li>
+	<li><a href="/tags/index.html">Tags</a></li>
+	<li><a href="/favorite/index.html">Favorite</a></li>
+	<li><a href="/about/index.html">About</a></li>
 </ul>
 </div>
 	</div>
@@ -69,10 +71,6 @@
 		
     
 	</div>
-	<form class="search" action="http://google.com/search" method="get">
-		<input class="alignright" type="text" name="q" results="0">
-		<input type="hidden" name="q" value="site:studentdeng.github.com">
-	</form>
 </nav>
 
 </header>
@@ -104,6 +102,18 @@
 	<script src="/javascripts/slash.js"></script>
 <script src="/javascripts/jquery.fancybox.pack.js"></script>
 <script type="text/javascript">
+(function($){
+	$('.fancybox').fancybox();
+})(jQuery);
+</script> <!-- Delete or comment this line to disable Fancybox -->
+
+
+
+
+
+
+</body>
+</html>xt/javascript">
 (function($){
 	$('.fancybox').fancybox();
 })(jQuery);
