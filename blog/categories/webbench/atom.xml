@@ -1,0 +1,162 @@
+<?xml version="1.0" encoding="utf-8"?>
+<feed xmlns="http://www.w3.org/2005/Atom">
+
+  <title><![CDATA[Category: webbench | 不会开机的男孩]]></title>
+  <link href="http://studentdeng.github.com/blog/categories/webbench/atom.xml" rel="self"/>
+  <link href="http://studentdeng.github.com/"/>
+  <updated>2013-08-03T13:56:27+08:00</updated>
+  <id>http://studentdeng.github.com/</id>
+  <author>
+    <name><![CDATA[studentdeng]]></name>
+    <email><![CDATA[studentdeng@hotmail.com]]></email>
+  </author>
+  <generator uri="http://octopress.org/">Octopress</generator>
+
+  
+  <entry>
+    <title type="html"><![CDATA[apache_test]]></title>
+    <link href="http://studentdeng.github.com/blog/2013/08/03/apache-test/"/>
+    <updated>2013-08-03T13:05:00+08:00</updated>
+    <id>http://studentdeng.github.com/blog/2013/08/03/apache-test</id>
+    <content type="html"><![CDATA[<p>最近一直想总结一点有关测试服务器性能的东西，今天先写一点入门的小东西了。
+网站的stress test 工具很多，这里介绍一个我觉得最简单的webbench</p>
+
+<h2>安装webbench</h2>
+
+<pre><code>wget http://www.ha97.com/code/webbench-1.5.tar.gz
+tar zxvf webbench-1.5.tar.gz
+cd webbench-1.5
+make
+make install
+</code></pre>
+
+<h2>使用webbench</h2>
+
+<pre><code>webbench -c 1000 -t 60 http://server_address/
+</code></pre>
+
+<p>c: 并发数， t 运行时间
+下面是测试结果</p>
+
+<pre><code>Speed=2798 pages/min, 53286 bytes/sec.
+Requests: 2798 susceed, 0 failed.
+</code></pre>
+
+<p>表示 每分钟处理请求2798， 每秒钟传输量53286</p>
+
+<h2>apache 的一点小问题</h2>
+
+<p>前几天换了一个阿里云的服务器，最低配置。内存只有512M，在做测试的时候遇到了一点小问题，这里记录一下。
+服务器使用lamp默认配置，在低配置的情况下，我发现在-c 100 的情况下 mysql 就已经crash了。</p>
+
+<p>这里是mysql日志</p>
+
+<pre><code>130803 13:26:40 InnoDB: Initializing buffer pool, size = 128.0M
+InnoDB: mmap(137363456 bytes) failed; errno 12
+130803 13:26:40 InnoDB: Completed initialization of buffer pool
+130803 13:26:40 InnoDB: Fatal error: cannot allocate memory for the buffer pool
+130803 13:26:40 [ERROR] Plugin 'InnoDB' init function returned error.
+130803 13:26:40 [ERROR] Plugin 'InnoDB' registration as a STORAGE ENGINE failed.
+130803 13:26:40 [ERROR] Unknown/unsupported storage engine: InnoDB
+130803 13:26:40 [ERROR] Aborting
+</code></pre>
+
+<p>发现系统内存似乎已经不够用了。
+用下面命令查看系统性能</p>
+
+<pre><code>top -i
+
+top - 13:32:45 up 4 days, 18:01,  2 users,  load average: 1.54, 9.10, 8.42
+Tasks: 242 total,  74 running, 168 sleeping,   0 stopped,   0 zombie
+Cpu(s): 85.1%us, 14.5%sy,  0.0%ni,  0.0%id,  0.0%wa,  0.0%hi,  0.0%si,  0.3%st
+Mem:    501892k total,   496672k used,     5220k free,     4000k buffers
+Swap:        0k total,        0k used,        0k free,    35128k cached
+
+PID USER      PR  NI  VIRT  RES  SHR S %CPU %MEM    TIME+  COMMAND
+6527 www-data  20   0  295m  13m 3952 R  2.3  2.8   0:00.75 apache2
+6531 www-data  20   0  294m  13m 3204 R  2.3  2.7   0:00.51 apache2
+7439 www-data  20   0  293m  12m 3484 R  2.3  2.6   0:00.30 apache2
+7441 www-data  20   0  293m  12m 3480 R  2.3  2.6   0:00.21 apache2
+7455 www-data  20   0  293m  12m 3480 R  2.3  2.6   0:00.14 apache2
+7456 www-data  20   0  293m  12m 3480 R  2.3  2.6   0:00.14 apache2
+7463 www-data  20   0  293m  12m 3480 R  2.3  2.6   0:00.08 apache2
+7465 www-data  20   0  294m  13m 3480 R  2.3  2.7   0:00.08 apache2
+7466 www-data  20   0  294m  13m 3480 R  2.3  2.7   0:00.08 apache2
+6491 www-data  20   0  294m  13m 3204 R  2.0  2.7   0:00.51 apache2
+6495 www-data  20   0  294m  13m 3268 R  2.0  2.7   0:00.52 apache2
+6526 www-data  20   0  295m  13m 3872 R  2.0  2.9   0:00.57 apache2
+6529 www-data  20   0  294m  13m 3212 R  2.0  2.7   0:00.48 apache2
+6536 www-data  20   0  294m  13m 3244 R  2.0  2.7   0:00.48 apache2
+6537 www-data  20   0  294m  13m 3244 R  2.0  2.7   0:00.47 apache2
+6538 www-data  20   0  294m  13m 3244 R  2.0  2.7   0:00.48 apache2
+7442 www-data  20   0  293m  12m 3484 R  2.0  2.6   0:00.21 apache2
+7458 www-data  20   0  293m  12m 3476 R  2.0  2.6   0:00.13 apache2
+7464 www-data  20   0  294m  12m 3480 R  2.0  2.6   0:00.08 apache2
+7467 www-data  20   0  294m  13m 3480 R  2.0  2.7   0:00.08 apache2
+7468 www-data  20   0  294m  12m 3480 R  2.0  2.6   0:00.08 apache2
+6528 www-data  20   0  295m  13m 3884 R  1.7  2.8   0:00.62 apache2
+7457 www-data  20   0  293m  12m 3480 R  1.7  2.6   0:00.13 apache2
+7469 www-data  20   0  294m  13m 3480 R  1.7  2.7   0:00.07 apache2
+7470 www-data  20   0  294m  13m 3480 R  1.7  2.7   0:00.07 apache2
+7492 www-data  20   0  293m  12m 3484 R  1.7  2.6   0:00.05 apache2
+7484 www-data  20   0  293m  12m 3484 R  1.3  2.6   0:00.04 apache2
+…
+</code></pre>
+
+<p>一下子看到好多的apache procress，让我大吃一惊。。。可见我有多弱了。。。原来每一个http请求，apache都开了一个进程来处理，而一个进程需要13M的物理内存。 而这一台服务器总共物理内存只有512M</p>
+
+<h2>apache 的工作模式</h2>
+
+<p>apache 的工作模式有几种，我们可以通过下面命令查看</p>
+
+<pre><code>apachectl -l
+
+Compiled in modules:
+core.c
+mod_log_config.c
+mod_logio.c
+prefork.c
+http_core.c
+mod_so.c
+</code></pre>
+
+<p>这个表明我们在prefork工作模式下，也是最稳定用的最多的工作模式。
+在这个模式下每一个用户的请求都会交给一个进程来处理，但是频繁的创建和销毁进程这种重量级操作降低不少系统性能，所以我们可以通过设置一些参数。但不管怎么样，都是一个请求一个进程。当进程数收到限制时，请求只能等待。而最大的请求书，显然受到系统硬件限制。</p>
+
+<p>我们可以在查看默认配置</p>
+
+<pre><code># prefork MPM
+# StartServers: number of server processes to start
+# MinSpareServers: minimum number of server processes which are kept spare
+# MaxSpareServers: maximum number of server processes which are kept spare
+# MaxClients: maximum number of server processes allowed to start
+# MaxRequestsPerChild: maximum number of requests a server process serves
+&lt;IfModule mpm_prefork_module&gt;
+    StartServers          5
+    MinSpareServers       5
+    MaxSpareServers      10
+    MaxClients           150
+    MaxRequestsPerChild   0
+&lt;/IfModule&gt;
+</code></pre>
+
+<p>这个已经说的很清楚了，对于现在的服务器配置，尝试MaxClients 修改成 40</p>
+
+<p>再次查看系统性能</p>
+
+<pre><code>top - 13:44:13 up 4 days, 18:12,  2 users,  load average: 12.10, 6.50, 8.88
+Tasks: 209 total,  41 running, 168 sleeping,   0 stopped,   0 zombie
+Cpu(s): 91.7%us,  7.9%sy,  0.0%ni,  0.0%id,  0.0%wa,  0.0%hi,  0.0%si,  0.3%st
+Mem:    501892k total,   399804k used,   102088k free,     6936k buffers
+Swap:        0k total,        0k used,        0k free,    71048k cached 
+</code></pre>
+
+<p>这是-c 100 已经没有问题了。</p>
+
+<pre><code>Speed=2780 pages/min, 52868 bytes/sec.
+Requests: 2780 susceed, 0 failed.
+</code></pre>
+]]></content>
+  </entry>
+  
+</feed>

@@ -3,7 +3,7 @@
 <html>
 <head>
 	<meta charset="utf-8">
-	<title>不会开机的男孩</title>
+	<title>apache_test - 不会开机的男孩</title>
 	<meta name="author" content="studentdeng">
 
 	
@@ -81,18 +81,9 @@ tar zxvf &hellip;">
 	
 		
 	
-	<div id="content" class="inner">
-
-
-    <article class="post">
-	<h2 class="title">
-		
-		<a href="/blog/2013/08/03/apache-test/">
-		
-			Apache_test</a>
-	</h2>
-	<div class="entry-content">
-		<p>最近一直想总结一点有关测试服务器性能的东西，今天先写一点入门的小东西了。
+	<div id="content" class="inner"><article class="post">
+	<h2 class="title">Apache_test</h2>
+	<div class="entry-content"><p>最近一直想总结一点有关测试服务器性能的东西，今天先写一点入门的小东西了。
 网站的stress test 工具很多，这里介绍一个我觉得最简单的webbench</p>
 
 <h2>安装webbench</h2>
@@ -230,10 +221,7 @@ Swap:        0k total,        0k used,        0k free,    71048k cached
 <pre><code>Speed=2780 pages/min, 52868 bytes/sec.
 Requests: 2780 susceed, 0 failed.
 </code></pre>
-
-		
-		
-	</div>
+</div>
 
 
 <div class="meta">
@@ -261,295 +249,18 @@ Requests: 2780 susceed, 0 failed.
 </div>
 </article>
 
-
-    <article class="post">
-	<h2 class="title">
+	<div class="share">
+	<div class="addthis_toolbox addthis_default_style ">
 		
-		<a href="/blog/2013/07/30/git-deploy/">
 		
-			Git 部署代码到服务器</a>
-	</h2>
-	<div class="entry-content">
-		<p>之前常用的部署代码就是用svn，或是更老土的ftp。今天在写一个新玩具的时候，突然发现，每次的git pull实在是一个让人烦躁的东西，就网上查找了一下，整理在这里。<a href="http://toroid.org/ams/git-website-howto">参考原文</a></p>
-
-<p>实现原理是当我们push 代码到remote repository时，通过git的<a href="https://www.kernel.org/pub/software/scm/git/docs/githooks.html">post-receive hooks</a>。执行</p>
-
-<pre><code>git checkout -f
-</code></pre>
-
-<p>来帮助我们实现自动部署</p>
-
-<p>让我们从最简单的开始，现在<strong>本地创建</strong>一个git repository</p>
-
-<pre><code>$ mkdir test &amp;&amp; cd test
-$ git init 
-$ echo 'Hello, world!' &gt; index.html
-$ echo 'Hello, world!' &gt; index.html
-$ git add index.html
-$ git commit -q -m "The humble beginnings of my web site."
-</code></pre>
-
-<p>index.html 就是我们希望能够部署到服务器的代码</p>
-
-<p>然后在<strong>服务器</strong>创建一个repository, 这里可不是服务器部署代码的位置</p>
-
-<pre><code>$ mkdir test &amp;&amp; cd test
-$ git init --bare
-$ cat &gt; hooks/post-receive
-#!/bin/sh
-GIT_WORK_TREE=/mnt/www/test git checkout -f
-$ chmod +x hooks/post-receive
-</code></pre>
-
-<p>这里的 &#8216;/mnt/www/test&#8217; 就是我们将要部署服务器代码的位置，一般的lamp，我们喜欢放在www里，当然这里需要根据不同的环境更换就好了。</p>
-
-<p>这里我们在<strong>本地</strong>的git目录下增加一个remote</p>
-
-<pre><code>$ git remote add prod ssh://server_address/mnt/www/test
-$ git push prod +master:refs/heads/master
-</code></pre>
-
-<p>server_address 可以ip，域名。</p>
-
-<p>我不太喜欢用这个命令行，我喜欢用<a href="http://www.sourcetreeapp.com">SourceTree</a>来做这个增加remote和最后的commit push 部分。</p>
-
-<p>这时我们切换到<strong>服务器</strong>目录下，就可以看到我们的index.html 在我们向prod push的之后，已经自动check out 到我们指定目录下了。</p>
-
-<p>之后我们只需要修改完成之后，git push prod 就可以自动部署代码了。</p>
-
-<p>第一次用，这里标记一下，看看后面当发生冲突的时候，时一个什么样的情况。： ）</p>
-
 		
 		
 	</div>
-
-
-<div class="meta">
-	<div class="date">
-
-
-
-
-
-
-
-
-  
-
-
-<time datetime="2013-07-30T22:34:00+08:00" pubdate data-updated="true">Jul 30<span>th</span>, 2013</time></div>
-	<div class="tags">
-
-
-	<a class='category' href='/blog/categories/git/'>git</a>, <a class='category' href='/blog/categories/tips/'>tips</a>
-
-
-</div>
 	
 </div>
-</article>
-
-
-    <article class="post">
-	<h2 class="title">
-		
-		<a href="/blog/2013/07/26/tips-install/">
-		
-			安装环境遇到的dt问题</a>
-	</h2>
-	<div class="entry-content">
-		<h1>ruby on rails</h1>
-
-<p>mysql2 image not found
-<a href="http://stackoverflow.com/questions/4546698/library-not-loaded-libmysqlclient-16-dylib-error-when-trying-to-run-rails-serv">soluation</a></p>
-
-		
-		
-	</div>
-
-
-<div class="meta">
-	<div class="date">
-
-
-
-
-
-
-
-
-  
-
-
-<time datetime="2013-07-26T17:30:00+08:00" pubdate data-updated="true">Jul 26<span>th</span>, 2013</time></div>
-	<div class="tags">
-
-
-	<a class='category' href='/blog/categories/configure/'>configure</a>, <a class='category' href='/blog/categories/ruby/'>ruby</a>, <a class='category' href='/blog/categories/tips/'>tips</a>
 
 
 </div>
-	
-</div>
-</article>
-
-
-    <article class="post">
-	<h2 class="title">
-		
-		<a href="/blog/2013/07/22/box2d-04/">
-		
-			Box2d 04 多边形刚体和鼠标连接器</a>
-	</h2>
-	<div class="entry-content">
-		<p>我们在真正做一些物体的时候，有一些情况不是标准的圆形，矩形。这时我们需要创建多边形的刚体。这里推荐一个工具<a href="https://github.com/jfahrenkrug/VertexHelper">VertexHelper</a>来帮我们生成刚体的定义。</p>
-
-<p>今天的东西似乎有一点太少了，再瞅瞅另一种连接器，b2MouseJoint——鼠标连接器。
-在使用鼠标连接器之前，我们需要找到我们选择的是那一个物体。</p>
-
-<ul>
-<li>获取手势的位置，也就是坐标向量</li>
-<li>创建一个小的物体，小到只是一个点，然后通过这个物体在物理世界中查找包含这个物体的刚体</li>
-</ul>
-
-
-<p>鼠标连接器的使用步骤
-当检测到碰撞时，创建连接器</p>
-
-<pre><code>b2MouseJointDef mouseJointDef;
-mouseJointDef.bodyA = groundBody; //通常连接地面
-mouseJointDef.bodyB = body;       //需要移动的刚体
-mouseJointDef.target = locationWorld; //当前位置
-mouseJointDef.maxForce = 1000 * body-&gt;GetMass(); //移动的最大力，这个决定移动的灵敏度
-//mouseJointDef.collideConnected = true; //这个场景不需要
-
-self.mouseJoint = (b2MouseJoint *) world-&gt;CreateJoint(&amp;mouseJointDef);
-//body-&gt;SetAwake(true);         //很多地方指定了这个，但是我实际测试，这个场景也不需要
-</code></pre>
-
-<p>在手势移动的时候重新设置</p>
-
-<pre><code>world-&gt;DestroyJoint(self.mouseJoint);
-self.mouseJoint = NULL;
-</code></pre>
-
-<p>在手势取消和结束时销毁</p>
-
-<pre><code>world-&gt;DestroyJoint(_mouseJoint);
-</code></pre>
-
-<p><a href="https://github.com/studentdeng/box2d-tutorials/tree/master/04">demo</a></p>
-
-<div class="video-container">
-    <iframe height=498 width=510 src="http://player.youku.com/embed/XNTg2NDQxNzAw" frameborder=0 allowfullscreen></iframe>
-</div>
-
-
-
-
-		
-		
-	</div>
-
-
-<div class="meta">
-	<div class="date">
-
-
-
-
-
-
-
-
-  
-
-
-<time datetime="2013-07-22T13:34:00+08:00" pubdate data-updated="true">Jul 22<span>nd</span>, 2013</time></div>
-	<div class="tags">
-
-
-	<a class='category' href='/blog/categories/box2d/'>box2D</a>, <a class='category' href='/blog/categories/game/'>game</a>
-
-
-</div>
-	
-</div>
-</article>
-
-
-    <article class="post">
-	<h2 class="title">
-		
-		<a href="/blog/2013/07/20/box2d-03/">
-		
-			Box2d 03 b2Joint 连接器</a>
-	</h2>
-	<div class="entry-content">
-		<p>在真实世界中，一个物体很难孤立的存在，比如一个我们的自行车，2个轮子除了可以自由滚动以外，还必须保证2个轮子之间的距离不变，而保证这个距离不变的就是自行车的大梁。我们的胳膊，需要保证在一定范围的情况下围绕一个点旋转等等。Box2D中 连接器就是用来保证刚体和刚体之间的某种关系而出现的。</p>
-
-<p>我们先认识b2DistanceJoint——距离连接器。</p>
-
-<p><img src="http://www.ladeng6666.com/blog/wp-content/uploads/2012/08/zixingche.jpg" alt="image" /></p>
-
-<p>这是一个自行车的模型bodyA bodyB 就是之前熟悉的圆形刚体，中间的红线是我们的距离连接，anchorA，anchorB 则是连接器连接2个刚体的位置。非常的直观。</p>
-
-<pre><code>b2DistanceJointDef jointDef;
-jointDef.Initialize(ballA, ballB, ballA-&gt;GetPosition(), ballB-&gt;GetPosition());
-
-b2DistanceJoint *join = (b2DistanceJoint *)world-&gt;CreateJoint(&amp;jointDef);
-CGFloat distance = 30.0 / PTM_RATIO;
-join-&gt;SetLength(distance);
-</code></pre>
-
-<p>非常的直观，制定连接的位置和距离，就创建完毕了。下面是一个demo，每当触摸屏幕的时候给自行车一个向右的冲量。</p>
-
-<p><a href="https://github.com/studentdeng/box2d-tutorials/tree/master/03">demo代码</a></p>
-
-<div class="video-container">
-    <iframe height=498 width=510 src="http://player.youku.com/embed/XNTg1MjU2MTQ4" frameborder=0 allowfullscreen></iframe>
-</div>
-
-
-
-
-		
-		
-	</div>
-
-
-<div class="meta">
-	<div class="date">
-
-
-
-
-
-
-
-
-  
-
-
-<time datetime="2013-07-20T13:30:00+08:00" pubdate data-updated="true">Jul 20<span>th</span>, 2013</time></div>
-	<div class="tags">
-
-
-	<a class='category' href='/blog/categories/box2d/'>box2D</a>, <a class='category' href='/blog/categories/game/'>game</a>
-
-
-</div>
-	
-</div>
-</article>
-
-<nav id="pagenavi">
-    
-    
-        <a href="/blog/page/2/" class="next">Next</a>
-    
-    <div class="center"><a href="/blog/archives">Blog Archives</a></div>
-</nav></div>
 	<footer id="footer" class="inner">Copyright &copy; 2013
 
     studentdeng
