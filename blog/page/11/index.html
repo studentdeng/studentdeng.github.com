@@ -7,7 +7,9 @@
 	<meta name="author" content="studentdeng">
 
 	
-	<meta name="description" content="昨天和同学对c++虚继承这部分 产生了一些争论，发觉自己对技术越来越浮躁了。不得不痛下决心。一看c++虚继承的内部实现（很浅很浅的看看）。 以下内容来自自己实验，希望各位大哥指点。当然要想获得权威的解释，看《Inside C++ Object Model》 让我们从最简单的开始。以下测试代码。 &hellip;">
+	<meta name="description" content="上一篇只是初步的写了一下虚继承，很不清楚而且有的地方自己理解也不到位。这回详细总结一下。以下内容来自vs2008 默认设置下。类的布局可以通过-d1reportSingleClassLayout查看。 让我们从最简单的类结构开始。 class A
+{
+public: int a; void af &hellip;">
 	
 	<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1">
 
@@ -78,6 +80,362 @@
 		
 	
 	<div id="content" class="inner">
+
+
+    <article class="post">
+	<h2 class="title">
+		
+		<a href="/blog/2010/06/07/c-plus-plus-vtable2/">
+		
+			再谈C++虚继承</a>
+	</h2>
+	<div class="entry-content">
+		<p>上一篇只是初步的写了一下虚继承，很不清楚而且有的地方自己理解也不到位。这回详细总结一下。以下内容来自vs2008 默认设置下。类的布局可以通过-d1reportSingleClassLayout查看。</p>
+
+<p>让我们从最简单的类结构开始。</p>
+
+<pre><code>class A
+{
+public:
+    int a;
+    void af();
+    void virtual vaf(); 
+};
+void A::vaf(){printf("vaf\n");}
+void A::af(){printf("af\n");}
+class B
+{
+public:
+    int b;
+    void bf();
+    void virtual vbf();
+};
+void B::vbf(){printf("vbf\n");};
+void B::bf(){printf("bf\n");};
+class C:public A,public B
+{
+public:
+    int c;
+    void cf();
+    void virtual vcf();    
+};
+void C::vcf(){printf("vcf\n");}
+void C::cf(){printf("cf\n");}
+</code></pre>
+
+<p>　　内存中这个例子是这样的。</p>
+
+<pre><code>class A    size(8):
+    +---
+    | {vfptr}
+    | a
+    +---
+
+A::$vftable@:
+    | &amp;A_meta
+    |  0
+    | &amp;A::vaf
+
+
+class B    size(8):
+    +---
+    | {vfptr}
+    | b
+    +---
+
+B::$vftable@:
+    | &amp;B_meta
+    |  0
+    | &amp;B::vbf
+
+class C    size(20):
+    +---
+    | +--- (base class A)
+    | | {vfptr}
+    | | a
+    | +---
+    | +--- (base class B)
+    | | {vfptr}
+    | | b
+    | +---
+    | c
+    +---
+
+C::$vftable@A@:
+    | &amp;C_meta
+    |  0
+    | &amp;A::vaf
+    | &amp;C::vcf
+
+C::$vftable@B@:
+    | -8
+    | &amp;B::vbf
+</code></pre>
+
+<p>这里我们总结一下，类中有虚函数布局。</p>
+
+<p>若是类中有虚函数，那么类中第一个元素是指向虚表的指针（这个情况只有vftable）。
+基类数据成员
+本身类成员
+最左边的基类和本类公用同一个虚函数表，从而可以简化一些操作。
+　　一个简单的例子，让我们看一下虚函数运行时的样子。</p>
+
+<pre><code>C *pc= new C;
+pc-&gt;af();
+pc-&gt;vaf();
+pc-&gt;vcf();
+pc-&gt;vbf();
+delete pc;
+.text:00401059                 push    offset aAf      ; "af\n";这里调用非虚函数，之前有一个给ecx赋值语句
+.text:0040105E                 call    ds:__imp__printf
+.text:00401064                 mov     eax, [esi]
+.text:00401066                 mov     edx, [eax]
+.text:00401068                 add     esp, 4
+.text:0040106B                 mov     ecx, esi         ;这里ecx指向类A，这里因为A和C相同的开始地址
+.text:0040106D                 call    edx              ;这里节省了一次类的转化
+.text:0040106F                 mov     eax, [esi]
+.text:00401071                 mov     edx, [eax+4]     ;这里调用vcf，在虚表中我们看到了他的offset 4
+.text:00401074                 mov     ecx, esi
+.text:00401076                 call    edx
+.text:00401078                 mov     eax, [esi+8]     ;这里调用vbf,这里需要首先调整this指针
+.text:0040107B                 mov     edx, [eax]       ;在找到相应的函数偏移量（这里为0）
+.text:0040107D                 lea     ecx, [esi+8]
+.text:00401080                 call    edx
+</code></pre>
+
+<p>有了前面的铺垫，我们步入正题，依然是一个简单的例子。</p>
+
+<pre><code>class D :virtual public A
+{
+    int d;
+    void df();
+    void virtual vdf();
+};
+void D::vdf(){printf("vdf\n");}
+void D::df(){printf("df\n");}
+class E :virtual public A
+{
+public:
+    int e;
+    void ef();
+    void virtual vef();
+};
+void E::vef(){printf("vef\n");}
+void E::ef(){printf("ef\n");}
+class F :public A,public B
+{
+public:
+    int f;
+    void ff();
+    void virtual vff();
+};
+void F::vff(){printf("vff\n");}
+void F::ff(){printf("ff\n");}
+</code></pre>
+
+<p>让我们再看一下class F在内存中的布局</p>
+
+<pre><code>class F    size(36):
+    +---
+    | +--- (base class D)
+    | | {vfptr}
+    | | {vbptr}
+    | | d
+    | +---
+    | +--- (base class E)
+    | | {vfptr}
+    | | {vbptr}
+    | | e
+    | +---
+    | f
+    +---
+    +--- (virtual base A)
+    | {vfptr}
+    | a
+    +---
+
+F::$vftable@D@:
+    | &amp;F_meta
+    |  0
+    | &amp;D::vdf
+    | &amp;F::vff
+
+F::$vftable@E@:
+    | -12
+    | &amp;E::vef
+
+F::$vbtable@D@:
+    | -4
+    | 24 (Fd(D+4)A)
+
+F::$vbtable@E@:
+    | -4
+    | 12 (Fd(E+4)A)
+
+F::$vftable@A@:
+    | -28
+    | &amp;A::vaf
+</code></pre>
+
+<p>这里又增加了一个指向虚基表的指针vbptr，我们可以看出这个指针的目的在于计算包含虚继承的类的位置（有直接虚继承和间接虚继承）。让我们总结下有虚继承下的布局。</p>
+
+<p>将类中非虚继承的基类放置最前面。这样访问非虚继承函数不需再计算偏移量。
+在派生类中若是没有vbtable则增加一个，除非能从原来的非虚继承类继承到了vbtable。
+派生类数据成员
+虚基类
+　　可见，虚基类始终在类的尾部，那么当类生长的时候，也就是继续被继承时，则很有可能使虚基的偏移量变大。</p>
+
+<p>比如在class D的虚基表中，D与A偏移量为0，而在class F中D与A偏移量变为了24，所以只能加入一个vbptr指向虚基表。</p>
+
+<p>有了前面的知识，那么运行时的情况就好分析了。</p>
+
+<pre><code>.text:0040104F     mov     dword ptr [eax+4], offset ??_8F@@7BD@@@ ; const F::`vbtable'{for `D'}
+.text:00401056     mov     dword ptr [eax+10h], offset ??_8F@@7BE@@@ ; const F::`vbtable'{for `E'}
+                                                         ;首先将虚基表初始化 eax=this
+.text:0040105D     mov     dword ptr [eax+1Ch], offset ??_7A@@6B@ ; const A::`vftable'
+.text:00401064     mov     ecx, [eax+4]      ;*ecx=vbtableFD
+.text:00401067     mov     dword ptr [eax], offset ??_7D@@6B0@@ ; const D::`vftable'{for `D'}
+.text:0040106D     mov     edx, [ecx+4]      ;获得vbtableFD表中第2项，也就是D和A虚函数表的offset
+.text:00401070     mov     dword ptr [edx+eax+4], offset ??_7D@@6BA@@@ ; const D::`vftable'{for `A'}
+                                             ;根据和虚基表的offset+虚基表中和虚函数的offset+this找到虚函数位置以下类推
+.text:00401078     mov     ecx, [eax+10h]
+.text:0040107B     mov     dword ptr [eax+0Ch], offset ??_7E@@6B0@@ ; const E::`vftable'{for `E'}
+.text:00401082     mov     edx, [ecx+4]
+.text:00401085     mov     dword ptr [edx+eax+10h], offset ??_7E@@6BA@@@ ; const E::`vftable'{for `A'}
+.text:0040108D     mov     ecx, [eax+4]
+.text:00401090     mov     dword ptr [eax], offset ??_7F@@6BD@@@ ; const F::`vftable'{for `D'}
+.text:00401096     mov     dword ptr [eax+0Ch], offset ??_7F@@6BE@@@ ; const F::`vftable'{for `E'}
+.text:0040109D     mov     edx, [ecx+4]
+.text:004010A0     mov     dword ptr [edx+eax+4], offset ??_7F@@6BA@@@ ; const F::`vftable'{for `A'}
+.text:004010A8     mov     esi, eax
+
+.text:004010AE     mov     eax, [esi+4]            ;eax=*vbtableFD
+.text:004010B1     mov     ecx, [eax+4]            ;ecx=虚基表中和虚函数的offset
+.text:004010B4     mov     edx, [ecx+esi+4]        ;*edx=vftable
+.text:004010B8     mov     eax, [edx]              
+.text:004010BA     lea     ecx, [ecx+esi+4]        ;this=class A的开始
+.text:004010BE     call    eax                     ;pf-&gt;vaf();
+.text:004010C0     mov     edx, [esi]
+.text:004010C2     mov     eax, [edx]
+.text:004010C4     mov     ecx, esi                ;classD和classF公用虚表
+.text:004010C6     call    eax
+.text:004010C8     mov     edx, [esi+0Ch]
+.text:004010CB     mov     eax, [edx]
+.text:004010CD     lea     ecx, [esi+0Ch]          ;修正this，指向class E
+.text:004010D0     call    eax
+.text:004010D2     mov     edx, [esi]
+.text:004010D4     mov     eax, [edx+4]
+.text:004010D7     mov     ecx, esi
+.text:004010D9     call    eax
+</code></pre>
+
+<p>　　再看下虚函数覆盖的问题。</p>
+
+<pre><code>class G
+{
+public:
+    int g;
+    void gf();
+    void virtual vgf();
+    void virtual vaf();
+};
+void G::gf(){printf("gf\n");}
+void G::vgf(){printf("vgf\n");}
+void G::vaf(){printf("vaf_g\n");}
+class H:public A,public G
+{
+public:
+    int h;
+    void hf();
+    void vaf();
+    void vgf();
+    void virtual vhf();
+};
+void H::hf(){printf("hf\n");}
+void H::vaf(){printf("vaf_H\n");}
+void H::vgf(){printf("vgf_h\n");}
+void H::vhf(){printf("vhf\n");}
+
+
+class H    size(20):
+    +---
+    | +--- (base class A)
+    | | {vfptr}
+    | | a
+    | +---
+    | +--- (base class G)
+    | | {vfptr}
+    | | g
+    | +---
+    | h
+    +---
+
+H::$vftable@A@:
+    | &amp;H_meta
+    |  0
+    | &amp;H::vaf
+    | &amp;H::vhf
+
+H::$vftable@G@:
+    | -8
+    | &amp;H::vgf
+    | &amp;thunk: this-=8; goto H::vaf
+</code></pre>
+
+<p>由于A类和G类的函数vaf都被子类H覆盖，由于A和H共用虚函数表，那么如果在G类中依然保留被覆盖的函数则浪费空间。实际是通过以下代码实现的。</p>
+
+<pre><code>.text:004010B0 ; [thunk]:public: virtual void __thiscall H::vaf`adjustor{8}' (void)
+.text:004010B0 ?vaf@H@@W7AEXXZ proc near               ; DATA XREF: .rdata:00402158o
+.text:004010B0                 sub     ecx, 8          ;这里调整this指针，指向class G=class A
+.text:004010B3                 jmp     ?vaf@H@@UAEXXZ  ; H::vaf(void);转向到G表中的vaf()
+.text:004010B3 ?vaf@H@@W7AEXXZ endp
+</code></pre>
+
+<p>可见要是要使用thunk，根本上是处理以达到节省函数表大小，通过修改this指针去调用子类表项，那么也就是当子类覆盖父类多个方法时，只保留一份，其他的则跳转执行。</p>
+
+<pre><code>mov     ecx, esi
+call    edx                   ;调用vaf
+mov     eax, [esi+8]          ;*eax=vftable_G
+mov     edx, [eax]
+lea     ecx, [esi+8]
+call    edx                   ;vgf
+mov     eax, [esi]
+mov     edx, [eax+4] 
+mov     ecx, esi
+call    edx                   ;vhf
+</code></pre>
+
+<p>虚函数中还有2个非常重要的部分一个纯虚函数,一个虚析构函数。由于析构函数和构造函数结合的实在是太紧密了。下一篇先总结下虚析构函数当然也包括构造函数的部分。</p>
+
+		
+		
+	</div>
+
+
+<div class="meta">
+	<div class="date">
+
+
+
+
+
+
+
+
+  
+
+
+<time datetime="2010-06-07T20:50:00+08:00" pubdate data-updated="true">Jun 7<span>th</span>, 2010</time></div>
+	<div class="tags">
+
+
+	<a class='category' href='/blog/categories/c-plus-plus/'>c++</a>
+
+
+</div>
+	
+</div>
+</article>
 
 
     <article class="post">
@@ -855,170 +1213,6 @@ DWORD WINAPI ThreadFunc(LPVOID n)
 
 
 	<a class='category' href='/blog/categories/c-plus-plus/'>c++</a>, <a class='category' href='/blog/categories/windows/'>windows</a>
-
-
-</div>
-	
-</div>
-</article>
-
-
-    <article class="post">
-	<h2 class="title">
-		
-		<a href="/blog/2010/04/06/thumb-pic2/">
-		
-			缩略图设计初探二</a>
-	</h2>
-	<div class="entry-content">
-		<p>之前的问题还是很大的，参考了.net framework Dictionary的思路，保留MPQ的hash算法和判断冲突的思路。重新整理了一下。</p>
-
-<p>第一部分：改进部分</p>
-
-<p>1、处理冲突的方法由原来线性再散列，改为分离链表法。</p>
-
-<p>2、修正了一些因为处理冲突而变化的部分。</p>
-
-<p>3、增加了扩容的部分。</p>
-
-<p>4、增加了CRC校验部分。</p>
-
-<p>第二部分：疑问</p>
-
-<p>1、如何保证数据的安全性？Delete操作只是将数据从hashTable中delete，但是文件中依然有图片存在。</p>
-
-<p>要么将每个图片加密储存，但是手机上资源消耗太大。那么最有可能就是delete之后将文件数据格式中关键数据上写一些随机数，从而正常解码失败。</p>
-
-<p>2、如果要统一管理图片，需要建立文件索引。</p>
-
-<p>3、过多的seek会影响效率，我这里还是保存了文件的偏移量，在读取的时候也必然会seek，因为我觉得使用seek似乎没有在效率产生很大的损失（可能我测试的数据不具有普遍性吧），但是很多资料上都对寻道很讨厌。这里我又参考了一下空间问题，故而保存了文件偏移量。</p>
-
-<p>第三部分：部分代码</p>
-
-<p>插入</p>
-
-<pre><code>BOOL MPFile::InsertData( LPCVOID lpBuffer, TCHAR *lpszString, const UINT fileSize, const FILETIME LastModiTime, 
-        LONG &amp;lindex, DWORD dwFlags )
-{
-    ASSERT( lpBuffer != NULL );
-    ASSERT( lpszString != NULL );
-
-    if( m_pMPBlockTable == NULL ) Initialize(0);
-    const DWORD HASH_OFFSET = 0, HASH_A = 1, HASH_B = 2;   
-    DWORD hashCode = hash.HashString(lpszString, HASH_OFFSET);   
-    DWORD nHashA = hash.HashString(lpszString, HASH_A);   
-    DWORD nHashB = hash.HashString(lpszString, HASH_B);   
-
-    DWORD targetBucket = hashCode % (m_pMPFileHeader-&gt;nHashTableLength); 
-    for ( LONG i = m_pMPBlucketTable[targetBucket].iBlockIndex; i &gt;= 0; i = m_pMPBlockTable[i].MPEntry.iNext ) 
-    {
-        if( m_pMPBlockTable[i].MPEntry.dwHashCode == hashCode
-    　　　　&amp;&amp;m_pMPBlockTable[i].MPEntry.dwHashValueA == nHashA 
-    　　　　&amp;&amp; m_pMPBlockTable[i].MPEntry.dwHashValueB == nHashB )
-        {
-        if( !(dwFlags &amp; INSERT_REPLACE_EXISTING) ) {return FALSE;}
-            return SetDataToFile(lpBuffer,lpszString,i);
-        }
-    }
-    // add new 
-    LONG index;
-    BOOL isNew=TRUE;
-    if (m_pMPFileHeader-&gt;nFreeCount &gt; 0) 
-    { 
-        index = m_pMPFileHeader-&gt;iFreeList;
-        m_pMPFileHeader-&gt;iFreeList = m_pMPBlockTable[index].MPEntry.iNext;
-        m_pMPFileHeader-&gt;nFreeCount--;
-        isNew = FALSE;
-    } 
-    else 
-    {
-        if (m_pMPFileHeader-&gt;nChildFileCount == m_pMPFileHeader-&gt;nHashTableLength) 
-        {
-            ReSize();
-            targetBucket = hashCode % (m_pMPFileHeader-&gt;nHashTableLength);
-        }
-        index = m_pMPFileHeader-&gt;nChildFileCount;
-        m_pMPFileHeader-&gt;nChildFileCount++;
-    } 
-
-    m_pMPBlockTable[index].MPEntry.dwHashCode= hashCode; 
-    m_pMPBlockTable[index].MPEntry.iNext = m_pMPBlucketTable[targetBucket].iBlockIndex; 
-    m_pMPBlockTable[index].MPEntry.dwHashValueA = nHashA;
-    m_pMPBlockTable[index].MPEntry.dwHashValueB = nHashB;
-    m_pMPBlockTable[index].dwFlag = dwFlags;
-    m_pMPBlockTable[index].nSize = fileSize + sizeof(MINIPICDATAITEMHEADER)+sizeof(DWORD);//size add fileName and crc32
-    m_pMPBlucketTable[targetBucket].iBlockIndex = index;
-
-    lindex = index;
-
-    //TODO:修改数据
-     if(isNew)
-    {
-        m_pMPBlockTable[index].FileStartAt = m_endOfFileData;
-        if(SetDataToFile(lpBuffer,lpszString,index) )
-        {
-            m_endOfFileData+=m_pMPBlockTable[index].nSize;//TODO:防止溢出
-        　　  return TRUE;
-        }
-        return FALSE;
-    }
-    else
-    {
-        return SetDataToFile( lpBuffer,lpszString, index );
-    }
-}
-</code></pre>
-
-<p>读取数据</p>
-
-<pre><code>LONG MPFile::FindEntry( TCHAR *lpszString )
-{
-    ASSERT(lpszString!=NULL);
-     if (m_pMPBlucketTable != NULL ) 
-     {
-        const DWORD HASH_OFFSET = 0, HASH_A = 1, HASH_B = 2;   
-        DWORD    hashCode = hash.HashString(lpszString, HASH_OFFSET);   
-        DWORD    nHashA = hash.HashString(lpszString, HASH_A);   
-        DWORD    nHashB = hash.HashString(lpszString, HASH_B);   
-        DWORD    nHashStart = hashCode % (m_pMPFileHeader-&gt;nHashTableLength);   
-
-        for (LONG i = m_pMPBlucketTable[nHashStart].iBlockIndex; i &gt;= 0; i = m_pMPBlockTable[i].MPEntry.iNext) 
-        {
-            if (m_pMPBlockTable[i].MPEntry.dwHashCode == hashCode 
-                &amp;&amp;m_pMPBlockTable[i].MPEntry.dwHashValueA == nHashA 
-                &amp;&amp; m_pMPBlockTable[i].MPEntry.dwHashValueB == nHashB )
-            return i;
-        }
-     }
-     return -1;
-}
-</code></pre>
-
-<p><a href="http://files.cnblogs.com/studentdeng/MP_v2.rar">MP_v2.rar源码</a></p>
-
-		
-		
-	</div>
-
-
-<div class="meta">
-	<div class="date">
-
-
-
-
-
-
-
-
-  
-
-
-<time datetime="2010-04-06T18:43:00+08:00" pubdate data-updated="true">Apr 6<span>th</span>, 2010</time></div>
-	<div class="tags">
-
-
-	<a class='category' href='/blog/categories/algorithms/'>algorithms</a>, <a class='category' href='/blog/categories/c-plus-plus/'>c++</a>, <a class='category' href='/blog/categories/windows-mobile/'>windows_mobile</a>
 
 
 </div>

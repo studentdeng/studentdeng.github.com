@@ -4,7 +4,7 @@
   <title><![CDATA[不会开机的男孩]]></title>
   <link href="http://studentdeng.github.com/atom.xml" rel="self"/>
   <link href="http://studentdeng.github.com/"/>
-  <updated>2013-08-03T17:51:04+08:00</updated>
+  <updated>2013-08-04T23:58:39+08:00</updated>
   <id>http://studentdeng.github.com/</id>
   <author>
     <name><![CDATA[studentdeng]]></name>
@@ -12,6 +12,23 @@
   </author>
   <generator uri="http://octopress.org/">Octopress</generator>
 
+  
+  <entry>
+    <title type="html"><![CDATA[stanford 算法课上 Kosaraju algorithm]]></title>
+    <link href="http://studentdeng.github.com/blog/2013/08/04/algorithms-class4/"/>
+    <updated>2013-08-04T23:32:00+08:00</updated>
+    <id>http://studentdeng.github.com/blog/2013/08/04/algorithms-class4</id>
+    <content type="html"><![CDATA[<p>强连通图的应用场景我就不在这里赘述了。其中<a href="http://en.wikipedia.org/wiki/Kosaraju's_algorithm">Kosaraju</a>是最常见的一种。</p>
+
+<p>这个也是Stanford 算法课<a href="https://class.coursera.org/algo-004/quiz/attempt?quiz_id=57">弟四周的作业</a>，现在看来是最难的一道题。那么这里我就给一个我自己的实现了。</p>
+
+<p>这个作业的难度就在于他的输入是一个相当大的数据，处理不好，很容易溢出。那份大数据，我没有留在这里，感兴趣的同学可以自己下载。70多M，实在不适合放在github上面。</p>
+
+<p><a href="https://github.com/studentdeng/algorithms_class">source_code</a></p>
+
+<p>由于是xcode的环境，在g++下是过不去的。。。</p>
+]]></content>
+  </entry>
   
   <entry>
     <title type="html"><![CDATA[apache 压力测试入门]]></title>
@@ -1193,14 +1210,8 @@ rake preview
 ]]></content>
   </entry>
   
-  <entry>
-    <title type="html"><![CDATA[哈佛幸福课 杂感一]]></title>
-    <link href="http://studentdeng.github.com/blog/2013/01/15/happiness/"/>
-    <updated>2013-01-15T18:10:00+08:00</updated>
-    <id>http://studentdeng.github.com/blog/2013/01/15/happiness</id>
-    <content type="html"><![CDATA[<p>好长时间不写博客了, 可以说将近一年的时间里面,并没有多少技术上的积累, 甚至有点倒退的痕迹, 不管是从心气还是态度, 还是毅力上面.我曾经是<em><a href="http://mindhacks.cn/">刘未鹏</a></em>的粉丝,哈,当然现在也一样. 我一直好奇为什么会他会那么的专心在思维这部分.其实在1年前,我也无法想象我会放下我心爱的计算机的书籍而拿起这些曾经我看不上的东西.有些东西的确只有经历过,才会明白.好消息是,一切还来得及.文本和技术类文章毫无瓜葛, 只是我觉得对于Geek们来说,有些其他东西还是很重要的.</p>
-
-<p><em><a href="http://v.163.com/special/positivepsychology/">幸福课</a></em>来自豆瓣小组的推荐, 一开始觉得这个只是一个练习英文听力的一个好的途径, 因为相对电影来说,我觉得对时间的利用率更高, 但事实上, 却是我听过的最好的公开课, 没有之一</p>
+</feed>
+�径, 因为相对电影来说,我觉得对时间的利用率更高, 但事实上, 却是我听过的最好的公开课, 没有之一</p>
 
 <h2>为什么要看这门课</h2>
 
