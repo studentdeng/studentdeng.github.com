@@ -1,0 +1,832 @@
+
+<!DOCTYPE HTML>
+<html>
+<head>
+	<meta charset="utf-8">
+	<title>SEH学习笔记一 - 不会开机的男孩</title>
+	<meta name="author" content="studentdeng">
+
+	
+	<meta name="description" content="SEH(structured exception handling)，结构化异常处理。在windows本身开发中运用的非常广泛，而且MS并没有独享，并且通过vs为开发者提供了方便几个关键字来支持。try, exception,__finally。但是讲解的却非常少。本文希望能够给大家抛砖引玉一下 &hellip;">
+	
+	<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1">
+
+	<link href="/atom.xml" rel="alternate" title="不会开机的男孩" type="application/atom+xml">
+	<link rel="canonical" href="">
+	<link href="/favicon.png" rel="shortcut icon">
+	<link href="/stylesheets/screen.css" media="screen, projection" rel="stylesheet" type="text/css">
+	<!--[if lt IE 9]><script src="//html5shiv.googlecode.com/svn/trunk/html5.js"></script><![endif]-->
+	<script async="true" src="//ajax.googleapis.com/ajax/libs/jquery/1.7.2/jquery.min.js"></script>
+	
+</head>
+
+
+<body>
+	<header id="header" class="inner"><h1><a href="/">不会开机的男孩</a></h1>
+<nav id="main-nav"><ul class="main">
+	<li><a href="/">Blog</a></li>
+	<li><a href="/blog/archives">Archives</a></li>
+	<li><a href="/tags/index.html">Tags</a></li>
+	<li><a href="/favorite/index.html">Favorite</a></li>
+	<li><a href="/about/index.html">About</a></li>
+</ul>
+</nav>
+<nav id="mobile-nav">
+	<div class="alignleft menu">
+		<a class="button">Menu</a>
+		<div class="container"><ul class="main">
+	<li><a href="/">Blog</a></li>
+	<li><a href="/blog/archives">Archives</a></li>
+	<li><a href="/tags/index.html">Tags</a></li>
+	<li><a href="/favorite/index.html">Favorite</a></li>
+	<li><a href="/about/index.html">About</a></li>
+</ul>
+</div>
+	</div>
+	<div class="alignright search">
+		<a class="button"></a>
+		<div class="container">
+			<form action="http://google.com/search" method="get">
+				<input type="text" name="q" results="0">
+				<input type="hidden" name="q" value="site:studentdeng.github.com">
+			</form>
+		</div>
+	</div>
+</nav>
+<nav id="sub-nav" class="alignright">
+	<div class="social">
+		
+		
+		
+		
+		<a class="github" href="https://github.com/studentdeng" title="GitHub">GitHub</a>
+		
+    
+		
+		
+		
+		
+		
+		<a class="rss" href="/atom.xml" title="RSS">RSS</a>
+		
+    
+	</div>
+</nav>
+
+</header>
+	
+		
+	
+	<div id="content" class="inner"><article class="post">
+	<h2 class="title">SEH学习笔记一</h2>
+	<div class="entry-content"><p>SEH(structured exception handling)，结构化异常处理。在windows本身开发中运用的非常广泛，而且MS并没有独享，并且通过vs为开发者提供了方便几个关键字来支持。<strong>try, </strong>exception,__finally。但是讲解的却非常少。本文希望能够给大家抛砖引玉一下。</p>
+
+<p>http://www.microsoft.com/msj/0197/exception/exception.aspx，这篇是理解SEH必须的文章，虽然他的时间悠久，但是却真正的解释了SEH的编译器级实现，下面的一些示例代码也来自这里。</p>
+
+<p>相关的不错的SEH文章，http://www.woodmann.com/crackz/Tutorials/Seh.htm。</p>
+
+<p>http://blogs.msdn.com/b/cbrumme/archive/2003/10/01/51524.aspx 这里讲了一些.net 异常机制，之前讲一些SEH也很不错。</p>
+
+<p>SEH中，在《windows 核心编程》中有一些讲解，但是我相信绝大多数，想我这样的初学者，并不能理解Jeffrey Richter的意思。其中最富有争议的就是“栈展开”(stack unwind),这个可以说是非常有想象力的一个词，伴随这个还有全局展开(global unwind)，和局部展开(local unwind)。以下内容，主要围绕《windows 核心编程》中比较容易让我这样的初学者困惑的地方展开(unwind? :P)。</p>
+
+<p>首先我们需要对SEH有一个大体的认识，</p>
+
+<p>当异常出现的时候，我们可以有选择性的处理异常，将相同的异常处理函数集中一起，大大减少了代码的维护工作，这意味着处理异常的时候，将有类似非局部跳转的能力。
+异常和返回值判断的最根本的不同是，异常真正的做到了健壮性，甚至连栈溢出的问题都可以恢复运行（当然，这个恢复没有任何意义，主要是能够保存错误信息）。所以异常是和操作系统结合的，所以必然导致了复杂性的大大提高，效率上的降低。
+程序的执行，需要一些最基本的运行环境，而在windows 中则是contex，（上下文），其中保存了大量的寄存器的值，而通过这些可以保证程序的执行环境正确，而这是在进行非局部跳转必须做到的事情。所以，在遇到<strong>try block的时候，编译器会在栈空间上保存一些信息，做为一个结点并将这些信息用链表联系起来，这样，当异常发生的时候，操作系统找到链表的头结点，然后遍历list，执行我们的代码，并找到相对应的处理异常的代码。而这个头结点，就保存在FS:[0]。当windows 遍历list，并找到相对应的代码时，由于程序控制流程的改变，在发生异常，到找到执行代码的这部分之间的一些临时变量都没有被释放掉（这里面不仅有我们的，还有一些是编译器默默为我们做的，比如之前提到的</strong>try所加入的节点必须从之前的list删掉）。而这个做的释放过程就是unwind。处理多个<strong>try的为global unwind，处理当前的</strong>try 上的__try则是local unwind(这里不是很准确，后面会详细解释)。</p>
+
+<p>结束处理程序（Termination Handlers），看起来简单也十分让人疑惑，为什么 return, goto，longjump，异常，控制流离开<strong>try block的时候，可以去执行</strong>finally block呢？ 同样，为什么ExitProcess, ExitThread, TerminateProcess, or TerminateThread则不能被执行呢？为什么可以使用goto到<strong>try外面，而不能跳入一个</strong>try block？等等。</p>
+
+<p>异常处理程序（Exception Handlers），则更让新手疑惑，特别是在结合了结束处理程序情况下，在程序的执行流程则变的诡异起来，而我们看到在vc中的SEH并不能够支持<strong>finally 和</strong>except结合一起使用，这又是为什么？使用SEH是否为我们程序增加了相当的负担？SEH是否安全？</p>
+
+<p>为了清楚的认识这些问题，我们必须更进一步的去探究SEH的具体实现过程，由于不同厂商不同编译器的实现方式不同，所以以下的部分来自MS自己的vc。而其由于SEH涉及到了一些安全问题和硬件的部分，所以在不同的vc 版本，不同的操作系统不同的计算机下的情况也不同。当然，为了简单，我们先看最简单的vc6。在我们正式进入细节的时候，让我们先暂时忘记那些__try关键字。</p>
+
+<p>　　异常是操作系统传给我们写的程序，我们写好处理异常的代码，那么操作系统是如何调用我们写的函数呢？当然是通过回调函数做的，那么这个回调函数是什么样子的呢？</p>
+
+<pre><code>EXCEPTION_DISPOSITION
+__cdecl _except_handler(
+     struct _EXCEPTION_RECORD *ExceptionRecord,
+     void * EstablisherFrame,
+     struct _CONTEXT *ContextRecord,
+     void * DispatcherContext
+     );
+</code></pre>
+
+<p>在EXCPT.H中，我们可以找到这个定义。</p>
+
+<pre><code>typedef struct _EXCEPTION_RECORD {
+    DWORD ExceptionCode;
+    DWORD ExceptionFlags;
+    struct _EXCEPTION_RECORD *ExceptionRecord;
+    PVOID ExceptionAddress;
+    DWORD NumberParameters;
+    DWORD ExceptionInformation[EXCEPTION_MAXIMUM_PARAMETERS];
+}  EXCEPTION_RECORD;
+</code></pre>
+
+<p>EXCEPTION_RECORD 定义异常，更多的可以参考msdn，http://msdn.microsoft.com/en-us/library/aa363082(VS.85).aspx</p>
+
+<p>contex的定义则根据不同的硬件有不同的定义，这里面定义了线程运行的环境，上下文。找到了回调函数，和异常的样子，那么操作系统是如何调用呢？还记得之前提到的list么？fs:[0]，那里，有我们需要的，我们需要知道另一个结构体。这是一个汇编上的定义。</p>
+
+<pre><code>_EXCEPTION_REGISTRATION struc
+        prev    dd              ?
+        handler dd            ?
+_EXCEPTION_REGISTRATION ends
+</code></pre>
+
+<p>prev记录了上一个_EXCEPTION_REGISTRATION结构体的地址，而handler则是我们回调函数的地址，操作系统通过fs:[0]，找到了一系列的我们写的回调函数。</p>
+
+<p>让我们先试一下。</p>
+
+<pre><code>//==================================================
+// MYSEH - Matt Pietrek 1997
+// Microsoft Systems Journal, January 1997
+// FILE: MYSEH.CPP
+// To compile: CL MYSEH.CPP
+//==================================================
+#define WIN32_LEAN_AND_MEAN
+#include &lt;windows.h&gt;
+#include &lt;stdio.h&gt;
+
+DWORD  scratch;
+
+EXCEPTION_DISPOSITION
+__cdecl
+_except_handler(
+    struct _EXCEPTION_RECORD *ExceptionRecord,
+    void * EstablisherFrame,
+    struct _CONTEXT *ContextRecord,
+    void * DispatcherContext )
+{
+    unsigned i;
+
+    // Indicate that we made it to our exception handler
+    printf( "Hello from an exception handler\n" );
+
+    // Change EAX in the context record so that it points to someplace
+    // where we can successfully write
+    ContextRecord-&gt;Eax = (DWORD)&amp;scratch;
+
+    // Tell the OS to restart the faulting instruction
+    return ExceptionContinueExecution;
+}
+
+int main(int argc, char* argv[])
+{
+    DWORD handler = (DWORD)_except_handler;
+
+    __asm
+    {                           // Build EXCEPTION_REGISTRATION record:
+        push    handler         // Address of handler function
+        push    FS:[0]          // Address of previous handler
+        mov     FS:[0],ESP      // Install new EXECEPTION_REGISTRATION
+    }
+
+    __asm
+    {
+        mov     eax,0           // Zero out EAX
+        mov     [eax], 1        // Write to EAX to deliberately cause a fault
+    }
+
+    printf( "After writing!\n" );
+
+    __asm
+    {                           // Remove our EXECEPTION_REGISTRATION record
+        mov     eax,[ESP]       // Get pointer to previous record
+        mov     FS:[0], EAX     // Install previous record
+        add     esp, 8          // Clean our EXECEPTION_REGISTRATION off stack
+    }
+
+    return 0;
+}
+
+typedef enum _EXCEPTION_DISPOSITION {
+    ExceptionContinueExecution,
+    ExceptionContinueSearch,
+    ExceptionNestedException,
+    ExceptionCollidedUnwind
+} EXCEPTION_DISPOSITION;
+</code></pre>
+
+<p>vc通过类似的代码生成，在我们的这段代码，</p>
+
+<pre><code>mov eax,0  mov [eax], 1，
+</code></pre>
+
+<p>在栈空间上分配了一个EXCEPTION_REGISTRATION结构体，并插入了fs:[0]链表的表头。 当然，在最后跳出这个代码块的时候，这个栈空间的EXCEPTION_REGISTRATION结构体也必须从fs:[0]中卸载掉。而在_except_handler返回的ExceptionContinueExecution，则意味着告诉OS，需要从发生异常的那个语句重新执行，一切都是那么的简单和自然。为了简单，我们在首节点就处理了这个异常，让我们再进一步，看一下异常是如何传递的。</p>
+
+<pre><code>EXCEPTION_DISPOSITION
+__cdecl
+_except_handler(
+    struct _EXCEPTION_RECORD *ExceptionRecord,
+    void * EstablisherFrame,
+    struct _CONTEXT *ContextRecord,
+    void * DispatcherContext )
+{
+    printf( "Home Grown handler: Exception Code: %08X Exception Flags %X",
+        ExceptionRecord-&gt;ExceptionCode, ExceptionRecord-&gt;ExceptionFlags );
+
+    if ( ExceptionRecord-&gt;ExceptionFlags &amp; 1 )
+        printf( " EH_NONCONTINUABLE" );
+    if ( ExceptionRecord-&gt;ExceptionFlags &amp; 2 )
+        printf( " EH_UNWINDING" );
+    if ( ExceptionRecord-&gt;ExceptionFlags &amp; 4 )
+        printf( " EH_EXIT_UNWIND" );
+    if ( ExceptionRecord-&gt;ExceptionFlags &amp; 8 )
+        printf( " EH_STACK_INVALID" );
+    if ( ExceptionRecord-&gt;ExceptionFlags &amp; 0x10 )
+        printf( " EH_NESTED_CALL" );
+
+    printf( "\n" );
+
+    // Punt... We don't want to handle this... Let somebody else handle it
+    return ExceptionContinueSearch;
+}
+
+void HomeGrownFrame( void )
+{
+    DWORD handler = (DWORD)_except_handler;
+
+    __asm
+    {                           // Build EXCEPTION_REGISTRATION record:
+        push    handler         // Address of handler function
+        push    FS:[0]          // Address of previous handler
+        mov     FS:[0],ESP      // Install new EXECEPTION_REGISTRATION
+    }
+
+    *(PDWORD)0 = 0;             // Write to address 0 to cause a fault
+
+    printf( "I should never get here!\n" );
+
+    __asm
+    {                           // Remove our EXECEPTION_REGISTRATION record
+        mov     eax,[ESP]       // Get pointer to previous record
+        mov     FS:[0], EAX     // Install previous record
+        add     esp, 8          // Clean our EXECEPTION_REGISTRATION off stack
+    }
+}
+
+int _tmain(int argc, _TCHAR* argv[])
+{
+    _try
+    {
+        HomeGrownFrame(); 
+    }
+    _except( EXCEPTION_EXECUTE_HANDLER )
+    {
+        printf( "Caught the exception in main()\n" );
+    }
+    return 0;
+}
+</code></pre>
+
+<p>我们在_except_handler中返回了ExceptionContinueSearch，这会告诉windows，我们这个回调函数不处理这个异常，你找其他去吧。我们看到了这个输出结果。</p>
+
+<pre><code>Home Grown handler: Exception Code: C0000005 Exception Flags 0
+Home Grown handler: Exception Code: C0000027 Exception Flags 2 EH_UNWINDING
+Caught the exception in main()
+</code></pre>
+
+<p>　　第一个我们很好理解，但是第二次是什么情况呢？这个就是之前提到的unwind过程。windows依次调用fs:[0]上的exceptionlist的回调函数，并根据返回值判断该如何执行，如果是ExceptionContinueSearch，则通过EXCEPTION_REGISTRATION 的prev寻找下一个，直到找到处理异常的函数（windows在创建线程的时候，已经为我们准备好了处理异常的程序）。在找到处理异常的代码后，windows会再一次遍历list，直到处理异常的地方。这一次和第一次不同的是Exception Flags  | = EH_UNWINDING，这一次，正是给那些拒绝处理这个异常的代码块一次清理自己的机会，包括一些编译器默默为我们生成的一些临时东东的移除，c++一些临时对象的析构函数调用，从fs:[0]，list上删除EXCEPTION_REGISTRATION 等等，当然，我们的finally block也正好趁着这个机会把自己执行了一次。但是，在我们开心的找到回调函数地址的时候，我们却不能直接执行这个地址的代码，因为在之前，很可能运行的环境已经变化了，许多寄存器的数值已经变化了，而且更重要的是ebp esp，很可能根本和我们的这个程序不符合，程序根本不能正确执行（之前做了很多的非局部跳转），所以，必须也把函数运行的状态保存起来，这样我们才能真正的执行我们的回调函数。那么这些状态保存在哪里呢？EXCEPTION_REGISTRATION结构体的地址，在windows fs:[0]可以找到, 那么我们只需要在原有的EXCEPTION_REGISTRATION成员下增加数据就可以找到这些状态。从而正确的恢复执行。</p>
+
+<p>在进一步了解之前，让我们先回顾一下文法。</p>
+
+<pre><code>__try 
+{
+   //Guarded body
+}
+__except(exception filter) 
+{
+   // Exception handler
+}
+
+void FuncOStimpy1()
+{
+   //1. Do any processing here.
+
+   ...
+
+   __try
+   {
+      //2. Call another function.
+      FuncORen1();
+
+      // Code here never executes.
+   }
+
+   __except( /* 6. Evaluate filter. */ EXCEPTION_EXECUTE_HANDLER) 
+   {
+      //8. After the unwind, the exception handler executes.
+      MessageBox(…);
+   }
+
+   //9. Exception handled--continue execution.
+
+
+
+}
+void FuncORen1() 
+{
+   DWORD dwTemp = 0;
+
+   //3. Do any processing here.
+
+
+
+   __try
+   {
+      //4. Request permission to access protected data.
+      WaitForSingleObject(g_hSem, INFINITE);
+
+      //5. Modify the data.
+      //    An exception is generated here.
+      g_dwProtectedData = 5 / dwTemp;
+   }
+   __finally
+   {
+      //7. Global unwind occurs because filter evaluated
+      //    to EXCEPTION_EXECUTE_HANDLER.
+
+      // Allow others to use protected data.
+      ReleaseSemaphore(g_hSem, 1, NULL);
+   }
+   // Continue processing--never executes.
+
+   ...  
+
+}
+</code></pre>
+
+<p>　　有了现在的基础，在看上面的代码，在执行代码顺序上，已经没有疑惑了。我们所指的回调函数，其实就是exception filter，当异常在5处发生的时候，系统首先要遍历fs:[0]，找到处理这个异常的代码，执行流程跑到了6，返回了EXCEPTION_EXECUTE_HANDLER，这告诉系统我认出了这个异常，然后，系统再次遍历fs:[0]，这个就是unwind，然后，我们在7处的finally代码才执行，最后执行Exception handler的代码，然后程序从9处恢复执行。Jeffrey Richter中描述的global unwind，local unwind，又是什么意思呢？书写什么样的代码可以最大的提高效率？以及异常处理的效率为什么要慢呢？这背后还有许许多多的小问题，比如为什么goto 只能跳出<strong>try block，而不能跳入</strong>try block？GetExceptionCode为什么能够在filter expression 和exception-handler block，为什么不能在filter function中调用？而如果想弄清楚这一系列问题，我们需要更深入的了解SEH。当然，这才是学习的重点。由于这部分和系统相关，在异常的转发过程中，需要编译器和操作系统的支持，所以，我们需要找一个稍微简单一点的编译器和os，如果是第一次接触这个，那么最好是 vc6 + xp sp1或2000。如果对vc6有极大的抵触情绪(比如本人),使用08的时候需要在编译器中加入/GS-,否则编译器会在栈中生成其他代码（检测是否有溢出）越高的系统还可能会加入safeSEH,SEHOP，而且，具体的实现可能也会稍有不同，一上来全部接触，可能难度稍微有些大（对本人来说），所以，我们从最简单的开始。</p>
+
+<p>让我们看下vc（vc6 vs2008），下的结构体。</p>
+
+<pre><code>struct _EXCEPTION_REGISTRATION {
+     struct _EXCEPTION_REGISTRATION *prev;          //上一个结构体
+     void (*handler)(PEXCEPTION_RECORD,             //我们的回调函数 
+                     PEXCEPTION_REGISTRATION,
+                     PCONTEXT,
+                     PEXCEPTION_RECORD);
+     struct scopetable_entry *scopetable;             
+     int trylevel;
+};
+
+typedef struct _SCOPETABLE
+{
+    DWORD       previousTryLevel;
+    DWORD       lpfnFilter        //我们的filter code address
+    DWORD       lpfnHandler       //我们的exception handler block 或是 finally handler bloack address
+} SCOPETABLE, *PSCOPETABLE;
+</code></pre>
+
+<p>这个trylevel有是什么呢？为什么要有SCOPETABLE？</p>
+
+<p>我们考虑这样的一个问题。</p>
+
+<pre><code>{
+...
+    __try
+    {
+        __try { } __except() { }
+    }
+    __except()
+    {
+
+    }
+...
+    __try
+    {
+
+    }
+    __except()
+    {
+
+    } 
+...
+}
+</code></pre>
+
+<p>当一个函数中，有非常多的<strong>try block时，如果我们每遇到一个</strong>try，就生成一个<em>EXCEPTION_REGISTRATION ，加入fs:[0]然后离开之后，在从fs:[0]中卸载掉，这个的确是一个浪费时间，浪费空间的做法。vc 在做的时候，每个函数只是生成一个</em>EXCEPTION_REGISTRATION 结构体，而在一个函数内，可能有嵌套的<strong>try block，也可能又并列的try block（以下把</strong>try 简写成try，这个的确不是一个好的书写，但是这个<em>_是在是太麻烦了，try block 是c++的异常，和SEH很像，但也是有些不同的），那么如何才能分辨出到底是哪一个try block？trylevel 和SCOPETABLE，则是为了满足这个要求而实现的。在进入函数的时候，vc会把trylevel初始化为-1，这个表示目前的代码在当前的</em>EXCEPTION_REGISTRATION 下，不属于try block保护下，遇到第一个try block的时候，vc把trylevel改为0,进入下一个并列的try block则为1….。struct scopetable_entry *则，保存了一个数组，previousTryLevel，告诉我们这个嵌套try block 的上一层block的index….。</p>
+
+<p>可见，vc通过这些手段，在我们的代码之中，维护了一个树的结构，来标示每一个try block，并提供从内层到外层的遍历方法。handler，按理来所，应该跑我们的lpfnFilter ，这里会不会重复？ 当然不会，vc实现_EXCEPTION_REGISTRATION 中，handler指向了同一个代码，vc 的运行时库函数 __except_handler ，根据vc版本后面3啊4啊什么的。原因也很简单，整个东东都有了嵌套，必然需要遍历，为了减少重复代码，和代码的安全，当然会都从一个函数入口开始，然后再去调用我们的代码。所以代码的地址，也需要保存。lpfnFilter 我们的except filter代码入口，lpfnHandler，则是我们的except block 入口。 那么，我们的finally在那里呢？由于，finally 并没有filter的概念，所以，当lpfnFilter == null的时候，vc会认为我们跑的是finally block，那么lpfnHandler则是我们的finally 的terminal handle。这也就告诉我们，为什么SEH中，不能同时存在finally 和except block了。</p>
+
+<p>整个事情越来越有趣了，但是一大堆的论述，的确没有任何意思。还是让我们看看代码。我在原有的代码上加上了查看trylevel的代码。</p>
+
+<pre><code>#ifndef _MSC_VER
+#error Visual C++ Required (Visual C++ specific information is displayed)
+#endif
+
+//----------------------------------------------------------------------------
+// Structure Definitions
+//----------------------------------------------------------------------------
+
+// The basic, OS defined exception frame
+
+struct EXCEPTION_REGISTRATION
+{
+    EXCEPTION_REGISTRATION* prev;
+    FARPROC                 handler;
+};
+
+
+// Data structure(s) pointed to by Visual C++ extended exception frame
+
+struct scopetable_entry
+{
+    DWORD       previousTryLevel;
+    FARPROC     lpfnFilter;
+    FARPROC     lpfnHandler;
+};
+
+// The extended exception frame used by Visual C++
+
+struct VC_EXCEPTION_REGISTRATION : EXCEPTION_REGISTRATION
+{
+    scopetable_entry *  scopetable;
+    int                 trylevel;
+    int                 _ebp;
+};
+
+//----------------------------------------------------------------------------
+// Prototypes
+//----------------------------------------------------------------------------
+
+// __except_handler3 is a Visual C++ RTL function.  We want to refer to
+// it in order to print it's address.  However, we need to prototype it since
+// it doesn't appear in any header file.
+
+extern "C" int _except_handler3(PEXCEPTION_RECORD, EXCEPTION_REGISTRATION *,
+                                PCONTEXT, PEXCEPTION_RECORD);
+
+
+//----------------------------------------------------------------------------
+// Code
+//----------------------------------------------------------------------------
+
+//
+// Display the information in one exception frame, along with its scopetable
+//
+
+void ShowSEHFrame( VC_EXCEPTION_REGISTRATION * pVCExcRec )
+{
+    printf( "Frame: %08X  Handler: %08X  Prev: %08X  Scopetable: %08X\n",
+            pVCExcRec, pVCExcRec-&gt;handler, pVCExcRec-&gt;prev,
+            pVCExcRec-&gt;scopetable );
+
+    scopetable_entry * pScopeTableEntry = pVCExcRec-&gt;scopetable;
+
+    for ( unsigned i = 0; i &lt;= pVCExcRec-&gt;trylevel; i++ )
+    {
+        printf( "    scopetable[%u] PrevTryLevel: %08X  "
+                "filter: %08X  __except: %08X\n", i,
+                pScopeTableEntry-&gt;previousTryLevel,
+                pScopeTableEntry-&gt;lpfnFilter,
+                pScopeTableEntry-&gt;lpfnHandler );
+
+        pScopeTableEntry++;
+    }
+
+    printf( "\n" );
+}   
+
+//
+// Walk the linked list of frames, displaying each in turn
+//
+
+void WalkSEHFrames( void )
+{
+    VC_EXCEPTION_REGISTRATION * pVCExcRec;
+
+    // Print out the location of the __except_handler3 function
+    printf( "_except_handler3 is at address: %08X\n", _except_handler3 );
+    printf( "\n" );
+
+    // Get a pointer to the head of the chain at FS:[0]
+    __asm   mov eax, FS:[0]
+    __asm   mov [pVCExcRec], EAX
+
+    // Walk the linked list of frames.  0xFFFFFFFF indicates the end of list
+    while (  0xFFFFFFFF != (unsigned)pVCExcRec )
+    {
+        ShowSEHFrame( pVCExcRec );
+        pVCExcRec = (VC_EXCEPTION_REGISTRATION *)(pVCExcRec-&gt;prev);
+    }       
+}
+
+void Function1( void )
+{
+    int tl=0;
+    __try
+    {
+        __asm mov eax, [ebp-4]
+        __asm mov tl, eax
+        printf("try leval = %d\n", tl);
+    }
+    __except(EXCEPTION_CONTINUE_SEARCH)
+    {
+
+    }
+
+    // Set up 3 nested _try levels (thereby forcing 3 scopetable entries)
+    __try
+    {
+        __asm mov eax, [ebp-4]
+        __asm mov tl, eax
+        printf("try leval = %d\n", tl);
+        __try
+        {
+            __asm mov eax, [ebp-4]
+            __asm mov tl, eax
+            printf("try leval = %d\n", tl);
+            __try
+            {
+    __asm mov eax, [ebp-4]
+    __asm mov tl, eax
+    printf("try leval = %d\n", tl);
+                WalkSEHFrames();    // Now show all the exception frames
+            }
+            __except( EXCEPTION_CONTINUE_SEARCH )
+            {
+            }
+        }
+        __except( EXCEPTION_CONTINUE_SEARCH )
+        {
+        }
+    }
+    __except( EXCEPTION_CONTINUE_SEARCH )
+    {
+    }
+}
+
+int main(int argc, char* argv[])
+{
+    int i;
+    int tl=0;
+    __asm mov eax, [ebp-4]
+    __asm mov tl, eax
+    printf("try leval = %d\n", tl);
+    __try
+    {
+        __asm mov eax, [ebp-4]
+  __asm mov tl, eax
+  printf("try leval = %d\n", tl);
+
+        Function1();    // Call a function that sets up more exception frames
+    }
+    __except( EXCEPTION_EXECUTE_HANDLER )
+    {
+        i = 0x4321;     // Do nothing (in reverse)
+    }
+
+    __try
+    {
+  __asm mov eax, [ebp-4]
+  __asm mov tl, eax
+  printf("try leval = %d\n", tl);
+
+        Function1();    // Call a function that sets up more exception frames   
+    }
+    __except( EXCEPTION_EXECUTE_HANDLER )
+    {
+        // Should never get here, since we aren't expecting an exception
+        printf( "Caught Exception in main\n" );
+    }
+    return 0; 
+}
+</code></pre>
+
+<p>这里我们可以看到如下情况，当然，这个是在2003下的，win7，会有不同的结果。最好还是先不用win7。win7的问题，我也不清楚。这个只能先放下了。</p>
+
+<p>try leval = -1</p>
+
+<pre><code>try leval = 0
+try leval = 0
+try leval = 1
+try leval = 2
+try leval = 3
+_except_handler3 is at address: 004014C0
+
+Frame: 0012FEFC  Handler: 004014C0  Prev: 0012FF70  Scopetable: 004210B8
+    scopetable[0] PrevTryLevel: FFFFFFFF  filter: 00401203  __except: 00401206
+    scopetable[1] PrevTryLevel: FFFFFFFF  filter: 004012A4  __except: 004012A7
+    scopetable[2] PrevTryLevel: 00000001  filter: 0040128E  __except: 00401291
+    scopetable[3] PrevTryLevel: 00000002  filter: 00401278  __except: 0040127B
+
+Frame: 0012FF70  Handler: 004014C0  Prev: 0012FFB0  Scopetable: 00420150
+    scopetable[0] PrevTryLevel: FFFFFFFF  filter: 0040135F  __except: 00401365
+
+Frame: 0012FFB0  Handler: 004014C0  Prev: 0012FFE0  Scopetable: 00420278
+    scopetable[0] PrevTryLevel: FFFFFFFF  filter: 00401788  __except: 004017A3
+
+Frame: 0012FFE0  Handler: 7C82B798  Prev: FFFFFFFF  Scopetable: 7C8123D8
+    scopetable[0] PrevTryLevel: FFFFFFFF  filter: 7C8571C8  __except: 7C8571DE
+
+try leval = 1
+try leval = 0
+try leval = 1
+try leval = 2
+try leval = 3
+_except_handler3 is at address: 004014C0
+
+Frame: 0012FEFC  Handler: 004014C0  Prev: 0012FF70  Scopetable: 004210B8
+    scopetable[0] PrevTryLevel: FFFFFFFF  filter: 00401203  __except: 00401206
+    scopetable[1] PrevTryLevel: FFFFFFFF  filter: 004012A4  __except: 004012A7
+    scopetable[2] PrevTryLevel: 00000001  filter: 0040128E  __except: 00401291
+    scopetable[3] PrevTryLevel: 00000002  filter: 00401278  __except: 0040127B
+
+Frame: 0012FF70  Handler: 004014C0  Prev: 0012FFB0  Scopetable: 00420150
+    scopetable[0] PrevTryLevel: FFFFFFFF  filter: 0040135F  __except: 00401365
+    scopetable[1] PrevTryLevel: FFFFFFFF  filter: 004013A2  __except: 004013A8
+
+Frame: 0012FFB0  Handler: 004014C0  Prev: 0012FFE0  Scopetable: 00420278
+    scopetable[0] PrevTryLevel: FFFFFFFF  filter: 00401788  __except: 004017A3
+
+Frame: 0012FFE0  Handler: 7C82B798  Prev: FFFFFFFF  Scopetable: 7C8123D8
+    scopetable[0] PrevTryLevel: FFFFFFFF  filter: 7C8571C8  __except: 7C8571DE
+</code></pre>
+
+<p>有了实践，这部分比较好懂了。明白了vc如何维护try block 之后，想要更清楚一点，只能从汇编的角度来看了。</p>
+
+<pre><code>EBP-00 _ebp
+EBP-04 trylevel
+EBP-08 scopetable pointer
+EBP-0C handler function address
+EBP-10 previous EXCEPTION_REGISTRATION
+EBP-14 LPEXCEPTION_POINTERS
+EBP-18 Standard ESP in frame
+</code></pre>
+
+<p>这是try except block生成时的堆栈。[ebp –10]，这里保存了vc 的EXCEPTION_REGISTRATION结构体，就和之前一样，对windows来说，他只是知道最基本的EXCEPTION_REGISTRATION，也就是只是关注prev 和handler，而其他的则是vc 编译器为了生成高效代码为我们加上去的。对windows当然是透明的。从一开始的例子也可以看出，我们只是使用最基本的EXCEPTION_REGISTRATION，依然能够执行SEH。</p>
+
+<p>同样，EBP-14 GetExceptionPointers， EBP-18 Standard ESP in frame也是vc帮我们加入的。[EBP-14 ]这个就是函数当调用GetExceptionInformation会返回[EBP-14], 所以，这个函数其实是一个vc相关的函数。同样的还有GetExceptioncode这个地方还有一点不同的是，vc通过on the flay的方式处理这个数据，也就是说，当异常真的发生的时候，这个数据才会添入数据（这个真是一个废话，没有发生异常，那里来的异常信息？）EBP-18 Standard ESP in frame就不用说了，想要非局部跳转，光搞定ebp是不行的，没有esp的修正，并不能将控制流转到那里。</p>
+
+<p>为了正确理解整个过程，我们需要理解<strong>except_handler 的代码，可惜，Matt Pietrek的有一些细节问题，可能会给我们这样的初学者疑惑，所以可以先看下http://bbs.pediy.com/showthread.php?t=53778，也是一位大牛的文章中，有vc6的</strong>except_handler code。当然，他多了一个ValidateEH3RN，这个和SEH的安全机制有关，我们目前先跳过去。__except_handler 的代码去了ValidateEH3RN，比较容易理解，当然，细扣细节的话，可能不同。在下一篇文章中，我们会着重关注这些细节。</p>
+
+<p>知道了这么多后，我们在看看我们现在可以解决什么样的问题了。Jeffrey Richter 告诉了我们很多有关于展开的，并且告诉了我们很多可能导致额外负担的代码，那么下面我们就看看，为什么会有额外代码。</p>
+
+<p>DWORD Funcenstein1()</p>
+
+<pre><code>{
+    DWORD dwTemp;
+
+    //1. Do any processing here.
+
+        __try
+    {
+        //2. Request permission to access
+        //    protected data, and then use it.
+        WaitForSingleObject(g_hSem, INFINITE);
+        g_dwProtectedData = 5;
+        dwTemp = g_dwProtectedData;
+
+        // Return the new value.
+        return(dwTemp);
+
+
+    }
+    __finally
+    {
+        //3. Allow others to use protected data.
+        ReleaseSemaphore(g_hSem, 1, NULL);
+    }
+
+    //4. Continue processing.
+    return(dwTemp);
+}
+
+
+.text:00401000                 push    ebp
+.text:00401001                 mov     ebp, esp
+.text:00401003                 push    0FFFFFFFFh
+.text:00401005                 push    offset stru_4021F8
+.text:0040100A                 push    offset __except_handler3
+.text:0040100F                 mov     eax, large fs:0
+.text:00401015                 push    eax
+.text:00401016                 mov     large fs:0, esp
+.text:0040101D                 sub     esp, 0Ch
+.text:00401020                 push    ebx
+.text:00401021                 push    esi
+.text:00401022                 push    edi
+.text:00401023                 mov     [ebp+var_4], 0
+.text:0040102A                 push    0FFFFFFFFh      ; dwMilliseconds
+.text:0040102C                 mov     eax, ?g_hSem@@3PAXA ; void * g_hSem
+.text:00401031                 push    eax             ; hHandle
+.text:00401032                 call    ds:__imp__WaitForSingleObject@8 ; WaitForSingleObject(x,x)
+.text:00401038                 mov     esi, 5
+.text:0040103D                 mov     ?g_dwProtectedData@@3KA, esi ; ulong g_dwProtectedData
+.text:00401043                 mov     [ebp+dwTemp], esi
+.text:00401046                 push    0FFFFFFFFh
+.text:00401048                 lea     ecx, [ebp+var_10]
+.text:0040104B                 push    ecx
+.text:0040104C                 call    __local_unwind2 ;这里应该就是Jeffrey Richter 告诉我们的局部展开。
+.text:00401051                 add     esp, 8
+.text:00401054                 mov     eax, esi
+.text:00401056                 mov     ecx, [ebp+var_10]
+.text:00401059                 mov     large fs:0, ecx
+.text:00401060                 pop     edi
+.text:00401061                 pop     esi
+.text:00401062                 pop     ebx
+.text:00401063                 mov     esp, ebp
+.text:00401065                 pop     ebp
+.text:00401066                 retn
+</code></pre>
+
+<p>那local unwind到底做了什么呢？当然是将本EXCEPTION_REGISTRATION内嵌套的那些try block遍历，并展开了。这里贴出local unwind伪代码。这个和我们想象的一样。当然，我这里掩去了一个很重要很重要的部分，是有关于异常嵌套的问题。这个问题会在下一篇中在描述。</p>
+
+<pre><code>void _local_unwind2(EXCEPTION_REGISTRATION*pEh3Exce, int targetLevel)
+{
+    scopetable_entry *scopetable = peh3Exce-&gt;scopetable;
+    int trylevel = peh3Exce-&gt;trylevel;
+
+    while (trylevel != -1)
+    {
+        if (targetLevel == -1 || trylevel &gt; targetLevel)
+            break;
+
+        if (scopetable[trylevel]-&gt;lpfnFilter == NULL)//__finally block
+        {
+            eax = scopetable[trylevel]-&gt;lpfnHandler;
+            _NLG_Notify(101);
+            eax = scopetable[trylevel]-&gt;lpfnHandler;
+            __NLG_Call();// call eax
+        }
+        trylevel = scopetable[targetLevel].previousTryLevel;
+        peh3Exce-&gt;trylevel = trylevel;
+    }
+    return;
+}
+</code></pre>
+
+<p>那当我们把return 换成<strong>leave时，又是什么样子呢？</strong>leave我们并没有看到local unwind，我们需要明白return 和<strong>leave的区别。从return发生local unwind，我们可以看出多少端倪，local unwind 的作用在于遍历本地的except frame，那么return和</strong>leave的区别就在于，<strong>leave不会跳出多个try block 而 return 是有可能的。 所以return 必须要产生额外的负担去执行local unwind，</strong>leave则相当于，goto到try block 的结束并正常跳出try block。所以，如果我们只是想跳出本次try要注意不要直接return。</p>
+
+<p>写给自己。</p>
+
+<p>这一篇其实没有写完，虽然历时1个多月，最近实在是太忙了。这篇文章有2点遗憾。</p>
+
+<p>1、最后应该写上global unwind，但是的确是不想去重复大牛们的内容了，global unwind 其实是系统RtlUnwind的封装，上边的链接中有讲这个的，也很详细。只是由于时间悠久和我们现在的编译器和操作系统距离很远了。如果对这些感兴趣，可以看看wince的代码，http://www.2beanet.com/wince/src/COREOS/NK/KERNEL/EXDSPTCH.C.html，</p>
+
+<p>http://www.2beanet.com/wince/src/COREOS/NK/KERNEL/X86/MDX86.C.html。这个和我们的xp2比较像。</p>
+
+<p>2、本来想尽可能的在这一篇中没有或是少有汇编，但是这个的确对我来说，是一个比较复杂的问题，而且越到最后，其实汇编也是不可避免的，因为真实的代码也很有可能就是汇编写的，我们实在是没有必要去把他翻译成c。</p>
+
+<p>这篇文章里面的问题还是很多的，也很有可能会给第一次接触这些的同学一些误解，下一篇将更深入的理解SEH机制，将尽可能的减少这些误解（也包括自己理解错误），内容包括global unwind，异常嵌套和一些很基础很基础的SEH安全机制的总结。</p>
+</div>
+
+
+<div class="meta">
+	<div class="date">
+
+
+
+
+
+
+
+
+  
+
+
+<time datetime="2010-12-15T21:20:00+08:00" pubdate data-updated="true">Dec 15<span>th</span>, 2010</time></div>
+	<div class="tags">
+
+
+	<a class='category' href='/blog/categories/windows/'>windows</a>
+
+
+</div>
+	
+</div>
+</article>
+
+	<div class="share">
+	<div class="addthis_toolbox addthis_default_style ">
+		
+		
+		
+		
+	</div>
+	
+</div>
+
+
+</div>
+	<footer id="footer" class="inner">Copyright &copy; 2013
+
+    studentdeng
+
+</footer>
+	<script src="/javascripts/slash.js"></script>
+<script src="/javascripts/jquery.fancybox.pack.js"></script>
+<script type="text/javascript">
+(function($){
+	$('.fancybox').fancybox();
+})(jQuery);
+</script> <!-- Delete or comment this line to disable Fancybox -->
+
+
+
+
+
+
+</body>
+</html>

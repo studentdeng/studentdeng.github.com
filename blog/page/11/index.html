@@ -1,0 +1,1251 @@
+
+<!DOCTYPE HTML>
+<html>
+<head>
+	<meta charset="utf-8">
+	<title>不会开机的男孩</title>
+	<meta name="author" content="studentdeng">
+
+	
+	<meta name="description" content="上一篇只是初步的写了一下虚继承，很不清楚而且有的地方自己理解也不到位。这回详细总结一下。以下内容来自vs2008 默认设置下。类的布局可以通过-d1reportSingleClassLayout查看。 让我们从最简单的类结构开始。 class A
+{
+public: int a; void af &hellip;">
+	
+	<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1">
+
+	<link href="/atom.xml" rel="alternate" title="不会开机的男孩" type="application/atom+xml">
+	<link rel="canonical" href="">
+	<link href="/favicon.png" rel="shortcut icon">
+	<link href="/stylesheets/screen.css" media="screen, projection" rel="stylesheet" type="text/css">
+	<!--[if lt IE 9]><script src="//html5shiv.googlecode.com/svn/trunk/html5.js"></script><![endif]-->
+	<script async="true" src="//ajax.googleapis.com/ajax/libs/jquery/1.7.2/jquery.min.js"></script>
+	
+</head>
+
+
+<body>
+	<header id="header" class="inner"><h1><a href="/">不会开机的男孩</a></h1>
+<nav id="main-nav"><ul class="main">
+	<li><a href="/">Blog</a></li>
+	<li><a href="/blog/archives">Archives</a></li>
+	<li><a href="/tags/index.html">Tags</a></li>
+	<li><a href="/favorite/index.html">Favorite</a></li>
+	<li><a href="/about/index.html">About</a></li>
+</ul>
+</nav>
+<nav id="mobile-nav">
+	<div class="alignleft menu">
+		<a class="button">Menu</a>
+		<div class="container"><ul class="main">
+	<li><a href="/">Blog</a></li>
+	<li><a href="/blog/archives">Archives</a></li>
+	<li><a href="/tags/index.html">Tags</a></li>
+	<li><a href="/favorite/index.html">Favorite</a></li>
+	<li><a href="/about/index.html">About</a></li>
+</ul>
+</div>
+	</div>
+	<div class="alignright search">
+		<a class="button"></a>
+		<div class="container">
+			<form action="http://google.com/search" method="get">
+				<input type="text" name="q" results="0">
+				<input type="hidden" name="q" value="site:studentdeng.github.com">
+			</form>
+		</div>
+	</div>
+</nav>
+<nav id="sub-nav" class="alignright">
+	<div class="social">
+		
+		
+		
+		
+		<a class="github" href="https://github.com/studentdeng" title="GitHub">GitHub</a>
+		
+    
+		
+		
+		
+		
+		
+		<a class="rss" href="/atom.xml" title="RSS">RSS</a>
+		
+    
+	</div>
+</nav>
+
+</header>
+	
+		
+	
+	<div id="content" class="inner">
+
+
+    <article class="post">
+	<h2 class="title">
+		
+		<a href="/blog/2010/06/07/c-plus-plus-vtable2/">
+		
+			再谈C++虚继承</a>
+	</h2>
+	<div class="entry-content">
+		<p>上一篇只是初步的写了一下虚继承，很不清楚而且有的地方自己理解也不到位。这回详细总结一下。以下内容来自vs2008 默认设置下。类的布局可以通过-d1reportSingleClassLayout查看。</p>
+
+<p>让我们从最简单的类结构开始。</p>
+
+<pre><code>class A
+{
+public:
+    int a;
+    void af();
+    void virtual vaf(); 
+};
+void A::vaf(){printf("vaf\n");}
+void A::af(){printf("af\n");}
+class B
+{
+public:
+    int b;
+    void bf();
+    void virtual vbf();
+};
+void B::vbf(){printf("vbf\n");};
+void B::bf(){printf("bf\n");};
+class C:public A,public B
+{
+public:
+    int c;
+    void cf();
+    void virtual vcf();    
+};
+void C::vcf(){printf("vcf\n");}
+void C::cf(){printf("cf\n");}
+</code></pre>
+
+<p>　　内存中这个例子是这样的。</p>
+
+<pre><code>class A    size(8):
+    +---
+    | {vfptr}
+    | a
+    +---
+
+A::$vftable@:
+    | &amp;A_meta
+    |  0
+    | &amp;A::vaf
+
+
+class B    size(8):
+    +---
+    | {vfptr}
+    | b
+    +---
+
+B::$vftable@:
+    | &amp;B_meta
+    |  0
+    | &amp;B::vbf
+
+class C    size(20):
+    +---
+    | +--- (base class A)
+    | | {vfptr}
+    | | a
+    | +---
+    | +--- (base class B)
+    | | {vfptr}
+    | | b
+    | +---
+    | c
+    +---
+
+C::$vftable@A@:
+    | &amp;C_meta
+    |  0
+    | &amp;A::vaf
+    | &amp;C::vcf
+
+C::$vftable@B@:
+    | -8
+    | &amp;B::vbf
+</code></pre>
+
+<p>这里我们总结一下，类中有虚函数布局。</p>
+
+<p>若是类中有虚函数，那么类中第一个元素是指向虚表的指针（这个情况只有vftable）。
+基类数据成员
+本身类成员
+最左边的基类和本类公用同一个虚函数表，从而可以简化一些操作。
+　　一个简单的例子，让我们看一下虚函数运行时的样子。</p>
+
+<pre><code>C *pc= new C;
+pc-&gt;af();
+pc-&gt;vaf();
+pc-&gt;vcf();
+pc-&gt;vbf();
+delete pc;
+.text:00401059                 push    offset aAf      ; "af\n";这里调用非虚函数，之前有一个给ecx赋值语句
+.text:0040105E                 call    ds:__imp__printf
+.text:00401064                 mov     eax, [esi]
+.text:00401066                 mov     edx, [eax]
+.text:00401068                 add     esp, 4
+.text:0040106B                 mov     ecx, esi         ;这里ecx指向类A，这里因为A和C相同的开始地址
+.text:0040106D                 call    edx              ;这里节省了一次类的转化
+.text:0040106F                 mov     eax, [esi]
+.text:00401071                 mov     edx, [eax+4]     ;这里调用vcf，在虚表中我们看到了他的offset 4
+.text:00401074                 mov     ecx, esi
+.text:00401076                 call    edx
+.text:00401078                 mov     eax, [esi+8]     ;这里调用vbf,这里需要首先调整this指针
+.text:0040107B                 mov     edx, [eax]       ;在找到相应的函数偏移量（这里为0）
+.text:0040107D                 lea     ecx, [esi+8]
+.text:00401080                 call    edx
+</code></pre>
+
+<p>有了前面的铺垫，我们步入正题，依然是一个简单的例子。</p>
+
+<pre><code>class D :virtual public A
+{
+    int d;
+    void df();
+    void virtual vdf();
+};
+void D::vdf(){printf("vdf\n");}
+void D::df(){printf("df\n");}
+class E :virtual public A
+{
+public:
+    int e;
+    void ef();
+    void virtual vef();
+};
+void E::vef(){printf("vef\n");}
+void E::ef(){printf("ef\n");}
+class F :public A,public B
+{
+public:
+    int f;
+    void ff();
+    void virtual vff();
+};
+void F::vff(){printf("vff\n");}
+void F::ff(){printf("ff\n");}
+</code></pre>
+
+<p>让我们再看一下class F在内存中的布局</p>
+
+<pre><code>class F    size(36):
+    +---
+    | +--- (base class D)
+    | | {vfptr}
+    | | {vbptr}
+    | | d
+    | +---
+    | +--- (base class E)
+    | | {vfptr}
+    | | {vbptr}
+    | | e
+    | +---
+    | f
+    +---
+    +--- (virtual base A)
+    | {vfptr}
+    | a
+    +---
+
+F::$vftable@D@:
+    | &amp;F_meta
+    |  0
+    | &amp;D::vdf
+    | &amp;F::vff
+
+F::$vftable@E@:
+    | -12
+    | &amp;E::vef
+
+F::$vbtable@D@:
+    | -4
+    | 24 (Fd(D+4)A)
+
+F::$vbtable@E@:
+    | -4
+    | 12 (Fd(E+4)A)
+
+F::$vftable@A@:
+    | -28
+    | &amp;A::vaf
+</code></pre>
+
+<p>这里又增加了一个指向虚基表的指针vbptr，我们可以看出这个指针的目的在于计算包含虚继承的类的位置（有直接虚继承和间接虚继承）。让我们总结下有虚继承下的布局。</p>
+
+<p>将类中非虚继承的基类放置最前面。这样访问非虚继承函数不需再计算偏移量。
+在派生类中若是没有vbtable则增加一个，除非能从原来的非虚继承类继承到了vbtable。
+派生类数据成员
+虚基类
+　　可见，虚基类始终在类的尾部，那么当类生长的时候，也就是继续被继承时，则很有可能使虚基的偏移量变大。</p>
+
+<p>比如在class D的虚基表中，D与A偏移量为0，而在class F中D与A偏移量变为了24，所以只能加入一个vbptr指向虚基表。</p>
+
+<p>有了前面的知识，那么运行时的情况就好分析了。</p>
+
+<pre><code>.text:0040104F     mov     dword ptr [eax+4], offset ??_8F@@7BD@@@ ; const F::`vbtable'{for `D'}
+.text:00401056     mov     dword ptr [eax+10h], offset ??_8F@@7BE@@@ ; const F::`vbtable'{for `E'}
+                                                         ;首先将虚基表初始化 eax=this
+.text:0040105D     mov     dword ptr [eax+1Ch], offset ??_7A@@6B@ ; const A::`vftable'
+.text:00401064     mov     ecx, [eax+4]      ;*ecx=vbtableFD
+.text:00401067     mov     dword ptr [eax], offset ??_7D@@6B0@@ ; const D::`vftable'{for `D'}
+.text:0040106D     mov     edx, [ecx+4]      ;获得vbtableFD表中第2项，也就是D和A虚函数表的offset
+.text:00401070     mov     dword ptr [edx+eax+4], offset ??_7D@@6BA@@@ ; const D::`vftable'{for `A'}
+                                             ;根据和虚基表的offset+虚基表中和虚函数的offset+this找到虚函数位置以下类推
+.text:00401078     mov     ecx, [eax+10h]
+.text:0040107B     mov     dword ptr [eax+0Ch], offset ??_7E@@6B0@@ ; const E::`vftable'{for `E'}
+.text:00401082     mov     edx, [ecx+4]
+.text:00401085     mov     dword ptr [edx+eax+10h], offset ??_7E@@6BA@@@ ; const E::`vftable'{for `A'}
+.text:0040108D     mov     ecx, [eax+4]
+.text:00401090     mov     dword ptr [eax], offset ??_7F@@6BD@@@ ; const F::`vftable'{for `D'}
+.text:00401096     mov     dword ptr [eax+0Ch], offset ??_7F@@6BE@@@ ; const F::`vftable'{for `E'}
+.text:0040109D     mov     edx, [ecx+4]
+.text:004010A0     mov     dword ptr [edx+eax+4], offset ??_7F@@6BA@@@ ; const F::`vftable'{for `A'}
+.text:004010A8     mov     esi, eax
+
+.text:004010AE     mov     eax, [esi+4]            ;eax=*vbtableFD
+.text:004010B1     mov     ecx, [eax+4]            ;ecx=虚基表中和虚函数的offset
+.text:004010B4     mov     edx, [ecx+esi+4]        ;*edx=vftable
+.text:004010B8     mov     eax, [edx]              
+.text:004010BA     lea     ecx, [ecx+esi+4]        ;this=class A的开始
+.text:004010BE     call    eax                     ;pf-&gt;vaf();
+.text:004010C0     mov     edx, [esi]
+.text:004010C2     mov     eax, [edx]
+.text:004010C4     mov     ecx, esi                ;classD和classF公用虚表
+.text:004010C6     call    eax
+.text:004010C8     mov     edx, [esi+0Ch]
+.text:004010CB     mov     eax, [edx]
+.text:004010CD     lea     ecx, [esi+0Ch]          ;修正this，指向class E
+.text:004010D0     call    eax
+.text:004010D2     mov     edx, [esi]
+.text:004010D4     mov     eax, [edx+4]
+.text:004010D7     mov     ecx, esi
+.text:004010D9     call    eax
+</code></pre>
+
+<p>　　再看下虚函数覆盖的问题。</p>
+
+<pre><code>class G
+{
+public:
+    int g;
+    void gf();
+    void virtual vgf();
+    void virtual vaf();
+};
+void G::gf(){printf("gf\n");}
+void G::vgf(){printf("vgf\n");}
+void G::vaf(){printf("vaf_g\n");}
+class H:public A,public G
+{
+public:
+    int h;
+    void hf();
+    void vaf();
+    void vgf();
+    void virtual vhf();
+};
+void H::hf(){printf("hf\n");}
+void H::vaf(){printf("vaf_H\n");}
+void H::vgf(){printf("vgf_h\n");}
+void H::vhf(){printf("vhf\n");}
+
+
+class H    size(20):
+    +---
+    | +--- (base class A)
+    | | {vfptr}
+    | | a
+    | +---
+    | +--- (base class G)
+    | | {vfptr}
+    | | g
+    | +---
+    | h
+    +---
+
+H::$vftable@A@:
+    | &amp;H_meta
+    |  0
+    | &amp;H::vaf
+    | &amp;H::vhf
+
+H::$vftable@G@:
+    | -8
+    | &amp;H::vgf
+    | &amp;thunk: this-=8; goto H::vaf
+</code></pre>
+
+<p>由于A类和G类的函数vaf都被子类H覆盖，由于A和H共用虚函数表，那么如果在G类中依然保留被覆盖的函数则浪费空间。实际是通过以下代码实现的。</p>
+
+<pre><code>.text:004010B0 ; [thunk]:public: virtual void __thiscall H::vaf`adjustor{8}' (void)
+.text:004010B0 ?vaf@H@@W7AEXXZ proc near               ; DATA XREF: .rdata:00402158o
+.text:004010B0                 sub     ecx, 8          ;这里调整this指针，指向class G=class A
+.text:004010B3                 jmp     ?vaf@H@@UAEXXZ  ; H::vaf(void);转向到G表中的vaf()
+.text:004010B3 ?vaf@H@@W7AEXXZ endp
+</code></pre>
+
+<p>可见要是要使用thunk，根本上是处理以达到节省函数表大小，通过修改this指针去调用子类表项，那么也就是当子类覆盖父类多个方法时，只保留一份，其他的则跳转执行。</p>
+
+<pre><code>mov     ecx, esi
+call    edx                   ;调用vaf
+mov     eax, [esi+8]          ;*eax=vftable_G
+mov     edx, [eax]
+lea     ecx, [esi+8]
+call    edx                   ;vgf
+mov     eax, [esi]
+mov     edx, [eax+4] 
+mov     ecx, esi
+call    edx                   ;vhf
+</code></pre>
+
+<p>虚函数中还有2个非常重要的部分一个纯虚函数,一个虚析构函数。由于析构函数和构造函数结合的实在是太紧密了。下一篇先总结下虚析构函数当然也包括构造函数的部分。</p>
+
+		
+		
+	</div>
+
+
+<div class="meta">
+	<div class="date">
+
+
+
+
+
+
+
+
+  
+
+
+<time datetime="2010-06-07T20:50:00+08:00" pubdate data-updated="true">Jun 7<span>th</span>, 2010</time></div>
+	<div class="tags">
+
+
+	<a class='category' href='/blog/categories/c-plus-plus/'>c++</a>
+
+
+</div>
+	
+</div>
+</article>
+
+
+    <article class="post">
+	<h2 class="title">
+		
+		<a href="/blog/2010/06/01/c-plus-plus-vtable/">
+		
+			C++虚继承初探</a>
+	</h2>
+	<div class="entry-content">
+		<p>昨天和同学对c++虚继承这部分 产生了一些争论，发觉自己对技术越来越浮躁了。不得不痛下决心。一看c++虚继承的内部实现（很浅很浅的看看）。</p>
+
+<p>以下内容来自自己实验，希望各位大哥指点。当然要想获得权威的解释，看《Inside C++ Object Model》</p>
+
+<p>让我们从最简单的开始。以下测试代码。</p>
+
+<pre><code>class Base
+{
+public:
+    Base()
+    {
+        printf("Base construct!\n");
+    }
+    //virtual void Test()=0;
+    virtual void f()
+    {
+        printf("Base\n");
+    }
+    virtual void f2()
+    {
+        printf("Base2\n");
+    }
+    virtual void f3()
+    {
+        printf("Base3\n");
+    }
+    void f4()
+    {
+        printf("Base4\n");
+    }
+};
+class Derived: public Base
+{
+public:
+    Derived()
+    {
+        printf("Derived construct!\n");
+    }
+    virtual void f()
+    {
+        printf("Derived\n");
+    }
+    virtual void f2()
+    {
+        printf("Derived2\n");
+    }
+    virtual void f3()
+    {
+        printf("Derived3\n");
+    }
+    void f4()
+    {
+        printf("Derived4\n");
+    }
+    /*virtual void Test()
+    {
+        printf("test\n");
+    }*/
+};
+int main()
+{
+    Base *p=new Base;
+    p-&gt;f();
+    p-&gt;f2();
+    p-&gt;f3();
+    p-&gt;f4();
+    /*Base *p = new Derived;*/
+    p = new Derived;
+    p-&gt;f();
+    p-&gt;f2();
+    p-&gt;f3();
+    p-&gt;f4();
+    //p-&gt;Test();
+    delete p;
+    return 0;
+}
+</code></pre>
+
+<p>以下是在我的环境下反汇编的部分代码。我的环境是vs2008 默认的Release。</p>
+
+<pre><code>.text:00401060 ; int __cdecl main(int argc, const char **argv, const char **envp)
+.text:00401060 _main           proc near               ; CODE XREF: __tmainCRTStartup+10Ap
+.text:00401060
+.text:00401060 argc            = dword ptr  4
+.text:00401060 argv            = dword ptr  8
+.text:00401060 envp            = dword ptr  0Ch
+.text:00401060
+.text:00401060                 push    esi
+.text:00401061                 push    edi
+.text:00401062                 push    4               ; unsigned int
+.text:00401064                 call    ??2@YAPAXI@Z_0  ; operator new(uint)
+.text:00401069                 mov     edi, ds:__imp__printf
+.text:0040106F                 mov     esi, eax
+.text:00401071                 add     esp, 4
+.text:00401074                 test    esi, esi
+.text:00401076                 jz      short loc_40108A
+.text:00401078                 push    offset aBaseConstruct ; "Base construct!\n"
+.text:0040107D                 mov     dword ptr [esi], offset ??_7Base@@6B@ ; const Base::`vftable'
+.text:00401083                 call    edi ; __imp__printf
+.text:00401085                 add     esp, 4
+.text:00401088                 jmp     short loc_40108C
+
+
+.text:0040107D mov dword ptr [esi], offset ??_7Base@@6B@ ; const Base::`vftable' 
+</code></pre>
+
+<p>是关键，根据上面分析，将指向Base类
+的虚表的指针保存到了向堆中分配的空间中，也就是 esi=**base_vtbl</p>
+
+<pre><code>.text:0040108C                 mov     eax, [esi]
+.text:0040108E                 mov     edx, [eax]   ;这里就好理解了，eax=*base_vtbl，edx=base_vtbl
+.text:00401090                 mov     ecx, esi
+.text:00401092                 call    edx          ;调用虚表中的第一个函数以下类推
+.text:00401094                 mov     eax, [esi]
+.text:00401096                 mov     edx, [eax+4]
+.text:00401099                 mov     ecx, esi
+.text:0040109B                 call    edx
+.text:0040109D                 mov     eax, [esi]
+.text:0040109F                 mov     edx, [eax+8]
+.text:004010A2                 mov     ecx, esi
+.text:004010A4                 call    edx
+.text:004010A6                 push    offset aBase4   ; "Base4\n" ;这里看出了非虚函数的优势，效率高，直接调用函数
+.text:004010AB                 call    edi ; __imp__printf
+</code></pre>
+
+<p>这是Base虚表内容</p>
+
+<pre><code>.rdata:0040216C ; const Base::`vftable'
+.rdata:0040216C ??_7Base@@6B@   dd offset ?f@Base@@UAEXXZ ; DATA XREF: _main+1Do  ;这里每个标号都指向相应函数
+.rdata:0040216C                                         ; _main+62o
+.rdata:0040216C                                         ; Base::f(void)
+.rdata:00402170                 dd offset ?f2@Base@@UAEXXZ ; Base::f2(void)
+.rdata:00402174                 dd offset ?f3@Base@@UAEXXZ ; Base::f3(void)
+.rdata:00402178                 dd offset ??_R4Derived@@6B@ ; const Derived::`RTTI Complete Object Locator' ;这个不懂
+</code></pre>
+
+<p>Base 还是比较简单的，让我们看Derived</p>
+
+<pre><code>.text:004010BD                 push    offset aBaseConstruct ; "Base construct!\n"
+.text:004010C2                 mov     dword ptr [esi], offset ??_7Base@@6B@ ; const Base::`vftable'
+.text:004010C8                 call    edi ; __imp__printf
+.text:004010CA                 push    offset aDerivedConstru ; "Derived construct!\n"
+.text:004010CF                 mov     dword ptr [esi], offset ??_7Derived@@6B@ ; const Derived::`vftable'
+.text:004010D5                 call    edi ; __imp__printf
+.text:004010D7                 add     esp, 8
+</code></pre>
+
+<p>可见在构造函数中和我们想象的完全一样，从基类开始，不过需要注意一点，最后esi=**Derived_vtbl
+ 以后的代码完全和在基类中调用函数一致。看来在VS2008中，c++的虚表其实就是数组（原来居然还以为是链表，不过似乎也有的编译器
+ 是用链表实现的）。这个例子的确不复杂，但是事实上却没有这么简单。看下一个稍微复杂一点的。</p>
+
+<pre><code>class A
+{
+public:
+    A()
+    {
+        printf("A construct\n");
+    }
+    virtual void f(){printf("A_F\n");}
+};
+class B
+{
+public:
+    B()
+    {
+        printf("B construct\n");
+    }
+    virtual void f(){printf("B_F\n");}
+    virtual void g(){printf("B_G\n");}
+};
+class C: public A,public B
+{
+public:
+    C()
+    {
+        printf("C construct\n");
+    }
+    void f(){printf("C_f\n");}
+};
+
+int _tmain(int argc, _TCHAR* argv[])
+{
+    A *a=new A;
+    B *b=new B;
+    C *c=new C;
+    a-&gt;f();
+    b-&gt;f();
+    b-&gt;g();
+    c-&gt;f();
+    return 0;
+}
+</code></pre>
+
+<p>先不看结果，花几分钟思考一下，class C 的虚表结构是什么？</p>
+
+<p>首先看代码，发现在class C中首先有一点不同，这个是之前的在class A,classB,classC中都是默认构造函数的代码</p>
+
+<pre><code>.text:00401077                 push    8               ; unsigned int      ;以前class只放一个指针，现在2个了。
+.text:00401079                 call    ??2@YAPAXI@Z_0  ; operator new(uint)
+.text:0040107E                 add     esp, 4
+.text:00401081                 test    eax, eax
+.text:00401083                 jz      short loc_40109D
+.text:00401085                 mov     dword ptr [eax+4], offset ??_7B@@6B@ ; const B::`vftable'
+.text:0040108C                 mov     dword ptr [eax], offset ??_7C@@6BA@@@ ; const C::`vftable'{for `A'}
+.text:00401092                 mov     dword ptr [eax+4], offset ??_7C@@6BB@@@ ; const C::`vftable'{for `B'}
+.text:00401099                 mov     edi, eax
+.text:0040109B                 jmp     short loc_40109F
+</code></pre>
+
+<p>这个是上面代码真正的反汇编代码，对比下，就可能对上面代码为什么有一个这么冗余的代码，似乎有些感觉了。</p>
+
+<pre><code>.text:004010A6                 push    offset aAConstruct ; "A construct\n"
+.text:004010AB                 mov     dword ptr [esi], offset ??_7A@@6B@ ; const A::`vftable'
+.text:004010B1                 call    edi ; __imp__printf
+.text:004010B3                 push    offset aBConstruct ; "B construct\n"
+.text:004010B8                 mov     dword ptr [esi+4], offset ??_7B@@6B@ ; const B::`vftable'
+.text:004010BF                 call    edi ; __imp__printf
+.text:004010C1                 push    offset aCConstruct ; "C construct\n"
+.text:004010C6                 mov     dword ptr [esi], offset ??_7C@@6BA@@@ ; const C::`vftable'{for `A'}
+.text:004010CC                 mov     dword ptr [esi+4], offset ??_7C@@6BB@@@ ; const C::`vftable'{for `B'}
+.text:004010D3                 call    edi ; __imp__printf
+.text:004010D5                 add     esp, 0Ch
+</code></pre>
+
+<p>下面的大部分容易理解，关键的是在class B的虚表中的f()。</p>
+
+<pre><code>; [thunk]:public: virtual void __thiscall C::f`adjustor{4}' (void)
+?f@C@@W3AEXXZ proc near               ;这时ecx 也就是this是指向class B的
+sub     ecx, 4                        ;这里很明显将原来的指向B:f()，指向了class C的虚表的开始部分。ecx放的是this指针
+jmp     ?f@C@@UAEXXZ    ; C::f(void)  ;这里顺理成章的变成了C::f()，this也在上部改变了
+?f@C@@W3AEXXZ endp
+</code></pre>
+
+<p>这里似乎就是传说中的“形式转换程序”，这个的确减少了虚表的体积。
+再看后面的代码，函数调用的时候和之前完全一致，也就是在class C中定义的f()，虽然没有被显示的声明为virtual，但vs2008已经
+把他默认当成虚函数调用了。至此，和同学的争论就此结束。</p>
+
+		
+		
+	</div>
+
+
+<div class="meta">
+	<div class="date">
+
+
+
+
+
+
+
+
+  
+
+
+<time datetime="2010-06-01T20:30:00+08:00" pubdate data-updated="true">Jun 1<span>st</span>, 2010</time></div>
+	<div class="tags">
+
+
+	<a class='category' href='/blog/categories/c-plus-plus/'>c++</a>
+
+
+</div>
+	
+</div>
+</article>
+
+
+    <article class="post">
+	<h2 class="title">
+		
+		<a href="/blog/2010/05/22/asm-win32/">
+		
+			Win32汇编学习（1）</a>
+	</h2>
+	<div class="entry-content">
+		<p>终于把学校里面让人无语的论文搞定了。周末终于有时间干些自己想干的事了。想起了这2周做的关于编译原理的实验，代码优化这部分的确是个难题。哎，我实在是太笨了，其实答案就在自己电脑里。将c程序反汇编后，终于第一次感受到了debug 和release的区别。兴奋之余让我又产生了忧虑，自己汇编的能力太弱了，面对稍微复杂点的算法再加上编译优化后的汇编代码，真是欲哭无泪。痛下决心，准备好好学学汇编了。为了给自己一个动力，准备学习Win32汇编（和学校那个8086再见了）。</p>
+
+<p>　　第一天，不准备上难度了。从最简单的&#8221;HelloWorld&#8221;开始。</p>
+
+<pre><code>; HelloWorld.asm
+
+comment * ----------------------------------------------
+                 The First Assemble Application
+                ---------------------------------------------- *
+
+.386
+.model flat, stdcall
+option casemap:none
+
+include \masm32\include\windows.inc
+
+include \masm32\include\user32.inc
+include \masm32\include\kernel32.inc
+
+includelib \masm32\lib\user32.lib
+includelib \masm32\lib\kernel32.lib
+
+    .data
+szCaption   db 'MessageBox', 0
+szText      db 'Hello, World!', 0
+
+    .code
+start:
+    invoke MessageBox,\     ; 调用函数名
+        NULL,\                      ; 父窗口句柄
+        offset szText,\           ; 文字
+        offset szCaption,\      ; 标题
+        MB_OK                    ; 按钮类型
+
+    invoke ExitProcess, NULL
+end start
+</code></pre>
+
+<p>一个简单的窗口就创建好了。一眼看上去发现和以前的8086还是有很多不同的。</p>
+
+<p>首先8086和80386在寻址方式不同。</p>
+
+<p>8086 通过 段地址*0x10 +偏移地址确定的。只能寻址1M，而80386 32根地址线寻址，空间达到了4G而且80386 通用寄存器大小为32位，所以不需要分段就能访问到地址。</p>
+
+<p>那么.data,.code不是段的意思么？ 不是。因为808386有分页机制，每个页可以自由制定属性，已经和8086代码和数据分段处理完全不同，实际上是把不同类型的数据或代码归类，再放到不同属性的内存页。</p>
+
+<p> 其次，8086的不安全，不方便的调用中断的方式改为了调用系统API的方式。我这里是采用的MASM，所以有invoke伪指令，其实这个指令也没别的，就是为我们编程省去了函数参数入栈的那些push。</p>
+
+<p>最后，发现win32汇编和使用c/c++似乎没有复杂很多。</p>
+
+		
+		
+	</div>
+
+
+<div class="meta">
+	<div class="date">
+
+
+
+
+
+
+
+
+  
+
+
+<time datetime="2010-05-22T18:49:00+08:00" pubdate data-updated="true">May 22<span>nd</span>, 2010</time></div>
+	<div class="tags">
+
+
+	<a class='category' href='/blog/categories/asm/'>asm</a>
+
+
+</div>
+	
+</div>
+</article>
+
+
+    <article class="post">
+	<h2 class="title">
+		
+		<a href="/blog/2010/04/24/mult-threading2/">
+		
+			多线程程序设计笔记二</a>
+	</h2>
+	<div class="entry-content">
+		<p>当我们正式开始之前，我想再多说一点，上一篇最后的那个程序可能会给像我一样的菜鸟一个误解，这里解释下。</p>
+
+<p>程序启动后就执行的那个线程称为主线程（也就是那个程序中的执行main函数的线程），而其他线程则成为子线程。主线程和其他线程最大的区别是当主线程返回或是调用一些函数强制退出后，使得程序中的其他子线程强制结束。 在一篇中native code和Manager code 在遇到同样的问题时，.net给我们做了一个好的榜样，其实不管是否是UI子线程，.net 控制台在终止进程结束之前，都会保证所有子线程已经退出。虽然我们无法知道到底它采用的是什么机制（我的理解是在调用结束进程之前调用了WaitForMultipleObjects或是其他wait函数等待所有子线程返回），但是这体现了一个很重要的原则，对产生的子线程负责，无论什么时候，都不应该直接结束程序而不等待子线程结束。因为子线程没有机会做清理工作。这个是一个非常可怕的问题，想这样的一个情况，子线程比如正在申请一个堆空间，而正好锁住了那个区域，然后被强制结束了。那么就很可能产生了内存泄露（产生不了也会增大系统负担）。所以再次提醒自己主线程在退出的时候，必须保证所有的子线程已经退出。</p>
+
+<p>从上一篇《多线程程序设计笔记一》中，我们知道了多线程程序设计的最基础的知识。下面总结下线程之间的通讯和同步问题。不过这个问题实在是太大了，对我来说。这里先只涉及最简单的在同一进程下的用户方式下的同步问题。</p>
+
+<p>以下内容将包括：</p>
+
+<p>互锁函数
+临界区
+互锁函数</p>
+
+<p>互锁函数运行在用户模式。它能保证当一个线程访问一个变量时，其它线程无法访问此变量，以确保变量值的唯一性。</p>
+
+<p>下面是一个简单的例子。</p>
+
+<pre><code>DWORD WINAPI ThreadFunc1(PVOID n)
+{
+  while(InterlockedExchange(&amp;g_bResourceInUse,TRUE) == TRUE)
+    SwitchToThread();
+  printf("thread1 used\n");
+  InterlockedExchange(&amp;g_bResourceInUse,FALSE);
+  return 0;
+}
+DWORD WINAPI ThreadFunc2(PVOID n)
+{
+  while(InterlockedExchange(&amp;g_bResourceInUse,TRUE) == TRUE)
+    SwitchToThread();
+  printf("thread2 used\n");
+  InterlockedExchange(&amp;g_bResourceInUse,FALSE);    
+  return 0;
+}
+</code></pre>
+
+<p>这个例子通过不断地判断bResourceInUse中的信息来确定线程是否能够使用资源。但是使用这个方法必须小心。大量的循环运算会浪费宝贵的CPU时间。而且如果是在单CPU下，线程不可能真正的异步执行，在thread1判断while的时候，thread2并不能做什么（不能修改该值）。所以我们应该避免在单个CPU计算机上使用循环锁。</p>
+
+<p>这里面还有一个需要知道的是必须使用关键字volatile声明g_bResourceInUse。我们需要把循环锁变量和循环锁保护的数据维护在不同的高速缓存行中。通过高速缓存行CPU可以不必访问内存总线而获得数据，但是在多处理器环境中，高速缓存行使得内存更新更加困难。如下：</p>
+
+<p>CPU1读取一个字节，将该字节和相邻字节读入CPU1的高速缓存行。
+CPU2读取同一个字节。从而和第一步相同的内容读入了CPU2的高速缓存行。
+CPU1修改该字节，因为已经在高速缓存行中，所以修改后的内容写入CPU1的高速缓存行，这个信息还没有写入内存。
+CPU2再次入去同一个字节。因为已经放入了CPU2的高速缓存行，所以CPU2不会访问内存。那么问题出现了。这个字节并不是该字节的新值。
+这个问题的确很严重，不过硬件工作者已经给我们解决了这个问题，当一个CPU修改高速缓存行字节时，其他CPU会被告知这个情况，他们的高速缓存行将无效。所以第四步中，CPU1必须将高速缓存行转入内存，而CPU2必须再次访问内存。</p>
+
+<p>原因想说清楚这些我现在还不行，这又涉及到了多核编程（哎，愧对老师啊，《多核程序设计》那课是白学了）。不过这里还是必须解释下volatile。</p>
+
+<p>被定义为volatile的变量，每次从内存中读取，而不能把他放在cache或寄存器中重复使用。
+告知编译器不要对这个变量做优化。
+告知编译器，变量可以被应用程序本身以外的某个东西进行修改，这些东西包括操作系统，硬件或同时执行的线程等。</p>
+
+<p>当必须以原子操作方式修改32为，64位值时，我们可以使用互锁函数。他们很有效率。但是实际工作，我们需要面对更复杂的数据结构。而且他们的效率是不进入内核态而节省下的。如果等待资源时间过长，就变成对CPU极大的浪费了，我们需要一种机制，使线程在等待访问共享资源时不浪费CPU时间。</p>
+
+<p>临界区（Critical Section）又叫做关键代码段</p>
+
+<p>临界区的描述</p>
+
+<p>win32提供的一种轻量级的同步机制，它存在于进程的内存空间中。一次只有一个线程获准进入临界区执行代码段，（其实就是让若干行代码能够以原子操作方式来使用资源）。
+它并不总是执行向内核模式的控制转换，要是获得一个未被占用的临界区时，只需要在用户态内的很少运算就能完成，只有在尝试获得已占用临界区时，它才会跳至内核模式。
+只能在属于同一个进程的线程间同步。
+补充一点，比如当线程A试图进入线程B拥有的临界区时，线程A将被置于等待状态。线程B离开临界区，线程A将处于可调度状态。让线程A立即等待，并不一定立即切换到内核方式。MS为了提高关键代码段的运行性能，将循环锁加入了这些代码段。当调用 EnterCriticalSection 它使用循环锁进行循环，只有当每次尝试获取都失败时才转入内核方式，从而线程A进入等待状态。</p>
+
+<p>这里可能就又糊涂了。之前说的循环锁不是效率很低么？的确，但是如果和转入内核方式比所消耗的资源少的话，就是可行的。比如我们仅仅是想操作一个指针。当然，如果是在单CPU下，循环锁是没有意义的，会直接转入内核方式。</p>
+
+<p>临界区的使用方法</p>
+
+<pre><code>    通过 InitializeCriticalSection 或 InitializeCriticalSectionAndSpinCount 函数初始化一个 CRITICAL_SECTION 结构，使用 SetCriticalSectionSpinCount 函数设置临界区的Spin计数器（可选）。然后使用 EnterCriticalSection 或 TryEnterCriticalSection 获取临界区的所有权；完成需要同步的操作后，使用 LeaveCriticalSection 函数释放临界区。最后使用 DeleteCriticalSection 函数析构临界区结构（只是删除RTL_CRITICAL_SECTION_ DEBUG）。
+</code></pre>
+
+<p>讲了这么多理论，实践一下。</p>
+
+<p>下面是对上一篇List做的多线程改进。</p>
+
+<pre><code>typedef struct _Node
+{
+  struct _Node *next;
+  int data;
+}Node;
+typedef struct _List
+{
+  Node *head;
+  CRITICAL_SECTION sec;
+}List;
+List *CreateList()
+{
+  List *pList = (List *)malloc(sizeof(pList));
+  pList-&gt;head = NULL;
+  InitializeCriticalSection(&amp;pList-&gt;sec);
+  return pList;
+}
+void DeleteList(List *pList)
+{
+  DeleteCriticalSection(&amp;pList-&gt;sec);
+  free(pList);
+  pList = NULL;
+}
+void AddHead(List *pList,Node *node)
+{
+  EnterCriticalSection(&amp;pList-&gt;sec);
+  node-&gt;next = pList-&gt;head;
+  pList-&gt;head = node;
+  LeaveCriticalSection(&amp;pList-&gt;sec);
+}
+</code></pre>
+
+<p>当然事实上没有这么简单。比如当交换两个链表内容的函数</p>
+
+<pre><code>void SwapLists(List *list1,List *List2)
+{
+  List *temp_List;
+  EnterCriticalSection(list1-&gt;sec);
+  EnterCriticalSection(list2-&gt;sec);
+  tmp_List-&gt;list = list1-&gt;head;
+  list1-&gt;head = list2-&gt;head;
+  list2-&gt;head = temp-&gt;list;
+  LeaveCriticalSection(list1-&gt;sec);
+  LeaveCriticalSection(list2-&gt;sec);
+}
+</code></pre>
+
+<p>当threadA: SwapLists(list1,list2);threadB:SwapLists(list2,list1)。两个线程会落入“我等你，你等我”的轮回，这种情况称为死锁。</p>
+
+<p>任何时候当一段代码需要1个以上的资源时，都可能发生死锁。而我们防止死锁通常的做法是保证“all or nothing”，也就是要不全部拥有，要不什么也没有。</p>
+
+<p>其实上面的代码还隐藏了一个问题，SwapList函数在使用的时候无形的需要确保一个资源使用的顺序。也就是说这个函数的运程依赖于代码的执行顺序，这种设计本身就是很脆弱的。</p>
+
+<p>临界区需要注意的</p>
+
+<p>每个共享资源使用一个CRITICAL_SECTION。只有被临界区Enter和Leave“围起来”的资源才能获得保护，临界区维护的只是一段代码（代码中通常有一些资源）。
+当同时访问多个资源的时候，使用临界区非常容易造成死锁， EnterCriticalSection 的顺序是需要认真考虑的但是并不一定十分可靠， LeaveCriticalSection 顺序则没有关系。
+不要长时间运行临界区，也就是不要长时间锁住一个资源。但是时间到底多长很难确定在windows OS中，所以不要在一个CRITICAL_SECTION中调用Sleep或Wait….API函数，SendMessage。当你以一个同步机制保护一份资源时，必须牢记“这项资源被使用频率如何？线程必须多块释放资源，才能确保整个程序运作平顺”。
+无法获知进入临界区的线程状态。由于临界区不是核心对象，如果一个线程进入临界区后，没有Leave，系统没有办法清除临界区。而且如果一个线程在Enter时被等待，那么等待的最长时间也是不能设定的。（也减少了一个处理错误的方式）
+想要了解更多的关于临界区的，参考http://msdn.microsoft.com/zh-cn/magazine/cc164040(en-us).aspx</p>
+
+<p>中文http://www.microsoft.com/china/MSDN/library/enterprisedevelopment/softwaredev/ousCriticalSections.mspx?mfr=true</p>
+
+		
+		
+	</div>
+
+
+<div class="meta">
+	<div class="date">
+
+
+
+
+
+
+
+
+  
+
+
+<time datetime="2010-04-24T18:46:00+08:00" pubdate data-updated="true">Apr 24<span>th</span>, 2010</time></div>
+	<div class="tags">
+
+
+	<a class='category' href='/blog/categories/c-plus-plus/'>c++</a>, <a class='category' href='/blog/categories/windows/'>windows</a>
+
+
+</div>
+	
+</div>
+</article>
+
+
+    <article class="post">
+	<h2 class="title">
+		
+		<a href="/blog/2010/04/16/mult-threading/">
+		
+			多线程程序设计笔记一</a>
+	</h2>
+	<div class="entry-content">
+		<p>多线程编程，学习了一个星期，总结一下。以下内容全部基于windows操作系统。  由于实力有限，对操作系统没有深入了解（或是根本不了解吧），一下内容主要来自《windows核心编程》、《win32多线程程序设计》、一些网上高人的见解和自己的理解而自己的认识难免有些偏差，希望大家挑挑毛病。谢谢。</p>
+
+<h1>进程和线程的区别。</h1>
+
+<p>进程通常被定义为一个正在运行的程序实例，它由两个部分组成</p>
+
+<p>1.操作系统用来管理进程的内核对象。内核对象也是系统用来存放关于进程的统计信息的地方。
+2.地址空间，它饱含所有可执行模块或DLL模块的代码和数据。它还包含动态内存分配的空间。如线程堆栈和堆分配空间。</p>
+
+<p>线程是CPU调度的基本单位。由两个部分组成的</p>
+
+<ol>
+<li>一个是线程的内核对象，操作系统用它来对线程实施管理。内核对象是系统用来存放线程统计信息的地方。</li>
+<li>线程堆栈，它用于维护线程在执行代码时需要的所有函数参数和局部变量。</li>
+</ol>
+
+
+<p>单个进程可能包含多个线程，而线程都“同时”执行进程地址空间中的代码，为此每个线程都有它自己的一组CPU寄存器（称为线程的上下文）和它自己的堆栈。进程是不活泼的，从不执行任何东西，它只是线程的容器。操作系统为每个线程安排一定的CPU时间片，仿佛所有线程都是同时运行一样。在同一个进程下的多个线程，能够执行相同的代码，对相同的数据进行操作，共享内核对象句柄。</p>
+
+<h1>Context Switch</h1>
+
+<p>在一个抢占式多任务操作系统中，操作系统确保每个线程都有机会执行，它依赖硬件的协助以及其他的工作。当硬件计时器认为某个线程已经执行够久了，就会发出一个中断，与之CPU保存线程的当前状态，把所有寄存器内容复制到堆栈中，再把它从堆栈中复制到CONTEXT结构中。操作系统通过恢复CONTEXT结构中的寄存器值来切换不同的线程。（当然得先切换到该线程隶属的进程内存）。这个过程为Context Switch 。当然如果有非常多的CPU，也就不需要进行Context Switch。</p>
+
+<h1>使用多线程的原因。</h1>
+
+<ol>
+<li>和进程相比，它是一种非常&#8221;节俭&#8221;的操作方式。启动一个线程所花费的空间远远小于启动一个进程所花费的空间，而且，线程间彼此切换所需的时间也远远小于进程间切换所需要的时间。</li>
+<li>线程间方便的通信机制。同一进程下的线程之间共享数据空间，所以一个线程的数据可以直接为其它线程所用。</li>
+<li>提高应用程序响应。这对图形界面的程序尤其有意义，当一个操作耗时很长时，整个系统都会等待这个操作，此时程序不会响应键盘、鼠标、菜单的操作，而使用多线程技术，将耗时长的操作和UI线程工作分开。</li>
+<li>线程彼此分享了大部分核心对象的拥有权。</li>
+<li>在多CPU下，多个线程可以真正的同时运行，提高了CPU的利用率。</li>
+</ol>
+
+
+<h1>多线程所带来的问题</h1>
+
+<ol>
+<li>多线程在单CPU上实际上是一个假象，CPU的时间总是有限的，如果用的不好，反而增加了CPU的负担，降低了系统性能。</li>
+<li>多线程发生共享数据空间，在这个抢占式环境下线程运行次序无法预期，容易产生竞争，导致程序效率降低，出错，甚至死锁。</li>
+<li>过多的线程导致过多的Context Switch，也会降低运行效率。</li>
+</ol>
+
+
+<p>讲了这么多，可见多线程程序设计给程序员带来了更高的要求。再查MSDN的时候，有的API会附上线程安全而有的却没有。下面我们开始进入多线程编程世界。</p>
+
+<p>在进入多线程世界之前，先想一个问题。</p>
+
+<p>设想一下，假如有一个简单的增添链表的操作</p>
+
+<pre><code>AddHead(struct List *list,struct Node *node)
+{
+   node -&gt; next = List-&gt;head;
+   List-&gt;head = node;
+}
+</code></pre>
+
+<p>这个程序若是在多线程下进行的话，会出问题。 比如当thread1 正在执行 AddHead，而Context Switch发生在node->next = List->head 和 List->head = node语句之间，而thread2也要执行AddHead，而且正确执行之后，并把一个节点添加到List中，那么当Context Switch发生，而thread1执行List->head = node后，那么thread2添加的节点就不在List中了，造成了内存泄露，而且的确，你可以想到很多出错的可能性。你可能说这个问题出现的概率很低，但是多想一下，若是这个程序是在一个搜索引擎中，每天有多少人去运行这个程序？而且CPU是以每秒千万级（我的YY，反正是很快）运行，那么程序的问题就不可避免。而之所以产生了问题，就是因为thread1和thread2产生了竞争（race condition）。</p>
+
+<p>当然可能你一下子就有了思路，产生这个问题的关键是在于在发生race 的地方设置变量，来“保护”AddHead的操作正确。</p>
+
+<pre><code>AddHead(struct List *list,struct Node *node)
+{
+   while(flag !=0)
+   flag = 1;
+   node -&gt; next = List-&gt;head;
+   List-&gt;head = node;
+   flag = 0;
+}
+</code></pre>
+
+<p>这个代码似乎可以正确运行，但是很遗憾，还是不行。好吧让我们先来明确一个知识。<strong>Atomic Operations(原子操作)</strong>。
+一下是AddHead的汇编代码</p>
+
+<pre><code>AddHead(struct List *list,struct Node *node)
+{
+  xor eax,eax 
+  s: 
+  ;while(flag !=0) 
+  cmp DWORD PTR _flag,eax 7   
+  jne short s 
+  ;flag = 1; 
+  mov eax,DWORD PTR _list$[esp-4]
+  mov ecx,DWORD PTR _node$[esp-4]
+  mov DWORD PTR _flag,1
+  ;node -&gt; next = List-&gt;head;
+  mov edx,DWORD PTR [eax]
+  mov DWORD PTR [ecx],edxx
+  ;List-&gt;head = node;
+  mov DWORD PTR [eax],ecx
+  ;flag = 0;
+  mov DWORD PTR _flag,0
+  ret 0
+   ;小弟还没学习完汇编，有一些操作码还是不知道，只能是理解意思，不能保证
+  ;肯定能执行，例子来自《Win32多线程程序设计》
+;}
+
+# Atomic Operations(原子操作)
+
+简单的几行代码在执行时会转换成这么多代码，不能指望C，C++这种高级语言的语句可以一次执行完毕而不发生Context Switch。
+</code></pre>
+
+<p>而且还存在编译器优化（比如一些循环语句等等）真实在机器上执行的代码可能和你所希望的是不同的。</p>
+
+<p>原子操作（Atomic Operation ）指一个操作如果能够不受中断的完成。</p>
+
+<p>所以上例的检查标记和设立标记的动作必须是一个Atomic Operation，如果中断了，就不能避免竞争。</p>
+
+<p>好吧让我们真正的开始多线程编程旅行吧，我们和学习其他任何知识一样，来一个HelloWorld。</p>
+
+<pre><code>#include &lt;stdio.h&gt;
+#include &lt;stdlib.h&gt;
+#include &lt;windows.h&gt;
+
+DWORD WINAPI ThreadFunc(LPVOID);
+
+int main()
+{
+    HANDLE hThrd;
+    DWORD threadId;
+    hThrd = CreateThread(NULL,
+,
+            ThreadFunc,
+,//(LPVOID)i,
+,
+            &amp;threadId );
+    if (hThrd)
+    {
+      printf("Thread launched\n");
+      CloseHandle(hThrd);
+    }
+    //Sleep(2000);
+    return 0;
+}
+
+DWORD WINAPI ThreadFunc(LPVOID n)
+{
+  printf("HelloWorld\n");
+  return 0;
+}
+</code></pre>
+
+<p>运行后发现悲剧了,Thread launched有了,但是没有我们的熟悉HelloWorld(对大部分人来说是没机会看到HelloWorld的),那么我们又遇到什么问题了?</p>
+
+<p>加上Sleep后,HelloWorld出现了,好吧,我们又发现了,创建一个线程,并写一个调用函数,和我们在main函数中写一个子程序不是一回事。</p>
+
+<p>一个函数调用操作，程序的控制权转移到被调函数中，执行完毕后在返回原调用处。</p>
+
+<p>产生一个线程，情况也十分类似，但是有些曲折，线程函数中我们是通过CreateThread，并传给ThreadFunc的地址。CreateThread开启一个新的线程，该线程调用ThreadFunc而原来的线程继续前进。好吧。ThreadFunc相对main来说异步执行了。那么ThreadFunc不需要在main结束之前返回，所以，main函数返回了，ThreadFunc还没来得及返回，所以没有显示HelloWorld，而Sleep之后，那么ThreadFunc返回了，那么也就显示HelloWorld。</p>
+
+<p>当main函数返回后，操作系统中止整个进程，收回大部分或全部资源，而你的thread就还没工作完就被“干”掉了。</p>
+
+<p><strong>当然你也可能会产生另一个疑问，main函数返回了，进程结束了，thread就直接悲剧了，能不能让main函数返回，进程不结束，thread不悲剧呢？</strong></p>
+
+<pre><code> static void Main(string[] args)
+ {
+   Thread th = new Thread(ShowWindow);
+   th.Start();
+   Console.WriteLine("窗体已创建,敲任意键退出...");
+   Console.ReadKey();
+   Console.WriteLine("Main thread End");
+ }
+  static void ShowWindow()
+ {
+   MessageBox.Show("test");
+ }
+</code></pre>
+
+<p>这是一段C#代码，主要来自<a href="http://blog.csdn.net/bitfan/archive/2010/01/14/5191299.aspx">ref</a>我稍微改动了一点点，这段代码可以保证即使主线程退出了，只要窗体没有关闭，操作系统会认为“进程”仍在执行，因此，控制台窗口会保持显示，直到窗体关闭，整个进程才结束。在这种情况下，本示例程序中有两个UI线程，一个是控制台窗口，另一个创建应用程序窗体的那个线程。</p>
+
+<p>如下是我模仿上边代码，写的c++的例子</p>
+
+<pre><code> int main()
+ {
+   HANDLE hThrd;
+   DWORD threadId;
+   HANDLE handle;
+   hThrd = CreateThread(NULL,
+           0,
+           ThreadFunc,
+           0,//(LPVOID)i,
+            0,
+           &amp;threadId );
+   if(hThrd)
+   {
+     printf("Thread launched\n");
+     CloseHandle(hThrd);
+   }
+   Sleep(5000);
+   printf("Main Thread End\n");
+   return 0;
+ }
+ DWORD WINAPI ThreadFunc(LPVOID n)
+ {
+   MessageBox(NULL,"test","test",MB_OK);
+   printf("thread1 End\n");
+   return 0;
+ }
+</code></pre>
+
+<p>令人遗憾的是，我写的这个，在main函数返回后，整个进程也随之结束了。。。。。。</p>
+
+<p>好吧。我承认我错了，到底哪里出了问题。我是搞不定了。这个花了我大概2天的时间，曾经我一度以为UI线程和Message queue之间有某种必然的联系，但是上例完全证明了我之前的想法是可笑的或是我整个思考出发点就是错误的。在thread1中不仅调用了GDI函数，而且能够响应消息（说明已经有了Message queue和Message loop）。</p>
+
+<p>看来我得继续学习才能搞定这个了。</p>
+
+		
+		
+	</div>
+
+
+<div class="meta">
+	<div class="date">
+
+
+
+
+
+
+
+
+  
+
+
+<time datetime="2010-04-16T18:11:00+08:00" pubdate data-updated="true">Apr 16<span>th</span>, 2010</time></div>
+	<div class="tags">
+
+
+	<a class='category' href='/blog/categories/c-plus-plus/'>c++</a>, <a class='category' href='/blog/categories/windows/'>windows</a>
+
+
+</div>
+	
+</div>
+</article>
+
+<nav id="pagenavi">
+    
+        <a href="/blog/page/10/" class="prev">Prev</a>
+    
+    
+        <a href="/blog/page/12/" class="next">Next</a>
+    
+    <div class="center"><a href="/blog/archives">Blog Archives</a></div>
+</nav></div>
+	<footer id="footer" class="inner">Copyright &copy; 2013
+
+    studentdeng
+
+</footer>
+	<script src="/javascripts/slash.js"></script>
+<script src="/javascripts/jquery.fancybox.pack.js"></script>
+<script type="text/javascript">
+(function($){
+	$('.fancybox').fancybox();
+})(jQuery);
+</script> <!-- Delete or comment this line to disable Fancybox -->
+
+
+
+
+
+
+</body>
+</html>

@@ -1,0 +1,189 @@
+
+<!DOCTYPE HTML>
+<html>
+<head>
+	<meta charset="utf-8">
+	<title>git 部署代码到服务器 - 不会开机的男孩</title>
+	<meta name="author" content="studentdeng">
+
+	
+	<meta name="description" content="之前常用的部署代码就是用svn，或是更老土的ftp。今天在写一个新玩具的时候，突然发现，每次的git pull实在是一个让人烦躁的东西，就网上查找了一下，整理在这里。参考原文 实现原理是当我们push 代码到remote repository时，通过git的post-receive hooks。 &hellip;">
+	
+	<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1">
+
+	<link href="/atom.xml" rel="alternate" title="不会开机的男孩" type="application/atom+xml">
+	<link rel="canonical" href="">
+	<link href="/favicon.png" rel="shortcut icon">
+	<link href="/stylesheets/screen.css" media="screen, projection" rel="stylesheet" type="text/css">
+	<!--[if lt IE 9]><script src="//html5shiv.googlecode.com/svn/trunk/html5.js"></script><![endif]-->
+	<script async="true" src="//ajax.googleapis.com/ajax/libs/jquery/1.7.2/jquery.min.js"></script>
+	
+</head>
+
+
+<body>
+	<header id="header" class="inner"><h1><a href="/">不会开机的男孩</a></h1>
+<nav id="main-nav"><ul class="main">
+	<li><a href="/">Blog</a></li>
+	<li><a href="/blog/archives">Archives</a></li>
+	<li><a href="/tags/index.html">Tags</a></li>
+	<li><a href="/favorite/index.html">Favorite</a></li>
+	<li><a href="/about/index.html">About</a></li>
+</ul>
+</nav>
+<nav id="mobile-nav">
+	<div class="alignleft menu">
+		<a class="button">Menu</a>
+		<div class="container"><ul class="main">
+	<li><a href="/">Blog</a></li>
+	<li><a href="/blog/archives">Archives</a></li>
+	<li><a href="/tags/index.html">Tags</a></li>
+	<li><a href="/favorite/index.html">Favorite</a></li>
+	<li><a href="/about/index.html">About</a></li>
+</ul>
+</div>
+	</div>
+	<div class="alignright search">
+		<a class="button"></a>
+		<div class="container">
+			<form action="http://google.com/search" method="get">
+				<input type="text" name="q" results="0">
+				<input type="hidden" name="q" value="site:studentdeng.github.com">
+			</form>
+		</div>
+	</div>
+</nav>
+<nav id="sub-nav" class="alignright">
+	<div class="social">
+		
+		
+		
+		
+		<a class="github" href="https://github.com/studentdeng" title="GitHub">GitHub</a>
+		
+    
+		
+		
+		
+		
+		
+		<a class="rss" href="/atom.xml" title="RSS">RSS</a>
+		
+    
+	</div>
+</nav>
+
+</header>
+	
+		
+	
+	<div id="content" class="inner"><article class="post">
+	<h2 class="title">Git 部署代码到服务器</h2>
+	<div class="entry-content"><p>之前常用的部署代码就是用svn，或是更老土的ftp。今天在写一个新玩具的时候，突然发现，每次的git pull实在是一个让人烦躁的东西，就网上查找了一下，整理在这里。<a href="http://toroid.org/ams/git-website-howto">参考原文</a></p>
+
+<p>实现原理是当我们push 代码到remote repository时，通过git的<a href="https://www.kernel.org/pub/software/scm/git/docs/githooks.html">post-receive hooks</a>。执行</p>
+
+<pre><code>git checkout -f
+</code></pre>
+
+<p>来帮助我们实现自动部署</p>
+
+<p>让我们从最简单的开始，现在<strong>本地创建</strong>一个git repository</p>
+
+<pre><code>$ mkdir test &amp;&amp; cd test
+$ git init 
+$ echo 'Hello, world!' &gt; index.html
+$ echo 'Hello, world!' &gt; index.html
+$ git add index.html
+$ git commit -q -m "The humble beginnings of my web site."
+</code></pre>
+
+<p>index.html 就是我们希望能够部署到服务器的代码</p>
+
+<p>然后在<strong>服务器</strong>创建一个repository, 这里可不是服务器部署代码的位置</p>
+
+<pre><code>$ mkdir test &amp;&amp; cd test
+$ git init --bare
+$ cat &gt; hooks/post-receive
+#!/bin/sh
+GIT_WORK_TREE=/mnt/www/test git checkout -f
+$ chmod +x hooks/post-receive
+</code></pre>
+
+<p>这里的 &#8216;/mnt/www/test&#8217; 就是我们将要部署服务器代码的位置，一般的lamp，我们喜欢放在www里，当然这里需要根据不同的环境更换就好了。</p>
+
+<p>这里我们在<strong>本地</strong>的git目录下增加一个remote</p>
+
+<pre><code>$ git remote add prod ssh://server_address/mnt/www/test
+$ git push prod +master:refs/heads/master
+</code></pre>
+
+<p>server_address 可以ip，域名。</p>
+
+<p>我不太喜欢用这个命令行，我喜欢用<a href="http://www.sourcetreeapp.com">SourceTree</a>来做这个增加remote和最后的commit push 部分。</p>
+
+<p>这时我们切换到<strong>服务器</strong>目录下，就可以看到我们的index.html 在我们向prod push的之后，已经自动check out 到我们指定目录下了。</p>
+
+<p>之后我们只需要修改完成之后，git push prod 就可以自动部署代码了。</p>
+
+<p>第一次用，这里标记一下，看看后面当发生冲突的时候，时一个什么样的情况。： ）</p>
+</div>
+
+
+<div class="meta">
+	<div class="date">
+
+
+
+
+
+
+
+
+  
+
+
+<time datetime="2013-07-30T22:34:00+08:00" pubdate data-updated="true">Jul 30<span>th</span>, 2013</time></div>
+	<div class="tags">
+
+
+	<a class='category' href='/blog/categories/git/'>git</a>, <a class='category' href='/blog/categories/tips/'>tips</a>
+
+
+</div>
+	
+</div>
+</article>
+
+	<div class="share">
+	<div class="addthis_toolbox addthis_default_style ">
+		
+		
+		
+		
+	</div>
+	
+</div>
+
+
+</div>
+	<footer id="footer" class="inner">Copyright &copy; 2013
+
+    studentdeng
+
+</footer>
+	<script src="/javascripts/slash.js"></script>
+<script src="/javascripts/jquery.fancybox.pack.js"></script>
+<script type="text/javascript">
+(function($){
+	$('.fancybox').fancybox();
+})(jQuery);
+</script> <!-- Delete or comment this line to disable Fancybox -->
+
+
+
+
+
+
+</body>
+</html>

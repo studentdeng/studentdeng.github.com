@@ -1,0 +1,199 @@
+
+<!DOCTYPE HTML>
+<html>
+<head>
+	<meta charset="utf-8">
+	<title>objcclass - 不会开机的男孩</title>
+	<meta name="author" content="studentdeng">
+
+	
+	<meta name="description" content="之前一直做C++开发，最近2个多月转 Objective-C， 入门的时候，遇到了很多的困惑。现在过节，正是解决他们的好时机。 主要参考来自http://www.sealiesoftware.com/blog/archive/2009/04/14/ &hellip;">
+	
+	<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1">
+
+	<link href="/atom.xml" rel="alternate" title="不会开机的男孩" type="application/atom+xml">
+	<link rel="canonical" href="">
+	<link href="/favicon.png" rel="shortcut icon">
+	<link href="/stylesheets/screen.css" media="screen, projection" rel="stylesheet" type="text/css">
+	<!--[if lt IE 9]><script src="//html5shiv.googlecode.com/svn/trunk/html5.js"></script><![endif]-->
+	<script async="true" src="//ajax.googleapis.com/ajax/libs/jquery/1.7.2/jquery.min.js"></script>
+	
+</head>
+
+
+<body>
+	<header id="header" class="inner"><h1><a href="/">不会开机的男孩</a></h1>
+<nav id="main-nav"><ul class="main">
+	<li><a href="/">Blog</a></li>
+	<li><a href="/blog/archives">Archives</a></li>
+	<li><a href="/tags/index.html">Tags</a></li>
+	<li><a href="/favorite/index.html">Favorite</a></li>
+	<li><a href="/about/index.html">About</a></li>
+</ul>
+</nav>
+<nav id="mobile-nav">
+	<div class="alignleft menu">
+		<a class="button">Menu</a>
+		<div class="container"><ul class="main">
+	<li><a href="/">Blog</a></li>
+	<li><a href="/blog/archives">Archives</a></li>
+	<li><a href="/tags/index.html">Tags</a></li>
+	<li><a href="/favorite/index.html">Favorite</a></li>
+	<li><a href="/about/index.html">About</a></li>
+</ul>
+</div>
+	</div>
+	<div class="alignright search">
+		<a class="button"></a>
+		<div class="container">
+			<form action="http://google.com/search" method="get">
+				<input type="text" name="q" results="0">
+				<input type="hidden" name="q" value="site:studentdeng.github.com">
+			</form>
+		</div>
+	</div>
+</nav>
+<nav id="sub-nav" class="alignright">
+	<div class="social">
+		
+		
+		
+		
+		<a class="github" href="https://github.com/studentdeng" title="GitHub">GitHub</a>
+		
+    
+		
+		
+		
+		
+		
+		<a class="rss" href="/atom.xml" title="RSS">RSS</a>
+		
+    
+	</div>
+</nav>
+
+</header>
+	
+		
+	
+	<div id="content" class="inner"><article class="post">
+	<h2 class="title">Objcclass</h2>
+	<div class="entry-content"><p>之前一直做C++开发，最近2个多月转 Objective-C， 入门的时候，遇到了很多的困惑。现在过节，正是解决他们的好时机。</p>
+
+<p>主要参考来自http://www.sealiesoftware.com/blog/archive/2009/04/14/objc_explain_Classes_and_metaclasses.html</p>
+
+<p> Objective-C 也是面向对象的语言，那么，首先需要知道的就是什么是class。</p>
+
+<p>C++ 的class相对 Objective-C 中的class，就简单明了很多了。C++ 中class简单的说，就是一个大的struct， 绝大部分的class可以在编译时决定好class的布局（通过虚继承来的class成员变量只能动态确定）。当然，最关键的是，你不可能在运行时创建一个class，因为所有的class在运行之前已经确定下来，并保存在二进制文件中。</p>
+
+<p>但是， Objective-C 确不同， Objective-C 可以在运行中创建class，修改class等等。那么，改如何定义 Objective-C 中的class呢。</p>
+
+<p>在这之前，我们先看一个简单的，class的实例对象。</p>
+
+<pre><code>@interface Object 
+{
+
+    //typedef struct objc_class *Class; 
+    Class isa;    /* A pointer to the instance's class structure */ 
+}
+</code></pre>
+
+<p>对象包含一个指向class的指针，而这也就意味着，任何包含class 的指针都可以被看做是对象（object）。</p>
+
+<pre><code>struct objc_class {            
+    struct objc_class *isa;    //这里也有isa指针 
+    struct objc_class *super_class;    //这里还有一个指向基类的指针 
+    const char *name;        
+    long version; 
+    long info; 
+    long instance_size; 
+    struct objc_ivar_list *ivars;
+
+    struct objc_method_list **methodLists;
+
+    struct objc_cache *cache; 
+     struct objc_protocol_list *protocols; 
+};
+
+//新的定义
+typedef struct class_t {
+
+    struct class_t *isa;
+
+    struct class_t *superclass;
+
+    Cache cache;
+
+    IMP *vtable;
+
+    class_rw_t *data;
+
+} class_t;
+</code></pre>
+
+<p>显然，在 Objective-C 眼中，一切都是对象，甚至包括我们的class。而对象就是class的实例，那么，class是什么的实例呢，metaclass。</p>
+
+<p>事实上，我们并没有解决问题。metaclass 事实上又是root metaclass 的实例，而root metaclass 自己又是 root metaclass 的实例，一图胜千言，不做赘述。</p>
+
+<p><img src="/images/objc.png" alt="alt text" /></p>
+</div>
+
+
+<div class="meta">
+	<div class="date">
+
+
+
+
+
+
+
+
+  
+
+
+<time datetime="2011-10-05T23:31:00+08:00" pubdate data-updated="true">Oct 5<span>th</span>, 2011</time></div>
+	<div class="tags">
+
+
+	<a class='category' href='/blog/categories/objective-c/'>Objective-C</a>
+
+
+</div>
+	
+</div>
+</article>
+
+	<div class="share">
+	<div class="addthis_toolbox addthis_default_style ">
+		
+		
+		
+		
+	</div>
+	
+</div>
+
+
+</div>
+	<footer id="footer" class="inner">Copyright &copy; 2013
+
+    studentdeng
+
+</footer>
+	<script src="/javascripts/slash.js"></script>
+<script src="/javascripts/jquery.fancybox.pack.js"></script>
+<script type="text/javascript">
+(function($){
+	$('.fancybox').fancybox();
+})(jQuery);
+</script> <!-- Delete or comment this line to disable Fancybox -->
+
+
+
+
+
+
+</body>
+</html>

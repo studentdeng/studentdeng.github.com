@@ -1,0 +1,218 @@
+<?xml version="1.0" encoding="utf-8"?>
+<feed xmlns="http://www.w3.org/2005/Atom">
+
+  <title><![CDATA[Category: tips | 不会开机的男孩]]></title>
+  <link href="http://studentdeng.github.com/blog/categories/tips/atom.xml" rel="self"/>
+  <link href="http://studentdeng.github.com/"/>
+  <updated>2013-08-04T23:58:39+08:00</updated>
+  <id>http://studentdeng.github.com/</id>
+  <author>
+    <name><![CDATA[studentdeng]]></name>
+    <email><![CDATA[studentdeng@hotmail.com]]></email>
+  </author>
+  <generator uri="http://octopress.org/">Octopress</generator>
+
+  
+  <entry>
+    <title type="html"><![CDATA[git 部署代码到服务器]]></title>
+    <link href="http://studentdeng.github.com/blog/2013/07/30/git-deploy/"/>
+    <updated>2013-07-30T22:34:00+08:00</updated>
+    <id>http://studentdeng.github.com/blog/2013/07/30/git-deploy</id>
+    <content type="html"><![CDATA[<p>之前常用的部署代码就是用svn，或是更老土的ftp。今天在写一个新玩具的时候，突然发现，每次的git pull实在是一个让人烦躁的东西，就网上查找了一下，整理在这里。<a href="http://toroid.org/ams/git-website-howto">参考原文</a></p>
+
+<p>实现原理是当我们push 代码到remote repository时，通过git的<a href="https://www.kernel.org/pub/software/scm/git/docs/githooks.html">post-receive hooks</a>。执行</p>
+
+<pre><code>git checkout -f
+</code></pre>
+
+<p>来帮助我们实现自动部署</p>
+
+<p>让我们从最简单的开始，现在<strong>本地创建</strong>一个git repository</p>
+
+<pre><code>$ mkdir test &amp;&amp; cd test
+$ git init 
+$ echo 'Hello, world!' &gt; index.html
+$ echo 'Hello, world!' &gt; index.html
+$ git add index.html
+$ git commit -q -m "The humble beginnings of my web site."
+</code></pre>
+
+<p>index.html 就是我们希望能够部署到服务器的代码</p>
+
+<p>然后在<strong>服务器</strong>创建一个repository, 这里可不是服务器部署代码的位置</p>
+
+<pre><code>$ mkdir test &amp;&amp; cd test
+$ git init --bare
+$ cat &gt; hooks/post-receive
+#!/bin/sh
+GIT_WORK_TREE=/mnt/www/test git checkout -f
+$ chmod +x hooks/post-receive
+</code></pre>
+
+<p>这里的 '/mnt/www/test' 就是我们将要部署服务器代码的位置，一般的lamp，我们喜欢放在www里，当然这里需要根据不同的环境更换就好了。</p>
+
+<p>这里我们在<strong>本地</strong>的git目录下增加一个remote</p>
+
+<pre><code>$ git remote add prod ssh://server_address/mnt/www/test
+$ git push prod +master:refs/heads/master
+</code></pre>
+
+<p>server_address 可以ip，域名。</p>
+
+<p>我不太喜欢用这个命令行，我喜欢用<a href="http://www.sourcetreeapp.com">SourceTree</a>来做这个增加remote和最后的commit push 部分。</p>
+
+<p>这时我们切换到<strong>服务器</strong>目录下，就可以看到我们的index.html 在我们向prod push的之后，已经自动check out 到我们指定目录下了。</p>
+
+<p>之后我们只需要修改完成之后，git push prod 就可以自动部署代码了。</p>
+
+<p>第一次用，这里标记一下，看看后面当发生冲突的时候，时一个什么样的情况。： ）</p>
+]]></content>
+  </entry>
+  
+  <entry>
+    <title type="html"><![CDATA[安装环境遇到的dt问题]]></title>
+    <link href="http://studentdeng.github.com/blog/2013/07/26/tips-install/"/>
+    <updated>2013-07-26T17:30:00+08:00</updated>
+    <id>http://studentdeng.github.com/blog/2013/07/26/tips-install</id>
+    <content type="html"><![CDATA[<h1>ruby on rails</h1>
+
+<p>mysql2 image not found
+<a href="http://stackoverflow.com/questions/4546698/library-not-loaded-libmysqlclient-16-dylib-error-when-trying-to-run-rails-serv">soluation</a></p>
+]]></content>
+  </entry>
+  
+  <entry>
+    <title type="html"><![CDATA[code snippets]]></title>
+    <link href="http://studentdeng.github.com/blog/2013/05/08/code-snippets/"/>
+    <updated>2013-05-08T11:30:00+08:00</updated>
+    <id>http://studentdeng.github.com/blog/2013/05/08/code-snippets</id>
+    <content type="html"><![CDATA[<p>Recently I found a fascinated feature of Xcode is the Code Snippets feature. It allows you to just type few characters instead of requiring you retype them over and over.</p>
+
+<p>In my opinion, this is feature is not very obvious. The snippets library is fairly well hidden. Luckily, I've found it. There's no sort of + button or something on the bottom of IDE. Apple just add a gesture to it. The only way you add a new snippet is to write a chunk of code and drag it into the Code Snippet Library window, and then it creates a default snippet and you can modify it, do whatever you want.</p>
+
+<p>add dynamic fields</p>
+
+<pre><code>&lt;#something...#&gt;
+</code></pre>
+
+<p>Finally I also found the same feature of Netbeans. It's called Code Templates. and this feature is much easier to use than xcode.</p>
+
+<p>add dynamic fields</p>
+
+<pre><code>${something...}
+</code></pre>
+
+<p>It's really fascinated feature and avoid retype the same piece of code again and again.</p>
+]]></content>
+  </entry>
+  
+  <entry>
+    <title type="html"><![CDATA[tips]]></title>
+    <link href="http://studentdeng.github.com/blog/2013/01/26/tips/"/>
+    <updated>2013-01-26T18:05:00+08:00</updated>
+    <id>http://studentdeng.github.com/blog/2013/01/26/tips</id>
+    <content type="html"><![CDATA[<ol>
+<li><a href="#A1">ARC 编译时遇到的相关问题</a></li>
+<li><a href="#A2">install cocoapods 问题</a></li>
+<li><a href="#A3">Adding Unit Tests to an existing iOS project with Xcode 4</a></li>
+<li><a href="#A4">NSDateFormatter 问题</a></li>
+<li><a href="#A5">写博客命令</a></li>
+<li><a href="#A6">php apigen command demo</a></li>
+</ol>
+
+
+
+
+<div name = "A1" id = "A1"></div>
+
+
+<h1>ARC 编译时遇到的相关问题</h1>
+
+<ol>
+<li>自己的项目没有使用ARC, 其他代码使用ARC</li>
+<li>自己项目使用ARC, 其他代码没有使用ARC</li>
+</ol>
+
+
+<p>在Xcode Build Phases 里面的 Compile Source 需要特殊处理的文件 增加 COmpiler Flags
+1. 第一种情况 添加 -fobjc-arc
+2. 第二种情况 添加 -fno-objc-arc</p>
+
+<div name = "A2" id = "A2"></div>
+
+
+<h1>install cocoapods 问题</h1>
+
+<p>In Preview of OS X Mountain Lion, Xcode has been distributed as X.app. And Commandline Tools are not installed by default. Commandline Tools contains cc/gcc that you must need to build environment.</p>
+
+<p>Open Xcode and cmd +, to open Preferences panel where you can install Commandline Tools:</p>
+
+<p><img src="/images/commandline.jpg" alt="alt text" /></p>
+
+<p>then</p>
+
+<pre><code>gem install hpricot
+gem install cocoapods
+</code></pre>
+
+<div name = "A3" id = "A3"></div>
+
+
+<h1>Adding Unit Tests to an existing iOS project with Xcode 4</h1>
+
+<p>When you build a new iPhone or iPad app from scratch, you can generate a new project with tests using Xcode’s project templates, and the test dependency is set up correctly.</p>
+
+<p>However, if you add a unit test target to an existing iOS project, there are some manual steps required to set up the target correctly. Following these steps will get you up and running quickly:</p>
+
+<p>Project MyExistingApp -> + Add Target -> iOS -> Other -> Cocoa Unit Testing Bundle
+Name the new target something like “Unit Tests” or “MyAppTests”
+Select your new “Unit Tests” target and click the Build Phases tab, expand Target Dependencies and add MyExistingApp as as a Target Dependency
+Click the Build Settings tab and set the Bundle Loader setting to</p>
+
+<pre><code>$(BUILT_PRODUCTS_DIR)/MyExistingApp.app/MyExistingApp
+</code></pre>
+
+<p>Set the Test Host build setting to</p>
+
+<pre><code>$(BUNDLE_LOADER)
+</code></pre>
+
+<p>Go back to your app target (not the test target), set the Symbols Hidden by Default build setting to NO</p>
+
+<p>That should take care of it, and you can now start adding tests for your app. With this configuration, you continue to add application classes only to your app target, and add test classes only to your test target. Since the tests run in the app running in the simulator, the code under test can safely instantiate views and fonts, which would otherwise cause OCunit to crash when running without the Test Host setting.</p>
+
+<div name = "A4" id = "A4"></div>
+
+
+<h1>NSDateFormatter 问题</h1>
+
+<p>最近在使用新版本xcode4.6 或是 因为新版本的sdk6.1 日期转换出现了一个问题. 而且是在模拟器可以, 真机不行的问题.
+问题是 时间格式中的 "Thu Jan" 无法被识别出来. 这个挺奇怪的, 可能新版本修改了默认行为. 下面是解决方法</p>
+
+<pre><code>//time format: @"Thu Jan 17 13:59:11 +0000 2013"
+s_format = [[NSDateFormatter alloc] init];
+[s_format setDateFormat:@"eee MMM dd HH:mm:ss ZZZZ yyyy"];
+[s_format setLocale:[[NSLocale alloc] initWithLocaleIdentifier:@"en_US_POSIX"]]; //之前少了设定Locale
+</code></pre>
+
+<div name = "A5" id = "A5"></div>
+
+
+<h1>写博客命令</h1>
+
+<pre><code>rake new_post['filename'];
+rake generate 
+rake preview
+</code></pre>
+
+<div name = "A6" id = "A6"></div>
+
+
+<h1>apigen command demo</h1>
+
+<pre><code>/usr/bin/php /Users/ygcurer/apigen/apigen.php --source /Applications/XAMPP/xamppfiles/htdocs/curer/application/controllers/api --destination /Applications/XAMPP/xamppfiles/htdocs/curer/doc_test --title curer --charset UTF-8 --access-levels public,protected --internal no --php yes --tree yes --deprecated no --todo no --download no --source-code yes --colors yes --progressbar no --update-check no
+</code></pre>
+]]></content>
+  </entry>
+  
+</feed>

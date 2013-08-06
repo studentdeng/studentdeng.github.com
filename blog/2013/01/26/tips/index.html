@@ -1,0 +1,247 @@
+
+<!DOCTYPE HTML>
+<html>
+<head>
+	<meta charset="utf-8">
+	<title>tips - 不会开机的男孩</title>
+	<meta name="author" content="studentdeng">
+
+	
+	<meta name="description" content="ARC 编译时遇到的相关问题
+install cocoapods 问题
+Adding Unit Tests to an existing iOS project with Xcode 4
+NSDateFormatter 问题
+写博客命令
+php apigen command demo ARC &hellip;">
+	
+	<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1">
+
+	<link href="/atom.xml" rel="alternate" title="不会开机的男孩" type="application/atom+xml">
+	<link rel="canonical" href="">
+	<link href="/favicon.png" rel="shortcut icon">
+	<link href="/stylesheets/screen.css" media="screen, projection" rel="stylesheet" type="text/css">
+	<!--[if lt IE 9]><script src="//html5shiv.googlecode.com/svn/trunk/html5.js"></script><![endif]-->
+	<script async="true" src="//ajax.googleapis.com/ajax/libs/jquery/1.7.2/jquery.min.js"></script>
+	
+</head>
+
+
+<body>
+	<header id="header" class="inner"><h1><a href="/">不会开机的男孩</a></h1>
+<nav id="main-nav"><ul class="main">
+	<li><a href="/">Blog</a></li>
+	<li><a href="/blog/archives">Archives</a></li>
+	<li><a href="/tags/index.html">Tags</a></li>
+	<li><a href="/favorite/index.html">Favorite</a></li>
+	<li><a href="/about/index.html">About</a></li>
+</ul>
+</nav>
+<nav id="mobile-nav">
+	<div class="alignleft menu">
+		<a class="button">Menu</a>
+		<div class="container"><ul class="main">
+	<li><a href="/">Blog</a></li>
+	<li><a href="/blog/archives">Archives</a></li>
+	<li><a href="/tags/index.html">Tags</a></li>
+	<li><a href="/favorite/index.html">Favorite</a></li>
+	<li><a href="/about/index.html">About</a></li>
+</ul>
+</div>
+	</div>
+	<div class="alignright search">
+		<a class="button"></a>
+		<div class="container">
+			<form action="http://google.com/search" method="get">
+				<input type="text" name="q" results="0">
+				<input type="hidden" name="q" value="site:studentdeng.github.com">
+			</form>
+		</div>
+	</div>
+</nav>
+<nav id="sub-nav" class="alignright">
+	<div class="social">
+		
+		
+		
+		
+		<a class="github" href="https://github.com/studentdeng" title="GitHub">GitHub</a>
+		
+    
+		
+		
+		
+		
+		
+		<a class="rss" href="/atom.xml" title="RSS">RSS</a>
+		
+    
+	</div>
+</nav>
+
+</header>
+	
+		
+	
+	<div id="content" class="inner"><article class="post">
+	<h2 class="title">Tips</h2>
+	<div class="entry-content"><ol>
+<li><a href="#A1">ARC 编译时遇到的相关问题</a></li>
+<li><a href="#A2">install cocoapods 问题</a></li>
+<li><a href="#A3">Adding Unit Tests to an existing iOS project with Xcode 4</a></li>
+<li><a href="#A4">NSDateFormatter 问题</a></li>
+<li><a href="#A5">写博客命令</a></li>
+<li><a href="#A6">php apigen command demo</a></li>
+</ol>
+
+
+
+
+<div name = "A1" id = "A1"></div>
+
+
+<h1>ARC 编译时遇到的相关问题</h1>
+
+<ol>
+<li>自己的项目没有使用ARC, 其他代码使用ARC</li>
+<li>自己项目使用ARC, 其他代码没有使用ARC</li>
+</ol>
+
+
+<p>在Xcode Build Phases 里面的 Compile Source 需要特殊处理的文件 增加 COmpiler Flags
+1. 第一种情况 添加 -fobjc-arc
+2. 第二种情况 添加 -fno-objc-arc</p>
+
+<div name = "A2" id = "A2"></div>
+
+
+<h1>install cocoapods 问题</h1>
+
+<p>In Preview of OS X Mountain Lion, Xcode has been distributed as X.app. And Commandline Tools are not installed by default. Commandline Tools contains cc/gcc that you must need to build environment.</p>
+
+<p>Open Xcode and cmd +, to open Preferences panel where you can install Commandline Tools:</p>
+
+<p><img src="/images/commandline.jpg" alt="alt text" /></p>
+
+<p>then</p>
+
+<pre><code>gem install hpricot
+gem install cocoapods
+</code></pre>
+
+<div name = "A3" id = "A3"></div>
+
+
+<h1>Adding Unit Tests to an existing iOS project with Xcode 4</h1>
+
+<p>When you build a new iPhone or iPad app from scratch, you can generate a new project with tests using Xcode’s project templates, and the test dependency is set up correctly.</p>
+
+<p>However, if you add a unit test target to an existing iOS project, there are some manual steps required to set up the target correctly. Following these steps will get you up and running quickly:</p>
+
+<p>Project MyExistingApp -> + Add Target -> iOS -> Other -> Cocoa Unit Testing Bundle
+Name the new target something like “Unit Tests” or “MyAppTests”
+Select your new “Unit Tests” target and click the Build Phases tab, expand Target Dependencies and add MyExistingApp as as a Target Dependency
+Click the Build Settings tab and set the Bundle Loader setting to</p>
+
+<pre><code>$(BUILT_PRODUCTS_DIR)/MyExistingApp.app/MyExistingApp
+</code></pre>
+
+<p>Set the Test Host build setting to</p>
+
+<pre><code>$(BUNDLE_LOADER)
+</code></pre>
+
+<p>Go back to your app target (not the test target), set the Symbols Hidden by Default build setting to NO</p>
+
+<p>That should take care of it, and you can now start adding tests for your app. With this configuration, you continue to add application classes only to your app target, and add test classes only to your test target. Since the tests run in the app running in the simulator, the code under test can safely instantiate views and fonts, which would otherwise cause OCunit to crash when running without the Test Host setting.</p>
+
+<div name = "A4" id = "A4"></div>
+
+
+<h1>NSDateFormatter 问题</h1>
+
+<p>最近在使用新版本xcode4.6 或是 因为新版本的sdk6.1 日期转换出现了一个问题. 而且是在模拟器可以, 真机不行的问题.
+问题是 时间格式中的 &#8220;Thu Jan&#8221; 无法被识别出来. 这个挺奇怪的, 可能新版本修改了默认行为. 下面是解决方法</p>
+
+<pre><code>//time format: @"Thu Jan 17 13:59:11 +0000 2013"
+s_format = [[NSDateFormatter alloc] init];
+[s_format setDateFormat:@"eee MMM dd HH:mm:ss ZZZZ yyyy"];
+[s_format setLocale:[[NSLocale alloc] initWithLocaleIdentifier:@"en_US_POSIX"]]; //之前少了设定Locale
+</code></pre>
+
+<div name = "A5" id = "A5"></div>
+
+
+<h1>写博客命令</h1>
+
+<pre><code>rake new_post['filename'];
+rake generate 
+rake preview
+</code></pre>
+
+<div name = "A6" id = "A6"></div>
+
+
+<h1>apigen command demo</h1>
+
+<pre><code>/usr/bin/php /Users/ygcurer/apigen/apigen.php --source /Applications/XAMPP/xamppfiles/htdocs/curer/application/controllers/api --destination /Applications/XAMPP/xamppfiles/htdocs/curer/doc_test --title curer --charset UTF-8 --access-levels public,protected --internal no --php yes --tree yes --deprecated no --todo no --download no --source-code yes --colors yes --progressbar no --update-check no
+</code></pre>
+</div>
+
+
+<div class="meta">
+	<div class="date">
+
+
+
+
+
+
+
+
+  
+
+
+<time datetime="2013-01-26T18:05:00+08:00" pubdate data-updated="true">Jan 26<span>th</span>, 2013</time></div>
+	<div class="tags">
+
+
+	<a class='category' href='/blog/categories/ios/'>IOS</a>, <a class='category' href='/blog/categories/configure/'>configure</a>, <a class='category' href='/blog/categories/tips/'>tips</a>
+
+
+</div>
+	
+</div>
+</article>
+
+	<div class="share">
+	<div class="addthis_toolbox addthis_default_style ">
+		
+		
+		
+		
+	</div>
+	
+</div>
+
+
+</div>
+	<footer id="footer" class="inner">Copyright &copy; 2013
+
+    studentdeng
+
+</footer>
+	<script src="/javascripts/slash.js"></script>
+<script src="/javascripts/jquery.fancybox.pack.js"></script>
+<script type="text/javascript">
+(function($){
+	$('.fancybox').fancybox();
+})(jQuery);
+</script> <!-- Delete or comment this line to disable Fancybox -->
+
+
+
+
+
+
+</body>
+</html>

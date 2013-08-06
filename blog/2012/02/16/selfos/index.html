@@ -1,0 +1,169 @@
+
+<!DOCTYPE HTML>
+<html>
+<head>
+	<meta charset="utf-8">
+	<title>Orange‘s 一个操作系统的实现 配置问题 - 不会开机的男孩</title>
+	<meta name="author" content="studentdeng">
+
+	
+	<meta name="description" content="最近在瞅《Orange‘s 一个操作系统的实现》，个人认为相当好的OS入门实践书籍，配合之前看过的大部分的理论书，容易理解那些抽象的概念（无代码无真相）， 和《Linux内核完全注释》都是相当不错的入门书籍。 这里记录一下可能遇到的问题，主要是配置问题，实现逻辑书里面很详细，代码注释也很详细， &hellip;">
+	
+	<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1">
+
+	<link href="/atom.xml" rel="alternate" title="不会开机的男孩" type="application/atom+xml">
+	<link rel="canonical" href="">
+	<link href="/favicon.png" rel="shortcut icon">
+	<link href="/stylesheets/screen.css" media="screen, projection" rel="stylesheet" type="text/css">
+	<!--[if lt IE 9]><script src="//html5shiv.googlecode.com/svn/trunk/html5.js"></script><![endif]-->
+	<script async="true" src="//ajax.googleapis.com/ajax/libs/jquery/1.7.2/jquery.min.js"></script>
+	
+</head>
+
+
+<body>
+	<header id="header" class="inner"><h1><a href="/">不会开机的男孩</a></h1>
+<nav id="main-nav"><ul class="main">
+	<li><a href="/">Blog</a></li>
+	<li><a href="/blog/archives">Archives</a></li>
+	<li><a href="/tags/index.html">Tags</a></li>
+	<li><a href="/favorite/index.html">Favorite</a></li>
+	<li><a href="/about/index.html">About</a></li>
+</ul>
+</nav>
+<nav id="mobile-nav">
+	<div class="alignleft menu">
+		<a class="button">Menu</a>
+		<div class="container"><ul class="main">
+	<li><a href="/">Blog</a></li>
+	<li><a href="/blog/archives">Archives</a></li>
+	<li><a href="/tags/index.html">Tags</a></li>
+	<li><a href="/favorite/index.html">Favorite</a></li>
+	<li><a href="/about/index.html">About</a></li>
+</ul>
+</div>
+	</div>
+	<div class="alignright search">
+		<a class="button"></a>
+		<div class="container">
+			<form action="http://google.com/search" method="get">
+				<input type="text" name="q" results="0">
+				<input type="hidden" name="q" value="site:studentdeng.github.com">
+			</form>
+		</div>
+	</div>
+</nav>
+<nav id="sub-nav" class="alignright">
+	<div class="social">
+		
+		
+		
+		
+		<a class="github" href="https://github.com/studentdeng" title="GitHub">GitHub</a>
+		
+    
+		
+		
+		
+		
+		
+		<a class="rss" href="/atom.xml" title="RSS">RSS</a>
+		
+    
+	</div>
+</nav>
+
+</header>
+	
+		
+	
+	<div id="content" class="inner"><article class="post">
+	<h2 class="title">Orange‘s 一个操作系统的实现 配置问题</h2>
+	<div class="entry-content"><p>最近在瞅《Orange‘s 一个操作系统的实现》，个人认为相当好的OS入门实践书籍，配合之前看过的大部分的理论书，容易理解那些抽象的概念（无代码无真相），</p>
+
+<p>和《Linux内核完全注释》都是相当不错的入门书籍。</p>
+
+<p>这里记录一下可能遇到的问题，主要是配置问题，实现逻辑书里面很详细，代码注释也很详细，仔细多想应该没啥问题。</p>
+
+<p>我这里环境是ubuntu 10 64bit， 而书中代码是32bit的。这里在编译链接的时候出了一点小问题。这里记录下。</p>
+
+<p>错误：</p>
+
+<pre><code>ld: i386 architecture of input file `kernel/kernel.o' is incompatible with i386:x86-64 output
+</code></pre>
+
+<p>需要修改makefile</p>
+
+<pre><code>CFLAGS          = -I include/ -c -fno-builtin -m32
+LDFLAGS         = -m elf_i386 -s -Ttext $(ENTRYPOINT)
+</code></pre>
+
+<p>错误：</p>
+
+<pre><code>klib.c:(.text+0xe5): undefined reference to `__stack_chk_fail'
+</code></pre>
+
+<p> 这里应该是少了c的标准库，还是需要修改makefile文件</p>
+
+<pre><code>LDFLAGS         = -m elf_i386 -s -Ttext $(ENTRYPOINT) -lc
+</code></pre>
+</div>
+
+
+<div class="meta">
+	<div class="date">
+
+
+
+
+
+
+
+
+  
+
+
+<time datetime="2012-02-16T23:57:00+08:00" pubdate data-updated="true">Feb 16<span>th</span>, 2012</time></div>
+	<div class="tags">
+
+
+	<a class='category' href='/blog/categories/operating-system/'>operating_system</a>
+
+
+</div>
+	
+</div>
+</article>
+
+	<div class="share">
+	<div class="addthis_toolbox addthis_default_style ">
+		
+		
+		
+		
+	</div>
+	
+</div>
+
+
+</div>
+	<footer id="footer" class="inner">Copyright &copy; 2013
+
+    studentdeng
+
+</footer>
+	<script src="/javascripts/slash.js"></script>
+<script src="/javascripts/jquery.fancybox.pack.js"></script>
+<script type="text/javascript">
+(function($){
+	$('.fancybox').fancybox();
+})(jQuery);
+</script> <!-- Delete or comment this line to disable Fancybox -->
+
+
+
+
+
+
+</body>
+</html>
