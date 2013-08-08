@@ -4,7 +4,7 @@
   <title><![CDATA[Category: algorithms | 不会开机的男孩]]></title>
   <link href="http://studentdeng.github.com/blog/categories/algorithms/atom.xml" rel="self"/>
   <link href="http://studentdeng.github.com/"/>
-  <updated>2013-08-04T23:58:39+08:00</updated>
+  <updated>2013-08-08T12:26:56+08:00</updated>
   <id>http://studentdeng.github.com/</id>
   <author>
     <name><![CDATA[studentdeng]]></name>
@@ -12,6 +12,65 @@
   </author>
   <generator uri="http://octopress.org/">Octopress</generator>
 
+  
+  <entry>
+    <title type="html"><![CDATA[跳跃表 skip list]]></title>
+    <link href="http://studentdeng.github.com/blog/2013/08/08/skip-list/"/>
+    <updated>2013-08-08T09:51:00+08:00</updated>
+    <id>http://studentdeng.github.com/blog/2013/08/08/skip-list</id>
+    <content type="html"><![CDATA[<p>最近在学习<a href="http://redis.cn">redis</a>，这时才知道了<a href="http://en.wikipedia.org/wiki/Skip_list">skip list</a>，结合<a href="http://v.163.com/movie/2010/12/7/S/M6UTT5U0I_M6V2TTJ7S.html">Mit 算法导论 lecture 12</a>，在奋斗了2个早上的时间后有了下面的东东。</p>
+
+<p>对于我们熟悉的binary search来说，我们需要能够做到random access才行。但是在普通的link这种数据结构中却不能做到。而这种情况下我们有很多类似的工具比如heap，tree，b tree，red－black tree。等等类似的都是来自AVL的变种。但是说实话，这些东东，的确是挺难实现的，需要做各种的旋转啊，调整啊，来保持平衡。特别是red－black tree。而这时的skip list 就为我们提供了一个很好的思路。</p>
+
+<h1>introduction</h1>
+
+<p>让我们先从简单的开始</p>
+
+<p><img src="images/skip_list1.png" alt="image" /></p>
+
+<p>如果最下面的数字是已经排序好的数列，我们想要快速查找其中一项，而不是简单的便利。我们可以增加一个link，也就是上面的一条，来让我们能够“跳过”一些元素，也就是减少一些不必要的比较。</p>
+
+<p>那么在2条时，我们的访问程度是多少呢？L2 + L1 / L2, 也就是第二条link的个数+ 每一个小端个数，这个是最差情况。显然，让这个不等式和最小，需要 L2 = L1 / L2。 显然L1是一个定值。这里设为N,那么，2条link下，我们的查找复杂度是 2 * √n</p>
+
+<p>如何再优化呢？这个思路很简单，就是在L2上面再构建一个link L3. 整个时间也就是 L3 ＋ L2 ／ L3 ＋ L1 ／ L2 ，根据不等式性质，他们的和最小时，也就是 L3 ＝ L2 ／ L3 ＝ L1 ／ L2。当L1 ＝ N时，他们的和时 3 * 立方根（N）</p>
+
+<p><img src="images/skip_list_l3.png" alt="image" /></p>
+
+<p>当第k层时， 我们的时间则是 k * k次方跟（N）</p>
+
+<p>当k = lgN 时，我们的时间为 lgN * lg 次方跟（N），根据对数的换底公式，我们可以得出 时间是 2lgN. 哈，我们现在已经降到O(lgN).我们满足了。</p>
+
+<p>这时我们可以想象一下，这个skip list的结构，其实就是一个binary tree。我们通过最上面的一层访问类似跟节点的情况，然后一层层link 相当于tree的孩子节点，整个比较过程和binary search 非常的相似。</p>
+
+<h1>insert</h1>
+
+<p>对于这些结构来说，搞定search不是难点，插入和删除则是最麻烦的东西。这里我们可以自己思考一下，为了保证我们的link的结构足够完美，可能需要记录没一段的个数，然后我们可能有一些节点要上几层或是下几层。但是这个其实，本质上和那些avl树又一样了。skip list则是基于一种随机的策略来决定这些节点。其实我们可以思考一下，最完美的分法就是和binary tree一样的，所以这种2倍数的关系就可以用抛硬币的方式来决定。</p>
+
+<p>这里为了程序时间方便，我们创建一个无穷小的节点作为我们的其实节点，这样，我们所有的开始都是从最左边。</p>
+
+<p><img src="images/skip_list_01.png" alt="image" /></p>
+
+<p>我们插入一个元素30，这时我们可以判断一下这个新的元素是否需要“升级”，这里我扔了一下，反面，不用升级了。</p>
+
+<p><img src="images/skip_list_02.png" alt="image" /></p>
+
+<p>这里我们插入一个15，我扔了一下，反面。不用升级</p>
+
+<p><img src="images/skip_list_03.png" alt="image" /></p>
+
+<p>这里我们插入一个20，我扔了一个正面，又扔了一个正面，额，好吧第三次终于是反面了。</p>
+
+<p><img src="images/skip_list_04.png" alt="image" /></p>
+
+<p>这里涉及到了一点点的随机算法的证明，这些东西实在是让人烦躁。主要还是大学时候的概率学得就不咋地，现在也都忘了。从最直观的来看，就是一层层升级的概率会越来越低，在随机算法足够独立和大量的数目上来看，不难形成这样子的一个类似tree的结构。</p>
+
+<h1>delete</h1>
+
+<p>删除这里的操作简直就是blazing simple,因为我们整个list layer 都是建立在随机上的，删除则是直接删除就好了</p>
+
+<p>我在看到这里，基本已经受不了要吐槽了。实现这个也太简单了，相对red-black tree这种东西。</p>
+]]></content>
+  </entry>
   
   <entry>
     <title type="html"><![CDATA[stanford 算法课上 Kosaraju algorithm]]></title>
@@ -636,196 +695,6 @@ __default_alloc_template&lt;__threads, __inst&gt;::_S_chunk_alloc(size_t __size,
 </code></pre>
 
 <p>内存管理这里仅仅是一个最最基本的梳理，事实上其实仅仅是照本宣科而已，因为这里面有太多的细节需要去琢磨。STL设计这样的原因是什么？他的分配回收机制为什么是这样？他的分配粒度，以及处理分配不足的手段。对我来说都是未知，不过好在目前的确不需要思考过多这些问题。仅仅是上层的封装和简单功能的实现就已经让我受益匪浅了。这些问题还是留给时间去沉淀这些未知吧。</p>
-]]></content>
-  </entry>
-  
-  <entry>
-    <title type="html"><![CDATA[SGI STL 学习笔记三 heap]]></title>
-    <link href="http://studentdeng.github.com/blog/2011/01/08/sgi-stl-heap/"/>
-    <updated>2011-01-08T21:44:00+08:00</updated>
-    <id>http://studentdeng.github.com/blog/2011/01/08/sgi-stl-heap</id>
-    <content type="html"><![CDATA[<p>heap，大家都非常了解。大学学的时候必须会的内容，要不考试很难过关。只是当时并没有学习明白。只是被老师和考试强了。完全是机械的记忆。觉得真是太对不起自己这个专业了。最近再看STL，也就有了这一篇老生重弹。</p>
-
-<p>在很多情况下，我们非常关心一个集合中的最大元素。并希望能够从集合中最快速度找到并删除。为了整体的效率，我们需要在这个集合中插入元素，查找最大元素，删除最大元素能够综合最快。使用binary heap便是一种不错的选择之一。而且能够在O(logN)插入，删除元素，查找最大元素在常数时间下。</p>
-
-<p>　　Binary heap 是一种complete binary tree（完全二叉树）。所以我们可以放心的使用简单的数组来保存数据而不需要担心浪费空间。维持树的父子关系也简单快速,而且整个过程都在原地进行。</p>
-
-<p>　　Heap 可以按照排列顺序分为大顶堆，小顶堆。 这里讨论的堆默认为大顶堆。每个节点的值大于等于其子节点的值。</p>
-
-<p>一个典型的大顶堆。</p>
-
-<p><img src="/images/stl-heap-1.png" alt="alt text" /></p>
-
-<p>了解heap，让我们从最简单的插入开始。</p>
-
-<p>push_heap
-　　在插入之前，首先确定的是，我们已经构成了一个完整的堆，为了保证完全二叉树的要求，我们只能在数组最后一个元素位置后增加元素。这个新家伙，显然有可能破坏了我们整个堆的结构。那么我们需要给这个新来的找到他的位置。</p>
-
-<p><img src="/images/stl-heap-2.png" alt="alt text" />
-<img src="/images/stl-heap-3.png" alt="alt text" />
-<img src="/images/stl-heap-4.png" alt="alt text" /></p>
-
-<p>　　总结这个过程。其实就是在整个树中增加一个叶子节点，然后，一直到比较到跟或是比父节点小为止。可以看出，整个这次比较最大次数为树的深度，O(logN)。</p>
-
-<pre><code>template &lt;class _RandomAccessIterator&gt;
-inline void
-push_heap(_RandomAccessIterator __first, _RandomAccessIterator __last)
-{
-  __push_heap_aux(__first, __last,
-                  __DISTANCE_TYPE(__first), __VALUE_TYPE(__first));
-}
-
-template &lt;class _RandomAccessIterator, class _Distance, class _Tp&gt;
-inline void
-__push_heap_aux(_RandomAccessIterator __first,
-                _RandomAccessIterator __last, _Distance*, _Tp*)
-{
-  __push_heap(__first, _Distance((__last - __first) - 1), _Distance(0), 
-              _Tp(*(__last - 1)));
-    //这里将最后一个元素设定为holeIndex。也就是说，这时新数据已经在底部的数组中了。
-}
-
-template &lt;class _RandomAccessIterator, class _Distance, class _Tp&gt;
-void
-__push_heap(_RandomAccessIterator __first,
-            _Distance __holeIndex, _Distance __topIndex, _Tp __value)
-{
-  _Distance __parent = (__holeIndex - 1) / 2;
-   //不断移动holeIndex，直到大于等于父节点或到达根。
-  while (__holeIndex &gt; __topIndex &amp;&amp; *(__first + __parent) &lt; __value) {
-    *(__first + __holeIndex) = *(__first + __parent);
-    __holeIndex = __parent;
-    __parent = (__holeIndex - 1) / 2;
-  }    
-  *(__first + __holeIndex) = __value;
-}
-</code></pre>
-
-<p>Pop_heap
-　　Pop_heap用来将最大值从堆中取走，当将顶部元素移动走之后，在根部就产生了一个hole。我们需要找到合适的数据将这个hole添上，而且我们还要尽可能的保存堆的性质（大小关系，和完全二叉树），所以，我们将顶部元素和最后一个元素交换。并将堆的大小减一。那么我们的新的根元素，显然违反了堆中大小关系的约定。所以，我们需要重新调整堆。而且，我们更爽的是，这个错误的堆的左右二个子树分别满足堆的性质，那么我需要找到hole节点的2个子节点中最大的和我们的hole 比较，并沿着大的子节点方向，直到叶子或是我们的这个hole满足大小关系。</p>
-
-<p><img src="/images/stl-heap-5.png" alt="alt text" />
-<img src="/images/stl-heap-6.png" alt="alt text" />
-<img src="/images/stl-heap-7.png" alt="alt text" />
-<img src="/images/stl-heap-8.png" alt="alt text" /></p>
-
-<pre><code>template &lt;class _RandomAccessIterator&gt;
-inline void pop_heap(_RandomAccessIterator __first, 
-                     _RandomAccessIterator __last)
-{
-  __pop_heap_aux(__first, __last, __VALUE_TYPE(__first));
-}
-
-template &lt;class _RandomAccessIterator, class _Tp&gt;
-inline void
-__pop_heap_aux(_RandomAccessIterator __first, _RandomAccessIterator __last,
-               _Tp*)
-{
-  __pop_heap(__first, __last - 1, __last - 1, 
-             _Tp(*(__last - 1)), __DISTANCE_TYPE(__first));
-}
-
-template &lt;class _RandomAccessIterator, class _Tp, class _Distance&gt;
-inline void
-__pop_heap(_RandomAccessIterator __first, _RandomAccessIterator __last,
-           _RandomAccessIterator __result, _Tp __value, _Distance*)
-{
-  *__result = *__first;
-   //这里将之前堆中最后一个元素的值保存在__value，并将根元素的值移动到最后一个元素
-  //然后将--last，也就是说，我们这里构造了一个更小的堆，并且只是根元素有问题。
-  //那么我们剩下的就是调整这个小堆。
-  __adjust_heap(__first, _Distance(0), _Distance(__last - __first), __value);
-}
-
-template &lt;class _RandomAccessIterator, class _Distance, class _Tp&gt;
-void
-__adjust_heap(_RandomAccessIterator __first, _Distance __holeIndex,
-              _Distance __len, _Tp __value)
-{
-  _Distance __topIndex = __holeIndex;
-  _Distance __secondChild = 2 * __holeIndex + 2; //找到hole节点的右子节点
-  while (__secondChild &lt; __len) {
-    if (*(__first + __secondChild) &lt; *(__first + (__secondChild - 1)))
-      __secondChild--;// __secondChild指向最大的子节点。
-    *(__first + __holeIndex) = *(__first + __secondChild);
-    //这里SGI STL并没有和我们的__value比较大小，所以，我们这里得到的holeIndex可能是错误的。或者说只是一
-    //个大概的位置。（很多优化的算法，并不是一次性完成的，而是去分情况或是其他什么的多种复合）。
-    //这里可能是SGI STL在这里优化，侯捷大师，似乎在这里打个一个盹。
-    __holeIndex = __secondChild;
-    __secondChild = 2 * (__secondChild + 1);
-  }
-  if (__secondChild == __len) {//当我们的根节点没有右节点时，就搞他左边的兄弟。
-    *(__first + __holeIndex) = *(__first + (__secondChild - 1));
-    __holeIndex = __secondChild - 1;
-  }
-  //侯捷大师注 ："将与调整值添入目前洞号内，注意，此时肯定满足次序特性"
-  //“依侯捷之见，下面直接改为 *(__first + __holeIndex) = value;应该可以”
-  //我这里认为侯捷大师在这里打盹了，这句话如果改了的话，整个过程就出错了。
-  //之前的优化，可以减少一些不必要的比较次数。但是如果把这个也省了。结果不能保证正确。
-  //我们的结果不一定满足次序特性。
-  __push_heap(__first, __holeIndex, __topIndex, __value);
-}
-</code></pre>
-
-<p>比如如下例子。</p>
-
-<p><img src="/images/stl-heap-9.png" alt="alt text" /></p>
-
-<p>当push_heap的时候，如果直接*(<strong>first + </strong>holeIndex) = VALUE,那么就会成为这个样子。</p>
-
-<p><img src="/images/stl-heap-10.png" alt="alt text" /></p>
-
-<p> 　　所以，必须要再一次经过__push_heap，再一次修正 24->16->65这条路径。保证真正的顺序。</p>
-
-<p>而SGI这样实现是为了减少一些不必要的比较。</p>
-
-<p>Sort_heap
-　　在搞定这些基本操作之后，我们发现，我们只需要执行一次次的pop_heap，我们就可以把数据按照一定的顺序跑列出来。而这也就是堆排序。</p>
-
-<pre><code>template &lt;class _RandomAccessIterator&gt;
-
-void sort_heap(_RandomAccessIterator __first, _RandomAccessIterator __last)
-
-{
-
-while (__last - __first &gt; 1)
-
-pop_heap(__first, __last--);
-
-}
-</code></pre>
-
-<p>　　我们发现，每一次pop_heap操作是O(logN)。整个数列排序结果是O(n*logN)。这已经达到比较方法的极限。而且是原地排序，而且最坏情况依然不变。heap sort的确是一个非常出色的算法。</p>
-
-<p>哦，扯了这么多，我们heap的好处不少，可是如何构造heap呢？</p>
-
-<p>Make_heap
-　　还记得<strong>adjust_heap， 这个函数，可以在左右子树满足条件情况下调整树，那么我们完全可以从下到上逐渐构造成一个符合我们要求的树。而且，树的叶子节点是没有孩子的。所以，我们可以更快的只是从中间开始。 初略的估算下，每一次</strong>adjust_heap，O(logN)，一半的节点，O(n*logN)，但其实我们可以做的更快。 建堆的复杂度可以达到O(n)的线性。</p>
-
-<pre><code>template &lt;class _RandomAccessIterator&gt;
-inline void
-make_heap(_RandomAccessIterator __first, _RandomAccessIterator __last)
-{
-  __make_heap(__first, __last,
-              __VALUE_TYPE(__first), __DISTANCE_TYPE(__first));
-}
-
-template &lt;class _RandomAccessIterator, class _Tp, class _Distance&gt;
-void
-__make_heap(_RandomAccessIterator __first,
-            _RandomAccessIterator __last, _Tp*, _Distance*)
-{
-  if (__last - __first &lt; 2) return;//当长度小于等于1时，我们就不需要排序了。
-  _Distance __len = __last - __first;
-  _Distance __parent = (__len - 2)/2;//找到第一个非叶子节点。
-
-  while (true) {
-    __adjust_heap(__first, __parent, __len, _Tp(*(__first + __parent)));
-    if (__parent == 0) return;
-    __parent--;
-  }
-}
-</code></pre>
 ]]></content>
   </entry>
   

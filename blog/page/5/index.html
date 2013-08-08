@@ -7,7 +7,12 @@
 	<meta name="author" content="studentdeng">
 
 	
-	<meta name="description" content="好长时间不写博客了, 可以说将近一年的时间里面,并没有多少技术上的积累, 甚至有点倒退的痕迹, 不管是从心气还是态度, 还是毅力上面.我曾经是刘未鹏的粉丝,哈,当然现在也一样. 我一直好奇为什么会他会那么的专心在思维这部分.其实在1年前, &hellip;">
+	<meta name="description" content="ARC 编译时遇到的相关问题
+install cocoapods 问题
+Adding Unit Tests to an existing iOS project with Xcode 4
+NSDateFormatter 问题
+写博客命令
+php apigen command demo ARC &hellip;">
 	
 	<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1">
 
@@ -78,6 +83,147 @@
 		
 	
 	<div id="content" class="inner">
+
+
+    <article class="post">
+	<h2 class="title">
+		
+		<a href="/blog/2013/01/26/tips/">
+		
+			Tips</a>
+	</h2>
+	<div class="entry-content">
+		<ol>
+<li><a href="#A1">ARC 编译时遇到的相关问题</a></li>
+<li><a href="#A2">install cocoapods 问题</a></li>
+<li><a href="#A3">Adding Unit Tests to an existing iOS project with Xcode 4</a></li>
+<li><a href="#A4">NSDateFormatter 问题</a></li>
+<li><a href="#A5">写博客命令</a></li>
+<li><a href="#A6">php apigen command demo</a></li>
+</ol>
+
+
+
+
+<div name = "A1" id = "A1"></div>
+
+
+<h1>ARC 编译时遇到的相关问题</h1>
+
+<ol>
+<li>自己的项目没有使用ARC, 其他代码使用ARC</li>
+<li>自己项目使用ARC, 其他代码没有使用ARC</li>
+</ol>
+
+
+<p>在Xcode Build Phases 里面的 Compile Source 需要特殊处理的文件 增加 COmpiler Flags
+1. 第一种情况 添加 -fobjc-arc
+2. 第二种情况 添加 -fno-objc-arc</p>
+
+<div name = "A2" id = "A2"></div>
+
+
+<h1>install cocoapods 问题</h1>
+
+<p>In Preview of OS X Mountain Lion, Xcode has been distributed as X.app. And Commandline Tools are not installed by default. Commandline Tools contains cc/gcc that you must need to build environment.</p>
+
+<p>Open Xcode and cmd +, to open Preferences panel where you can install Commandline Tools:</p>
+
+<p><img src="/images/commandline.jpg" alt="alt text" /></p>
+
+<p>then</p>
+
+<pre><code>gem install hpricot
+gem install cocoapods
+</code></pre>
+
+<div name = "A3" id = "A3"></div>
+
+
+<h1>Adding Unit Tests to an existing iOS project with Xcode 4</h1>
+
+<p>When you build a new iPhone or iPad app from scratch, you can generate a new project with tests using Xcode’s project templates, and the test dependency is set up correctly.</p>
+
+<p>However, if you add a unit test target to an existing iOS project, there are some manual steps required to set up the target correctly. Following these steps will get you up and running quickly:</p>
+
+<p>Project MyExistingApp -> + Add Target -> iOS -> Other -> Cocoa Unit Testing Bundle
+Name the new target something like “Unit Tests” or “MyAppTests”
+Select your new “Unit Tests” target and click the Build Phases tab, expand Target Dependencies and add MyExistingApp as as a Target Dependency
+Click the Build Settings tab and set the Bundle Loader setting to</p>
+
+<pre><code>$(BUILT_PRODUCTS_DIR)/MyExistingApp.app/MyExistingApp
+</code></pre>
+
+<p>Set the Test Host build setting to</p>
+
+<pre><code>$(BUNDLE_LOADER)
+</code></pre>
+
+<p>Go back to your app target (not the test target), set the Symbols Hidden by Default build setting to NO</p>
+
+<p>That should take care of it, and you can now start adding tests for your app. With this configuration, you continue to add application classes only to your app target, and add test classes only to your test target. Since the tests run in the app running in the simulator, the code under test can safely instantiate views and fonts, which would otherwise cause OCunit to crash when running without the Test Host setting.</p>
+
+<div name = "A4" id = "A4"></div>
+
+
+<h1>NSDateFormatter 问题</h1>
+
+<p>最近在使用新版本xcode4.6 或是 因为新版本的sdk6.1 日期转换出现了一个问题. 而且是在模拟器可以, 真机不行的问题.
+问题是 时间格式中的 &#8220;Thu Jan&#8221; 无法被识别出来. 这个挺奇怪的, 可能新版本修改了默认行为. 下面是解决方法</p>
+
+<pre><code>//time format: @"Thu Jan 17 13:59:11 +0000 2013"
+s_format = [[NSDateFormatter alloc] init];
+[s_format setDateFormat:@"eee MMM dd HH:mm:ss ZZZZ yyyy"];
+[s_format setLocale:[[NSLocale alloc] initWithLocaleIdentifier:@"en_US_POSIX"]]; //之前少了设定Locale
+</code></pre>
+
+<div name = "A5" id = "A5"></div>
+
+
+<h1>写博客命令</h1>
+
+<pre><code>rake new_post['filename'];
+rake generate 
+rake preview
+</code></pre>
+
+<div name = "A6" id = "A6"></div>
+
+
+<h1>apigen command demo</h1>
+
+<pre><code>/usr/bin/php /Users/ygcurer/apigen/apigen.php --source /Applications/XAMPP/xamppfiles/htdocs/curer/application/controllers/api --destination /Applications/XAMPP/xamppfiles/htdocs/curer/doc_test --title curer --charset UTF-8 --access-levels public,protected --internal no --php yes --tree yes --deprecated no --todo no --download no --source-code yes --colors yes --progressbar no --update-check no
+</code></pre>
+
+		
+		
+	</div>
+
+
+<div class="meta">
+	<div class="date">
+
+
+
+
+
+
+
+
+  
+
+
+<time datetime="2013-01-26T18:05:00+08:00" pubdate data-updated="true">Jan 26<span>th</span>, 2013</time></div>
+	<div class="tags">
+
+
+	<a class='category' href='/blog/categories/ios/'>IOS</a>, <a class='category' href='/blog/categories/configure/'>configure</a>, <a class='category' href='/blog/categories/tips/'>tips</a>
+
+
+</div>
+	
+</div>
+</article>
 
 
     <article class="post">
@@ -417,67 +563,6 @@ Tal说到,&#8221;人们是有权利去感受幸福,感受痛苦,悲伤的.
 
 
 <time datetime="2012-11-15T07:07:39+08:00" pubdate data-updated="true">Nov 15<span>th</span>, 2012</time></div>
-	<div class="tags">
-
-
-	<a class='category' href='/blog/categories/emotion/'>emotion</a>
-
-
-</div>
-	
-</div>
-</article>
-
-
-    <article class="post">
-	<h2 class="title">
-		
-		<a href="/blog/2012/11/12/how-to-ask-question/">
-		
-			如何问问题</a>
-	</h2>
-	<div class="entry-content">
-		<p>如何问问题,这是一个非常有意思的问题.恩.事实上,对很多初学者来说,特别是在工作中,遇到最多的就是,不会问问题.</p>
-
-<p>同样, 对于&#8221;自己&#8221;,这个独特的领域下,如何去问问题,依然是一个非常头疼的问题.</p>
-
-<p>这个可能听上去很奇怪,不过却是一个很常见的问题.就是,我们常常问自己问题.比如,当我们的一段感情出现了问题.一段工作合作经历不愉快,我们总是在问,&#8221;what&#8217;s wrong, what&#8217;s not working, how can I improve it&#8221; 恩,事实上这个没有任何问题.特别是对那些拥有强大驱动力的家伙们,喜欢打鸡血的家伙们,总是愿意从任何角度去思考如何能够做的更好,这个问题在那里. 呵呵, 有时候真的非常讽刺, 写到这里我脑子里在想什么? &#8220;下午的扑克牌,我出的牌还是有问题,如果blah blah blah, 那么yadda yadda yadda&#8221;, 恩,这个本来没有任何问题.但是,如果问自己的问题或是思考的问题,只是这个,那么这个,就是一个很大的问题.</p>
-
-<p>一个很简单的例子, 如果有人问我 &#8220;你的缺点是什么&#8221;, &#8220;固执,自闭,不好沟通,懒惰&#8221;. 但如果问题,&#8221;你的优点是什么&#8221;, 好吧,我真的一下子回答不上来,我需要思考很久,而且,似乎,恩,直到现在我也没有一个让自己信服的答案.</p>
-
-<p>为什么会出现这种问题. 有很大原因,这个问题是出在了思考问题的方式中, 有时候,或是,在大多数时候,注意力过于集中了.恩. 这是一个好的习惯, 能够更好的集中注意力, 能够在嘈杂的环境下学习, 能够抵抗大家娱乐时,冷静思考. 因为,这个世界有太多的诱惑, 太多的噪音, 不管是真的生活环境, 还是别人的建议. 一点点动作,都会分心会降低很大的效率, 但是,如果总是,恩,我指的是总是,那么,会导致一个非常严重的问题,就是, 你关注的,只是你想关注的事情,而并不关注那些已经存在,甚至就在眼前的事情,这样,同一件事情,所获得的经历,或是事物的看法,会受到非常大的自己注意力的约束.</p>
-
-<p>一个简单的例子,就拿下午和同事们一起打牌放松, 其实现在想来应该是一个很放松的一个环境.但显然有点被我搞糟了,至少大家的情绪受到了影响.呼, 也许我太过在意打牌输赢的这个结果, 总是会去埋怨队友不该这么出牌,而对手出错了则会很开心的去&#8221;讥笑&#8221;, 幸灾乐祸. 因为我的脑瓜子里面塞的全是,如何能够获胜,我需要教会我的队友如何出牌,然后我需要用我的情绪影响我的队手,这样他们会犯更多的错误,我会去不由自主的去记忆出牌的每一个环节,而其他人更多的只是一个娱乐的心态,因为并不是一个竞争的事情,大家不去care 这个结果,所以不会像我那样废脑子记忆之前的一些动作 ,而是开心一起玩的过程.而我显然只是关注于比赛的输赢.恩,只是注意这个结果,甚至细节到每一轮出牌,是否能够做的更好.更纠结的是,完了,我还会反思.有些地方,可以做的更好.</p>
-
-<p>同样,在面对一段失败的经历时,同样, 看到的也会全部聚焦在如何解决问题,如何提高效率,如何能够更快.更好. 等等, 而并没有去在意收获到什么.也不去在意自己的优点而只是在意自己的缺点, 恩,如何改正.</p>
-
-<p>这是一个道理的.</p>
-
-<p>因为,如果你在一个团队工作, 如果你说出来的只是,&#8221;what&#8217;s wrong, how can we improve it&#8221;, 会打击到更多人的积极性.人们会感到失落.会感到更多的压力,当然,不同的人会喜欢不同的环境,我不排除有人喜欢高压力,高动力. 但如果全部都是这些话,那么这个就是一个非常严重的问题.</p>
-
-<p>当然,这个不仅仅在工作中,生活中,特别是和家庭成员的关系,更是这样子的.想想一直说你不行,不行, 别人家的孩子,怎怎怎的老妈吧, 那个永远处在高处藐视你一切努力成果的别人家的孩子. 好吧,我这里不想去讨论过多这些东西.要不我妈又要给我打电话了. 这个东西毕竟还是准备在空间发的:  ), 好吧,不能要求父母太多,因为他们有他们的教育背景, 和生活背景.80后父母的他们那一代,能够做到这些,能够了解自己情绪的实在是太难了.</p>
-
-<p>如何问问题, 其实这个不是问问题,而是如何思考问题.思考的方式,决定了现实.</p>
-
-		
-		
-	</div>
-
-
-<div class="meta">
-	<div class="date">
-
-
-
-
-
-
-
-
-  
-
-
-<time datetime="2012-11-12T07:12:01+08:00" pubdate data-updated="true">Nov 12<span>th</span>, 2012</time></div>
 	<div class="tags">
 
 

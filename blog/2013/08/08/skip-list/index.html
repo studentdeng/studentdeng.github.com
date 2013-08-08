@@ -1,0 +1,192 @@
+
+<!DOCTYPE HTML>
+<html>
+<head>
+	<meta charset="utf-8">
+	<title>跳跃表 skip list - 不会开机的男孩</title>
+	<meta name="author" content="studentdeng">
+
+	
+	<meta name="description" content="最近在学习redis，这时才知道了skip list，结合Mit 算法导论 lecture 12，在奋斗了2个早上的时间后有了下面的东东。 对于我们熟悉的binary search来说，我们需要能够做到random access才行。但是在普通的link这种数据结构中却不能做到。 &hellip;">
+	
+	<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1">
+
+	<link href="/atom.xml" rel="alternate" title="不会开机的男孩" type="application/atom+xml">
+	<link rel="canonical" href="">
+	<link href="/favicon.png" rel="shortcut icon">
+	<link href="/stylesheets/screen.css" media="screen, projection" rel="stylesheet" type="text/css">
+	<!--[if lt IE 9]><script src="//html5shiv.googlecode.com/svn/trunk/html5.js"></script><![endif]-->
+	<script async="true" src="//ajax.googleapis.com/ajax/libs/jquery/1.7.2/jquery.min.js"></script>
+	
+</head>
+
+
+<body>
+	<header id="header" class="inner"><h1><a href="/">不会开机的男孩</a></h1>
+<nav id="main-nav"><ul class="main">
+	<li><a href="/">Blog</a></li>
+	<li><a href="/blog/archives">Archives</a></li>
+	<li><a href="/tags/index.html">Tags</a></li>
+	<li><a href="/favorite/index.html">Favorite</a></li>
+	<li><a href="/about/index.html">About</a></li>
+</ul>
+</nav>
+<nav id="mobile-nav">
+	<div class="alignleft menu">
+		<a class="button">Menu</a>
+		<div class="container"><ul class="main">
+	<li><a href="/">Blog</a></li>
+	<li><a href="/blog/archives">Archives</a></li>
+	<li><a href="/tags/index.html">Tags</a></li>
+	<li><a href="/favorite/index.html">Favorite</a></li>
+	<li><a href="/about/index.html">About</a></li>
+</ul>
+</div>
+	</div>
+	<div class="alignright search">
+		<a class="button"></a>
+		<div class="container">
+			<form action="http://google.com/search" method="get">
+				<input type="text" name="q" results="0">
+				<input type="hidden" name="q" value="site:studentdeng.github.com">
+			</form>
+		</div>
+	</div>
+</nav>
+<nav id="sub-nav" class="alignright">
+	<div class="social">
+		
+		
+		
+		
+		<a class="github" href="https://github.com/studentdeng" title="GitHub">GitHub</a>
+		
+    
+		
+		
+		
+		
+		
+		<a class="rss" href="/atom.xml" title="RSS">RSS</a>
+		
+    
+	</div>
+</nav>
+
+</header>
+	
+		
+	
+	<div id="content" class="inner"><article class="post">
+	<h2 class="title">跳跃表 Skip List</h2>
+	<div class="entry-content"><p>最近在学习<a href="http://redis.cn">redis</a>，这时才知道了<a href="http://en.wikipedia.org/wiki/Skip_list">skip list</a>，结合<a href="http://v.163.com/movie/2010/12/7/S/M6UTT5U0I_M6V2TTJ7S.html">Mit 算法导论 lecture 12</a>，在奋斗了2个早上的时间后有了下面的东东。</p>
+
+<p>对于我们熟悉的binary search来说，我们需要能够做到random access才行。但是在普通的link这种数据结构中却不能做到。而这种情况下我们有很多类似的工具比如heap，tree，b tree，red－black tree。等等类似的都是来自AVL的变种。但是说实话，这些东东，的确是挺难实现的，需要做各种的旋转啊，调整啊，来保持平衡。特别是red－black tree。而这时的skip list 就为我们提供了一个很好的思路。</p>
+
+<h1>introduction</h1>
+
+<p>让我们先从简单的开始</p>
+
+<p><img src="images/skip_list1.png" alt="image" /></p>
+
+<p>如果最下面的数字是已经排序好的数列，我们想要快速查找其中一项，而不是简单的便利。我们可以增加一个link，也就是上面的一条，来让我们能够“跳过”一些元素，也就是减少一些不必要的比较。</p>
+
+<p>那么在2条时，我们的访问程度是多少呢？L2 + L1 / L2, 也就是第二条link的个数+ 每一个小端个数，这个是最差情况。显然，让这个不等式和最小，需要 L2 = L1 / L2。 显然L1是一个定值。这里设为N,那么，2条link下，我们的查找复杂度是 2 * √n</p>
+
+<p>如何再优化呢？这个思路很简单，就是在L2上面再构建一个link L3. 整个时间也就是 L3 ＋ L2 ／ L3 ＋ L1 ／ L2 ，根据不等式性质，他们的和最小时，也就是 L3 ＝ L2 ／ L3 ＝ L1 ／ L2。当L1 ＝ N时，他们的和时 3 * 立方根（N）</p>
+
+<p><img src="images/skip_list_l3.png" alt="image" /></p>
+
+<p>当第k层时， 我们的时间则是 k * k次方跟（N）</p>
+
+<p>当k = lgN 时，我们的时间为 lgN * lg 次方跟（N），根据对数的换底公式，我们可以得出 时间是 2lgN. 哈，我们现在已经降到O(lgN).我们满足了。</p>
+
+<p>这时我们可以想象一下，这个skip list的结构，其实就是一个binary tree。我们通过最上面的一层访问类似跟节点的情况，然后一层层link 相当于tree的孩子节点，整个比较过程和binary search 非常的相似。</p>
+
+<h1>insert</h1>
+
+<p>对于这些结构来说，搞定search不是难点，插入和删除则是最麻烦的东西。这里我们可以自己思考一下，为了保证我们的link的结构足够完美，可能需要记录没一段的个数，然后我们可能有一些节点要上几层或是下几层。但是这个其实，本质上和那些avl树又一样了。skip list则是基于一种随机的策略来决定这些节点。其实我们可以思考一下，最完美的分法就是和binary tree一样的，所以这种2倍数的关系就可以用抛硬币的方式来决定。</p>
+
+<p>这里为了程序时间方便，我们创建一个无穷小的节点作为我们的其实节点，这样，我们所有的开始都是从最左边。</p>
+
+<p><img src="images/skip_list_01.png" alt="image" /></p>
+
+<p>我们插入一个元素30，这时我们可以判断一下这个新的元素是否需要“升级”，这里我扔了一下，反面，不用升级了。</p>
+
+<p><img src="images/skip_list_02.png" alt="image" /></p>
+
+<p>这里我们插入一个15，我扔了一下，反面。不用升级</p>
+
+<p><img src="images/skip_list_03.png" alt="image" /></p>
+
+<p>这里我们插入一个20，我扔了一个正面，又扔了一个正面，额，好吧第三次终于是反面了。</p>
+
+<p><img src="images/skip_list_04.png" alt="image" /></p>
+
+<p>这里涉及到了一点点的随机算法的证明，这些东西实在是让人烦躁。主要还是大学时候的概率学得就不咋地，现在也都忘了。从最直观的来看，就是一层层升级的概率会越来越低，在随机算法足够独立和大量的数目上来看，不难形成这样子的一个类似tree的结构。</p>
+
+<h1>delete</h1>
+
+<p>删除这里的操作简直就是blazing simple,因为我们整个list layer 都是建立在随机上的，删除则是直接删除就好了</p>
+
+<p>我在看到这里，基本已经受不了要吐槽了。实现这个也太简单了，相对red-black tree这种东西。</p>
+</div>
+
+
+<div class="meta">
+	<div class="date">
+
+
+
+
+
+
+
+
+  
+
+
+<time datetime="2013-08-08T09:51:00+08:00" pubdate data-updated="true">Aug 8<span>th</span>, 2013</time></div>
+	<div class="tags">
+
+
+	<a class='category' href='/blog/categories/algorithms/'>algorithms</a>
+
+
+</div>
+	
+</div>
+</article>
+
+	<div class="share">
+	<div class="addthis_toolbox addthis_default_style ">
+		
+		
+		
+		
+	</div>
+	
+</div>
+
+
+</div>
+	<footer id="footer" class="inner">Copyright &copy; 2013
+
+    studentdeng
+
+</footer>
+	<script src="/javascripts/slash.js"></script>
+<script src="/javascripts/jquery.fancybox.pack.js"></script>
+<script type="text/javascript">
+(function($){
+	$('.fancybox').fancybox();
+})(jQuery);
+</script> <!-- Delete or comment this line to disable Fancybox -->
+
+
+
+
+
+
+</body>
+</html>
