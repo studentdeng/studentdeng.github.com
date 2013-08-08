@@ -7,7 +7,8 @@
 	<meta name="author" content="studentdeng">
 
 	
-	<meta name="description" content="最近在学习redis，这时才知道了skip list，结合Mit 算法导论 lecture 12，在奋斗了2个早上的时间后有了下面的东东。 对于我们熟悉的binary search来说，我们需要能够做到random access才行。但是在普通的link这种数据结构中却不能做到。 &hellip;">
+	<meta name="description" content="资料代码，思路来自 raywenderlich。这个只是自己学习时的笔记，非原创。 b2RevoluteJoint 将刚体固定在一个点上，刚体可以围绕这个点旋转
+可以提供马达，提供刚体旋转的动力 所以，通过b2RevoluteJoint的第一个特性，我们可以很方便的模拟跷跷板。而第二个特性， &hellip;">
 	
 	<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1">
 
@@ -78,6 +79,110 @@
 		
 	
 	<div id="content" class="inner">
+
+
+    <article class="post">
+	<h2 class="title">
+		
+		<a href="/blog/2013/08/08/box2d-05/">
+		
+			Box2d 05 RevoluteJoint and b2WeldJoint</a>
+	</h2>
+	<div class="entry-content">
+		<p>资料代码，思路来自 <a href="http://www.raywenderlich.com/4756/how-to-make-a-catapult-shooting-game-with-cocos2d-and-box2d-part-1">raywenderlich</a>。这个只是自己学习时的笔记，非原创。</p>
+
+<h1>b2RevoluteJoint</h1>
+
+<ul>
+<li>将刚体固定在一个点上，刚体可以围绕这个点旋转</li>
+<li>可以提供马达，提供刚体旋转的动力</li>
+</ul>
+
+
+<p>所以，通过b2RevoluteJoint的第一个特性，我们可以很方便的模拟跷跷板。而第二个特性，我们可以很方便的实现汽车运动，或是弹弓类似的东西，今天实现一个类似疯狂小鸟的demo</p>
+
+<p>创建b2RevoluteJoint很简单，但是里面有一些属性还是让人比较纠结，特别是好多中文blog，不知道是笔误还是无心，都是错的 =, =!</p>
+
+<pre><code>b2RevoluteJointDef armJointDef;
+armJointDef.Initialize(groundBody, armBody, b2Vec2(233.0 / PTM_RATIO, FLOOR_HEIGHT / PTM_RATIO));
+
+armJointDef.enableLimit = true;
+armJointDef.lowerAngle = CC_DEGREES_TO_RADIANS(9);
+armJointDef.upperAngle = CC_DEGREES_TO_RADIANS(75);
+
+armJointDef.enableMotor = true;
+armJointDef.maxMotorTorque = 200;
+armJointDef.motorSpeed = - 10;
+
+armJoint = (b2RevoluteJoint *)world-&gt;CreateJoint(&amp;armJointDef);
+</code></pre>
+
+<p>这3个很好理解，就是对我们的旋转做限制。单位是弧度。</p>
+
+<ul>
+<li>enableLimit</li>
+<li>lowerAngle</li>
+<li>upperAngle</li>
+</ul>
+
+
+<p>这3个稍微不好理解</p>
+
+<ul>
+<li>enableMotor：     表示是否开启我们的旋转马达</li>
+<li>motorSpeed：      表示我们希望马达给我们提供的速度是多少，小于0表示顺时针</li>
+<li>maxMotorTorque：  表示马达给我们提供的扭矩有多少。</li>
+</ul>
+
+
+<p>简单的说，就是maxMotorTorque为我们提供改变速度的力。motorSpeed表示我们希望达到的最大速度是多少。</p>
+
+<h1>b2WeldJoint</h1>
+
+<p>b2WeldJoint又是一个很好理解的连接器。b2WeldJoint通过一个点把2个刚体绑定在一起运动。</p>
+
+<pre><code>b2WeldJointDef weldJointDef;
+weldJointDef.Initialize(bulletBody, armBody, b2Vec2(230.0f/PTM_RATIO,(155.0f+FLOOR_HEIGHT)/PTM_RATIO));
+weldJointDef.collideConnected = false;
+
+bulletJoint = (b2WeldJoint*)world-&gt;CreateJoint(&amp;weldJointDef);
+</code></pre>
+
+<p>在弹弓实例下，我们可以将炮弹绑定在我们的发射架上，当发射架运动到一定角度时，我们可以释放这个连接器，炮弹就可以射出了。</p>
+
+<p><a href="https://github.com/studentdeng/box2d-tutorials/tree/master/05">source code</a></p>
+
+<p><a href="http://v.youku.com/v_show/id_XNTkzMzI0ODAw.html">demo演示</a></p>
+
+		
+		
+	</div>
+
+
+<div class="meta">
+	<div class="date">
+
+
+
+
+
+
+
+
+  
+
+
+<time datetime="2013-08-08T15:11:00+08:00" pubdate data-updated="true">Aug 8<span>th</span>, 2013</time></div>
+	<div class="tags">
+
+
+	<a class='category' href='/blog/categories/box2d/'>box2D</a>, <a class='category' href='/blog/categories/game/'>game</a>
+
+
+</div>
+	
+</div>
+</article>
 
 
     <article class="post">
@@ -478,50 +583,6 @@ $ git push prod +master:refs/heads/master
 
 
 	<a class='category' href='/blog/categories/git/'>git</a>, <a class='category' href='/blog/categories/tips/'>tips</a>
-
-
-</div>
-	
-</div>
-</article>
-
-
-    <article class="post">
-	<h2 class="title">
-		
-		<a href="/blog/2013/07/26/tips-install/">
-		
-			安装环境遇到的dt问题</a>
-	</h2>
-	<div class="entry-content">
-		<h1>ruby on rails</h1>
-
-<p>mysql2 image not found
-<a href="http://stackoverflow.com/questions/4546698/library-not-loaded-libmysqlclient-16-dylib-error-when-trying-to-run-rails-serv">soluation</a></p>
-
-		
-		
-	</div>
-
-
-<div class="meta">
-	<div class="date">
-
-
-
-
-
-
-
-
-  
-
-
-<time datetime="2013-07-26T17:30:00+08:00" pubdate data-updated="true">Jul 26<span>th</span>, 2013</time></div>
-	<div class="tags">
-
-
-	<a class='category' href='/blog/categories/configure/'>configure</a>, <a class='category' href='/blog/categories/ruby/'>ruby</a>, <a class='category' href='/blog/categories/tips/'>tips</a>
 
 
 </div>

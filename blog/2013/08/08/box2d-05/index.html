@@ -1,0 +1,206 @@
+
+<!DOCTYPE HTML>
+<html>
+<head>
+	<meta charset="utf-8">
+	<title>box2d 05 RevoluteJoint and b2WeldJoint - 不会开机的男孩</title>
+	<meta name="author" content="studentdeng">
+
+	
+	<meta name="description" content="资料代码，思路来自 raywenderlich。这个只是自己学习时的笔记，非原创。 b2RevoluteJoint 将刚体固定在一个点上，刚体可以围绕这个点旋转
+可以提供马达，提供刚体旋转的动力 所以，通过b2RevoluteJoint的第一个特性，我们可以很方便的模拟跷跷板。而第二个特性， &hellip;">
+	
+	<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1">
+
+	<link href="/atom.xml" rel="alternate" title="不会开机的男孩" type="application/atom+xml">
+	<link rel="canonical" href="">
+	<link href="/favicon.png" rel="shortcut icon">
+	<link href="/stylesheets/screen.css" media="screen, projection" rel="stylesheet" type="text/css">
+	<!--[if lt IE 9]><script src="//html5shiv.googlecode.com/svn/trunk/html5.js"></script><![endif]-->
+	<script async="true" src="//ajax.googleapis.com/ajax/libs/jquery/1.7.2/jquery.min.js"></script>
+	
+</head>
+
+
+<body>
+	<header id="header" class="inner"><h1><a href="/">不会开机的男孩</a></h1>
+<nav id="main-nav"><ul class="main">
+	<li><a href="/">Blog</a></li>
+	<li><a href="/blog/archives">Archives</a></li>
+	<li><a href="/tags/index.html">Tags</a></li>
+	<li><a href="/favorite/index.html">Favorite</a></li>
+	<li><a href="/about/index.html">About</a></li>
+</ul>
+</nav>
+<nav id="mobile-nav">
+	<div class="alignleft menu">
+		<a class="button">Menu</a>
+		<div class="container"><ul class="main">
+	<li><a href="/">Blog</a></li>
+	<li><a href="/blog/archives">Archives</a></li>
+	<li><a href="/tags/index.html">Tags</a></li>
+	<li><a href="/favorite/index.html">Favorite</a></li>
+	<li><a href="/about/index.html">About</a></li>
+</ul>
+</div>
+	</div>
+	<div class="alignright search">
+		<a class="button"></a>
+		<div class="container">
+			<form action="http://google.com/search" method="get">
+				<input type="text" name="q" results="0">
+				<input type="hidden" name="q" value="site:studentdeng.github.com">
+			</form>
+		</div>
+	</div>
+</nav>
+<nav id="sub-nav" class="alignright">
+	<div class="social">
+		
+		
+		
+		
+		<a class="github" href="https://github.com/studentdeng" title="GitHub">GitHub</a>
+		
+    
+		
+		
+		
+		
+		
+		<a class="rss" href="/atom.xml" title="RSS">RSS</a>
+		
+    
+	</div>
+</nav>
+
+</header>
+	
+		
+	
+	<div id="content" class="inner"><article class="post">
+	<h2 class="title">Box2d 05 RevoluteJoint and b2WeldJoint</h2>
+	<div class="entry-content"><p>资料代码，思路来自 <a href="http://www.raywenderlich.com/4756/how-to-make-a-catapult-shooting-game-with-cocos2d-and-box2d-part-1">raywenderlich</a>。这个只是自己学习时的笔记，非原创。</p>
+
+<h1>b2RevoluteJoint</h1>
+
+<ul>
+<li>将刚体固定在一个点上，刚体可以围绕这个点旋转</li>
+<li>可以提供马达，提供刚体旋转的动力</li>
+</ul>
+
+
+<p>所以，通过b2RevoluteJoint的第一个特性，我们可以很方便的模拟跷跷板。而第二个特性，我们可以很方便的实现汽车运动，或是弹弓类似的东西，今天实现一个类似疯狂小鸟的demo</p>
+
+<p>创建b2RevoluteJoint很简单，但是里面有一些属性还是让人比较纠结，特别是好多中文blog，不知道是笔误还是无心，都是错的 =, =!</p>
+
+<pre><code>b2RevoluteJointDef armJointDef;
+armJointDef.Initialize(groundBody, armBody, b2Vec2(233.0 / PTM_RATIO, FLOOR_HEIGHT / PTM_RATIO));
+
+armJointDef.enableLimit = true;
+armJointDef.lowerAngle = CC_DEGREES_TO_RADIANS(9);
+armJointDef.upperAngle = CC_DEGREES_TO_RADIANS(75);
+
+armJointDef.enableMotor = true;
+armJointDef.maxMotorTorque = 200;
+armJointDef.motorSpeed = - 10;
+
+armJoint = (b2RevoluteJoint *)world-&gt;CreateJoint(&amp;armJointDef);
+</code></pre>
+
+<p>这3个很好理解，就是对我们的旋转做限制。单位是弧度。</p>
+
+<ul>
+<li>enableLimit</li>
+<li>lowerAngle</li>
+<li>upperAngle</li>
+</ul>
+
+
+<p>这3个稍微不好理解</p>
+
+<ul>
+<li>enableMotor：     表示是否开启我们的旋转马达</li>
+<li>motorSpeed：      表示我们希望马达给我们提供的速度是多少，小于0表示顺时针</li>
+<li>maxMotorTorque：  表示马达给我们提供的扭矩有多少。</li>
+</ul>
+
+
+<p>简单的说，就是maxMotorTorque为我们提供改变速度的力。motorSpeed表示我们希望达到的最大速度是多少。</p>
+
+<h1>b2WeldJoint</h1>
+
+<p>b2WeldJoint又是一个很好理解的连接器。b2WeldJoint通过一个点把2个刚体绑定在一起运动。</p>
+
+<pre><code>b2WeldJointDef weldJointDef;
+weldJointDef.Initialize(bulletBody, armBody, b2Vec2(230.0f/PTM_RATIO,(155.0f+FLOOR_HEIGHT)/PTM_RATIO));
+weldJointDef.collideConnected = false;
+
+bulletJoint = (b2WeldJoint*)world-&gt;CreateJoint(&amp;weldJointDef);
+</code></pre>
+
+<p>在弹弓实例下，我们可以将炮弹绑定在我们的发射架上，当发射架运动到一定角度时，我们可以释放这个连接器，炮弹就可以射出了。</p>
+
+<p><a href="https://github.com/studentdeng/box2d-tutorials/tree/master/05">source code</a></p>
+
+<p><a href="http://v.youku.com/v_show/id_XNTkzMzI0ODAw.html">demo演示</a></p>
+</div>
+
+
+<div class="meta">
+	<div class="date">
+
+
+
+
+
+
+
+
+  
+
+
+<time datetime="2013-08-08T15:11:00+08:00" pubdate data-updated="true">Aug 8<span>th</span>, 2013</time></div>
+	<div class="tags">
+
+
+	<a class='category' href='/blog/categories/box2d/'>box2D</a>, <a class='category' href='/blog/categories/game/'>game</a>
+
+
+</div>
+	
+</div>
+</article>
+
+	<div class="share">
+	<div class="addthis_toolbox addthis_default_style ">
+		
+		
+		
+		
+	</div>
+	
+</div>
+
+
+</div>
+	<footer id="footer" class="inner">Copyright &copy; 2013
+
+    studentdeng
+
+</footer>
+	<script src="/javascripts/slash.js"></script>
+<script src="/javascripts/jquery.fancybox.pack.js"></script>
+<script type="text/javascript">
+(function($){
+	$('.fancybox').fancybox();
+})(jQuery);
+</script> <!-- Delete or comment this line to disable Fancybox -->
+
+
+
+
+
+
+</body>
+</html>
