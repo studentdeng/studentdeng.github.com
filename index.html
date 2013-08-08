@@ -96,7 +96,7 @@
 
 <p>让我们先从简单的开始</p>
 
-<p><img src="images/skip_list1.png" alt="image" /></p>
+<p><img src="http://studentdeng.github.io/images/skip_list1.png" alt="image" /></p>
 
 <p>如果最下面的数字是已经排序好的数列，我们想要快速查找其中一项，而不是简单的便利。我们可以增加一个link，也就是上面的一条，来让我们能够“跳过”一些元素，也就是减少一些不必要的比较。</p>
 
@@ -104,7 +104,7 @@
 
 <p>如何再优化呢？这个思路很简单，就是在L2上面再构建一个link L3. 整个时间也就是 L3 ＋ L2 ／ L3 ＋ L1 ／ L2 ，根据不等式性质，他们的和最小时，也就是 L3 ＝ L2 ／ L3 ＝ L1 ／ L2。当L1 ＝ N时，他们的和时 3 * 立方根（N）</p>
 
-<p><img src="images/skip_list_l3.png" alt="image" /></p>
+<p><img src="http://studentdeng.github.io/images/skip_list_l3.png" alt="image" /></p>
 
 <p>当第k层时， 我们的时间则是 k * k次方跟（N）</p>
 
@@ -118,19 +118,19 @@
 
 <p>这里为了程序时间方便，我们创建一个无穷小的节点作为我们的其实节点，这样，我们所有的开始都是从最左边。</p>
 
-<p><img src="images/skip_list_01.png" alt="image" /></p>
+<p><img src="http://studentdeng.github.io/images/skip_list_01.png" alt="image" /></p>
 
 <p>我们插入一个元素30，这时我们可以判断一下这个新的元素是否需要“升级”，这里我扔了一下，反面，不用升级了。</p>
 
-<p><img src="images/skip_list_02.png" alt="image" /></p>
+<p><img src="http://studentdeng.github.io/images/skip_list_02.png" alt="image" /></p>
 
 <p>这里我们插入一个15，我扔了一下，反面。不用升级</p>
 
-<p><img src="images/skip_list_03.png" alt="image" /></p>
+<p><img src="http://studentdeng.github.io/images/skip_list_03.png" alt="image" /></p>
 
 <p>这里我们插入一个20，我扔了一个正面，又扔了一个正面，额，好吧第三次终于是反面了。</p>
 
-<p><img src="images/skip_list_04.png" alt="image" /></p>
+<p><img src="http://studentdeng.github.io/images/skip_list_04.png" alt="image" /></p>
 
 <p>这里涉及到了一点点的随机算法的证明，这些东西实在是让人烦躁。主要还是大学时候的概率学得就不咋地，现在也都忘了。从最直观的来看，就是一层层升级的概率会越来越低，在随机算法足够独立和大量的数目上来看，不难形成这样子的一个类似tree的结构。</p>
 
