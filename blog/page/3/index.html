@@ -7,7 +7,9 @@
 	<meta name="author" content="studentdeng">
 
 	
-	<meta name="description" content="有很多人觉得我能用1年的时间减肥30斤，并保持下来很牛，也许是有一点点的不容易吧。我这里纪录一下自己的心得。 动力 改变很难，减肥的确是一件非常难的事情，需要极大的意志力和时间的投入。我最开始的动力，可能说出来挺丢人，是因为自己喜欢的一个女孩，表白失败。然后顿时觉得浑身充满负能量没有地方发泄。 &hellip;">
+	<meta name="description" content="首先几个概念需要了解一下。 world
+就是engin需要模拟的世界，他有一个大家都很熟悉的重力 body(刚体)
+刚体的定义大家在物理中都熟悉了，在box2D世界中，刚体定义了物体一些重要的属性，比如质点位置，旋转角度，角速度，线性阻尼，等 shape(形状)这里定义我们的物体的形状是圆的， &hellip;">
 	
 	<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1">
 
@@ -78,6 +80,154 @@
 		
 	
 	<div id="content" class="inner">
+
+
+    <article class="post">
+	<h2 class="title">
+		
+		<a href="/blog/2013/07/18/box2d-01/">
+		
+			Box2D 01 基本概念</a>
+	</h2>
+	<div class="entry-content">
+		<p>首先几个概念需要了解一下。</p>
+
+<p><strong>world</strong>
+就是engin需要模拟的世界，他有一个大家都很熟悉的重力</p>
+
+<p><strong>body(刚体)</strong>
+刚体的定义大家在物理中都熟悉了，在box2D世界中，刚体定义了物体一些重要的属性，比如质点位置，旋转角度，角速度，线性阻尼，等</p>
+
+<p><strong>shape(形状)</strong>这里定义我们的物体的形状是圆的，方的还是多边形等</p>
+
+<p><strong>fixture(材质？这个好难翻译中文)</strong>光是上面的东西，我们不能够完成物理世界的碰撞，fixture定义了几个重要的属性，包括摩擦系数，恢复系数，密度</p>
+
+<p>回想当初学习的物理知识也就这么多了，当然后面还会介绍其他新的东西。有个形状，和密度我们可以计算质量，有了位置，速度，角速度，足够我们计算高中学到的简单碰撞了，在有恢复系数和线性阻尼，我们也能更好的模拟更真实的物理情景，而这也是大学物理的部分了。</p>
+
+<p>好多的背景知识，让我们再看看如何在程序里面做一个真实的世界出来。</p>
+
+<pre><code>b2Vec2 gravity;
+gravity.Set(0.0f, -10.0f);
+world = new b2World(gravity);
+</code></pre>
+
+<p>box2D的坐标是和笛卡尔坐标系一样的，向量 (0, -10) 表示我们真实世界的重力，大约为10米每秒</p>
+
+<p>创建我们的第一个物体，一个圆球。
+这里Box2D采用了工厂模式来创建一个我们需要的物体。我们首先描述一个需求，然后通过一个工厂来生产我们需要的产品。</p>
+
+<pre><code>b2BodyDef bodyDef;//
+bodyDef.type = b2_dynamicBody; //这里定义为动态刚体
+bodyDef.position.Set(pt.x/PTM_RATIO, pt.y/PTM_RATIO);
+body = world-&gt;CreateBody(&amp;bodyDef);
+
+b2CircleShape bodyShape;
+bodyShape.m_radius = 26.0 / PTM_RATIO; //定义球的半径
+
+b2FixtureDef fixtureDef;
+fixtureDef.shape = &amp;bodyShape;
+fixtureDef.density = 0.1f;  //密度
+fixtureDef.friction = 0.1f; //摩擦力
+fixtureDef.restitution = 0.9f; //恢复系数
+body-&gt;CreateFixture(&amp;fixtureDef);
+</code></pre>
+
+<p>还急得之前的概念么？在定义好body，shape，创建好fixture之后。这些信息已经足够模拟真实运动了。因为是真实的世界，独立各个平台，box2D的单位是米，而不是程序图形图像的单位像素，PTM_RATIO这个宏用于转换单位。</p>
+
+<p>当然，这些物理数据还不能让我们在程序中看到，为了美观，增加一点小东西，希望大家了解cocos2d。这里创建一个CCPhysicsSprite</p>
+
+<pre><code>CCPhysicsSprite *sprite = [CCPhysicsSprite spriteWithFile:@"ball.png"];
+[self addChild:sprite];
+
+[sprite setPTMRatio:PTM_RATIO];
+[sprite setB2Body:body];
+
+//CCPhysicsSprite 的操作一定要在设置PTMRatio 和 body之后
+[sprite setPosition: ccp(pt.x, pt.y)];
+</code></pre>
+
+<p>这时我们就可以看到一个小球自由落体，然后淡出世界，不过似乎有一种淡淡的忧伤，太无趣了这个世界。</p>
+
+<p>让我们为这个世界创建一个边界，让小球不要运动超过屏幕。</p>
+
+<pre><code>// Define the ground body.
+b2BodyDef groundBodyDef;
+groundBodyDef.position.Set(0, 0); // bottom-left corner
+
+// Call the body factory which allocates memory for the ground body
+// from a pool and creates the ground box shape (also from a pool).
+// The body is also added to the world.
+b2Body* groundBody = world-&gt;CreateBody(&amp;groundBodyDef);
+
+// Define the ground box shape.
+b2EdgeShape groundBox;      
+
+// bottom
+
+groundBox.Set(b2Vec2(0,0), b2Vec2(s.width/PTM_RATIO,0));
+groundBody-&gt;CreateFixture(&amp;groundBox,0);
+
+// top
+groundBox.Set(b2Vec2(0,s.height/PTM_RATIO), b2Vec2(s.width/PTM_RATIO,s.height/PTM_RATIO));
+groundBody-&gt;CreateFixture(&amp;groundBox,0);
+
+// left
+groundBox.Set(b2Vec2(0,s.height/PTM_RATIO), b2Vec2(0,0));
+groundBody-&gt;CreateFixture(&amp;groundBox,0);
+
+// right
+groundBox.Set(b2Vec2(s.width/PTM_RATIO,s.height/PTM_RATIO), b2Vec2(s.width/PTM_RATIO,0));
+groundBody-&gt;CreateFixture(&amp;groundBox,0);
+</code></pre>
+
+<p>这里没有指定其他属性，默认创建的刚体是静态的，不会移动的。而这正是我们想要的。</p>
+
+<p>这时小球会自由落体然后反弹，这时可以调整restitution，如果对这些不是很熟悉的话。但是总体感觉还是有一点无聊，让我们再来一点新东西。</p>
+
+<pre><code>b2Vec2 force = b2Vec2(-30, 30);
+body-&gt;ApplyLinearImpulse(force, body-&gt;GetPosition());
+</code></pre>
+
+<p>body是我们其中的一个小球。ApplyLinearImpulse的意思就是对body施加一个冲量。</p>
+
+<p><a href="https://github.com/studentdeng/box2d-tutorials/tree/master/01">demo地址</a></p>
+
+<div class="video-container">
+<iframe height=498 width=510 src="http://player.youku.com/embed/XNTg0NTU4NzQ0" frameborder=0 allowfullscreen></iframe>
+</div>
+
+
+		
+		
+	</div>
+
+
+<div class="meta">
+	<div class="date">
+
+
+
+
+
+
+
+
+  
+
+
+<time datetime="2013-07-18T16:05:00+08:00" pubdate data-updated="true">Jul 18<span>th</span>, 2013</time></div>
+	<div class="tags">
+
+
+	<a class='category' href='/blog/categories/box2d/'>box2D</a>, <a class='category' href='/blog/categories/game/'>game</a>
+
+
+</div>
+	
+	<div class="comments"><a href="/blog/2013/07/18/box2d-01/#disqus_thread">Comments</a></div>
+	
+</div>
+</article>
 
 
     <article class="post">
@@ -164,6 +314,8 @@
 
 </div>
 	
+	<div class="comments"><a href="/blog/2013/07/09/exercise/#disqus_thread">Comments</a></div>
+	
 </div>
 </article>
 
@@ -228,6 +380,8 @@
 
 
 </div>
+	
+	<div class="comments"><a href="/blog/2013/06/24/remember/#disqus_thread">Comments</a></div>
 	
 </div>
 </article>
@@ -297,6 +451,8 @@ okay， 这个idea最大的区别在于，你需要跳出你之前对那个女�
 
 </div>
 	
+	<div class="comments"><a href="/blog/2013/06/20/something-should-already-known/#disqus_thread">Comments</a></div>
+	
 </div>
 </article>
 
@@ -357,62 +513,7 @@ okay， 这个idea最大的区别在于，你需要跳出你之前对那个女�
 
 </div>
 	
-</div>
-</article>
-
-
-    <article class="post">
-	<h2 class="title">
-		
-		<a href="/blog/2013/05/08/code-snippets/">
-		
-			Code Snippets</a>
-	</h2>
-	<div class="entry-content">
-		<p>Recently I found a fascinated feature of Xcode is the Code Snippets feature. It allows you to just type few characters instead of requiring you retype them over and over.</p>
-
-<p>In my opinion, this is feature is not very obvious. The snippets library is fairly well hidden. Luckily, I&#8217;ve found it. There&#8217;s no sort of + button or something on the bottom of IDE. Apple just add a gesture to it. The only way you add a new snippet is to write a chunk of code and drag it into the Code Snippet Library window, and then it creates a default snippet and you can modify it, do whatever you want.</p>
-
-<p>add dynamic fields</p>
-
-<pre><code>&lt;#something...#&gt;
-</code></pre>
-
-<p>Finally I also found the same feature of Netbeans. It&#8217;s called Code Templates. and this feature is much easier to use than xcode.</p>
-
-<p>add dynamic fields</p>
-
-<pre><code>${something...}
-</code></pre>
-
-<p>It&#8217;s really fascinated feature and avoid retype the same piece of code again and again.</p>
-
-		
-		
-	</div>
-
-
-<div class="meta">
-	<div class="date">
-
-
-
-
-
-
-
-
-  
-
-
-<time datetime="2013-05-08T11:30:00+08:00" pubdate data-updated="true">May 8<span>th</span>, 2013</time></div>
-	<div class="tags">
-
-
-	<a class='category' href='/blog/categories/tips/'>tips</a>
-
-
-</div>
+	<div class="comments"><a href="/blog/2013/06/12/note-book/#disqus_thread">Comments</a></div>
 	
 </div>
 </article>
@@ -439,6 +540,19 @@ okay， 这个idea最大的区别在于，你需要跳出你之前对那个女�
 })(jQuery);
 </script> <!-- Delete or comment this line to disable Fancybox -->
 
+
+<script type="text/javascript">
+      var disqus_shortname = 'studentdeng';
+      
+        
+        var disqus_script = 'count.js';
+      
+    (function () {
+      var dsq = document.createElement('script'); dsq.type = 'text/javascript'; dsq.async = true;
+      dsq.src = '//go.disqus.com/' + disqus_script;
+      (document.getElementsByTagName('head')[0] || document.getElementsByTagName('body')[0]).appendChild(dsq);
+    }());
+</script>
 
 
 

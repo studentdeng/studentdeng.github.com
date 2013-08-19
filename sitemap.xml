@@ -241,8 +241,12 @@
         <lastmod>2013-08-08T16:44:21+08:00</lastmod>
     </url>
     <url>
+        <loc>http://studentdeng.github.com/blog/2013/08/19/redis-start-up/</loc>
+        <lastmod>2013-08-19T15:17:55+08:00</lastmod>
+    </url>
+    <url>
         <loc>http://studentdeng.github.com/blog/archives/</loc>
-        <lastmod>2013-08-08T16:44:21+08:00</lastmod>
+        <lastmod>2013-08-19T15:17:55+08:00</lastmod>
     </url>
     <url>
         <loc>http://studentdeng.github.com/favorite/</loc>
@@ -250,7 +254,7 @@
     </url>
     <url>
         <loc>http://studentdeng.github.com/</loc>
-        <lastmod>2013-08-08T16:44:21+08:00</lastmod>
+        <lastmod>2013-08-19T15:17:55+08:00</lastmod>
     </url>
     <url>
         <loc>http://studentdeng.github.com/robots.txt</loc>

@@ -4,7 +4,7 @@
   <title><![CDATA[不会开机的男孩]]></title>
   <link href="http://studentdeng.github.com/atom.xml" rel="self"/>
   <link href="http://studentdeng.github.com/"/>
-  <updated>2013-08-08T16:47:32+08:00</updated>
+  <updated>2013-08-19T15:18:17+08:00</updated>
   <id>http://studentdeng.github.com/</id>
   <author>
     <name><![CDATA[studentdeng]]></name>
@@ -12,6 +12,303 @@
   </author>
   <generator uri="http://octopress.org/">Octopress</generator>
 
+  
+  <entry>
+    <title type="html"><![CDATA[redis服务器启动流程]]></title>
+    <link href="http://studentdeng.github.com/blog/2013/08/19/redis-start-up/"/>
+    <updated>2013-08-19T10:26:00+08:00</updated>
+    <id>http://studentdeng.github.com/blog/2013/08/19/redis-start-up</id>
+    <content type="html"><![CDATA[<p><img src="http://pauladamsmith.com/articles/redis_under_the_hood/startup.png" alt="整个系统初始化流程图" /></p>
+
+<p>让我们从 redis.c -> main() 开始</p>
+
+<h1>读取配置文件</h1>
+
+<p>在初始化完毕一些系统时间之后，redis开始初始化服务器配置。</p>
+
+<h2>initServerConfig</h2>
+
+<p>在这个函数中，初始化全局变量</p>
+
+<pre><code>struct redisServer server; /* server global state */
+</code></pre>
+
+<p>struct redisServer 结构体描述了服务器的状态。这种庞大的数据结构实在是看的烦躁。
+这里可以很方便的看到redis的系统默认配置。另外还初始化了系统命令表。</p>
+
+<pre><code>server.commands = dictCreate(&amp;commandTableDictType,NULL);
+populateCommandTable();
+</code></pre>
+
+<p>这里我们可以找到redis的命令所对应的函数名称。</p>
+
+<pre><code>struct redisCommand redisCommandTable[] = {
+    {"get",getCommand,2,"r",0,NULL,1,1,1,0,0},
+    {"set",setCommand,3,"wm",0,noPreloadGetKeys,1,1,1,0,0},
+    {"setnx",setnxCommand,3,"wm",0,noPreloadGetKeys,1,1,1,0,0},
+    {"setex",setexCommand,4,"wm",0,noPreloadGetKeys,1,1,1,0,0},
+    {"psetex",psetexCommand,4,"wm",0,noPreloadGetKeys,1,1,1,0,0},
+    {"append",appendCommand,3,"wm",0,NULL,1,1,1,0,0},
+    //...
+}
+
+
+struct redisCommand {
+    // 命令的名字
+    char *name;
+    // 命令的实现函数
+    redisCommandProc *proc;
+    // 命令所需的参数数量
+    int arity;
+    // 字符形式表示的 FLAG 值
+    char *sflags; /* Flags as string represenation, one char per flag. */
+    // 实际的 FLAG 值，由 sflags 计算得出
+    int flags;    /* The actual flags, obtained from the 'sflags' field. */
+    /* Use a function to determine keys arguments in a command line.
+     * Used for Redis Cluster redirect. */
+    // 可选，在以下三个参数不足以决定命令的 key 参数时使用
+    redisGetKeysProc *getkeys_proc;
+    /* What keys should be loaded in background when calling this command? */
+    // 第一个 key 的位置
+    int firstkey; /* The first argument that's a key (0 = no keys) */
+    // 第二个 key 的位置
+    int lastkey;  /* THe last argument that's a key */
+    // 两个 key 之间的空隔
+    int keystep;  /* The step between first and last key */
+    // 这个命令被执行所耗费的总毫秒数
+    long long microseconds;
+    // 这个命令被调用的总次数
+    long long calls;
+};
+</code></pre>
+
+<p>这里可以看出，redis的命令配置，保存在底层数据结构dic中。</p>
+
+<h1>服务器初始化</h1>
+
+<h2>initServer</h2>
+
+<p>这里设置信号回调函数，和继续初始化</p>
+
+<pre><code>struct redisServer server; /* server global state */
+</code></pre>
+
+<p>结构外，创建了SharedObjects。</p>
+
+<h3>createSharedObjects</h3>
+
+<pre><code>initServer-&gt;createSharedObjects
+</code></pre>
+
+<p>redis这里将除了把一些常用的字符串保存起来，目的就是为了减少不断申请释放时CPU时间，内存碎片等等,常用的返回客户端的命令，消息等。如</p>
+
+<pre><code>shared.ok = createObject(REDIS_STRING,sdsnew("+OK\r\n"));
+shared.err = createObject(REDIS_STRING,sdsnew("-ERR\r\n"));
+
+//...
+
+shared.wrongtypeerr = createObject(REDIS_STRING,sdsnew(
+    "-WRONGTYPE Operation against a key holding the wrong kind of value\r\n"));
+//...
+</code></pre>
+
+<p>还初始化了一个很大的共享数字对象。</p>
+
+<pre><code>#define REDIS_SHARED_INTEGERS 10000
+
+for (j = 0; j &lt; REDIS_SHARED_INTEGERS; j++) {
+    shared.integers[j] = createObject(REDIS_STRING,(void*)(long)j);
+    shared.integers[j]-&gt;encoding = REDIS_ENCODING_INT;
+}
+</code></pre>
+
+<h3>aeCreateEventLoop</h3>
+
+<pre><code>initServer-&gt;aeCreateEventLoop
+
+
+
+/* Include the best multiplexing layer supported by this system.
+* The following should be ordered by performances, descending. */
+#ifdef HAVE_EVPORT
+    #include "ae_evport.c"
+#else
+    #ifdef HAVE_EPOLL
+        #include "ae_epoll.c"
+    #else
+        #ifdef HAVE_KQUEUE
+            #include "ae_kqueue.c"
+        #else
+            #include "ae_select.c"
+        #endif
+    #endif
+#endif
+</code></pre>
+
+<p>接下来创建eventloop。这里调用 aeApiCreate 创建event loop。redis这里根据不同平台会选择不同的event方式，
+Linux 使用epoll，BSD上面使用kqueue，其他选择select</p>
+
+<h3>初始化网络连接</h3>
+
+<pre><code>if (server.port != 0) {
+    server.ipfd = anetTcpServer(server.neterr,server.port,server.bindaddr);
+    if (server.ipfd == ANET_ERR) {
+        redisLog(REDIS_WARNING, "Opening port %d: %s",
+            server.port, server.neterr);
+        exit(1);
+    }
+}
+
+if (server.unixsocket != NULL) {
+    unlink(server.unixsocket); /* don't care if this fails */
+    server.sofd = anetUnixServer(server.neterr,server.unixsocket,server.unixsocketperm);
+    if (server.sofd == ANET_ERR) {
+        redisLog(REDIS_WARNING, "Opening socket: %s", server.neterr);
+        exit(1);
+    }
+}
+</code></pre>
+
+<h3>创建系统cron定时器</h3>
+
+<pre><code>aeCreateTimeEvent(server.el, 1, serverCron, NULL, NULL);
+
+aeCreateTimeEvent
+aeCreateTimeEvent accepts the following as parameters:
+eventLoop: This is server.el in redis.c
+milliseconds: The number of milliseconds from the current time after which the timer expires.
+proc: Function pointer. Stores the address of the function that has to be called after the timer expires.
+clientData: Mostly NULL.
+finalizerProc: Pointer to the function that has to be called before the timed event is removed from the list of timed events.
+</code></pre>
+
+<p>aeCreateTimeEvent 创建一个定时器，redis会在这个serverCron中清理系统变量，判断是否需要写入文件等操作。</p>
+
+<h3>在event loop中绑定回调函数</h3>
+
+<pre><code>if (server.ipfd &gt; 0 &amp;&amp; aeCreateFileEvent(server.el,server.ipfd,AE_READABLE,
+    acceptTcpHandler,NULL) == AE_ERR) redisPanic("Unrecoverable error creating server.ipfd file event.");            
+</code></pre>
+
+<h1>设置启动event loop</h1>
+
+<pre><code>// 设置事件执行前要运行的函数
+aeSetBeforeSleepProc(server.el,beforeSleep);
+
+// 启动服务器循环
+aeMain(server.el);
+
+// 关闭服务器，删除事件
+aeDeleteEventLoop(server.el);
+</code></pre>
+
+<p>aeMain函数和之前用的很多的windows中的message queue非常相似。redis不断循环等待执行event。这里不论是定时器还是socket event，都会在这个event loop中被执行。</p>
+
+<pre><code>void aeMain(aeEventLoop *eventLoop) {
+
+eventLoop-&gt;stop = 0;
+
+while (!eventLoop-&gt;stop) {
+
+    // 如果有需要在事件处理前执行的函数，那么运行它
+    if (eventLoop-&gt;beforesleep != NULL)
+        eventLoop-&gt;beforesleep(eventLoop);
+
+    // 开始处理事件
+    aeProcessEvents(eventLoop, AE_ALL_EVENTS);
+    }
+}
+</code></pre>
+
+<p>方便整理，这里重复一下一开始的流程图</p>
+
+<p><img src="http://pauladamsmith.com/articles/redis_under_the_hood/startup.png" alt="整个系统初始化流程图" /></p>
+
+<h1>处理客户端命令流程</h1>
+
+<p><img src="http://pauladamsmith.com/articles/redis_under_the_hood/request-response.png" alt="处理客户端命令流程图" /></p>
+
+<p>之前我们已经注册了socket acceptTcpHandler 回调函数，现在的流程是</p>
+
+<pre><code>acceptTcpHandler-&gt;acceptCommonHandler-&gt;createClient-&gt;aeCreateFileEvent
+
+if (aeCreateFileEvent(server.el, c-&gt;fd, AE_READABLE,
+    readQueryFromClient, c) == AE_ERR) {
+    freeClient(c);
+    return NULL;
+}
+</code></pre>
+
+<p>这里又向event loop中加入一个新的事件callback函数：aeCreateFileEvent 用于把event loop中的监听的事件和回调函数绑定在一起。</p>
+
+<p>readQueryFromClient 则是客户端一切命令的入口函数。</p>
+
+<pre><code>void readQueryFromClient(aeEventLoop *el, int fd, void *privdata, int mask) {
+    redisClient *c = (redisClient*) privdata;
+    char buf[REDIS_IOBUF_LEN];
+    int nread;
+    // ...
+
+    nread = read(fd, buf, REDIS_IOBUF_LEN);
+    // ...
+    if (nread) {
+        size_t oldlen = sdslen(c-&gt;querybuf);
+        c-&gt;querybuf = sdscatlen(c-&gt;querybuf, buf, nread);
+        c-&gt;lastinteraction = time(NULL);
+        /* Scan this new piece of the query for the newline. We do this
+        * here in order to make sure we perform this scan just one time
+        * per piece of buffer, leading to an O(N) scan instead of O(N*N) */
+        if (c-&gt;bulklen == -1 &amp;&amp; c-&gt;newline == NULL)
+            c-&gt;newline = strchr(c-&gt;querybuf+oldlen,'\n');
+    } else {
+        return;
+    }
+    Processinputbuffer(c);
+}
+</code></pre>
+
+<p> readQueryFromClient读取客户端命令，交给Processinputbuffer处理。</p>
+
+<pre><code>void processInputBuffer(redisClient *c) {
+    //...
+
+    if (processCommand(c) == REDIS_OK)
+        resetClient(c);
+}
+
+int processCommand(redisClient *c) {
+    //...
+    call(c,REDIS_CALL_FULL);
+}
+</code></pre>
+
+<p>这里call回根据command定义的callback函数，执行相对应的redis命令代码。</p>
+
+<p>当command执行完毕之后，准备将结果传递给客户端。这里可以看到注册了sendReplyToClient回调函数。</p>
+
+<pre><code>int prepareClientToWrite(redisClient *c) {
+    if (c-&gt;flags &amp; REDIS_LUA_CLIENT) return REDIS_OK;
+    if (c-&gt;fd &lt;= 0) return REDIS_ERR; /* Fake client */
+    if (c-&gt;bufpos == 0 &amp;&amp; listLength(c-&gt;reply) == 0 &amp;&amp;
+        (c-&gt;replstate == REDIS_REPL_NONE || c-&gt;replstate == REDIS_REPL_ONLINE) &amp;&amp;
+        aeCreateFileEvent(server.el, c-&gt;fd, AE_WRITABLE, sendReplyToClient, c) == AE_ERR)
+            return REDIS_ERR;
+    return REDIS_OK;
+}
+</code></pre>
+
+<p>读到这里，我们已经看到了。redis在处理event loop的时候，不仅仅是处理客户端的连接，很多redis内部的流程也是通过event loop实现的。这个是event driven常常遇到的方式。</p>
+
+<p>内容资料、图片、代码参考</p>
+
+<ul>
+<li><a href="https://github.com/huangz1990/annotated_redis_source">huangz的redis2.6代码注释</a></li>
+<li><a href="http://pauladamsmith.com/articles/redis-under-the-hood.html#back-up-to-main">Redis: under the hood</a></li>
+<li><a href="http://redis.io/topics/internals-rediseventlib">Redis Event Library</a></li>
+</ul>
+
+]]></content>
+  </entry>
   
   <entry>
     <title type="html"><![CDATA[box2d 05 RevoluteJoint and b2WeldJoint]]></title>
@@ -969,142 +1266,8 @@ datadir=C:/mysql_code/mysql-5-1.1.68/win/data
 ]]></content>
   </entry>
   
-  <entry>
-    <title type="html"><![CDATA[情商太低, 伤不起]]></title>
-    <link href="http://studentdeng.github.com/blog/2013/03/05/emotion-unknown/"/>
-    <updated>2013-03-05T00:25:00+08:00</updated>
-    <id>http://studentdeng.github.com/blog/2013/03/05/emotion-unknown</id>
-    <content type="html"><![CDATA[<p>这是我写过的最难的一篇, 是目前为止最困难的一篇, 我的思路非常的混乱, 只是想通过这个方式来帮助我理清自己, 找出可以收获的地方. 其实我很早就想写了, 但是有很多东西反反复复,相互牵引的, 我的思维也在不断的变化, 有太多的地方我不明白, 这让我现在非常难受, 而在这个时候写一篇这样子的东西,实在是一件非常痛苦的事情, anyway, 就当这一篇是我对抗自己完美主义的一部分啦.</p>
-
-<h2>先喷下自己吧, 展现一下负能量</h2>
-
-<p>我是一个天生的悲观主义者, 有的人天生就比其他人容易快乐, 幸福, 而有的人天生就容易比其他人焦虑, 抑郁.很不幸, 我是那种容易焦虑的, 我非常害怕失败,特别是自己在意的事情, 我经常自己YY出一大堆各种失败的场景和缘由, 有的甚至是非常低概率事情,一旦遇到失败又或是最后结果达不到我的期望,我还会深深的陷入自卑中. 不管是什么原因, 最后会被自己大量的消极情绪淹没.</p>
-
-<p>所以,我非常想改变, 我不想被那些大量的消极情绪,影响到我的效率. 因为这个要消耗掉我相当多的精力来应付这些我认为是累赘,但我又甩不掉的习惯 &#8212;- 就是不去思考那些产生烦心事的缘由, 不要去想或是分析自己的消极情绪的原因. 我一直希望我能够改掉, 直到我听到这个实验</p>
-
-<p>首先参与实验的家伙们需要回答一个问题, 他们是否希望能够摆脱自己性格方面的某些缺点, 比如古板, 或者容易亲信别人. 第二部分, 则是让这些家伙们去评估这些正面的性格, 言行一致是否对你很重要, 值得信赖是否很重要, 被认为是一个严肃认真的人, 是否很重要.</p>
-
-<p>而实验的结果也很有趣, 那些给这些正面性格打高分的人, 认为这些性格很重要的人, 反而比较不容易去改变自己的负面性格. 不如 容易相信别人 和 值得信赖.</p>
-
-<p>就拿我自己来说吧, 我觉得最大的优点就是喜欢思考, 思考问为什么, 如果说得难听一点, 就是喜欢钻牛角尖, 而且我一直赞同一个观点, 一个人的专注一件事情的时间越长, 那么越容易做好. 事实上, 如果我喜欢一件事情, 我可以每天超过15个小时在一件事情上面,并坚持至少半年,  我很开心, 我有比别人更多的精力去专注的做事情, 而且我自己的进步有很大的原因在于这里, 但是这个也带给了我一个非常大的缺点.就是钻牛角尖, 对自己在乎的事情, 太过于在意细节, 导致和人不好相处. 我带过一个刚毕业的小弟, 我能够从工作时间到下班回家地铁的路上, 不断的展现我的负能量, &#8220;这段代码不能这么写? 你知道这样有什么后果么?&#8221;, 而且这个时间相当的长,大概有半年多吧, 每天都要喷.</p>
-
-<p>我想该掉这些坏毛病, 但是我的潜意识告诉我, 细节是必须要扣的. 对于工作来说, 钻牛角尖能够让我学到更多, 而且对于Geek们来说, 面对枯燥的code都能看出花来, 或多或少都是些钻牛角尖的家伙,但是这些在人际交往中就是一个非常大的问题. 哎, 更别说,我还有完美主义问题,</p>
-
-<p>完美主义:一种充斥在我们生活中的对失败的失能性恐惧, 尤其是在我们最在意的方面. 失能性恐惧 指的是在面对失败时, 有这裹足不前的畏惧. 我的完美主义并不是在生活中的每一个方面, 每一个细节. 而是发生在我们在意的地方.</p>
-
-<p>从本质来看, 我的schema就是一个逐利者, 虽然很难听, 但这的确是事实. 我对自已在意的事情, 只是追求结果, 几乎不在乎过程.</p>
-
-<ul>
-<li><p>我看不到那个小弟的进步, 我一直以一个很高的要求(对他来说), 在他达到这个要求之前都是一文不值的.</p></li>
-<li><p>我看中一门考试, 那么如果这门考试我不是满分, 我就觉得非常难受, 因为我觉得我没有做到, 那么别人也不能做出来.</p></li>
-<li><p>在公司中,我的目标就是做问题的终结者, 如果这个问题我解决不了, 那么没人可以解决.</p></li>
-</ul>
-
-
-<p>这就是我的schema, 在达到这些标准之前, 所有的努力都没有价值. 因为我眼中, 只有一条路是正确的,</p>
-
-<p>典型的完美主义者, 完美主义者的确非常的痛苦, 因为很简单, 现实总是非常的残酷. 因为害怕心理上的失落而变得患得患失, 特别害怕失败.</p>
-
-<p>说到根底, 还是自己分不清出很多事情, 把太多的事情看成一件事情, all or nothing.</p>
-
-<h2>What should I do</h2>
-
-<p>答案很简单, 就是在遇到问题的时候, 选择面对, 不是逃避.去做, 去承担风险,承担责任.去尝试, 这里面有几个原因.</p>
-
-<p>首先, 我们是如何评价自己的,这个标准有些时候和评价其他人的方式是一样的.</p>
-
-<p>一个简单的例子, 比如,我们看到一个家伙, 敢于主动站出来, 表达自己的想法, 积极发言, 或是不断的失败,但依然不放弃,一直在努力坚持, 我们会认为这个家伙很有勇气, 有毅力.这个家伙心理一定很强大.勇于面对困难的家伙和普通人一样会有起起落落, 但是整体的幸福基线却在上升.我们很多时候通过行为来判断一个人的能力, 同样也适用于自己.</p>
-
-<p>那些勇于向喜欢的女孩表白的男孩, 虽然会有更多失败的经历, 但却越来越明白自己适合找那种类型的女孩, 那些能够在工作中敢于请教别人, 在上课时勇于回答老师问题, 向老师提出问题的家伙们, 也更容易学到并记住知识.很多时候, 我们害怕失败,以及失败以后带来的各种消极想法. 但当事情过去之后, 即使是失败了, 经历的痛苦情绪也并没有想象中的那么大. 就像我之前第一次喜欢一个女孩, 然后最后居然发现这个女孩已经结婚了?觉得这个心坎真的实在是迈不过去.但现在也迈过去了.等等, 越来越多的尝试, 成功固然好, 而且即使失败了,最后也会过去. 但如果没有尝试, 那么会一直认为这个事情会一直持续下去, 但事实上这是不可能的.而当我们意识到真正的失败的痛苦要比我们想象的失败的痛苦少时, 我们会变得更自信.</p>
-
-<p>如果说第一段感情我最大的收获是什么, 就是不管是多么美好的事情, 都会成为浮云, 不管是多么烂, 多么糟糕的事情, 也都会过去.</p>
-
-<p>以前和女孩说话都会脸红, 现在和美女聊天也不觉得有什么尴尬了, 所以每周的锻炼还是很有必要的.</p>
-
-<p>很多人都佩服我能够坚持半年健身, 保持体重, 但又有多少人知道我第一个月就减少了20斤, 后5个月加起来才少了5斤, 又有多少人知道我曾经减肥2次, 每次都不少于20斤, 但是反弹却超过了30斤. 我能做到今天的样子, 因为我经历了别人想象不到多的失败.</p>
-
-<p>所以, just do it.</p>
-
-<p>改变很难, 改变也不是灵丹妙药, 能够一下子解决问题. 我追求的只是不后悔, 做自己认为对的事情.</p>
-]]></content>
-  </entry>
-  
 </feed>
-  2
-.code   16                      @ @"\01-[ClassA changeFooDirect:]"
-.thumb_func "-[ClassA changeFooDirect:]"
-"-[ClassA changeFooDirect:]":
-@ BB#0:
-    push    {r4, r7, lr}
-    mov r4, r0                          
-    mov r0, r2
-    add r7, sp, #4
-    blx _objc_retain
-    movw    r1, :lower16:(_OBJC_IVAR_$_ClassA._foo-(LPC0_0+4))
-    movt    r1, :upper16:(_OBJC_IVAR_$_ClassA._foo-(LPC0_0+4))
-LPC0_0:
-    add r1, pc                          
-    ldr r2, [r1]            //r2 = 变量foo在类实例中的偏移量
-    ldr r1, [r4, r2]            //r4 = self 这句的意思就是 r1 = foo;
-    str r0, [r4, r2]            //r0 表示参数inFoo, 这里相当于_foo = inFoo;
-    mov r0, r1              
-    pop.w   {r4, r7, lr}            
-    b.w _objc_release           //release ro的变量 也就是 _foo
-</code></pre>
-
-<p>这里我们可以看出, ARC retain 新变量, 然后release 旧的变量, 而这个正是我们想要的结果.这段坑爹的代码在ARC下是可以正确运行的</p>
-
-<p><strong>这里我再次声明一下, 类似changeFooDirect 这样的代码 只是用于研究, 访问类实例成员变量时都应该使用property方法而不是直接访问或是修改</strong></p>
-
-<p>changeFooSetter 这里我们看到无论是否开启ARC 生成的代码都是一样的.调用自动生成的setter 方法</p>
-
-<pre><code>.align  2
-.code   16                      @ @"\01-[ClassA changeFooSetter:]"
-.thumb_func "-[ClassA changeFooSetter:]"
-"-[ClassA changeFooSetter:]":
-@ BB#0:
-    movw    r1, :lower16:(L_OBJC_SELECTOR_REFERENCES_-(LPC1_0+4))
-    movt    r1, :upper16:(L_OBJC_SELECTOR_REFERENCES_-(LPC1_0+4))
-LPC1_0:
-    add r1, pc
-    ldr r1, [r1]
-    b.w _objc_msgSend
-</code></pre>
-
-<p>然后我们再看看getNumber 函数 开启ARC后的代码</p>
-
-<pre><code>.align  2
-.code   16                      @ @"\01-[ClassA getNumber]"
-.thumb_func "-[ClassA getNumber]"
-"-[ClassA getNumber]":
-@ BB#0:
-push    {r7, lr}
-movw    r0, :lower16:(L_OBJC_SELECTOR_REFERENCES_2-(LPC3_0+4))
-mov r7, sp
-movt    r0, :upper16:(L_OBJC_SELECTOR_REFERENCES_2-(LPC3_0+4))
-movw    r2, :lower16:(L_OBJC_CLASSLIST_REFERENCES_$_-(LPC3_1+4))
-movt    r2, :upper16:(L_OBJC_CLASSLIST_REFERENCES_$_-(LPC3_1+4))
-LPC3_0:
-add r0, pc
-LPC3_1:
-add r2, pc
-ldr r1, [r0]
-ldr r0, [r2]
-blx _objc_msgSend
-movw    r1, :lower16:(L_OBJC_SELECTOR_REFERENCES_4-(LPC3_2+4))
-movs    r2, #10
-movt    r1, :upper16:(L_OBJC_SELECTOR_REFERENCES_4-(LPC3_2+4))
-LPC3_2:
-add r1, pc
-ldr r1, [r1]
-blx _objc_msgSend
-pop.w   {r7, lr}
-b.w _objc_autoreleaseReturnValue               //如果没有开启ARC 则没有 _objc_autoreleaseReturnValue
-</code></pre>
-
-<p>关于_objc_autoreleaseReturnValue 也有很多有趣的事情, 如果把这个家伙简单的理解成autorelease就大错特错了, 编译器会对这些做优化, 减少一些无谓的retain release 来提高代码效率</p>
-
-<p>newNumber 和我们想的也一样, 在开启ARC的时候, 并没有增加 类似autorelease 的函数, 而是将retain count 保持为1.</p>
+�retain count 保持为1.</p>
 
 <p>如果是普通的临时变量又是什么样子呢?</p>
 
