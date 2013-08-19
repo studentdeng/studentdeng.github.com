@@ -4,7 +4,7 @@
   <title><![CDATA[Category: game | 不会开机的男孩]]></title>
   <link href="http://studentdeng.github.com/blog/categories/game/atom.xml" rel="self"/>
   <link href="http://studentdeng.github.com/"/>
-  <updated>2013-08-19T15:18:17+08:00</updated>
+  <updated>2013-08-19T15:25:03+08:00</updated>
   <id>http://studentdeng.github.com/</id>
   <author>
     <name><![CDATA[studentdeng]]></name>
@@ -81,7 +81,10 @@ bulletJoint = (b2WeldJoint*)world-&gt;CreateJoint(&amp;weldJointDef);
 
 <p><a href="https://github.com/studentdeng/box2d-tutorials/tree/master/05">source code</a></p>
 
-<p><a href="http://v.youku.com/v_show/id_XNTkzMzI0ODAw.html">demo演示</a></p>
+<div class="video-container">
+    <iframe height=498 width=510 src="http://player.youku.com/embed/XNTkzMzI0ODAw" frameborder=0 allowfullscreen></iframe>
+</div>
+
 ]]></content>
   </entry>
   
