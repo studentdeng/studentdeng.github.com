@@ -4,7 +4,7 @@
   <title><![CDATA[Category: algorithms | 不会开机的男孩]]></title>
   <link href="http://studentdeng.github.com/blog/categories/algorithms/atom.xml" rel="self"/>
   <link href="http://studentdeng.github.com/"/>
-  <updated>2013-08-19T15:25:03+08:00</updated>
+  <updated>2013-08-25T16:59:21+08:00</updated>
   <id>http://studentdeng.github.com/</id>
   <author>
     <name><![CDATA[studentdeng]]></name>
@@ -66,7 +66,7 @@
 
 <h1>delete</h1>
 
-<p>删除这里的操作简直就是blazing simple,因为我们整个list layer 都是建立在随机上的，删除则是直接删除就好了</p>
+<p>删除这里的操作简直就是blazingly simple,因为我们整个list layer 都是建立在随机上的，删除则是直接删除就好了</p>
 
 <p>我在看到这里，基本已经受不了要吐槽了。实现这个也太简单了，相对red-black tree这种东西。</p>
 ]]></content>
