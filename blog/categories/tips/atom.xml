@@ -4,7 +4,7 @@
   <title><![CDATA[Category: tips | 不会开机的男孩]]></title>
   <link href="http://studentdeng.github.com/blog/categories/tips/atom.xml" rel="self"/>
   <link href="http://studentdeng.github.com/"/>
-  <updated>2013-08-28T11:17:11+08:00</updated>
+  <updated>2013-08-28T17:16:01+08:00</updated>
   <id>http://studentdeng.github.com/</id>
   <author>
     <name><![CDATA[studentdeng]]></name>
@@ -222,8 +222,6 @@ rake preview
 <p>apple 自己的UIImagePickerController 不支持横屏，所以，在ios6系统下，打开相册或是摄像头就回崩溃。。。。
 这是apple自己的bug，在6.0时被发现，6.1 修复，但是，目前看来，在6.1.1 又回来了。。。。这是一个work around的方法，或是一个唯一的简单方法。</p>
 
-<p>```objective-c</p>
-
 <pre><code>@implementation UIImagePickerController (UIImagePickerCategory)
 
 - (BOOL)shouldAutorotate
@@ -238,8 +236,6 @@ rake preview
 
 @end
 </code></pre>
-
-<p>···</p>
 ]]></content>
   </entry>
   
