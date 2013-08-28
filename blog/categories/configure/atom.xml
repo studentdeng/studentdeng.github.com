@@ -4,7 +4,7 @@
   <title><![CDATA[Category: configure | 不会开机的男孩]]></title>
   <link href="http://studentdeng.github.com/blog/categories/configure/atom.xml" rel="self"/>
   <link href="http://studentdeng.github.com/"/>
-  <updated>2013-08-25T16:59:21+08:00</updated>
+  <updated>2013-08-28T11:17:11+08:00</updated>
   <id>http://studentdeng.github.com/</id>
   <author>
     <name><![CDATA[studentdeng]]></name>
@@ -37,6 +37,7 @@
 <li><a href="#A4">NSDateFormatter 问题</a></li>
 <li><a href="#A5">写博客命令</a></li>
 <li><a href="#A6">php apigen command demo</a></li>
+<li><a href="#A7">ios6 下因为横屏问题导致UIImagePickerController崩溃</a></li>
 </ol>
 
 
@@ -131,6 +132,33 @@ rake preview
 
 <pre><code>/usr/bin/php /Users/ygcurer/apigen/apigen.php --source /Applications/XAMPP/xamppfiles/htdocs/curer/application/controllers/api --destination /Applications/XAMPP/xamppfiles/htdocs/curer/doc_test --title curer --charset UTF-8 --access-levels public,protected --internal no --php yes --tree yes --deprecated no --todo no --download no --source-code yes --colors yes --progressbar no --update-check no
 </code></pre>
+
+<div name = "A7" id = "A7"></div>
+
+
+<h1>ios6 下因为横屏问题导致UIImagePickerController崩溃</h1>
+
+<p>apple 自己的UIImagePickerController 不支持横屏，所以，在ios6系统下，打开相册或是摄像头就回崩溃。。。。
+这是apple自己的bug，在6.0时被发现，6.1 修复，但是，目前看来，在6.1.1 又回来了。。。。这是一个work around的方法，或是一个唯一的简单方法。</p>
+
+<p>```objective-c</p>
+
+<pre><code>@implementation UIImagePickerController (UIImagePickerCategory)
+
+- (BOOL)shouldAutorotate
+{
+    return NO;
+}
+
+-(UIInterfaceOrientation)preferredInterfaceOrientationForPresentation
+{
+    return UIInterfaceOrientationPortrait;
+}
+
+@end
+</code></pre>
+
+<p>···</p>
 ]]></content>
   </entry>
   
