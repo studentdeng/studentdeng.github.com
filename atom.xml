@@ -4,7 +4,7 @@
   <title><![CDATA[不会开机的男孩]]></title>
   <link href="http://studentdeng.github.com/atom.xml" rel="self"/>
   <link href="http://studentdeng.github.com/"/>
-  <updated>2013-08-28T17:16:01+08:00</updated>
+  <updated>2013-09-05T13:57:56+08:00</updated>
   <id>http://studentdeng.github.com/</id>
   <author>
     <name><![CDATA[studentdeng]]></name>
@@ -635,7 +635,7 @@ $ git commit -q -m "The humble beginnings of my web site."
 
 <p>然后在<strong>服务器</strong>创建一个repository, 这里可不是服务器部署代码的位置</p>
 
-<pre><code>$ mkdir test &amp;&amp; cd test
+<pre><code>$ mkdir test.git &amp;&amp; cd test.git
 $ git init --bare
 $ cat &gt; hooks/post-receive
 #!/bin/sh
@@ -643,11 +643,16 @@ GIT_WORK_TREE=/mnt/www/test git checkout -f
 $ chmod +x hooks/post-receive
 </code></pre>
 
+<p>这是服务器的git代码目录</p>
+
+<pre><code>/repo/test.git
+</code></pre>
+
 <p>这里的 &#8216;/mnt/www/test&#8217; 就是我们将要部署服务器代码的位置，一般的lamp，我们喜欢放在www里，当然这里需要根据不同的环境更换就好了。</p>
 
 <p>这里我们在<strong>本地</strong>的git目录下增加一个remote</p>
 
-<pre><code>$ git remote add prod ssh://server_address/mnt/www/test
+<pre><code>$ git remote add prod ssh://server_address/repo/test.git
 $ git push prod +master:refs/heads/master
 </code></pre>
 
@@ -1270,11 +1275,7 @@ datadir=C:/mysql_code/mysql-5-1.1.68/win/data
   </entry>
   
 </feed>
-��?</p>
-
-<pre><code>- (void)test
-{
-        NSNumber *test = [[NSNumber alloc] initWithInt:1];
+;
 
         NSLog(@"%@", test);
 }
