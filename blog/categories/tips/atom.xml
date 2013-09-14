@@ -4,7 +4,7 @@
   <title><![CDATA[Category: tips | 不会开机的男孩]]></title>
   <link href="http://studentdeng.github.com/blog/categories/tips/atom.xml" rel="self"/>
   <link href="http://studentdeng.github.com/"/>
-  <updated>2013-09-05T13:57:56+08:00</updated>
+  <updated>2013-09-14T11:43:36+08:00</updated>
   <id>http://studentdeng.github.com/</id>
   <author>
     <name><![CDATA[studentdeng]]></name>
@@ -12,6 +12,146 @@
   </author>
   <generator uri="http://octopress.org/">Octopress</generator>
 
+  
+  <entry>
+    <title type="html"><![CDATA[cocoapods 入门]]></title>
+    <link href="http://studentdeng.github.com/blog/2013/09/13/cocoapods-tutorial/"/>
+    <updated>2013-09-13T23:48:00+08:00</updated>
+    <id>http://studentdeng.github.com/blog/2013/09/13/cocoapods-tutorial</id>
+    <content type="html"><![CDATA[<h1>介绍</h1>
+
+<p>最近一直在搞<a href="https://github.com/CocoaPods/CocoaPods">cocoapods</a>。 ios 这么多年终于有一个好使的包管理了。真的好激动好激动。。。
+之前开发一些App的时候，在一开始的时候，总是需要手动添加framework， library，设置一些 search path，有时候还会忘记那么几个，然后出来一大堆的link error。当一些library更新的时候，还需要自己手动去更换。3句话说就是</p>
+
+<ol>
+<li>手动增加framework，library</li>
+<li>手动增加编译参数</li>
+<li>手动维护代码更新</li>
+</ol>
+
+
+<p>完全是一大堆的体力活，当然，这些简单的配置和复制并不会花费太多的时间，但是，还是觉得在浪费生命，而这时候CocoaPods就出来了。我们只需要设置一个Podfile文件，执行</p>
+
+<pre><code>$ pod install 
+</code></pre>
+
+<p>CocoaPods会帮我们下载好代码，设置好编译参数，配置好framework， library。</p>
+
+<h1>安装和更新</h1>
+
+<pre><code>$ sudo gem install cocoapods
+</code></pre>
+
+<h1>使用</h1>
+
+<p>在project根目录下，create Podfile文件，下面一个例子</p>
+
+<pre><code>platform :ios, '5.0'
+pod 'CURestKit', '~&gt;1.0.1' 
+pod 'SDWebImage','~&gt;3.4'
+pod 'MBProgressHUD', '~&gt; 0.7'
+pod 'UALogger', '~&gt; 0.2.3'
+</code></pre>
+
+<p>CocoaPods 会帮我们从git clone下来配置好的这些代码。后面的部分表示代码的版本号，一般来说和tag挂钩。</p>
+
+<p>配置好Podfile之后，执行</p>
+
+<pre><code>$ pod install
+</code></pre>
+
+<p>则会帮我们配置好这些项目。并生成一个XXXX.xcworkspace。 以后project使用这个文件就可以了。CocoaPods其实就是帮我们配置一个静态库作为项目的依赖。</p>
+
+<p>CocoaPods里面有大量的代码，现在最新的版本安装后是在这里</p>
+
+<pre><code>~/.cocoapods/repo/master/ 
+</code></pre>
+
+<h1>制作自己的项目配置</h1>
+
+<p>实际开发过程中，我们还有不少代码需要被改动，而CocoaPods上面的代码，大部分都比较旧，都是很稳定的代码，当然也有一些不能用的（大部分是国内的公司做的，大家都懂的）。另外还有一些我们自己写的一些其他代码，暂时还么有被CocoaPods收录的。这时候我们就需要配置自己的项目啦。</p>
+
+<p>这里是我的一个项目配置例子。cocoapods的配置文件就是一个 *.podspec的文件，这是一个例子文件名ShareCenter.podspec。这是一个典型的ruby，</p>
+
+<pre><code>Pod::Spec.new do |s|
+s.name         = "ShareCenter"
+s.version      = "2.0"
+s.summary      = "share client include sina weibo ,tencent weibo, renren"
+
+s.description  = &lt;&lt;-DESC
+               share client include sina weibo ,tencent weibo, renren
+               DESC
+
+s.homepage     = "https://github.com/studentdeng/ShareCenterExample"
+s.license      = 'MIT'
+s.author       = { "curer" =&gt; "studentdeng@hotmail.com" }
+s.platform     = :ios, '5.0'
+
+s.source       = { :git =&gt; "https://github.com/studentdeng/ShareCenterExample.git", :tag =&gt; s.version.to_s }
+s.source_files  = 'ShareCenter', 'ShareCenter/**/*.{h,m}'
+
+s.frameworks   = 'QuartzCore', 'Security', 'CoreGraphics', 'AudioToolbox'
+s.library = 'sqlite3.0'
+s.vendored_libraries = 'ShareCenter/Vender/sina/libWeiboSDK/libWeiboSDK.a'
+
+s.prefix_header_contents = &lt;&lt;-EOS
+#ifdef __OBJC__
+#import "ROConnect.h"
+#endif /* __OBJC__*/
+EOS
+end
+</code></pre>
+
+<p>这个基本上都是自解释的，这里有几个需要说明一下</p>
+
+<h2>s.source s.source_files</h2>
+
+<p>这里的 <em>source</em> 我们看出是一个git 的地址，这里我们调试的时候，可以先暂时设置成本地git，调试完毕之后就可以发布 增加tag。想要最新的代码只需要这样设置就好</p>
+
+<pre><code>{ :git =&gt; "https://github.com/studentdeng/ShareCenterExample.git"}
+</code></pre>
+
+<p>我们的git项目中，并不是所有的代码都需要被引用到我们的代码中，通常project还会包括一些example，test cases等，这里的 <em>source_files</em> 就是用来指定一些文件夹，或是文件。我这里的设置也很容易理解，就是ShareCenter下面的递归后的所有后缀是h、m的子文件。</p>
+
+<h2>s.frameworks s.library</h2>
+
+<p>这里配置的就是我们的framework 和 library，这里注意一下library的名字规则就好。</p>
+
+<h2>vendored_libraries</h2>
+
+<p>这里用来指定外部的静态库。这里我们指定了sina sso认证的SDK</p>
+
+<h2>s.prefix_header_contents</h2>
+
+<p>这里用来指定预编译的配置，这里一定要鄙视一下renren的超级渣渣SDK。这里提供一种解决方法。</p>
+
+<h2>部署我们的配置到cocoapods中</h2>
+
+<p>cocoapods的代码配置文件是在这里<a href="https://github.com/CocoaPods/Specs">Specs</a></p>
+
+<p>这里最好是去fork一个自己的project，然后保存一个自己或是团队的配置，这样不会在更新cocoapods的时候，丢掉自己的配置。当然，如果觉得自己搞的还不错，也可以去pull requests。</p>
+
+<p>在之前提到的目录<em>~/.cocoapods/repo/master/</em> 下面，我们可以看到已经有超级多的项目了，我们可以也可以通过</p>
+
+<pre><code>$ pod search XXX
+</code></pre>
+
+<p>来查找项目，或是直接在这个文件夹下面找，可以学习不少project的配置技巧，我这里也是从他们学到的。</p>
+
+<p>最后添加一个project的配置是这样子的。</p>
+
+<p>例如上面的例子，
+在<em>~/.cocoapods/repo/master/</em> 下面创建一个文件夹ShareCenter，然后在创建一个2.0的文件夹表示这是version2.0的配置。
+然后在把之前的ShareCenter.podspec复制到2.0目录下面。</p>
+
+<p>也就是最后的目录是这样子的</p>
+
+<pre><code>~/.cocoapods/repo/master/ShareCenter/2.0/ShareCenter.podspec
+</code></pre>
+
+<p>如果希望更多的了解cocoapods，还是需要去<a href="https://github.com/CocoaPods/CocoaPods">Github</a>上面 :D</p>
+]]></content>
+  </entry>
   
   <entry>
     <title type="html"><![CDATA[git 部署代码到服务器]]></title>
