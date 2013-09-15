@@ -4,7 +4,7 @@
   <title><![CDATA[不会开机的男孩]]></title>
   <link href="http://studentdeng.github.com/atom.xml" rel="self"/>
   <link href="http://studentdeng.github.com/"/>
-  <updated>2013-09-14T11:43:36+08:00</updated>
+  <updated>2013-09-16T00:37:45+08:00</updated>
   <id>http://studentdeng.github.com/</id>
   <author>
     <name><![CDATA[studentdeng]]></name>
@@ -12,6 +12,31 @@
   </author>
   <generator uri="http://octopress.org/">Octopress</generator>
 
+  
+  <entry>
+    <title type="html"><![CDATA[calm down]]></title>
+    <link href="http://studentdeng.github.com/blog/2013/09/15/calm-down/"/>
+    <updated>2013-09-15T23:03:00+08:00</updated>
+    <id>http://studentdeng.github.com/blog/2013/09/15/calm-down</id>
+    <content type="html"><![CDATA[<p>最近已经发生了很多事情，将来也会发生一些事情，这里为了不让我负能量爆发，就不写这些细节了。昨天和老大聊到晚上3点半，这里我还很dt的查了一下，上一次聊这么晚也就是2个月前。刚刚突然发现有人赞了一下我的微博，哦，很好，长出一口气，终于不是强X的无脑赞了。微博的内容是一篇关于《女人明白要趁早》的读书笔记，书里写过一句这样的话“这世上只有快乐的猪和悲伤的哲学家”，但在我看来，还有另一类人是悲伤的猪，而我显然属于后者。当然这不是我想说的，书中有一些这样的话。</p>
+
+<p>“当你一无所知、一无所有、一无所成的时候,没事不要去想“个人尊严”和“个人价值”这 类虚词儿。一、做好眼前事。二、假以时日。 有完美榜样是好的,能让我们矢志不渝地去为追求完美努力;知道榜样其实不完美也是好的, 避免我们成为偏执狂,或者因为目标难以企及而自暴自弃。”</p>
+
+<p>这个世界上面充斥这这样子的言论，你没有办法去反驳它，因为他本身说的就是事实，是正确的，而且是毫无疑问正确的，但是如果只是做到这些是不可能成功，或是更严格讲，这些都不是成功的关键因素，从心理学角度来看，这些话没有办法被证伪。这些话就是一个个成功人士为了安慰屌丝们的心灵鸡汤而已。</p>
+
+<p>对于年轻的人们来说，经历的苦难和挫折大概都是因为阅历，资历不足，内心却比地球还大，一开始就像构建一艘航空母舰。但最后发现这样的航母根本做不出来，或是做出来随便小小的浪头就能把它拍的粉碎。而也有不少人意识到了这一点，做出了一搜搜驱逐舰，潜艇。但最后发现，光这艘船，根本不可能带你穿过那些暴风雨频发的海域。</p>
+
+<p>我们害怕跌入日复一日平淡庸碌的结婚、生子、还房贷、终老一生的生活中去。但是现实就是这个社会最不缺的就是空想家，社会不仅不看你的想法，不在意你的未来，更不在意你的过去，只是看你的现在，你的所作所为。你所能掌握的资源，你能做出多少选择的能力。</p>
+
+<p>大家都会成长，会慢慢看淡这些ups and downs，大家都在说，现在社会多么浮躁，年轻人要学会等待，假以时日，每天坚持，就会变好的。我只想说“呵呵”。平静会很容易的掩饰内心的平庸，诚然平静很重要，但绝对不是逃避，需要cope，而这需要一个强大的内心。只有内心足够强大才能做出抵挡风浪的船，而不是随流漂动的木板，虽然他们都是在水上浮着，当然木板也有好处，船会翻。木板不会。</p>
+
+<p>一个朋友曾今问过我为什么给自己设定一个30岁的目标，因为有太多的东西我们不能左右，在到一定年纪就不得不考虑，作为一个男孩子，不得不去承担一些该来的责任，那么自由时间必定要被压缩，而且有一些事情，年纪大了，也就错过机会了，或是需要付出比年轻时候更多的投入。所以必须趁年轻，因为在再不疯狂就来不及了。</p>
+
+<p>Tal在幸福课中提到一句，平庸和卓越在表面都很平静时是如何区分出来。卓越的人更会相信自己会做到。</p>
+
+<p>额，本来还是想写下去，发现自己已经不知不觉开始写心灵鸡汤了，看来我已经被毒害不少了，再删掉一大段之后，思路瞬间被阻塞了。一阵阵困意袭来，呼~，昨天睡得有一点少了。今天最开心的就是，去东直门上了一节跳舞课，按照我以往对我自己的了解，我应该死宅在家里才对，绝对不会出门，更别说走这么远。</p>
+]]></content>
+  </entry>
   
   <entry>
     <title type="html"><![CDATA[cocoapods 入门]]></title>
@@ -1275,99 +1300,6 @@ do shell script "/usr/bin/php /Users/ygcurer/apigen/apigen.php --source " &amp; 
 <p>2年前,我觉得我虽然是一个很diaosi的家伙,但是我有一点是觉得很少人能够做到我这点的, 就是我知道我想要做什么, 我喜欢做什么,我适合做什么, 能够在22岁的时候想明白这个事情,让我非常开心,而且也一直向这个目标前进, 而为了这个,当然, 我放弃了非常多的东西, 其实我现在也不知道,因为一个东西,你付出了大量的时间,即便是没啥天赋, 也会做得不错, 这个世界上有太多的东西,我没有做过, 甚至都没有听到, 我凭什么说我适合做这个呢?</p>
 
 <p>唯一能确定的就是,&#8221;天道酬勤&#8221;,&#8221;机会只会留给有准备的人&#8221;</p>
-]]></content>
-  </entry>
-  
-  <entry>
-    <title type="html"><![CDATA[mysql 源代码 第二天 ]]></title>
-    <link href="http://studentdeng.github.com/blog/2013/03/21/mysql-source-code-2/"/>
-    <updated>2013-03-21T23:48:00+08:00</updated>
-    <id>http://studentdeng.github.com/blog/2013/03/21/mysql-source-code-2</id>
-    <content type="html"><![CDATA[<p>昨天搭建好环境, 今天怀着无比兴奋的心情看一下, 一条简单的sql 背后有那些有趣的事情发生, 当然, 我们先从最简单的sql 开始.</p>
-
-<pre><code>select * from example
-</code></pre>
-
-<p>当然, 对于这么庞大的项目, 我只能小小的大略一下代码结构了.</p>
-
-<h2>SQL Interface</h2>
-
-<p>首先启动mysqld, mysql的 server 部分</p>
-
-<p>mysqld.cc</p>
-
-<pre><code>int main(int argc, char **argv) 
-</code></pre>
-
-<p>传说中一切世界的源头. 在处理一些参数或是配置什么的, whatever, 先不关心这个,跳转到</p>
-
-<pre><code>int win_main(int argc, char **argv)
-</code></pre>
-
-<p>还是一些配置, 读取my.ini, 日志, socket, 什么的. 然后创建一大堆的thread, 这里面大部分暂时没用
-在很多的thread callback 函数中, 有一个必须要了解一下了它是</p>
-
-<pre><code>handle_one_connection // sql_connect.cc
-</code></pre>
-
-<p>它是client 请求server callback的开始 然后依次调用</p>
-
-<pre><code>my_real_read -&gt; do_command -&gt; my_net_read 
-</code></pre>
-
-<p>这里等待socket</p>
-
-<p>client 部分</p>
-
-<p>通过mysql 我们连接到 mysqld, 这里我们先跳过其他命令过程. 直接步入今天的主题, 我事先已经创建好一个简单的数据库, 里面2个字段, 3条数据.</p>
-
-<pre><code>select * from example
-</code></pre>
-
-<p>回到之前的server</p>
-
-<p>这时, mysqld 收到的socket, 在检查一些错误之后, 我们来到</p>
-
-<pre><code>dispatch_command -&gt; mysql_parse
-</code></pre>
-
-<h2>mysql Query Parser</h2>
-
-<p>这里我们进入了mysql Query Parser 部分, mysql 首先需要词法分析,语法分析 SQL 语句, 把我们的SQL 转变成一个个token 语法树什么的 要做一些编译器类似的前端部分, whatever, 对这部分不感兴趣, 我现在可没有扩展SQL 语句的想法.我们这条语句是select 所以, 我们最后跳到了 handle_select部分</p>
-
-<pre><code>mysql_parse -&gt; mysql_execute_command -&gt; execute_sqlcom_select -&gt; handle_select -&gt; mysql_select
-</code></pre>
-
-<h2>Query Optimizer</h2>
-
-<p>这里我们来到了mysql Query Optimizer 部分, 3个主要的事情</p>
-
-<pre><code> prepare
- optimize
- exec
-</code></pre>
-
-<p>这个将是之后重点要学的, 现在先跳过啦</p>
-
-<h2>Query Execution</h2>
-
-<pre><code>do_select -&gt; sub_select -&gt; sub_select ....
-</code></pre>
-
-<p>这里我们看到了很多类似的函数, 从名字上来看, 基本上是处理递归的, 而且,事实上也的确是这样子的&#8230;.(真是废话), mysql 这里不断地读取一行行数据,
-判断是否嵌套查询等等.最后 一系列的clear unlock. free, release</p>
-
-<pre><code>net_end_statement
-</code></pre>
-
-<p>这里将数据返回client, server 继续</p>
-
-<pre><code>do_command -&gt; my_net_read ... 
-</code></pre>
-
-<p>最后结构图
-<img src="http://studentdeng.github.com/images/mysql_1_1.gif" alt="alt text" />
-<img src="http://studentdeng.github.com/images/mysql_1_2.gif" alt="alt text" /></p>
 ]]></content>
   </entry>
   
