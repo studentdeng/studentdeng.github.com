@@ -4,7 +4,7 @@
   <title><![CDATA[Category: algorithms | 不会开机的男孩]]></title>
   <link href="http://studentdeng.github.com/blog/categories/algorithms/atom.xml" rel="self"/>
   <link href="http://studentdeng.github.com/"/>
-  <updated>2013-09-16T00:37:45+08:00</updated>
+  <updated>2013-09-16T19:49:16+08:00</updated>
   <id>http://studentdeng.github.com/</id>
   <author>
     <name><![CDATA[studentdeng]]></name>
@@ -12,6 +12,72 @@
   </author>
   <generator uri="http://octopress.org/">Octopress</generator>
 
+  
+  <entry>
+    <title type="html"><![CDATA[Stanford 算法课 part 2 Scheduling]]></title>
+    <link href="http://studentdeng.github.com/blog/2013/09/16/algo-class-02-scheduling/"/>
+    <updated>2013-09-16T20:46:00+08:00</updated>
+    <id>http://studentdeng.github.com/blog/2013/09/16/algo-class-02-scheduling</id>
+    <content type="html"><![CDATA[<p>当一个人每天都有做不完的事情时，不知道大家又没有这种感觉。各种各样的事情，各种deadline，甚至是一些无关紧要的琐碎事情也会不断的在大脑中被回想，而且还是反复的，没有任何理由的会冒出来。对像我这样非常懒惰的人来说，这就是一个非常致命的打击，因为我需要中断当前的事情，这会让我多消耗不少脑力。。。</p>
+
+<p>这应该算是时间管理中的一部分，如何给自己安排任务。人的大脑和电脑的工作模式还是有一些类似的，比如如果一直不断的记录一大堆事情而不是执行，那么就会影响到他们的工作效率。同样，如果重要的事情不作，最后也会不断的在大脑里面被回想，而造成效率降低。</p>
+
+<p>在我看来，解决这些回想问题最关键的事情就是把这些东西搞定，这样才能把大脑清空，然后去做那些更加有意义的事情。</p>
+
+<p>最近再跟algorithm part2里面正好有一个scheduling application的东西，挺有意思的。这里记录一下。</p>
+
+<h1>问题描述</h1>
+
+<h2>Setup</h2>
+
+<p>scheduling 的基本模型是有一个shared resource，比如CPU。但是有许多jobs，比如很多线程，需要使用CPU才能运行。</p>
+
+<h2>Question</h2>
+
+<p>我们应该如何调度这个jobs的顺序，哪一个job优先于其他job执行，从而让整个计划执行时间最少。</p>
+
+<h2>Assume</h2>
+
+<p>为了更清楚的定义数学模型，每一个job有2个维度。</p>
+
+<ul>
+<li>weight 重要性</li>
+<li>length 时间</li>
+</ul>
+
+
+<h2>Defintion</h2>
+
+<p>Completion time。 第J个任务的完成时间（Completion time）Cj 是 （任务J之前的等待时间 + 任务J的length）* 任务J的weight</p>
+
+<h1>思路</h1>
+
+<p>这里根据直觉可以很明显的知道 我们需要把重要的事情放在前面，把时间短的事情放置在前面，这样可以很快的打一个勾勾，清空大脑中的这个任务。也就是说Cj 和 Wj 正相关，和 Lj负相关。但是总是有一些事情让人欲罢不能，就是那些很重要，而且做起来还比较费劲，时间花费长的事情，和那些不重要但是时间花费短的事情。真实世界的事情太复杂，还是回到我们这个简单的模型中。</p>
+
+<p>一种常见的思维是设法将问题转换成之前我们已经解决了的思路之中，所以很容易想到我们需要找到单位长度中最重要的事情先做。因为我们的这个模型的任务调度不是抢占式的么。</p>
+
+<p>将上面的单位时间的含义翻译过来就是 wj / lj。 也就是我们的调度程序将按照w / l的值，从大到小排列
+<img src="https://raw.github.com/studentdeng/studentdeng.github.com/master/images/algo_schema_01.png" alt="scheduling 1" /></p>
+
+<p>这里我们假定任务i > j。这个图则表示这2个任务相连在一起，stuff表示之前的任务，more stuff表示之后的任务。</p>
+
+<p><img src="https://raw.github.com/studentdeng/studentdeng.github.com/master/images/algo_schema_02.png" alt="scheduling 2" /></p>
+
+<p>而这里，我们做一次任务i、j的交换，就像这样</p>
+
+<p><img src="https://raw.github.com/studentdeng/studentdeng.github.com/master/images/algo_schema_03.png" alt="image" /></p>
+
+<p>那个这2个scheduling中，i,j之前的任务的完成时间不会变，之后的任务完成时间也不会变。那么受到影响的只是任务i，j。</p>
+
+<p><img src="https://raw.github.com/studentdeng/studentdeng.github.com/master/images/algo_schema_04.png" alt="image" /></p>
+
+<p>那么这里显然scheduling 2 也就是后面的那张图的顺序比第一个要小。</p>
+
+<p>然后我们可以想象最后的任务流程，就如果冒泡排序一样，一次次的比较把相对重要的数据一次次的放置到前面。</p>
+
+<p>而当所有相邻的任务都按照这样的规则排列完毕后，得到的就是一个 wj / lj 的从大到小的序列。</p>
+]]></content>
+  </entry>
   
   <entry>
     <title type="html"><![CDATA[跳跃表 skip list]]></title>
@@ -428,273 +494,6 @@ __STL_TEMPLATE_NULL struct hash&lt;unsigned long&gt; {
 <p>好吧，总不能啥也放弃吧，都放弃了那到底也简单了。这里，我只能说，我推荐SGI STL。在我看来，这是一个结合了设计模式，理论算法与实践最好的一个实例。他不仅是开源的，代码量也不多，命名也算规范，而且还有一本侯捷大师的著作来诠释，帮助我们理解，而且还能帮助我们具体实践过程中规避一些错误。我们每一个在学校学习的算法，我们都可以在这里找到答案（至少可以用来做作业拿高分对某些特别的女生），而且都会比一般大学讲的深刻，事实上，我认为，大学现在的教育为什么觉得无用，不是太难太理论，而是教的太简单了，简单到已经没有用的地步了，从而根本没有实际意义。（大学联合培训机构，是我所见过的，比大学扩招还要搞笑的事情）比如快速排序，SGI STL做了非常多的优化来保证无论在什么时候，都不会退化到n2，在分的过程总是分不好时，采用堆排序。在快速排序到做最后几步，为了减少开销而采用插入排序去做哪些马上就要排好序的部分。而这些策略，并不是凭空想象，都可以在高爷爷的著作中找到理论证明，以及网上的各种论文，前提是你的数学功底足够（当然这里实践在前还是理论在前这个实在是没有讨论的意义）。所以，理论不是没有用，只是自己学的太肤浅。实践也不是没有用，只是自己没有考虑那么多的情况，想的太简单而已。</p>
 
 <p>当然，这个可能又会引起另一个庞大的问题，“不要重复制作轮子”，不过这个已经大大超出这篇文章的范围了。我自己的看法是，STL是为了实现最基本的最通用的东东的，而实际过程中，我们往往有自己的特殊性。而这些特殊性是STL不可能设计时都给我们考虑周全的。也就是我们很可能需要扩展，重写部分以适合我们的需要。当然，现在离这些目标还很远很远很远。</p>
-]]></content>
-  </entry>
-  
-  <entry>
-    <title type="html"><![CDATA[SGI STL 学习笔记四 内存管理]]></title>
-    <link href="http://studentdeng.github.com/blog/2011/01/17/sgi-stl-memory/"/>
-    <updated>2011-01-17T22:46:00+08:00</updated>
-    <id>http://studentdeng.github.com/blog/2011/01/17/sgi-stl-memory</id>
-    <content type="html"><![CDATA[<p>SGI STL 在g++中默认的编译选项是构造2个分配器。</p>
-
-<h1>第一级分配器__malloc_alloc_template</h1>
-
-<p>这个一级分配器设计比较简单。由于SGI STL中分配内存没有使用C++推荐的 operator new/delete 而是使用malloc/delete。所以，并没有set_new_handler()。当面对内存不足的情况，这里模仿了c++的做法。</p>
-
-<pre><code>template &lt;int __inst&gt;
-void (* __malloc_alloc_template&lt;__inst&gt;::__malloc_alloc_oom_handler)() = 0;
-
-static void (* __set_malloc_handler(void (*__f)()))()
-{
-    void (* __old)() = __malloc_alloc_oom_handler;
-    __malloc_alloc_oom_handler = __f;
-    return(__old);
-}
-
-template &lt;int __inst&gt;
-void*
-__malloc_alloc_template&lt;__inst&gt;::_S_oom_malloc(size_t __n)
-{
-    void (* __my_malloc_handler)();
-    void* __result;
-
-    for (;;) {
-       //这里不断的调用处理分配不足的情况代码，如果有可能解决问题，那么OK，如果还是不行，那么
-         //只能抛出异常，当然，如果没有指定，默认为NULL，则会直接抛出异常。
-        __my_malloc_handler = __malloc_alloc_oom_handler;
-        if (0 == __my_malloc_handler) { __THROW_BAD_ALLOC; }
-        (*__my_malloc_handler)();
-        __result = malloc(__n);
-        if (__result) return(__result);
-    }
-}
-
-//这里，如果分配不足，则会调用_S_oom_malloc来救急。oom，就是out of memory的意思。
-static void* allocate(size_t __n)
-{
-    void* __result = malloc(__n);
-    if (0 == __result) __result = _S_oom_malloc(__n);
-    return __result;
-
-}
-</code></pre>
-
-<h1>二级分配器 __default_alloc_template</h1>
-
-<p>二级配置器多了很多机制，在分配小的内存上做了优化。</p>
-
-<p>粗略的分配策略。</p>
-
-<p>分配大小超过 _MAX_BYTES = 128bytes，使用一级分配器处理。当分配器大小小于128bytes时，则通过内存池管理。
-调整分配大小到8的倍数，从freeList中，分配内存。</p>
-
-<pre><code>template &lt;bool threads, int inst&gt;
-class __default_alloc_template {
-
-private:
-  // Really we should use static const int x = N
-  // instead of enum { x = N }, but few compilers accept the former.
-# ifndef __SUNPRO_CC
-    enum {_ALIGN = 8}; 
-    enum {_MAX_BYTES = 128};
-    enum {_NFREELISTS = _MAX_BYTES/_ALIGN}; //free_list 个数
-# endif
-  static size_t
-  _S_round_up(size_t __bytes)
-    { return (((__bytes) + _ALIGN-1) &amp; ~(_ALIGN - 1)); }
-
-__PRIVATE:
-  union _Obj {
-        union _Obj* _M_free_list_link;
-        char _M_client_data[1];    /* The client sees this.        */
-  };
-//根据大小，找到对应的index，从1开始。
-static  size_t _S_freelist_index(size_t __bytes) {
-        return (((__bytes) + _ALIGN-1)/_ALIGN - 1);
-}
-</code></pre>
-
-<p>可以看出，_Obj就是一个简单的单向链表，只是这个链表和我们之前学习的不一样。之前的链表数据只是链表节点的一部分，而这里当分配给client的时候是一整块的。</p>
-
-<h1>分配空间</h1>
-
-<pre><code>static void* allocate(size_t __n)
-  {
-    _Obj* __VOLATILE* __my_free_list;
-    _Obj* __RESTRICT __result;
-
-    if (__n &gt; (size_t) _MAX_BYTES) {
-        return(malloc_alloc::allocate(__n));
-    }
-    __my_free_list = _S_free_list + _S_freelist_index(__n);
-    // Acquire the lock here with a constructor call.
-    // This ensures that it is released in exit or during stack
-    // unwinding.
-#ifndef _NOTHREADS
-        /*REFERENCED*/
-        _Lock __lock_instance;
-#endif
-    __result = *__my_free_list;
-    if (__result == 0) { //没有找到freeList
-        void* __r = _S_refill(_S_round_up(__n)); //这里重新填充 freeList
-        return __r;
-    }
-    *__my_free_list = __result -&gt; _M_free_list_link;
-    return (__result);
-  };
-</code></pre>
-
-<p>如果能够获得freeList，情况很简单，将__my_free_list 的值，指向已经分配空间的下一块空间。</p>
-
-<pre><code>/* Returns an object of size __n, and optionally adds to size __n free list.*/
-/* We assume that __n is properly aligned.                                */
-/* We hold the allocation lock.                                         */
-template &lt;bool __threads, int __inst&gt;
-void*
-__default_alloc_template&lt;__threads, __inst&gt;::_S_refill(size_t __n)
-{
-    int __nobjs = 20;
-     //由他来分配空间，第二个参数为引用， 所以有可能出现分配不足，也就是__nobjs &lt; 20的情况。
-    char* __chunk = _S_chunk_alloc(__n, __nobjs); 
-    _Obj* __VOLATILE* __my_free_list;
-    _Obj* __result;
-    _Obj* __current_obj;
-    _Obj* __next_obj;
-    int __i;
-
-    if (1 == __nobjs) return(__chunk); //如果只能分配一个大小，那么我们不需要调整freeList了。
-    __my_free_list = _S_free_list + _S_freelist_index(__n);
-
-    /* Build free list in chunk */ //构造freeList
-      __result = (_Obj*)__chunk;
-      *__my_free_list = __next_obj = (_Obj*)(__chunk + __n);
-      for (__i = 1; ; __i++) { //从第二个开始构造freeList，因为第一个需要传给上层函数。
-        __current_obj = __next_obj;
-        __next_obj = (_Obj*)((char*)__next_obj + __n);
-        if (__nobjs - 1 == __i) {
-            __current_obj -&gt; _M_free_list_link = 0;
-            break;
-        } else {
-            __current_obj -&gt; _M_free_list_link = __next_obj;
-        }
-      }
-     //这里，我们发现，这个freeList，其实就是一个简单的单向链表，
-    //__my_free_list = _S_free_list + _S_freelist_index(__n); 这个就是获得这个链表的表头。
-    return(__result);
-}
-</code></pre>
-
-<h1>释放空间</h1>
-
-<pre><code>/* __p may not be 0 */
-  static void deallocate(void* __p, size_t __n)
-  {
-    _Obj* __q = (_Obj*)__p;
-    _Obj* __VOLATILE* __my_free_list;
-
-    if (__n &gt; (size_t) _MAX_BYTES) {
-        malloc_alloc::deallocate(__p, __n); //过大的block，我们通过1级分配器搞定
-        return;
-    }
-    __my_free_list = _S_free_list + _S_freelist_index(__n);
-    // acquire lock
-#       ifndef _NOTHREADS
-        /*REFERENCED*/
-        _Lock __lock_instance;
-#       endif /* _NOTHREADS */
-     //这里是典型的在listHead 的下一个位置添加的操作，这里看出，对于小的block，我们并没有给操作系统，而是
-    //链表保存起来。
-    __q -&gt; _M_free_list_link = *__my_free_list;
-    *__my_free_list = __q;
-    // lock is released here
-  }
-</code></pre>
-
-<h1>内存池分配</h1>
-
-<pre><code>/* We allocate memory in large chunks in order to avoid fragmenting     */
-/* the malloc heap too much.                                            */
-/* We assume that size is properly aligned.                             */
-/* We hold the allocation lock.                                         */
-template &lt;bool __threads, int __inst&gt;
-char*
-__default_alloc_template&lt;__threads, __inst&gt;::_S_chunk_alloc(size_t __size,
-                                                            int&amp; __nobjs)
-{
-    char* __result;
-    size_t __total_bytes = __size * __nobjs;
-    size_t __bytes_left = _S_end_free - _S_start_free;
-
-    if (__bytes_left &gt;= __total_bytes) {
-          //内存池足够，分配后返回
-        __result = _S_start_free;
-        _S_start_free += __total_bytes;
-        return(__result);
-    } else if (__bytes_left &gt;= __size) {
-          //内存池不够整个memory block，但是足够一个以上的block。
-        __nobjs = (int)(__bytes_left/__size);
-        __total_bytes = __size * __nobjs;
-        __result = _S_start_free;
-        _S_start_free += __total_bytes;
-        return(__result);
-    } else {
-          //内存池已经一个都不能满足memory block
-        size_t __bytes_to_get = 2 * __total_bytes + _S_round_up(_S_heap_size &gt;&gt; 4);
-        // Try to make use of the left-over piece.
-        if (__bytes_left &gt; 0) {
-               //内存池中还有剩余，找到这部分空间并填入相应的memory block list中。
-            _Obj* __VOLATILE* __my_free_list =
-                        _S_free_list + _S_freelist_index(__bytes_left);
-
-            ((_Obj*)_S_start_free) -&gt; _M_free_list_link = *__my_free_list;
-            *__my_free_list = (_Obj*)_S_start_free;
-        }
-          //内存池为空，我们从heap中找内存
-          //__bytes_to_get是一个不断增加的数字，也就是每次从heap分配的空间越来越多。
-        _S_start_free = (char*)malloc(__bytes_to_get);  
-        if (0 == _S_start_free) {
-                //极端情况， heap的空间不足。
-            size_t __i;
-            _Obj* __VOLATILE* __my_free_list;
-     _Obj* __p;
-            // Try to make do with what we have.  That can't
-            // hurt.  We do not try smaller requests, since that tends
-            // to result in disaster on multi-process machines.
-                //这部分不理解，为什么只能从大的block中分配呢？
-            for (__i = __size; __i &lt;= _MAX_BYTES; __i += _ALIGN) {
-                __my_free_list = _S_free_list + _S_freelist_index(__i);
-                __p = *__my_free_list;
-                if (0 != __p) {
-                          //在freeList 中，我们找到了一个大的block，并且里面有数据
-                    *__my_free_list = __p -&gt; _M_free_list_link;
-                    _S_start_free = (char*)__p;
-                    _S_end_free = _S_start_free + __i;
-                          //从大的freelist中，我们分配出一个来到内存池，然后递归。这次没有
-                              //意外，会找到足够的内存
-                    return(_S_chunk_alloc(__size, __nobjs));
-                    // Any leftover piece will eventually make it to the
-                    // right free list.
-                }
-            }
-                //还是没有满足要求，调用一级分配器看oom机制，是否能够帮助我们
-     _S_end_free = 0; // In case of exception.
-            _S_start_free = (char*)malloc_alloc::allocate(__bytes_to_get);
-            // This should either throw an
-            // exception or remedy the situation.  Thus we assume it
-            // succeeded.
-        }
-          //扩充了内存池大小
-        _S_heap_size += __bytes_to_get;
-        _S_end_free = _S_start_free + __bytes_to_get;
-        return(_S_chunk_alloc(__size, __nobjs));//根据新的内存池大小，修正__nobjs
-    }//end else
-     //这里我们看出了，为什么是8的倍数，所以，我们分配的大的block，肯定会在小的block中找到位置，而不会
-      //浪费掉当然，具体的理由肯定还有更多，需要去了解更多的内存方面的知识才能理解。
-}
-</code></pre>
-
-<p>内存管理这里仅仅是一个最最基本的梳理，事实上其实仅仅是照本宣科而已，因为这里面有太多的细节需要去琢磨。STL设计这样的原因是什么？他的分配回收机制为什么是这样？他的分配粒度，以及处理分配不足的手段。对我来说都是未知，不过好在目前的确不需要思考过多这些问题。仅仅是上层的封装和简单功能的实现就已经让我受益匪浅了。这些问题还是留给时间去沉淀这些未知吧。</p>
 ]]></content>
   </entry>
   
