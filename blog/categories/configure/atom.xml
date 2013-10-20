@@ -4,7 +4,7 @@
   <title><![CDATA[Category: configure | 不会开机的男孩]]></title>
   <link href="http://studentdeng.github.com/blog/categories/configure/atom.xml" rel="self"/>
   <link href="http://studentdeng.github.com/"/>
-  <updated>2013-09-16T19:49:16+08:00</updated>
+  <updated>2013-10-20T15:52:28+08:00</updated>
   <id>http://studentdeng.github.com/</id>
   <author>
     <name><![CDATA[studentdeng]]></name>
@@ -38,6 +38,7 @@
 <li><a href="#A5">写博客命令</a></li>
 <li><a href="#A6">php apigen command demo</a></li>
 <li><a href="#A7">ios6 下因为横屏问题导致UIImagePickerController崩溃</a></li>
+<li><a href="#A8">ios5 下UILabel sizeToFit导致 UILabel不换行 </a></li>
 </ol>
 
 
@@ -155,6 +156,14 @@ rake preview
 
 @end
 </code></pre>
+
+<div name = "A8" id = "A8"></div>
+
+
+<h1>ios5 下UILabel sizeToFit导致 UILabel不换行</h1>
+
+<p>很奇怪的Bug 在ios5.0下，sizeToFit 之后，UILabel 不换行，但是在ios6， ios7 下面没有任何问题，
+这里应该是apple的bug被修复了。在ios5下，慎用 sizeToFit</p>
 ]]></content>
   </entry>
   
