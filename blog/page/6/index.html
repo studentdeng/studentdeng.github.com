@@ -229,6 +229,11 @@ rake preview
 <p>很奇怪的Bug 在ios5.0下，sizeToFit 之后，UILabel 不换行，但是在ios6， ios7 下面没有任何问题，
 这里应该是apple的bug被修复了。在ios5下，慎用 sizeToFit</p>
 
+<p>在使用sizeToFit的原因是因为需要置顶UILabel，这里有一个比较简单的方式
+stringByAppendingString:@&#8221;\n \n \n \n \n \n \n \n&#8221;]</p>
+
+<p>通过设置在Label中的字符串，增加额外的空行，来达到置顶的要求</p>
+
 		
 		
 	</div>

@@ -4,7 +4,7 @@
   <title><![CDATA[Category: configure | 不会开机的男孩]]></title>
   <link href="http://studentdeng.github.com/blog/categories/configure/atom.xml" rel="self"/>
   <link href="http://studentdeng.github.com/"/>
-  <updated>2013-10-20T15:52:28+08:00</updated>
+  <updated>2013-10-22T13:16:55+08:00</updated>
   <id>http://studentdeng.github.com/</id>
   <author>
     <name><![CDATA[studentdeng]]></name>
@@ -164,6 +164,11 @@ rake preview
 
 <p>很奇怪的Bug 在ios5.0下，sizeToFit 之后，UILabel 不换行，但是在ios6， ios7 下面没有任何问题，
 这里应该是apple的bug被修复了。在ios5下，慎用 sizeToFit</p>
+
+<p>在使用sizeToFit的原因是因为需要置顶UILabel，这里有一个比较简单的方式
+stringByAppendingString:@"\n \n \n \n \n \n \n \n"]</p>
+
+<p>通过设置在Label中的字符串，增加额外的空行，来达到置顶的要求</p>
 ]]></content>
   </entry>
   
