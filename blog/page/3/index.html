@@ -92,7 +92,7 @@
 
 <p>实现原理是当我们push 代码到remote repository时，通过git的<a href="https://www.kernel.org/pub/software/scm/git/docs/githooks.html">post-receive hooks</a>。执行</p>
 
-<pre><code>git checkout -f
+<pre><code>git checkout prod -f
 </code></pre>
 
 <p>来帮助我们实现自动部署</p>
@@ -115,7 +115,7 @@ $ git commit -q -m "The humble beginnings of my web site."
 $ git init --bare
 $ cat &gt; hooks/post-receive
 #!/bin/sh
-GIT_WORK_TREE=/mnt/www/test git checkout -f
+GIT_WORK_TREE=/mnt/www/test git checkout prod -f
 $ chmod +x hooks/post-receive
 </code></pre>
 
