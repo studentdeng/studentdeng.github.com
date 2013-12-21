@@ -1,0 +1,204 @@
+
+<!DOCTYPE HTML>
+<html>
+<head>
+	<meta charset="utf-8">
+	<title>翻译 《Getting Pixels onto the Screen》 - 不会开机的男孩</title>
+	<meta name="author" content="studentdeng">
+
+	
+	<meta name="description" content="原文 绘制像素到屏幕 像素是如何绘制到屏幕上面的？有非常多的方式输出数据到屏幕，通过调用很多不同的framework和不同的函数。这里我们讲一下这个过程背后的东西。希望能够帮助大家了解什么时候该使用什么API，特别是当遇到性能问题需要调试的时候。当然，我们这里主要讲iOS，但是事实上， &hellip;">
+	
+	<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1">
+
+	<link href="/atom.xml" rel="alternate" title="不会开机的男孩" type="application/atom+xml">
+	<link rel="canonical" href="">
+	<link href="/favicon.png" rel="shortcut icon">
+	<link href="/stylesheets/screen.css" media="screen, projection" rel="stylesheet" type="text/css">
+	<!--[if lt IE 9]><script src="//html5shiv.googlecode.com/svn/trunk/html5.js"></script><![endif]-->
+	<script async="true" src="//ajax.googleapis.com/ajax/libs/jquery/1.7.2/jquery.min.js"></script>
+	
+</head>
+
+
+<body>
+	<header id="header" class="inner"><h1><a href="/">不会开机的男孩</a></h1>
+<nav id="main-nav"><ul class="main">
+	<li><a href="/">Blog</a></li>
+	<li><a href="/blog/archives">Archives</a></li>
+	<li><a href="/tags/index.html">Tags</a></li>
+	<li><a href="/favorite/index.html">Favorite</a></li>
+	<li><a href="/about/index.html">About</a></li>
+</ul>
+</nav>
+<nav id="mobile-nav">
+	<div class="alignleft menu">
+		<a class="button">Menu</a>
+		<div class="container"><ul class="main">
+	<li><a href="/">Blog</a></li>
+	<li><a href="/blog/archives">Archives</a></li>
+	<li><a href="/tags/index.html">Tags</a></li>
+	<li><a href="/favorite/index.html">Favorite</a></li>
+	<li><a href="/about/index.html">About</a></li>
+</ul>
+</div>
+	</div>
+	<div class="alignright search">
+		<a class="button"></a>
+		<div class="container">
+			<form action="http://google.com/search" method="get">
+				<input type="text" name="q" results="0">
+				<input type="hidden" name="q" value="site:studentdeng.github.com">
+			</form>
+		</div>
+	</div>
+</nav>
+<nav id="sub-nav" class="alignright">
+	<div class="social">
+		
+		
+		
+		
+		<a class="github" href="https://github.com/studentdeng" title="GitHub">GitHub</a>
+		
+    
+		
+		
+		
+		
+		
+		<a class="rss" href="/atom.xml" title="RSS">RSS</a>
+		
+    
+	</div>
+</nav>
+
+</header>
+	
+		
+	
+	<div id="content" class="inner"><article class="post">
+	<h2 class="title">翻译 《Getting Pixels Onto the Screen》</h2>
+	<div class="entry-content"><p><a href="http://www.objc.io/issue-3/moving-pixels-onto-the-screen.html#pixels">原文</a></p>
+
+<h1>绘制像素到屏幕</h1>
+
+<p>像素是如何绘制到屏幕上面的？有非常多的方式输出数据到屏幕，通过调用很多不同的framework和不同的函数。这里我们讲一下这个过程背后的东西。希望能够帮助大家了解什么时候该使用什么API，特别是当遇到性能问题需要调试的时候。当然，我们这里主要讲iOS，但是事实上，很多东西也是可以应用到OSX上面的。</p>
+
+<h2>Graphics Stack</h2>
+
+<p>绘制屏幕的过程中又很多都是不被人了解的。但是一旦像素被绘制到屏幕上面，那么像素就是有3种颜色组成：红绿蓝。这3个颜色单元通过特定的强弱组合形成一个特定的颜色。对于iPhone5 <a href="https://en.wikipedia.org/wiki/IPS_LCD">IPS_LCD</a> 的分辨率是1,136×640 = 727,040个像素，也就是有2,181,120个颜色单元。对于一个15寸高清屏幕的MacBook Pro来说，这个数字差不多是1500万。Graphics Stack 就是确保每一个单元的强弱都正确。当滑动整个屏幕的时候，上百万的颜色单元需要在每秒60次的更新。</p>
+
+<h2>The Software Components</h2>
+
+<p>下面是一个简单的例子，整个软件看起来是这个样子</p>
+
+<p><img src="http://www.objc.io/images/issue-3/pixels-software-stack@2x.png" alt="image" /></p>
+
+<p>显示器上面的就是GPU，图像处理单元。GPU是一个高度并发计算的硬件单元，特别是处理图形图像的并行计算。这就是为什么可以这么快的更新像素并输出到屏幕的原因。并行计算的设计让GPU可以高效的混合图像纹理。我们会在后面详细解释混合图像纹理这个过程。现在需要知道的就是GPU是被高度优化设计的，因此非常适合计算图像这种类型的工作。他比CPU计算的更快，更节约能耗。因为CPU是为了更一般的计算设计的硬件。CPU虽然可以做很多事情，但是在图像这方面还是远远慢于GPU。</p>
+
+<p>GPU驱动是一些直接操作GPU的代码，由于各个GPU是不同的，驱动在他们之上创建一个层，这个层通常是OpenGL/OpenGL ES。</p>
+
+<p>OpenGL（<a href="http://en.wikipedia.org/wiki/OpenGL">Open Graphics Library)</a>）是用来做2D和3G图形图像渲染的API。由于GPU是一个非常定制化的硬件，OpenGL和GPU紧密合作充分发挥GPU的能力来实现图形图像渲染硬件加速。对大多数情况，OpenGL太底层了。但是当1992年第一个版本发布后（20多年前），它就成为主流的操作GPU的方式，并且前进了一大步因为程序员再也不用为了每一个GPU编写不同的应用程序。</p>
+
+<p>在OpenGL上面，分开了几个。iOS设备几乎所有的东西变成了Core Animation，但是在OSX，绕过Core Animation而使用Core Graphic 并不是不常见。有一些特别的应用程序，特别是游戏，可能直接使用OpenGL/OpenGL ES. 然后事情变得让人疑惑起来，因为有些渲染Core Animation 使用 Core Graphic。类似AVFoundation， Core Image 这样的框架，或是其他的一些混合的方式。</p>
+
+<p>这里提醒一件事情， GPU是一个强有力的图形图像硬件，在显示像素方面起着核心作用。它也连接着CPU。从硬件方面讲就是有一些总线把他们连接了起来。也有一些框架比如 OpenGL， Core Animation。Core Graphic控制GPU和CPU之间的数据传输。为了让像素能够显示到屏幕上面，有一些工作是需要CPU的。然后数据会被传给GPU，然后数据再被处理，最后显示到屏幕上面。</p>
+
+<p>每一个过程中都有自己的挑战，在这个过程中也存在很多权衡。</p>
+
+<h1>硬件层</h1>
+
+<p><img src="http://www.objc.io/images/issue-3/pixels%2C%20hardware%402x.png" alt="image" /></p>
+
+<p>这是一个很简单的图表用来描述一个挑战。GPU有纹理（位图）合成为一帧（比如1秒60帧）每一个纹理占用VRAM（显卡）因此GPU一次处理的纹理有大小限制。GPU处理合成方面非常高效，但是有一些合成任务比其他要复杂，所以GPU对处理能力有一个不能超过16.7ms限制（1秒60帧）。</p>
+
+<p>另一个挑战是把数据传给GPU。为了让GPU能够访问数据，我们需要把数据从内存复制到显存。这个过程叫做上传到GPU。这个可能看上去不重要，但是对于一个大的纹理来说，会非常耗时。</p>
+
+<p>最后CPU运行程序。你可能告诉CPU从资源文件夹中加载一个PNG图片，并解压。这些过程都发生在CPU。当需要显示这些解压的图片时，就需要上传数据到GPU。一些事情看似非常简单，比如显示一段文字，对CPU来说是一个非常复杂的任务。需要调用Core Text 和 Core Graphic框架去根据文字生成一个位图。完成后，以纹理的方式上传到GPU，然后准备显示。当你滑动或是移动一段屏幕上面的文字时，同样的纹理会被重用，CPU会简单的告诉GPU只是需要一个新的位置，所以GPU可以重新利用现有的纹理。CPU不需要重新绘制文字，位图也不需要重新上传到GPU。</p>
+
+<p>上面的有一点复杂，在有一个整体概念之后，我们会开始解释里面的技术细节。</p>
+</div>
+
+
+<div class="meta">
+	<div class="date">
+
+
+
+
+
+
+
+
+  
+
+
+<time datetime="2013-12-09T15:55:00+08:00" pubdate data-updated="true">Dec 9<span>th</span>, 2013</time></div>
+	<div class="tags">
+
+
+	<a class='category' href='/blog/categories/ios/'>IOS</a>, <a class='category' href='/blog/categories/translation/'>translation</a>
+
+
+</div>
+	
+	<div class="comments"><a href="#disqus_thread">Comments</a></div>
+	
+</div>
+</article>
+
+	<div class="share">
+	<div class="addthis_toolbox addthis_default_style ">
+		
+		
+		
+		
+	</div>
+	
+</div>
+
+
+
+<section id="comment">
+    <h2 class="title">Comments</h2>
+    <div id="disqus_thread" aria-live="polite"><noscript>Please enable JavaScript to view the <a href="http://disqus.com/?ref_noscript">comments powered by Disqus.</a></noscript>
+</div>
+</section>
+</div>
+	<footer id="footer" class="inner">Copyright &copy; 2013
+
+    studentdeng
+
+</footer>
+	<script src="/javascripts/slash.js"></script>
+<script src="/javascripts/jquery.fancybox.pack.js"></script>
+<script type="text/javascript">
+(function($){
+	$('.fancybox').fancybox();
+})(jQuery);
+</script> <!-- Delete or comment this line to disable Fancybox -->
+
+
+<script type="text/javascript">
+      var disqus_shortname = 'studentdeng';
+      
+        
+        // var disqus_developer = 1;
+        var disqus_identifier = 'http://studentdeng.github.com/blog/2013/12/09/getting-pixels-onto-the-screen/';
+        var disqus_url = 'http://studentdeng.github.com/blog/2013/12/09/getting-pixels-onto-the-screen/';
+        var disqus_script = 'embed.js';
+      
+    (function () {
+      var dsq = document.createElement('script'); dsq.type = 'text/javascript'; dsq.async = true;
+      dsq.src = '//go.disqus.com/' + disqus_script;
+      (document.getElementsByTagName('head')[0] || document.getElementsByTagName('body')[0]).appendChild(dsq);
+    }());
+</script>
+
+
+
+
+
+</body>
+</html>
