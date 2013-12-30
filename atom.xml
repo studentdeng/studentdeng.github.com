@@ -4,7 +4,7 @@
   <title><![CDATA[不会开机的男孩]]></title>
   <link href="http://studentdeng.github.com/atom.xml" rel="self"/>
   <link href="http://studentdeng.github.com/"/>
-  <updated>2013-12-30T23:45:54+08:00</updated>
+  <updated>2013-12-31T00:12:11+08:00</updated>
   <id>http://studentdeng.github.com/</id>
   <author>
     <name><![CDATA[studentdeng]]></name>
@@ -67,7 +67,9 @@
     <link href="http://studentdeng.github.com/blog/2013/12/09/getting-pixels-onto-the-screen/"/>
     <updated>2013-12-09T15:55:00+08:00</updated>
     <id>http://studentdeng.github.com/blog/2013/12/09/getting-pixels-onto-the-screen</id>
-    <content type="html"><![CDATA[<p><a href="http://www.objc.io/issue-3/moving-pixels-onto-the-screen.html#pixels">原文</a></p>
+    <content type="html"><![CDATA[<p>这篇提交到<a href="http://blog.jobbole.com/?p=54511">伯乐在线</a></p>
+
+<p><a href="http://www.objc.io/issue-3/moving-pixels-onto-the-screen.html#pixels">原文</a></p>
 
 <h1>绘制像素到屏幕</h1>
 
