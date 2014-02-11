@@ -1,0 +1,234 @@
+
+<!DOCTYPE HTML>
+<html>
+<head>
+	<meta charset="utf-8">
+	<title>百度面试 - 不会开机的男孩</title>
+	<meta name="author" content="studentdeng">
+
+	
+	<meta name="description" content="百度移动云可穿戴部门的面试经历，面试官都非常热情友好，一上来到弄的我挺不好意思的。下面记录一下自己的面试过程，因为我真的没啥面试经验，需要总结下。 1面 Objective C runtime library：Objective C的对象模型，block的底层实现结构，消息发送，消息转发， &hellip;">
+	
+	<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1">
+
+	<link href="/atom.xml" rel="alternate" title="不会开机的男孩" type="application/atom+xml">
+	<link rel="canonical" href="">
+	<link href="/favicon.png" rel="shortcut icon">
+	<link href="/stylesheets/screen.css" media="screen, projection" rel="stylesheet" type="text/css">
+	<!--[if lt IE 9]><script src="//html5shiv.googlecode.com/svn/trunk/html5.js"></script><![endif]-->
+	<script async="true" src="//ajax.googleapis.com/ajax/libs/jquery/1.7.2/jquery.min.js"></script>
+	
+</head>
+
+
+<body>
+	<header id="header" class="inner"><h1><a href="/">不会开机的男孩</a></h1>
+<nav id="main-nav"><ul class="main">
+	<li><a href="/">Blog</a></li>
+	<li><a href="/blog/archives">Archives</a></li>
+	<li><a href="/tags/index.html">Tags</a></li>
+	<li><a href="/favorite/index.html">Favorite</a></li>
+	<li><a href="/about/index.html">About</a></li>
+</ul>
+</nav>
+<nav id="mobile-nav">
+	<div class="alignleft menu">
+		<a class="button">Menu</a>
+		<div class="container"><ul class="main">
+	<li><a href="/">Blog</a></li>
+	<li><a href="/blog/archives">Archives</a></li>
+	<li><a href="/tags/index.html">Tags</a></li>
+	<li><a href="/favorite/index.html">Favorite</a></li>
+	<li><a href="/about/index.html">About</a></li>
+</ul>
+</div>
+	</div>
+	<div class="alignright search">
+		<a class="button"></a>
+		<div class="container">
+			<form action="http://google.com/search" method="get">
+				<input type="text" name="q" results="0">
+				<input type="hidden" name="q" value="site:studentdeng.github.com">
+			</form>
+		</div>
+	</div>
+</nav>
+<nav id="sub-nav" class="alignright">
+	<div class="social">
+		
+		
+		
+		
+		<a class="github" href="https://github.com/studentdeng" title="GitHub">GitHub</a>
+		
+    
+		
+		
+		
+		
+		
+		<a class="rss" href="/atom.xml" title="RSS">RSS</a>
+		
+    
+	</div>
+</nav>
+
+</header>
+	
+		
+	
+	<div id="content" class="inner"><article class="post">
+	<h2 class="title">百度面试</h2>
+	<div class="entry-content"><p>百度移动云可穿戴部门的面试经历，面试官都非常热情友好，一上来到弄的我挺不好意思的。下面记录一下自己的面试过程，因为我真的没啥面试经验，需要总结下。</p>
+
+<h1>1面</h1>
+
+<ul>
+<li>Objective C runtime library：Objective C的对象模型，block的底层实现结构，消息发送，消息转发，这些都需要背后C一层的描述，内存管理。</li>
+<li>Core Data：中多线程中处理大量数据同步时的操作。</li>
+<li>Multithreading：什么时候处理多线程，几种方式，优缺点。</li>
+<li>Delegate， Notification，KVO， other 优缺点</li>
+</ul>
+
+
+<p>runtime有一点追问，category，method 的实现机制，class的载入过程。
+1面整体感觉不错，40分钟不到，感觉回答的还可以。被通知一会儿二面。</p>
+
+<h1>2面</h1>
+
+<p>二面的时间非常长，差不多将近3个小时，直接面到快下班了。1面问的主要是知识点。2面问主要考察的是设计解决方案的能力，另外辅助追问的方式，考察深度和广度，回答过程中需要列出适合的具体例子，方案还需要细致到具体的关键的函数名称，方法。另外考察设计模式的理解，最后还考了算法。因为时间太长，这里记录一些重要的问题。</p>
+
+<ol>
+<li>设计一个progress bar解决方案，追问到 Core Graphic、CGPath、maskLayer。</li>
+<li>设计一个popup view被追问到 keyWindow、UIWindow的layer、UIView hierarchy。</li>
+<li>从设计模式的角度分析Delegate、Notification、KVO的区别。被追问到自己写的library和开源的项目中用到哪些设计模式，为什么使用，有哪些好处和坏处，现在能否改进。</li>
+<li>算是问题3的追问，设计一个方案来检测KVO的同步异步问题。willChange和 didChange的不同点，然后被追问到有没有其他地方也有类似情况，被追问到Core Data 中falut object。</li>
+<li>Multithreading，什么时候采用Multithreading方案，以及理由。追问到系统还有哪些在后台运行的thread，被追问到view life cycle、iOS6之后的不同以及内存管理。</li>
+<li>百度有一个亿级别的APP需要统计用户行为的日志系统。不使用数据库，只是使用普通文件，设计一个系统。被追问到内存映射文件。这个问题本来是服务器的问题，我表示从来没做过，回答很瞎。</li>
+</ol>
+
+
+<p>算法考了2个。一个是如何求一个集合的交集。另一个是百亿数据中查找相同的数字以及出现的次数。</p>
+
+<p>最后还补充了几个小问题</p>
+
+<ul>
+<li>自己对可穿戴设备的感受</li>
+<li>自己如果进入这个team，自己准备做那方面的事情</li>
+<li>为什么创业，自己未来规划</li>
+</ul>
+
+
+<p>一会被告知3面，但是因为太晚，约到次日下午3面。</p>
+
+<h1>3面</h1>
+
+<p>3面的时间和1面差不多40分钟，问了几个问题，主要是考察精神层面的东西。</p>
+
+<ul>
+<li>为什么做Windows Mobile</li>
+<li>为什么改iOS</li>
+<li>为什么来百度</li>
+<li>为什么iPhone 可以成功，那些吸引你</li>
+<li>如何看待AppStore 现在的生态圈</li>
+</ul>
+
+
+<p>后面就是他说的多一些，介绍团队遇到的困难以及14年团队的打算。最后他给了我2句话的评价，我觉得还是蛮对的。</p>
+
+<ul>
+<li>选择的时候都是经过深思熟虑的</li>
+<li>有野心，wanna make a difference</li>
+</ul>
+
+
+<p>有意思的是，他说他也wanna make a difference。</p>
+
+<h1>总结</h1>
+
+<p>整体还是挺尴尬的，几乎所有的知识点都是1，2年前积累的，13年积累的东西基本上没有，都是一些虚的东西。
+2面挺好的，暴露了自己不少问题，设计模式那部分几乎没有概念了。</p>
+</div>
+
+
+<div class="meta">
+	<div class="date">
+
+
+
+
+
+
+
+
+  
+
+
+<time datetime="2014-02-11T00:10:00+08:00" pubdate data-updated="true">Feb 11<span>th</span>, 2014</time></div>
+	<div class="tags">
+
+
+	<a class='category' href='/blog/categories/ios/'>iOS</a>, <a class='category' href='/blog/categories/interview/'>interview</a>
+
+
+</div>
+	
+	<div class="comments"><a href="#disqus_thread">Comments</a></div>
+	
+</div>
+</article>
+
+	<div class="share">
+	<div class="addthis_toolbox addthis_default_style ">
+		
+		
+		
+		
+	</div>
+	
+</div>
+
+
+
+<section id="comment">
+    <h2 class="title">Comments</h2>
+    <div id="disqus_thread" aria-live="polite"><noscript>Please enable JavaScript to view the <a href="http://disqus.com/?ref_noscript">comments powered by Disqus.</a></noscript>
+</div>
+</section>
+</div>
+	<footer id="footer" class="inner">Copyright &copy; 2014
+
+    studentdeng
+
+</footer>
+	<script src="/javascripts/slash.js"></script>
+<script src="/javascripts/jquery.fancybox.pack.js"></script>
+<script type="text/javascript">
+(function($){
+	$('.fancybox').fancybox();
+})(jQuery);
+</script> <!-- Delete or comment this line to disable Fancybox -->
+
+
+<script type="text/javascript">
+      var disqus_shortname = 'studentdeng';
+      
+        
+        // var disqus_developer = 1;
+        var disqus_identifier = 'http://studentdeng.github.com/blog/2014/02/11/baidu-interview/';
+        var disqus_url = 'http://studentdeng.github.com/blog/2014/02/11/baidu-interview/';
+        var disqus_script = 'embed.js';
+      
+    (function () {
+      var dsq = document.createElement('script'); dsq.type = 'text/javascript'; dsq.async = true;
+      dsq.src = '//go.disqus.com/' + disqus_script;
+      (document.getElementsByTagName('head')[0] || document.getElementsByTagName('body')[0]).appendChild(dsq);
+    }());
+</script>
+
+
+
+
+
+</body>
+</html>

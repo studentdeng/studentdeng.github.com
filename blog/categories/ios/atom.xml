@@ -1,10 +1,10 @@
 <?xml version="1.0" encoding="utf-8"?>
 <feed xmlns="http://www.w3.org/2005/Atom">
 
-  <title><![CDATA[Category: ios | 不会开机的男孩]]></title>
+  <title><![CDATA[Category: iOS | 不会开机的男孩]]></title>
   <link href="http://studentdeng.github.com/blog/categories/ios/atom.xml" rel="self"/>
   <link href="http://studentdeng.github.com/"/>
-  <updated>2013-12-31T00:12:11+08:00</updated>
+  <updated>2014-02-11T11:16:53+08:00</updated>
   <id>http://studentdeng.github.com/</id>
   <author>
     <name><![CDATA[studentdeng]]></name>
@@ -14,142 +14,79 @@
 
   
   <entry>
-    <title type="html"><![CDATA[cocoapods 入门]]></title>
-    <link href="http://studentdeng.github.com/blog/2013/09/13/cocoapods-tutorial/"/>
-    <updated>2013-09-13T23:48:00+08:00</updated>
-    <id>http://studentdeng.github.com/blog/2013/09/13/cocoapods-tutorial</id>
-    <content type="html"><![CDATA[<h1>介绍</h1>
+    <title type="html"><![CDATA[百度面试]]></title>
+    <link href="http://studentdeng.github.com/blog/2014/02/11/baidu-interview/"/>
+    <updated>2014-02-11T00:10:00+08:00</updated>
+    <id>http://studentdeng.github.com/blog/2014/02/11/baidu-interview</id>
+    <content type="html"><![CDATA[<p>百度移动云可穿戴部门的面试经历，面试官都非常热情友好，一上来到弄的我挺不好意思的。下面记录一下自己的面试过程，因为我真的没啥面试经验，需要总结下。</p>
 
-<p>最近一直在搞<a href="https://github.com/CocoaPods/CocoaPods">cocoapods</a>。 ios 这么多年终于有一个好使的包管理了。真的好激动好激动。。。
-之前开发一些App的时候，在一开始的时候，总是需要手动添加framework， library，设置一些 search path，有时候还会忘记那么几个，然后出来一大堆的link error。当一些library更新的时候，还需要自己手动去更换。3句话说就是</p>
+<h1>1面</h1>
+
+<ul>
+<li>Objective C runtime library：Objective C的对象模型，block的底层实现结构，消息发送，消息转发，这些都需要背后C一层的描述，内存管理。</li>
+<li>Core Data：中多线程中处理大量数据同步时的操作。</li>
+<li>Multithreading：什么时候处理多线程，几种方式，优缺点。</li>
+<li>Delegate， Notification，KVO， other 优缺点</li>
+</ul>
+
+
+<p>runtime有一点追问，category，method 的实现机制，class的载入过程。
+1面整体感觉不错，40分钟不到，感觉回答的还可以。被通知一会儿二面。</p>
+
+<h1>2面</h1>
+
+<p>二面的时间非常长，差不多将近3个小时，直接面到快下班了。1面问的主要是知识点。2面问主要考察的是设计解决方案的能力，另外辅助追问的方式，考察深度和广度，回答过程中需要列出适合的具体例子，方案还需要细致到具体的关键的函数名称，方法。另外考察设计模式的理解，最后还考了算法。因为时间太长，这里记录一些重要的问题。</p>
 
 <ol>
-<li>手动增加framework，library</li>
-<li>手动增加编译参数</li>
-<li>手动维护代码更新</li>
+<li>设计一个progress bar解决方案，追问到 Core Graphic、CGPath、maskLayer。</li>
+<li>设计一个popup view被追问到 keyWindow、UIWindow的layer、UIView hierarchy。</li>
+<li>从设计模式的角度分析Delegate、Notification、KVO的区别。被追问到自己写的library和开源的项目中用到哪些设计模式，为什么使用，有哪些好处和坏处，现在能否改进。</li>
+<li>算是问题3的追问，设计一个方案来检测KVO的同步异步问题。willChange和 didChange的不同点，然后被追问到有没有其他地方也有类似情况，被追问到Core Data 中falut object。</li>
+<li>Multithreading，什么时候采用Multithreading方案，以及理由。追问到系统还有哪些在后台运行的thread，被追问到view life cycle、iOS6之后的不同以及内存管理。</li>
+<li>百度有一个亿级别的APP需要统计用户行为的日志系统。不使用数据库，只是使用普通文件，设计一个系统。被追问到内存映射文件。这个问题本来是服务器的问题，我表示从来没做过，回答很瞎。</li>
 </ol>
 
 
-<p>完全是一大堆的体力活，当然，这些简单的配置和复制并不会花费太多的时间，但是，还是觉得在浪费生命，而这时候CocoaPods就出来了。我们只需要设置一个Podfile文件，执行</p>
+<p>算法考了2个。一个是如何求一个集合的交集。另一个是百亿数据中查找相同的数字以及出现的次数。</p>
 
-<pre><code>$ pod install 
-</code></pre>
+<p>最后还补充了几个小问题</p>
 
-<p>CocoaPods会帮我们下载好代码，设置好编译参数，配置好framework， library。</p>
+<ul>
+<li>自己对可穿戴设备的感受</li>
+<li>自己如果进入这个team，自己准备做那方面的事情</li>
+<li>为什么创业，自己未来规划</li>
+</ul>
 
-<h1>安装和更新</h1>
 
-<pre><code>$ sudo gem install cocoapods
-</code></pre>
+<p>一会被告知3面，但是因为太晚，约到次日下午3面。</p>
 
-<h1>使用</h1>
+<h1>3面</h1>
 
-<p>在project根目录下，create Podfile文件，下面一个例子</p>
+<p>3面的时间和1面差不多40分钟，问了几个问题，主要是考察精神层面的东西。</p>
 
-<pre><code>platform :ios, '5.0'
-pod 'CURestKit', '~&gt;1.0.1' 
-pod 'SDWebImage','~&gt;3.4'
-pod 'MBProgressHUD', '~&gt; 0.7'
-pod 'UALogger', '~&gt; 0.2.3'
-</code></pre>
+<ul>
+<li>为什么做Windows Mobile</li>
+<li>为什么改iOS</li>
+<li>为什么来百度</li>
+<li>为什么iPhone 可以成功，那些吸引你</li>
+<li>如何看待AppStore 现在的生态圈</li>
+</ul>
 
-<p>CocoaPods 会帮我们从git clone下来配置好的这些代码。后面的部分表示代码的版本号，一般来说和tag挂钩。</p>
 
-<p>配置好Podfile之后，执行</p>
+<p>后面就是他说的多一些，介绍团队遇到的困难以及14年团队的打算。最后他给了我2句话的评价，我觉得还是蛮对的。</p>
 
-<pre><code>$ pod install
-</code></pre>
+<ul>
+<li>选择的时候都是经过深思熟虑的</li>
+<li>有野心，wanna make a difference</li>
+</ul>
 
-<p>则会帮我们配置好这些项目。并生成一个XXXX.xcworkspace。 以后project使用这个文件就可以了。CocoaPods其实就是帮我们配置一个静态库作为项目的依赖。</p>
 
-<p>CocoaPods里面有大量的代码，现在最新的版本安装后是在这里</p>
+<p>有意思的是，他说他也wanna make a difference。</p>
 
-<pre><code>~/.cocoapods/repo/master/ 
-</code></pre>
+<h1>总结</h1>
 
-<h1>制作自己的项目配置</h1>
-
-<p>实际开发过程中，我们还有不少代码需要被改动，而CocoaPods上面的代码，大部分都比较旧，都是很稳定的代码，当然也有一些不能用的（大部分是国内的公司做的，大家都懂的）。另外还有一些我们自己写的一些其他代码，暂时还么有被CocoaPods收录的。这时候我们就需要配置自己的项目啦。</p>
-
-<p>这里是我的一个项目配置例子。cocoapods的配置文件就是一个 *.podspec的文件，这是一个例子文件名ShareCenter.podspec。这是一个典型的ruby，</p>
-
-<pre><code>Pod::Spec.new do |s|
-s.name         = "ShareCenter"
-s.version      = "2.0"
-s.summary      = "share client include sina weibo ,tencent weibo, renren"
-
-s.description  = &lt;&lt;-DESC
-               share client include sina weibo ,tencent weibo, renren
-               DESC
-
-s.homepage     = "https://github.com/studentdeng/ShareCenterExample"
-s.license      = 'MIT'
-s.author       = { "curer" =&gt; "studentdeng@hotmail.com" }
-s.platform     = :ios, '5.0'
-
-s.source       = { :git =&gt; "https://github.com/studentdeng/ShareCenterExample.git", :tag =&gt; s.version.to_s }
-s.source_files  = 'ShareCenter', 'ShareCenter/**/*.{h,m}'
-
-s.frameworks   = 'QuartzCore', 'Security', 'CoreGraphics', 'AudioToolbox'
-s.library = 'sqlite3.0'
-s.vendored_libraries = 'ShareCenter/Vender/sina/libWeiboSDK/libWeiboSDK.a'
-
-s.prefix_header_contents = &lt;&lt;-EOS
-#ifdef __OBJC__
-#import "ROConnect.h"
-#endif /* __OBJC__*/
-EOS
-end
-</code></pre>
-
-<p>这个基本上都是自解释的，这里有几个需要说明一下</p>
-
-<h2>s.source s.source_files</h2>
-
-<p>这里的 <em>source</em> 我们看出是一个git 的地址，这里我们调试的时候，可以先暂时设置成本地git，调试完毕之后就可以发布 增加tag。想要最新的代码只需要这样设置就好</p>
-
-<pre><code>{ :git =&gt; "https://github.com/studentdeng/ShareCenterExample.git"}
-</code></pre>
-
-<p>我们的git项目中，并不是所有的代码都需要被引用到我们的代码中，通常project还会包括一些example，test cases等，这里的 <em>source_files</em> 就是用来指定一些文件夹，或是文件。我这里的设置也很容易理解，就是ShareCenter下面的递归后的所有后缀是h、m的子文件。</p>
-
-<h2>s.frameworks s.library</h2>
-
-<p>这里配置的就是我们的framework 和 library，这里注意一下library的名字规则就好。</p>
-
-<h2>vendored_libraries</h2>
-
-<p>这里用来指定外部的静态库。这里我们指定了sina sso认证的SDK</p>
-
-<h2>s.prefix_header_contents</h2>
-
-<p>这里用来指定预编译的配置，这里一定要鄙视一下renren的超级渣渣SDK。这里提供一种解决方法。</p>
-
-<h2>部署我们的配置到cocoapods中</h2>
-
-<p>cocoapods的代码配置文件是在这里<a href="https://github.com/CocoaPods/Specs">Specs</a></p>
-
-<p>这里最好是去fork一个自己的project，然后保存一个自己或是团队的配置，这样不会在更新cocoapods的时候，丢掉自己的配置。当然，如果觉得自己搞的还不错，也可以去pull requests。</p>
-
-<p>在之前提到的目录<em>~/.cocoapods/repo/master/</em> 下面，我们可以看到已经有超级多的项目了，我们可以也可以通过</p>
-
-<pre><code>$ pod search XXX
-</code></pre>
-
-<p>来查找项目，或是直接在这个文件夹下面找，可以学习不少project的配置技巧，我这里也是从他们学到的。</p>
-
-<p>最后添加一个project的配置是这样子的。</p>
-
-<p>例如上面的例子，
-在<em>~/.cocoapods/repo/master/</em> 下面创建一个文件夹ShareCenter，然后在创建一个2.0的文件夹表示这是version2.0的配置。
-然后在把之前的ShareCenter.podspec复制到2.0目录下面。</p>
-
-<p>也就是最后的目录是这样子的</p>
-
-<pre><code>~/.cocoapods/repo/master/ShareCenter/2.0/ShareCenter.podspec
-</code></pre>
-
-<p>如果希望更多的了解cocoapods，还是需要去<a href="https://github.com/CocoaPods/CocoaPods">Github</a>上面 :D</p>
+<p>整体还是挺尴尬的，几乎所有的知识点都是1，2年前积累的，13年积累的东西基本上没有，都是一些虚的东西。
+2面挺好的，暴露了自己不少问题，设计模式那部分几乎没有概念了。</p>
 ]]></content>
   </entry>
   

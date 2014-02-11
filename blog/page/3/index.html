@@ -7,7 +7,7 @@
 	<meta name="author" content="studentdeng">
 
 	
-	<meta name="description" content="强连通图的应用场景我就不在这里赘述了。其中Kosaraju是最常见的一种。 这个也是Stanford 算法课弟四周的作业，现在看来是最难的一道题。那么这里我就给一个我自己的实现了。 这个作业的难度就在于他的输入是一个相当大的数据，处理不好，很容易溢出。那份大数据，我没有留在这里， &hellip;">
+	<meta name="description" content="让我们从 redis.c -> main() 开始 读取配置文件 在初始化完毕一些系统时间之后，redis开始初始化服务器配置。 initServerConfig 在这个函数中，初始化全局变量 struct redisServer server; /* server global state &hellip;">
 	
 	<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1">
 
@@ -78,6 +78,539 @@
 		
 	
 	<div id="content" class="inner">
+
+
+    <article class="post">
+	<h2 class="title">
+		
+		<a href="/blog/2013/08/19/redis-start-up/">
+		
+			Redis服务器启动流程</a>
+	</h2>
+	<div class="entry-content">
+		<p><img src="http://pauladamsmith.com/articles/redis_under_the_hood/startup.png" alt="整个系统初始化流程图" /></p>
+
+<p>让我们从 redis.c -> main() 开始</p>
+
+<h1>读取配置文件</h1>
+
+<p>在初始化完毕一些系统时间之后，redis开始初始化服务器配置。</p>
+
+<h2>initServerConfig</h2>
+
+<p>在这个函数中，初始化全局变量</p>
+
+<pre><code>struct redisServer server; /* server global state */
+</code></pre>
+
+<p>struct redisServer 结构体描述了服务器的状态。这种庞大的数据结构实在是看的烦躁。
+这里可以很方便的看到redis的系统默认配置。另外还初始化了系统命令表。</p>
+
+<pre><code>server.commands = dictCreate(&amp;commandTableDictType,NULL);
+populateCommandTable();
+</code></pre>
+
+<p>这里我们可以找到redis的命令所对应的函数名称。</p>
+
+<pre><code>struct redisCommand redisCommandTable[] = {
+    {"get",getCommand,2,"r",0,NULL,1,1,1,0,0},
+    {"set",setCommand,3,"wm",0,noPreloadGetKeys,1,1,1,0,0},
+    {"setnx",setnxCommand,3,"wm",0,noPreloadGetKeys,1,1,1,0,0},
+    {"setex",setexCommand,4,"wm",0,noPreloadGetKeys,1,1,1,0,0},
+    {"psetex",psetexCommand,4,"wm",0,noPreloadGetKeys,1,1,1,0,0},
+    {"append",appendCommand,3,"wm",0,NULL,1,1,1,0,0},
+    //...
+}
+
+
+struct redisCommand {
+    // 命令的名字
+    char *name;
+    // 命令的实现函数
+    redisCommandProc *proc;
+    // 命令所需的参数数量
+    int arity;
+    // 字符形式表示的 FLAG 值
+    char *sflags; /* Flags as string represenation, one char per flag. */
+    // 实际的 FLAG 值，由 sflags 计算得出
+    int flags;    /* The actual flags, obtained from the 'sflags' field. */
+    /* Use a function to determine keys arguments in a command line.
+     * Used for Redis Cluster redirect. */
+    // 可选，在以下三个参数不足以决定命令的 key 参数时使用
+    redisGetKeysProc *getkeys_proc;
+    /* What keys should be loaded in background when calling this command? */
+    // 第一个 key 的位置
+    int firstkey; /* The first argument that's a key (0 = no keys) */
+    // 第二个 key 的位置
+    int lastkey;  /* THe last argument that's a key */
+    // 两个 key 之间的空隔
+    int keystep;  /* The step between first and last key */
+    // 这个命令被执行所耗费的总毫秒数
+    long long microseconds;
+    // 这个命令被调用的总次数
+    long long calls;
+};
+</code></pre>
+
+<p>这里可以看出，redis的命令配置，保存在底层数据结构dic中。</p>
+
+<h1>服务器初始化</h1>
+
+<h2>initServer</h2>
+
+<p>这里设置信号回调函数，和继续初始化</p>
+
+<pre><code>struct redisServer server; /* server global state */
+</code></pre>
+
+<p>结构外，创建了SharedObjects。</p>
+
+<h3>createSharedObjects</h3>
+
+<pre><code>initServer-&gt;createSharedObjects
+</code></pre>
+
+<p>redis这里将除了把一些常用的字符串保存起来，目的就是为了减少不断申请释放时CPU时间，内存碎片等等,常用的返回客户端的命令，消息等。如</p>
+
+<pre><code>shared.ok = createObject(REDIS_STRING,sdsnew("+OK\r\n"));
+shared.err = createObject(REDIS_STRING,sdsnew("-ERR\r\n"));
+
+//...
+
+shared.wrongtypeerr = createObject(REDIS_STRING,sdsnew(
+    "-WRONGTYPE Operation against a key holding the wrong kind of value\r\n"));
+//...
+</code></pre>
+
+<p>还初始化了一个很大的共享数字对象。</p>
+
+<pre><code>#define REDIS_SHARED_INTEGERS 10000
+
+for (j = 0; j &lt; REDIS_SHARED_INTEGERS; j++) {
+    shared.integers[j] = createObject(REDIS_STRING,(void*)(long)j);
+    shared.integers[j]-&gt;encoding = REDIS_ENCODING_INT;
+}
+</code></pre>
+
+<h3>aeCreateEventLoop</h3>
+
+<pre><code>initServer-&gt;aeCreateEventLoop
+
+
+
+/* Include the best multiplexing layer supported by this system.
+* The following should be ordered by performances, descending. */
+#ifdef HAVE_EVPORT
+    #include "ae_evport.c"
+#else
+    #ifdef HAVE_EPOLL
+        #include "ae_epoll.c"
+    #else
+        #ifdef HAVE_KQUEUE
+            #include "ae_kqueue.c"
+        #else
+            #include "ae_select.c"
+        #endif
+    #endif
+#endif
+</code></pre>
+
+<p>接下来创建eventloop。这里调用 aeApiCreate 创建event loop。redis这里根据不同平台会选择不同的event方式，
+Linux 使用epoll，BSD上面使用kqueue，其他选择select</p>
+
+<h3>初始化网络连接</h3>
+
+<pre><code>if (server.port != 0) {
+    server.ipfd = anetTcpServer(server.neterr,server.port,server.bindaddr);
+    if (server.ipfd == ANET_ERR) {
+        redisLog(REDIS_WARNING, "Opening port %d: %s",
+            server.port, server.neterr);
+        exit(1);
+    }
+}
+
+if (server.unixsocket != NULL) {
+    unlink(server.unixsocket); /* don't care if this fails */
+    server.sofd = anetUnixServer(server.neterr,server.unixsocket,server.unixsocketperm);
+    if (server.sofd == ANET_ERR) {
+        redisLog(REDIS_WARNING, "Opening socket: %s", server.neterr);
+        exit(1);
+    }
+}
+</code></pre>
+
+<h3>创建系统cron定时器</h3>
+
+<pre><code>aeCreateTimeEvent(server.el, 1, serverCron, NULL, NULL);
+
+aeCreateTimeEvent
+aeCreateTimeEvent accepts the following as parameters:
+eventLoop: This is server.el in redis.c
+milliseconds: The number of milliseconds from the current time after which the timer expires.
+proc: Function pointer. Stores the address of the function that has to be called after the timer expires.
+clientData: Mostly NULL.
+finalizerProc: Pointer to the function that has to be called before the timed event is removed from the list of timed events.
+</code></pre>
+
+<p>aeCreateTimeEvent 创建一个定时器，redis会在这个serverCron中清理系统变量，判断是否需要写入文件等操作。</p>
+
+<h3>在event loop中绑定回调函数</h3>
+
+<pre><code>if (server.ipfd &gt; 0 &amp;&amp; aeCreateFileEvent(server.el,server.ipfd,AE_READABLE,
+    acceptTcpHandler,NULL) == AE_ERR) redisPanic("Unrecoverable error creating server.ipfd file event.");            
+</code></pre>
+
+<h1>设置启动event loop</h1>
+
+<pre><code>// 设置事件执行前要运行的函数
+aeSetBeforeSleepProc(server.el,beforeSleep);
+
+// 启动服务器循环
+aeMain(server.el);
+
+// 关闭服务器，删除事件
+aeDeleteEventLoop(server.el);
+</code></pre>
+
+<p>aeMain函数和之前用的很多的windows中的message queue非常相似。redis不断循环等待执行event。这里不论是定时器还是socket event，都会在这个event loop中被执行。</p>
+
+<pre><code>void aeMain(aeEventLoop *eventLoop) {
+
+eventLoop-&gt;stop = 0;
+
+while (!eventLoop-&gt;stop) {
+
+    // 如果有需要在事件处理前执行的函数，那么运行它
+    if (eventLoop-&gt;beforesleep != NULL)
+        eventLoop-&gt;beforesleep(eventLoop);
+
+    // 开始处理事件
+    aeProcessEvents(eventLoop, AE_ALL_EVENTS);
+    }
+}
+</code></pre>
+
+<p>方便整理，这里重复一下一开始的流程图</p>
+
+<p><img src="http://pauladamsmith.com/articles/redis_under_the_hood/startup.png" alt="整个系统初始化流程图" /></p>
+
+<h1>处理客户端命令流程</h1>
+
+<p><img src="http://pauladamsmith.com/articles/redis_under_the_hood/request-response.png" alt="处理客户端命令流程图" /></p>
+
+<p>之前我们已经注册了socket acceptTcpHandler 回调函数，现在的流程是</p>
+
+<pre><code>acceptTcpHandler-&gt;acceptCommonHandler-&gt;createClient-&gt;aeCreateFileEvent
+
+if (aeCreateFileEvent(server.el, c-&gt;fd, AE_READABLE,
+    readQueryFromClient, c) == AE_ERR) {
+    freeClient(c);
+    return NULL;
+}
+</code></pre>
+
+<p>这里又向event loop中加入一个新的事件callback函数：aeCreateFileEvent 用于把event loop中的监听的事件和回调函数绑定在一起。</p>
+
+<p>readQueryFromClient 则是客户端一切命令的入口函数。</p>
+
+<pre><code>void readQueryFromClient(aeEventLoop *el, int fd, void *privdata, int mask) {
+    redisClient *c = (redisClient*) privdata;
+    char buf[REDIS_IOBUF_LEN];
+    int nread;
+    // ...
+
+    nread = read(fd, buf, REDIS_IOBUF_LEN);
+    // ...
+    if (nread) {
+        size_t oldlen = sdslen(c-&gt;querybuf);
+        c-&gt;querybuf = sdscatlen(c-&gt;querybuf, buf, nread);
+        c-&gt;lastinteraction = time(NULL);
+        /* Scan this new piece of the query for the newline. We do this
+        * here in order to make sure we perform this scan just one time
+        * per piece of buffer, leading to an O(N) scan instead of O(N*N) */
+        if (c-&gt;bulklen == -1 &amp;&amp; c-&gt;newline == NULL)
+            c-&gt;newline = strchr(c-&gt;querybuf+oldlen,'\n');
+    } else {
+        return;
+    }
+    Processinputbuffer(c);
+}
+</code></pre>
+
+<p> readQueryFromClient读取客户端命令，交给Processinputbuffer处理。</p>
+
+<pre><code>void processInputBuffer(redisClient *c) {
+    //...
+
+    if (processCommand(c) == REDIS_OK)
+        resetClient(c);
+}
+
+int processCommand(redisClient *c) {
+    //...
+    call(c,REDIS_CALL_FULL);
+}
+</code></pre>
+
+<p>这里call回根据command定义的callback函数，执行相对应的redis命令代码。</p>
+
+<p>当command执行完毕之后，准备将结果传递给客户端。这里可以看到注册了sendReplyToClient回调函数。</p>
+
+<pre><code>int prepareClientToWrite(redisClient *c) {
+    if (c-&gt;flags &amp; REDIS_LUA_CLIENT) return REDIS_OK;
+    if (c-&gt;fd &lt;= 0) return REDIS_ERR; /* Fake client */
+    if (c-&gt;bufpos == 0 &amp;&amp; listLength(c-&gt;reply) == 0 &amp;&amp;
+        (c-&gt;replstate == REDIS_REPL_NONE || c-&gt;replstate == REDIS_REPL_ONLINE) &amp;&amp;
+        aeCreateFileEvent(server.el, c-&gt;fd, AE_WRITABLE, sendReplyToClient, c) == AE_ERR)
+            return REDIS_ERR;
+    return REDIS_OK;
+}
+</code></pre>
+
+<p>读到这里，我们已经看到了。redis在处理event loop的时候，不仅仅是处理客户端的连接，很多redis内部的流程也是通过event loop实现的。这个是event driven常常遇到的方式。</p>
+
+<p>内容资料、图片、代码参考</p>
+
+<ul>
+<li><a href="https://github.com/huangz1990/annotated_redis_source">huangz的redis2.6代码注释</a></li>
+<li><a href="http://pauladamsmith.com/articles/redis-under-the-hood.html#back-up-to-main">Redis: under the hood</a></li>
+<li><a href="http://redis.io/topics/internals-rediseventlib">Redis Event Library</a></li>
+</ul>
+
+
+		
+		
+	</div>
+
+
+<div class="meta">
+	<div class="date">
+
+
+
+
+
+
+
+
+  
+
+
+<time datetime="2013-08-19T10:26:00+08:00" pubdate data-updated="true">Aug 19<span>th</span>, 2013</time></div>
+	<div class="tags">
+
+
+	<a class='category' href='/blog/categories/redis/'>redis</a>
+
+
+</div>
+	
+	<div class="comments"><a href="/blog/2013/08/19/redis-start-up/#disqus_thread">Comments</a></div>
+	
+</div>
+</article>
+
+
+    <article class="post">
+	<h2 class="title">
+		
+		<a href="/blog/2013/08/08/box2d-05/">
+		
+			Box2d 05 RevoluteJoint and b2WeldJoint</a>
+	</h2>
+	<div class="entry-content">
+		<p>资料代码，思路来自 <a href="http://www.raywenderlich.com/4756/how-to-make-a-catapult-shooting-game-with-cocos2d-and-box2d-part-1">raywenderlich</a>。这个只是自己学习时的笔记，非原创。</p>
+
+<h1>b2RevoluteJoint</h1>
+
+<ul>
+<li>将刚体固定在一个点上，刚体可以围绕这个点旋转</li>
+<li>可以提供马达，提供刚体旋转的动力</li>
+</ul>
+
+
+<p>所以，通过b2RevoluteJoint的第一个特性，我们可以很方便的模拟跷跷板。而第二个特性，我们可以很方便的实现汽车运动，或是弹弓类似的东西，今天实现一个类似疯狂小鸟的demo</p>
+
+<p>创建b2RevoluteJoint很简单，但是里面有一些属性还是让人比较纠结，特别是好多中文blog，不知道是笔误还是无心，都是错的 =, =!</p>
+
+<pre><code>b2RevoluteJointDef armJointDef;
+armJointDef.Initialize(groundBody, armBody, b2Vec2(233.0 / PTM_RATIO, FLOOR_HEIGHT / PTM_RATIO));
+
+armJointDef.enableLimit = true;
+armJointDef.lowerAngle = CC_DEGREES_TO_RADIANS(9);
+armJointDef.upperAngle = CC_DEGREES_TO_RADIANS(75);
+
+armJointDef.enableMotor = true;
+armJointDef.maxMotorTorque = 200;
+armJointDef.motorSpeed = - 10;
+
+armJoint = (b2RevoluteJoint *)world-&gt;CreateJoint(&amp;armJointDef);
+</code></pre>
+
+<p>这3个很好理解，就是对我们的旋转做限制。单位是弧度。</p>
+
+<ul>
+<li>enableLimit</li>
+<li>lowerAngle</li>
+<li>upperAngle</li>
+</ul>
+
+
+<p>这3个稍微不好理解</p>
+
+<ul>
+<li>enableMotor：     表示是否开启我们的旋转马达</li>
+<li>motorSpeed：      表示我们希望马达给我们提供的速度是多少，小于0表示顺时针</li>
+<li>maxMotorTorque：  表示马达给我们提供的扭矩有多少。</li>
+</ul>
+
+
+<p>简单的说，就是maxMotorTorque为我们提供改变速度的力。motorSpeed表示我们希望达到的最大速度是多少。</p>
+
+<h1>b2WeldJoint</h1>
+
+<p>b2WeldJoint又是一个很好理解的连接器。b2WeldJoint通过一个点把2个刚体绑定在一起运动。</p>
+
+<pre><code>b2WeldJointDef weldJointDef;
+weldJointDef.Initialize(bulletBody, armBody, b2Vec2(230.0f/PTM_RATIO,(155.0f+FLOOR_HEIGHT)/PTM_RATIO));
+weldJointDef.collideConnected = false;
+
+bulletJoint = (b2WeldJoint*)world-&gt;CreateJoint(&amp;weldJointDef);
+</code></pre>
+
+<p>在弹弓实例下，我们可以将炮弹绑定在我们的发射架上，当发射架运动到一定角度时，我们可以释放这个连接器，炮弹就可以射出了。</p>
+
+<p><a href="https://github.com/studentdeng/box2d-tutorials/tree/master/05">source code</a></p>
+
+<div class="video-container">
+    <iframe height=498 width=510 src="http://player.youku.com/embed/XNTkzMzI0ODAw" frameborder=0 allowfullscreen></iframe>
+</div>
+
+
+		
+		
+	</div>
+
+
+<div class="meta">
+	<div class="date">
+
+
+
+
+
+
+
+
+  
+
+
+<time datetime="2013-08-08T15:11:00+08:00" pubdate data-updated="true">Aug 8<span>th</span>, 2013</time></div>
+	<div class="tags">
+
+
+	<a class='category' href='/blog/categories/box2d/'>box2D</a>, <a class='category' href='/blog/categories/game/'>game</a>
+
+
+</div>
+	
+	<div class="comments"><a href="/blog/2013/08/08/box2d-05/#disqus_thread">Comments</a></div>
+	
+</div>
+</article>
+
+
+    <article class="post">
+	<h2 class="title">
+		
+		<a href="/blog/2013/08/08/skip-list/">
+		
+			跳跃表 Skip List</a>
+	</h2>
+	<div class="entry-content">
+		<p>最近在学习<a href="http://redis.cn">redis</a>，这时才知道了<a href="http://en.wikipedia.org/wiki/Skip_list">skip list</a>，结合<a href="http://v.163.com/movie/2010/12/7/S/M6UTT5U0I_M6V2TTJ7S.html">Mit 算法导论 lecture 12</a>，在奋斗了2个早上的时间后有了下面的东东。</p>
+
+<p>对于我们熟悉的binary search来说，我们需要能够做到random access才行。但是在普通的link这种数据结构中却不能做到。而这种情况下我们有很多类似的工具比如heap，tree，b tree，red－black tree。等等类似的都是来自AVL的变种。但是说实话，这些东东，的确是挺难实现的，需要做各种的旋转啊，调整啊，来保持平衡。特别是red－black tree。而这时的skip list 就为我们提供了一个很好的思路。</p>
+
+<h1>introduction</h1>
+
+<p>让我们先从简单的开始</p>
+
+<p><img src="http://studentdeng.github.io/images/skip_list1.png" alt="image" /></p>
+
+<p>如果最下面的数字是已经排序好的数列，我们想要快速查找其中一项，而不是简单的便利。我们可以增加一个link，也就是上面的一条，来让我们能够“跳过”一些元素，也就是减少一些不必要的比较。</p>
+
+<p>那么在2条时，我们的访问程度是多少呢？L2 + L1 / L2, 也就是第二条link的个数+ 每一个小端个数，这个是最差情况。显然，让这个不等式和最小，需要 L2 = L1 / L2。 显然L1是一个定值。这里设为N,那么，2条link下，我们的查找复杂度是 2 * √n</p>
+
+<p>如何再优化呢？这个思路很简单，就是在L2上面再构建一个link L3. 整个时间也就是 L3 ＋ L2 ／ L3 ＋ L1 ／ L2 ，根据不等式性质，他们的和最小时，也就是 L3 ＝ L2 ／ L3 ＝ L1 ／ L2。当L1 ＝ N时，他们的和时 3 * 立方根（N）</p>
+
+<p><img src="http://studentdeng.github.io/images/skip_list_l3.png" alt="image" /></p>
+
+<p>当第k层时， 我们的时间则是 k * k次方跟（N）</p>
+
+<p>当k = lgN 时，我们的时间为 lgN * lg 次方跟（N），根据对数的换底公式，我们可以得出 时间是 2lgN. 哈，我们现在已经降到O(lgN).我们满足了。</p>
+
+<p>这时我们可以想象一下，这个skip list的结构，其实就是一个binary tree。我们通过最上面的一层访问类似跟节点的情况，然后一层层link 相当于tree的孩子节点，整个比较过程和binary search 非常的相似。</p>
+
+<h1>insert</h1>
+
+<p>对于这些结构来说，搞定search不是难点，插入和删除则是最麻烦的东西。这里我们可以自己思考一下，为了保证我们的link的结构足够完美，可能需要记录没一段的个数，然后我们可能有一些节点要上几层或是下几层。但是这个其实，本质上和那些avl树又一样了。skip list则是基于一种随机的策略来决定这些节点。其实我们可以思考一下，最完美的分法就是和binary tree一样的，所以这种2倍数的关系就可以用抛硬币的方式来决定。</p>
+
+<p>这里为了程序时间方便，我们创建一个无穷小的节点作为我们的其实节点，这样，我们所有的开始都是从最左边。</p>
+
+<p><img src="http://studentdeng.github.io/images/skip_list_01.png" alt="image" /></p>
+
+<p>我们插入一个元素30，这时我们可以判断一下这个新的元素是否需要“升级”，这里我扔了一下，反面，不用升级了。</p>
+
+<p><img src="http://studentdeng.github.io/images/skip_list_02.png" alt="image" /></p>
+
+<p>这里我们插入一个15，我扔了一下，反面。不用升级</p>
+
+<p><img src="http://studentdeng.github.io/images/skip_list_03.png" alt="image" /></p>
+
+<p>这里我们插入一个20，我扔了一个正面，又扔了一个正面，额，好吧第三次终于是反面了。</p>
+
+<p><img src="http://studentdeng.github.io/images/skip_list_04.png" alt="image" /></p>
+
+<p>这里涉及到了一点点的随机算法的证明，这些东西实在是让人烦躁。主要还是大学时候的概率学得就不咋地，现在也都忘了。从最直观的来看，就是一层层升级的概率会越来越低，在随机算法足够独立和大量的数目上来看，不难形成这样子的一个类似tree的结构。</p>
+
+<h1>delete</h1>
+
+<p>删除这里的操作简直就是blazingly simple,因为我们整个list layer 都是建立在随机上的，删除则是直接删除就好了</p>
+
+<p>我在看到这里，基本已经受不了要吐槽了。实现这个也太简单了，相对red-black tree这种东西。</p>
+
+		
+		
+	</div>
+
+
+<div class="meta">
+	<div class="date">
+
+
+
+
+
+
+
+
+  
+
+
+<time datetime="2013-08-08T09:51:00+08:00" pubdate data-updated="true">Aug 8<span>th</span>, 2013</time></div>
+	<div class="tags">
+
+
+	<a class='category' href='/blog/categories/algorithms/'>algorithms</a>
+
+
+</div>
+	
+	<div class="comments"><a href="/blog/2013/08/08/skip-list/#disqus_thread">Comments</a></div>
+	
+</div>
+</article>
 
 
     <article class="post">
@@ -310,233 +843,6 @@ Requests: 2780 susceed, 0 failed.
 </div>
 </article>
 
-
-    <article class="post">
-	<h2 class="title">
-		
-		<a href="/blog/2013/07/30/git-deploy/">
-		
-			Git 部署代码到服务器</a>
-	</h2>
-	<div class="entry-content">
-		<p>之前常用的部署代码就是用svn，或是更老土的ftp。今天在写一个新玩具的时候，突然发现，每次的git pull实在是一个让人烦躁的东西，就网上查找了一下，整理在这里。<a href="http://toroid.org/ams/git-website-howto">参考原文</a></p>
-
-<p>实现原理是当我们push 代码到remote repository时，通过git的<a href="https://www.kernel.org/pub/software/scm/git/docs/githooks.html">post-receive hooks</a>。执行</p>
-
-<pre><code>git checkout prod -f
-</code></pre>
-
-<p>来帮助我们实现自动部署</p>
-
-<p>让我们从最简单的开始，现在<strong>本地创建</strong>一个git repository</p>
-
-<pre><code>$ mkdir test &amp;&amp; cd test
-$ git init 
-$ echo 'Hello, world!' &gt; index.html
-$ echo 'Hello, world!' &gt; index.html
-$ git add index.html
-$ git commit -q -m "The humble beginnings of my web site."
-</code></pre>
-
-<p>index.html 就是我们希望能够部署到服务器的代码</p>
-
-<p>然后在<strong>服务器</strong>创建一个repository, 这里可不是服务器部署代码的位置</p>
-
-<pre><code>$ mkdir test.git &amp;&amp; cd test.git
-$ git init --bare
-$ cat &gt; hooks/post-receive
-#!/bin/sh
-GIT_WORK_TREE=/mnt/www/test git checkout prod -f
-$ chmod +x hooks/post-receive
-</code></pre>
-
-<p>这是服务器的git代码目录</p>
-
-<pre><code>/repo/test.git
-</code></pre>
-
-<p>这里的 &#8216;/mnt/www/test&#8217; 就是我们将要部署服务器代码的位置，一般的lamp，我们喜欢放在www里，当然这里需要根据不同的环境更换就好了。</p>
-
-<p>这里我们在<strong>本地</strong>的git目录下增加一个remote</p>
-
-<pre><code>$ git remote add prod ssh://server_address/repo/test.git
-$ git push prod +master:refs/heads/master
-</code></pre>
-
-<p>server_address 可以ip，域名。</p>
-
-<p>我不太喜欢用这个命令行，我喜欢用<a href="http://www.sourcetreeapp.com">SourceTree</a>来做这个增加remote和最后的commit push 部分。</p>
-
-<p>这时我们切换到<strong>服务器</strong>目录下，就可以看到我们的index.html 在我们向prod push的之后，已经自动check out 到我们指定目录下了。</p>
-
-<p>之后我们只需要修改完成之后，git push prod 就可以自动部署代码了。</p>
-
-<p>第一次用，这里标记一下，看看后面当发生冲突的时候，时一个什么样的情况。： ）</p>
-
-		
-		
-	</div>
-
-
-<div class="meta">
-	<div class="date">
-
-
-
-
-
-
-
-
-  
-
-
-<time datetime="2013-07-30T22:34:00+08:00" pubdate data-updated="true">Jul 30<span>th</span>, 2013</time></div>
-	<div class="tags">
-
-
-	<a class='category' href='/blog/categories/git/'>git</a>, <a class='category' href='/blog/categories/tips/'>tips</a>
-
-
-</div>
-	
-	<div class="comments"><a href="/blog/2013/07/30/git-deploy/#disqus_thread">Comments</a></div>
-	
-</div>
-</article>
-
-
-    <article class="post">
-	<h2 class="title">
-		
-		<a href="/blog/2013/07/26/tips-install/">
-		
-			安装环境遇到的dt问题</a>
-	</h2>
-	<div class="entry-content">
-		<h1>ruby on rails</h1>
-
-<p>mysql2 image not found
-<a href="http://stackoverflow.com/questions/4546698/library-not-loaded-libmysqlclient-16-dylib-error-when-trying-to-run-rails-serv">soluation</a></p>
-
-		
-		
-	</div>
-
-
-<div class="meta">
-	<div class="date">
-
-
-
-
-
-
-
-
-  
-
-
-<time datetime="2013-07-26T17:30:00+08:00" pubdate data-updated="true">Jul 26<span>th</span>, 2013</time></div>
-	<div class="tags">
-
-
-	<a class='category' href='/blog/categories/configure/'>configure</a>, <a class='category' href='/blog/categories/ruby/'>ruby</a>, <a class='category' href='/blog/categories/tips/'>tips</a>
-
-
-</div>
-	
-	<div class="comments"><a href="/blog/2013/07/26/tips-install/#disqus_thread">Comments</a></div>
-	
-</div>
-</article>
-
-
-    <article class="post">
-	<h2 class="title">
-		
-		<a href="/blog/2013/07/22/box2d-04/">
-		
-			Box2d 04 多边形刚体和鼠标连接器</a>
-	</h2>
-	<div class="entry-content">
-		<p>我们在真正做一些物体的时候，有一些情况不是标准的圆形，矩形。这时我们需要创建多边形的刚体。这里推荐一个工具<a href="https://github.com/jfahrenkrug/VertexHelper">VertexHelper</a>来帮我们生成刚体的定义。</p>
-
-<p>今天的东西似乎有一点太少了，再瞅瞅另一种连接器，b2MouseJoint——鼠标连接器。
-在使用鼠标连接器之前，我们需要找到我们选择的是那一个物体。</p>
-
-<ul>
-<li>获取手势的位置，也就是坐标向量</li>
-<li>创建一个小的物体，小到只是一个点，然后通过这个物体在物理世界中查找包含这个物体的刚体</li>
-</ul>
-
-
-<p>鼠标连接器的使用步骤
-当检测到碰撞时，创建连接器</p>
-
-<pre><code>b2MouseJointDef mouseJointDef;
-mouseJointDef.bodyA = groundBody; //通常连接地面
-mouseJointDef.bodyB = body;       //需要移动的刚体
-mouseJointDef.target = locationWorld; //当前位置
-mouseJointDef.maxForce = 1000 * body-&gt;GetMass(); //移动的最大力，这个决定移动的灵敏度
-//mouseJointDef.collideConnected = true; //这个场景不需要
-
-self.mouseJoint = (b2MouseJoint *) world-&gt;CreateJoint(&amp;mouseJointDef);
-//body-&gt;SetAwake(true);         //很多地方指定了这个，但是我实际测试，这个场景也不需要
-</code></pre>
-
-<p>在手势移动的时候重新设置</p>
-
-<pre><code>world-&gt;DestroyJoint(self.mouseJoint);
-self.mouseJoint = NULL;
-</code></pre>
-
-<p>在手势取消和结束时销毁</p>
-
-<pre><code>world-&gt;DestroyJoint(_mouseJoint);
-</code></pre>
-
-<p><a href="https://github.com/studentdeng/box2d-tutorials/tree/master/04">demo</a></p>
-
-<div class="video-container">
-    <iframe height=498 width=510 src="http://player.youku.com/embed/XNTg2NDQxNzAw" frameborder=0 allowfullscreen></iframe>
-</div>
-
-
-
-
-		
-		
-	</div>
-
-
-<div class="meta">
-	<div class="date">
-
-
-
-
-
-
-
-
-  
-
-
-<time datetime="2013-07-22T13:34:00+08:00" pubdate data-updated="true">Jul 22<span>nd</span>, 2013</time></div>
-	<div class="tags">
-
-
-	<a class='category' href='/blog/categories/box2d/'>box2D</a>, <a class='category' href='/blog/categories/game/'>game</a>
-
-
-</div>
-	
-	<div class="comments"><a href="/blog/2013/07/22/box2d-04/#disqus_thread">Comments</a></div>
-	
-</div>
-</article>
-
 <nav id="pagenavi">
     
         <a href="/blog/page/2/" class="prev">Prev</a>
@@ -546,7 +852,7 @@ self.mouseJoint = NULL;
     
     <div class="center"><a href="/blog/archives">Blog Archives</a></div>
 </nav></div>
-	<footer id="footer" class="inner">Copyright &copy; 2013
+	<footer id="footer" class="inner">Copyright &copy; 2014
 
     studentdeng
 
