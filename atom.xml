@@ -4,7 +4,7 @@
   <title><![CDATA[不会开机的男孩]]></title>
   <link href="http://studentdeng.github.com/atom.xml" rel="self"/>
   <link href="http://studentdeng.github.com/"/>
-  <updated>2014-02-13T22:48:29+08:00</updated>
+  <updated>2014-02-21T14:16:00+08:00</updated>
   <id>http://studentdeng.github.com/</id>
   <author>
     <name><![CDATA[studentdeng]]></name>
@@ -12,6 +12,108 @@
   </author>
   <generator uri="http://octopress.org/">Octopress</generator>
 
+  
+  <entry>
+    <title type="html"><![CDATA[Xcode5 Plugins 开发简介]]></title>
+    <link href="http://studentdeng.github.com/blog/2014/02/21/xcode-plugin-fun/"/>
+    <updated>2014-02-21T13:13:00+08:00</updated>
+    <id>http://studentdeng.github.com/blog/2014/02/21/xcode-plugin-fun</id>
+    <content type="html"><![CDATA[<p>这篇文章介绍如何给Xcode5开发插件。如果之前了解iPhone &amp; iPad 开发，那么下面的内容对您非常熟悉。最后我们会开发一个简单的插件，记录Xcode开发中Building的时间。</p>
+
+<h1>准备工作</h1>
+
+<p>首先编写一个Plugin还是需要不少额外的配置，这里推荐<a href="https://github.com/kattrali/Xcode5-Plugin-Template">Xcode Plugin Template</a>。用这个templage来帮助我们开发Plugin。</p>
+
+<p>另外，编写插件和之前的iPhone or Mac上的APP不太一样。从某种意义上来说就是用Xcode调试Xcode。所以这里需要额外配置一点东西。</p>
+
+<ul>
+<li>修改Scheme</li>
+</ul>
+
+
+<p><img src="http://studentdeng.github.io/images/xcode_plugin1.png" alt="image" /></p>
+
+<ul>
+<li>Executable 选择Xcode.app</li>
+</ul>
+
+
+<p><img src="http://studentdeng.github.io/images/xcode_plugin2.png" alt="image" /></p>
+
+<p>当我们Build &amp; Run Project的时候就可以看到启动了一个新的Xcode进程，当然除了Xcode， Mail或是其他程序我们都可以调试。</p>
+
+<h1>如何编写插件</h1>
+
+<p>因为Apple至今并没有公开Xcode Plugin的文档，所以我们需要通过一些其他方法寻找思路。</p>
+
+<figure class='code'> <div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+<span class='line-number'>2</span>
+<span class='line-number'>3</span>
+<span class='line-number'>4</span>
+<span class='line-number'>5</span>
+<span class='line-number'>6</span>
+<span class='line-number'>7</span>
+</pre></td><td class='code'><pre><code class='objc'><span class='line'> <span class="p">[[</span><span class="n">NSNotificationCenter</span> <span class="n">defaultCenter</span><span class="p">]</span> <span class="nl">addObserver:</span><span class="n">self</span> <span class="nl">selector:</span><span class="k">@selector</span><span class="p">(</span><span class="nl">notificationLog:</span><span class="p">)</span> <span class="nl">name:</span><span class="nb">nil</span> <span class="nl">object:</span><span class="nb">nil</span><span class="p">];</span>
+</span><span class='line'>  
+</span><span class='line'>  <span class="o">-</span> <span class="p">(</span><span class="kt">void</span><span class="p">)</span><span class="nl">notificationLog:</span><span class="p">(</span><span class="n">NSNotification</span> <span class="o">*</span><span class="p">)</span><span class="n">notify</span>
+</span><span class='line'>  <span class="p">{</span>
+</span><span class='line'>      <span class="n">NSLog</span><span class="p">(</span><span class="s">@&quot;%@&quot;</span><span class="p">,</span> <span class="n">notify</span><span class="p">.</span><span class="n">name</span><span class="p">);</span>
+</span><span class='line'>  <span class="p">}</span>
+</span><span class='line'>  
+</span></code></pre></td></tr></table></div></figure>
+
+
+<p>这里稍微有一点特殊，参数notificationName 设为nil，下面是Apple的文档，不是很清楚。</p>
+
+<pre><code>notificationName If you pass nil, the notification center doesn’t use a notification’s name to decide whether to deliver it to the observer.
+</code></pre>
+
+<p>但是目前来看，似乎可以看到所有的通知。当然绝大部分是重复的，对我们没有意义。很幸运最后我们找到了2个通知是我们需要的，下面的代码，已经做了过滤。</p>
+
+<figure class='code'> <div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+<span class='line-number'>2</span>
+<span class='line-number'>3</span>
+<span class='line-number'>4</span>
+<span class='line-number'>5</span>
+<span class='line-number'>6</span>
+<span class='line-number'>7</span>
+<span class='line-number'>8</span>
+<span class='line-number'>9</span>
+</pre></td><td class='code'><pre><code class='objc'><span class='line'> <span class="o">-</span> <span class="p">(</span><span class="kt">void</span><span class="p">)</span><span class="nl">notificationLog:</span><span class="p">(</span><span class="n">NSNotification</span> <span class="o">*</span><span class="p">)</span><span class="n">notify</span>
+</span><span class='line'>  <span class="p">{</span>
+</span><span class='line'>      <span class="k">if</span> <span class="p">(</span><span class="o">!</span><span class="p">[</span><span class="n">notify</span><span class="p">.</span><span class="n">name</span> <span class="nl">hasPrefix:</span><span class="s">@&quot;IDEBuildOperation&quot;</span><span class="p">])</span> <span class="p">{</span>
+</span><span class='line'>          <span class="k">return</span><span class="p">;</span>
+</span><span class='line'>      <span class="p">}</span>
+</span><span class='line'>
+</span><span class='line'>      <span class="n">NSLog</span><span class="p">(</span><span class="s">@&quot;%@&quot;</span><span class="p">,</span> <span class="n">notify</span><span class="p">.</span><span class="n">name</span><span class="p">);</span>
+</span><span class='line'>  <span class="p">}</span>
+</span><span class='line'>  
+</span></code></pre></td></tr></table></div></figure>
+
+
+<p>这2个通知分别是</p>
+
+<ul>
+<li>IDEBuildOperationWillStartNotification</li>
+<li>IDEBuildOperationDidStopNotification</li>
+</ul>
+
+
+<p>这个我们不得不赞一下cocoa的命名方式，大家都可以猜出这2个通知的含义。剩下的事情就很简单了。统计build时间。</p>
+
+<h1>最后</h1>
+
+<p>这是<a href="https://github.com/studentdeng/Buddy">项目源代码</a>。有兴趣的同学可以玩玩，看一下自己的编译时间有多长。另外最终的代码中还增加了2个小的features。</p>
+
+<ul>
+<li>查看当前打开Xcode的人数</li>
+<li>查看自己打开Xcode专注的时间有多长，这个时间是当Xcode被focus的时候才统计，另外不足1分钟不计算在内。</li>
+</ul>
+
+
+<p>Have fun！</p>
+]]></content>
+  </entry>
   
   <entry>
     <title type="html"><![CDATA[我的2008-2018]]></title>
@@ -2034,45 +2136,6 @@ join-&gt;SetLength(distance);
 </div>
 
 
-
-]]></content>
-  </entry>
-  
-  <entry>
-    <title type="html"><![CDATA[Box2D 02 刚体]]></title>
-    <link href="http://studentdeng.github.com/blog/2013/07/19/box2d-02/"/>
-    <updated>2013-07-19T15:30:00+08:00</updated>
-    <id>http://studentdeng.github.com/blog/2013/07/19/box2d-02</id>
-    <content type="html"><![CDATA[<p>刚体的属性有3种。</p>
-
-<ul>
-<li>staticBody</li>
-<li>kinematicBody</li>
-<li><p>dynamicBody</p>
-
-<p>  staticzero mass, zero velocity, may be manually moved</p>
-
-<p>  kinematic: zero mass, non-zero velocity set by user, moved by solver</p>
-
-<p>  dynamic: positive mass, non-zero velocity determined by forces, moved by solver</p></li>
-</ul>
-
-
-<p>简单说就是static 的刚体没有质量，没有速度。
-kinematic 的刚体没有质量，但是可以设置速度。
-dynamic 的刚体就是之前我们写的小球。有质量有速度。</p>
-
-<p>static 的常常用于游戏中的墙，这种不会移动的，而且不会受到力的作用改变他的位置，速度等。
-kinematic 的常常用于游戏中的跳板这些，他们会移动，但是同样不会受到力的作用改变原来的运动轨迹。
-dynamic 通常是我们的玩家，敌人。他们会移动，而且会受到力的作用，旋转，碰撞，加速等。</p>
-
-<p>刚写好了几个demo，用来做这几种类型的区分，</p>
-
-<p><a href="https://github.com/studentdeng/box2d-tutorials/tree/master/02">demo代码</a></p>
-
-<div class="video-container">
-<iframe height=498 width=510 src="http://player.youku.com/embed/XNTg0OTM0OTg4" frameborder=0 allowfullscreen></iframe>
-</div>
 
 ]]></content>
   </entry>

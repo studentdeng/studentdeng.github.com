@@ -7,7 +7,7 @@
 	<meta name="author" content="studentdeng">
 
 	
-	<meta name="description" content="这是我写过的最难的一篇, 是目前为止最困难的一篇, 我的思路非常的混乱, 只是想通过这个方式来帮助我理清自己, 找出可以收获的地方. 其实我很早就想写了, 但是有很多东西反反复复,相互牵引的, 我的思维也在不断的变化, 有太多的地方我不明白, 这让我现在非常难受, 而在这个时候写一篇这样子的东西 &hellip;">
+	<meta name="description" content="下载源代码 mysql 下载CMAKE download 代码根目录 执行下面代码, 确定生成configure.data 文件 wscript win\configure.js WITH_INNOBASE_STORAGE_ENGINE WITH_PARTITION_STORAGE_ENGINE &hellip;">
 	
 	<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1">
 
@@ -78,6 +78,83 @@
 		
 	
 	<div id="content" class="inner">
+
+
+    <article class="post">
+	<h2 class="title">
+		
+		<a href="/blog/2013/03/20/mysql-source-code-setup/">
+		
+			调试 Mysql源代码 环境搭建</a>
+	</h2>
+	<div class="entry-content">
+		<p>下载源代码 <a href="http://dev.mysql.com/downloads/mysql/">mysql</a></p>
+
+<p>下载CMAKE <a href="http://www.cmake.org/">download</a></p>
+
+<p>代码根目录 执行下面代码, 确定生成configure.data 文件</p>
+
+<pre><code>wscript win\configure.js WITH_INNOBASE_STORAGE_ENGINE WITH_PARTITION_STORAGE_ENGINE MYSQL_SERVER_SUFFIX=-pro
+</code></pre>
+
+<p>找到 win 目录下的 XXX.bat 文件复制到源代码根目录下, 我这里使用vs2008 ,所以复制 build-vs9.bat 到源代码根目录
+在系统根目录 C:/windows 下 增加一个 my.ini 用于 mysql 配置, 我的mysql 源代码目录在 C:/mysql_code/mysql-5-1.1.68</p>
+
+<pre><code>[mysqld]
+# set basedir to your installation path
+basedir=C:/mysql_code/mysql-5-1.1.68
+# set datadir to the location of your data directory
+datadir=C:/mysql_code/mysql-5-1.1.68/win/data
+</code></pre>
+
+<p>将sql目录下的share文件夹复制到源代码根目录下</p>
+
+<p>修改sql_locale.cc 文件, 把文件编码改成 UTF8 with BOM, windows 你懂的</p>
+
+<p>然后可以调试了, 不过这里我遇到一个问题, 在 sql_locale.cc 函数 test_lc_time_sz 函数, 这里DEBUG_ASSERT(0)了一下, 目前先暂时注释掉它 : (
+现在可以跑</p>
+
+<pre><code>mysqld
+</code></pre>
+
+<p>然后在</p>
+
+<pre><code>mysql -u root -p 
+</code></pre>
+
+<p>over!</p>
+
+		
+		
+	</div>
+
+
+<div class="meta">
+	<div class="date">
+
+
+
+
+
+
+
+
+  
+
+
+<time datetime="2013-03-20T22:06:00+08:00" pubdate data-updated="true">Mar 20<span>th</span>, 2013</time></div>
+	<div class="tags">
+
+
+	<a class='category' href='/blog/categories/mysql/'>mysql</a>
+
+
+</div>
+	
+	<div class="comments"><a href="/blog/2013/03/20/mysql-source-code-setup/#disqus_thread">Comments</a></div>
+	
+</div>
+</article>
 
 
     <article class="post">
@@ -712,93 +789,6 @@ stringByAppendingString:@&#8221;\n \n \n \n \n \n \n \n&#8221;]</p>
 </div>
 	
 	<div class="comments"><a href="/blog/2013/01/15/happiness/#disqus_thread">Comments</a></div>
-	
-</div>
-</article>
-
-
-    <article class="post">
-	<h2 class="title">
-		
-		<a href="/blog/2012/12/17/birthday-2012/">
-		
-			又要过生日了, 总得写点神马</a>
-	</h2>
-	<div class="entry-content">
-		<p>一转眼又要过生日了, 我想我又要长大一岁了.每当这个时候, 总是会思考这一年的收获有多少,遗憾有多少, 就像之前的一篇中写的, 今年的我的主题就是&#8221;了解自己&#8221;.</p>
-
-<p>之前我一直认为我是一个懒惰, 幼稚, 固执的家伙, 那么我今年还会再增加一个Tag, 敏感.</p>
-
-<p>为什么说自己敏感呢? 我的理解就是同一件事情, 更够比别人更开心, 也能够比别人更伤心.对于我这样一个低情商男孩来说, 有一个这样子的属性, 就像强X说的, 这就是一个悲剧, 特别是和女孩交往的过程. 放大别人对自己的好, 放大别人对自己的不好.</p>
-
-<p>因为各种各样客观的原因, 我经历的&#8221;放大的不好&#8221;, 要远远多于&#8221;放大的对自己的好&#8221;. 呵呵, 所以经历了2段非常难受的过程. 而且, 后面肯定还会经历更多的而且是更难受的过程.</p>
-
-<p>总结自己难受的过程, 我觉得我现在的状态可以冷静的去分析我当时的想法.首先是自己为什么觉得特别难受吧, 从外表来看, 就是不能接受失败, 呵呵, 的确是,但不准确, 因为我也不是一路都一帆风顺的,经历不了失败和挫折的家伙, 这个问题我一直在思考, 从健身回来, 现在我觉得, 我接受不了的是, 无法找到原因的失败, 我是一个极端懒惰的人, 如果我在意这件事情,我无法接受我经历一段失败后,无法从中获取教训, 因为意味着,我肯定还会继续犯同样的错误再下一次.</p>
-
-<p>我也不知道我的想法是准确的还是不准确的, 但有一个事情是肯定的, 就是经历过2次撕心裂肺的痛, 第一次的痛是通过3个多月的每天游泳和健身房器械发泄出去,没有流一滴眼泪, 第二次则是抱头痛苦了2个小时.</p>
-
-<p>现在回想自己当初的样子, 真的还是好敏感, 好脆弱, 但是却给了我2段非常宝贵的人生经历, 因为一般人没有这么敏感, 那种痛苦很少机会才能体会到, 而我却在半年里面连续经历2次, 其实, 我觉得我自己真的还是挺棒的, 因为我没有去地铁里划人脸报复, 也没有轻生跳楼, 而是坐在这里分析当时的想法.呵呵, 当然这个是玩笑话, 我最佩服我自己的是, 如果没有这2段连续的打击, I would not be able to find the most difficult task in my life , that is changing myself. 我将失去,或是更晚的意识到, 这个人生中最困难的任务,就是改变自己, 因为有太多的人, 别说改变自己, 面对自己都做不到, 因为自己可以骗得了任何人,但唯独骗不了自己.</p>
-
-<p> 南非总统曼德拉, 曾在牢狱中读过27年, 很难想象当一个人被冤枉入狱,收受尽迫害之后,在这么长时间, 在充满了各种负面情绪的地方中, 出来之后, 并没有变成一个极端分子, 而是能够有一个更加包容的心态去面对所有人, 坚持平等,自由的信念.</p>
-
-<p>我觉得我真的好幸运, 因为我并没有在牢狱里面待了27年,这么长的时间, 半年就够了: ), 上天总是公平的, 虽然有过非常难受的经历, 而且后面肯定还有更难受的经历, 但同时, 敏感的我, 也一定会有非常开心的,非常幸福的经历, 再找到真正合适我的女孩之后.</p>
-
-<p>我的人生还有很长, 我也相信之后还会有更大的挫折和失败感在等着我. 之前的我其实一直在选择逃避, 并没有真正的去面对困难, 用积极心理学的角度来看就是 Don&#8217;t give the  permission to be human, 不能接受失败, 承认失败, 不管是造成失败的原因,或是失败产生的结果, 不能接受情绪的上下波动, 认为all or nothing 无法区分affect, behaviour, cognize等等, 所以才会经历这一次非常大的困难, 感谢陪伴我渡过我人生低谷的2个家伙, 我的老大, 给我一个很好的榜样, 另一个波士顿的睿智女孩, 给我很多的理解和关心, 虽然她很讨厌我用睿智这个词.</p>
-
-<p>这些是我后半年的一些自己做的数字统计</p>
-
-<p>读过25 本书, 其中计算机专业书8本, 心理学5本, 历史3本, 思维训练2本, 小说2本, 美国文化2本, 经济学1本, 科普1本, 哲学1本, 人物传记1本</p>
-
-<p>32篇读书笔记(很简略的),2篇书评.</p>
-
-<p>总结了一份影响自己最大的书列
-总结了一份自己最喜欢的音乐列表, 8篇音乐的感受.</p>
-
-<p>记录了11篇自己的真心感受.加这一篇12 篇: D</p>
-
-<p>保证每周健身至少3次, 一般7次.
-听写英语71天, 用完4只中性笔.
-每周固定时间学英语6-8个小时.完成 3个level 24个学习单元.
-完整的完成1个网络公开课内容.并拿到认证,虽然没有真正的价值, 但对于工作的我,而且周末已经满负荷工作和学英语来说,还算不容易.</p>
-
-<p>敢向喜欢的女孩表白, 表白2次,虽然都没成: (</p>
-
-<p>第一次送老妈礼物.
-第一次节日向老妈说祝福.
-…
-…
-…</p>
-
-<p>如果真的有世界末日, 我觉得, 我的人生, 还算是丰富多彩的.</p>
-
-		
-		
-	</div>
-
-
-<div class="meta">
-	<div class="date">
-
-
-
-
-
-
-
-
-  
-
-
-<time datetime="2012-12-17T10:07:23+08:00" pubdate data-updated="true">Dec 17<span>th</span>, 2012</time></div>
-	<div class="tags">
-
-
-	<a class='category' href='/blog/categories/emotion/'>emotion</a>
-
-
-</div>
-	
-	<div class="comments"><a href="/blog/2012/12/17/birthday-2012/#disqus_thread">Comments</a></div>
 	
 </div>
 </article>
