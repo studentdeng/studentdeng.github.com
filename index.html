@@ -7,7 +7,9 @@
 	<meta name="author" content="studentdeng">
 
 	
-	<meta name="description" content="这篇文章介绍如何给Xcode5开发插件。如果之前了解iPhone &amp; iPad 开发，那么下面的内容对您非常熟悉。最后我们会开发一个简单的插件，记录Xcode开发中Building的时间。 准备工作 首先编写一个Plugin还是需要不少额外的配置，这里推荐Xcode Plugin &hellip;">
+	<meta name="description" content="名词解释与约定 名词解释 Apple Notification Center Service 简称 ANCS。
+ANCS 服务（iOS设备，如iPhone，iPad等）的publisher 称为 Notification Provider。
+任意的ANCS服务的client（硬件设备，配件）称为 &hellip;">
 	
 	<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1">
 
@@ -78,6 +80,225 @@
 		
 	
 	<div id="content" class="inner">
+
+
+    <article class="post">
+	<h2 class="title">
+		
+		<a href="/blog/2014/03/22/ancs/">
+		
+			Ancs</a>
+	</h2>
+	<div class="entry-content">
+		<h1>名词解释与约定</h1>
+
+<h2>名词解释</h2>
+
+<ul>
+<li>Apple Notification Center Service 简称 ANCS。</li>
+<li>ANCS 服务（iOS设备，如iPhone，iPad等）的publisher 称为 Notification Provider。</li>
+<li>任意的ANCS服务的client（硬件设备，配件）称为 Notification Consumer。</li>
+<li>Generic Attribute Profile简称GATT。</li>
+<li>在iOS NotificationCenter 显示的通知称为 iOS notification。</li>
+<li>通过GATT characteristic 发布的通知称为 GATT notification。</li>
+<li>iPhone、 iPad等运行iOS系统的设备称为iOS设备</li>
+</ul>
+
+
+<h2>约定</h2>
+
+<p>文本档覆盖的内容中除特别描述外，和字节序相关的都是用Little-endian (小端模式)。
+文本档覆盖的内容中除特别描述外，和字符串传递相关的都是UTF-8</p>
+
+<p><em>注意：ANCS 并不保证始终存在，服务开启，关闭机制由iOS系统决定，Device 需要一直检测，查找ANCS是否存在。</em></p>
+
+<h1>协议内容</h1>
+
+<p>ANCS的uart profile UUID : ” 7905F431-B5CE-4E99-A40F-4B1E122D00D0”</p>
+
+<p>uart profile 中包括3个 characteristic</p>
+
+<ul>
+<li>Notification Source   UUID: “9FBF120D-6301-42D9-8C58-25E699A21DBD” (notifiable)</li>
+<li>Control Point             UUID: “69D1D8F3-45E1-49A8-9821-9BBDFDAAD9D9”(write with             response)</li>
+<li>Data Source           UUID:” 22EAC6E9-24D6-4BB5-BE44-B36ACE7C7BFB &#8220;(notifiable)</li>
+</ul>
+
+
+<p>Device端Notification Source 是必须实现的。Centrol Point 和 Data Source 可选。</p>
+
+<h2>Notification Source Characteristic</h2>
+
+<p>Notification Source characteristic 包括3个功能</p>
+
+<ul>
+<li>新的iOS设备通知</li>
+<li>iOS设备通知修改</li>
+<li>iOS设备通知删除</li>
+</ul>
+
+
+<p>当Device端 subscribes Notification Source characteristic时，GATT Notification 会立刻分发出去。所以，Notification consumer （Device）在subscribe之前就需要做好立马接受和处理消息的状态。</p>
+
+<h3>Notification Source response format</h3>
+
+<p><img src="http://studentdeng.github.io/images/ancs1.png" alt="图2-1 Notification Source characteristic 通过GATT Notification 的格式。" /></p>
+
+<ul>
+<li>EventID：描述iOS设备上面的通知是增加、删除、还是修改。</li>
+<li>EventFlags: 标志位，描述iOS设备通知（重要， 静默）</li>
+<li>CategoryID：iOS设备通知类型</li>
+<li>CategoryCount：给定类型的通知数量，比如有2个未读email消息通知，这时有一个新的未读消息通知push到iOS设备，这时CategoryCount = 3
+NotificationUID：通知的唯一标示，这个字段用于和Control Point characteristic 检索更多的信息。</li>
+</ul>
+
+
+<p><img src="http://studentdeng.github.io/images/ancs2.png" alt="image" /></p>
+
+<p>表格3-1：CategoryID的描述</p>
+
+<p><img src="http://studentdeng.github.io/images/ancs3.png" alt="image" /></p>
+
+<h3>Notification Source Response Example</h3>
+
+<p>Device 获取的来此Notification Source的数据是“00 01 00 01 43 00 00 00”</p>
+
+<p><img src="http://studentdeng.github.io/images/ancs4.png" alt="image" /></p>
+
+<p>图2-2一个iOS通知的生命周期。</p>
+
+<p>比如当iOS设备（如iPhone）收到一个iMessage消息，iOS NotificationCenter会产生一个Notification，ANCS会通知device 有一个新的通知。当iOS设备阅读这个iMessage消息之后，iOS Not ificationCenter 会删除掉这个通知，ANCS把这个删除通知push到device</p>
+
+<h2>Control Point 和 Data Source Characteristic</h2>
+
+<p>只是Notification Source 不能获得足够的信息，
+Control Point 和 Data Source characteristic用来解决这个问题。
+Device 向Control Point characteristic 写一个命令，如果成功，会从DataSource characteristic 获得response。</p>
+
+<h3>获取通知属性命令</h3>
+
+<p>该命令根据NotificationUID 查找通知的详细内容（通知属性）。</p>
+
+<p><img src="http://studentdeng.github.io/images/ancs5.png" alt="image" /></p>
+
+<p>图2-3 获取通知属性命令格式
+CommandID: 必须设置为0
+NotificationUID：通知的唯一标示（Notification Source 获得）
+AttributeIDS：需要检索信息list</p>
+
+<p><img src="http://studentdeng.github.io/images/ancs6.png" alt="image" /></p>
+
+<p>图3-5 可以检索的通知属性列表，其中Title， subtitle， Message 需要增加2个bytes的字段表示长度。</p>
+
+<p>获取通知属性命令Example
+“00 43 00 00 00 00 01 FF FF 02 05”</p>
+
+<p><img src="http://studentdeng.github.io/images/ancs7.png" alt="image" /></p>
+
+<h3>获取通知属性命令Response消息格式</h3>
+
+<p><img src="http://studentdeng.github.io/images/ancs8.png" alt="image" /></p>
+
+<p>图2-4 获取通知属性命令返回数据格式</p>
+
+<p>CommandID： 0
+NotificationUID：通知的唯一标示
+AttributeList：具体的属性返回数据列表. 如果返回的属性空，长度是0</p>
+
+<p>如果返回的数据长度大于 GATT MTU，那么数据会被分几段传输。Device 需要对数据拼接。</p>
+
+<h3>通知属性命令Response 消息格式Example</h3>
+
+<p>下图查找 NotificationUID为2的 AppIdentifier、Title、SubTitle、Message Date属性返回数据</p>
+
+<p><img src="http://studentdeng.github.io/images/ancs9.png" alt="image" /></p>
+
+<h2>获取APP属性命令</h2>
+
+<p>该命令通过APPIdentifier查找iOS设备中安装的APP的属性。</p>
+
+<p>图2-5 获取APP属性命令格式</p>
+
+<p>CommandID: 必须设置成1
+AppIdentifier：字符串’\0’ 结尾。
+AttributeIDS：查找ID列表</p>
+
+<h2>获取APP属性命令 Example</h2>
+
+<p>查找AppIdentifier 为 “com.apple.mobilemail” 的APP属性</p>
+
+<p><img src="http://studentdeng.github.io/images/ancs10.png" alt="image" /></p>
+
+<h2>获取APP属性命令Response消息格式</h2>
+
+<p><img src="http://studentdeng.github.io/images/ancs11.png" alt="image" /></p>
+
+<p>图2-6获取APP属性命令返回数据格式</p>
+
+<ul>
+<li>CommandID：必须是1</li>
+<li>AppIdentifier：字符串 ‘\0’结尾</li>
+<li>AttributeList：具体的属性返回数据列表. 如果返回的属性空，长度是0</li>
+</ul>
+
+
+<p>如果返回的数据长度大于 GATT MTU，那么数据会被分几段传输。Device 需要对数据拼接。</p>
+
+<h3>获取APP属性命令Response消息格式Example</h3>
+
+<p>查找AppIdentifier 为 “com.apple.mobilemail” 的APP属性返回数据
+汉字 “邮件”</p>
+
+<p><img src="http://studentdeng.github.io/images/ancs12.png" alt="image" /></p>
+
+<h2>sessions会话</h2>
+
+<p>ANCS 的 session 从设备订阅characteristic 开始到取消订阅或是disconnect结束。所有的Identifier 比如 NotificationUID，AppIdentifier 只在当前的session有效。</p>
+
+<p>当session结束后，设备需要删除掉所有的在session中获得的Identifier信息，这些信息会在session建立的时候重新通知设备.</p>
+
+<h1>错误代码</h1>
+
+<ul>
+<li>未知命令：（0xA0）</li>
+<li>无效命令:（0xA1）</li>
+<li>无效参数（0xA2） : 比如NotificationUID 找不到</li>
+</ul>
+
+
+<p><em>注意：如果产生了上面的错误，都不会再收到任何的GATT 通知。</em></p>
+
+		
+		
+	</div>
+
+
+<div class="meta">
+	<div class="date">
+
+
+
+
+
+
+
+
+  
+
+
+<time datetime="2014-03-22T15:42:00+08:00" pubdate data-updated="true">Mar 22<span>nd</span>, 2014</time></div>
+	<div class="tags">
+
+
+	<a class='category' href='/blog/categories/ios/'>iOS</a>
+
+
+</div>
+	
+	<div class="comments"><a href="/blog/2014/03/22/ancs/#disqus_thread">Comments</a></div>
+	
+</div>
+</article>
 
 
     <article class="post">
@@ -205,7 +426,7 @@
 	<div class="tags">
 
 
-	<a class='category' href='/blog/categories/plugin/'>plugin</a>
+	<a class='category' href='/blog/categories/ios/'>iOS</a>, <a class='category' href='/blog/categories/plugin/'>plugin</a>
 
 
 </div>
@@ -562,95 +783,12 @@ int main(int argc, const char * argv[])
 	<div class="tags">
 
 
-	<a class='category' href='/blog/categories/ios/'>IOS</a>, <a class='category' href='/blog/categories/translation/'>translation</a>
+	<a class='category' href='/blog/categories/ios/'>iOS</a>, <a class='category' href='/blog/categories/translation/'>translation</a>
 
 
 </div>
 	
 	<div class="comments"><a href="/blog/2014/01/15/concurrent-api/#disqus_thread">Comments</a></div>
-	
-</div>
-</article>
-
-
-    <article class="post">
-	<h2 class="title">
-		
-		<a href="/blog/2013/12/14/25years/">
-		
-			2013年度总结</a>
-	</h2>
-	<div class="entry-content">
-		<h1>过去的一年</h1>
-
-<p>人生的第25个年头就要过去了，现在是14号，离25岁的终点还有一个星期。这个意味着我马上就要26岁了。25岁的人生马上就要结束了。为什么这么害怕25岁。25岁到底意味着什么？身体开始衰老而且入行3年。身体衰老意味着如果希望有一个好身材，那么需要付出比之前大的多的时间和毅力，甚至保持都是一件越来越难的事情。入行3年意味着你完成1W小时体验，科学上意味着你应该是一个专家且小有成就了。你已经不是一个小孩子，那种看一篇文章，听一个演讲就马上行动起来的年轻人。你需要能够制定适合自己的计划，而且稳定靠谱的执行下去，没有为什么，因为这个就是这个时候应该做到的。你的试错的成本会变得越来越高，而且你不得不面对一些自己在年轻的时候不愿意面对的问题。那么看看这1年来我做的事情吧。</p>
-
-<p>我养成了2个好习惯，一个健身一个学英语。而且这2个方面都有了不少的进步，之前已经写得太多，这里不多说了。旅行过一次，一次接力马拉松，另外看了52本书。下面是具体的统计</p>
-
-<p><img src="http://studentdeng.github.io/images/25-1.png" alt="image" /></p>
-
-<p><img src="http://studentdeng.github.io/images/25-2.png" alt="image" /></p>
-
-<p>其中小说最多16篇，心理学6本，计算机5本。20篇读书笔记，5个书评。</p>
-
-<p>翻翻去年给自己定得目标，除了雅思没有搞定以外，其他的还算过去了。</p>
-
-<h1>我是谁</h1>
-
-<p>现在的社交工具越来越多，会有越来越多人的生活不经意之间闯进我们的生活里。你需要学会辨别他们。就拿一个跑马拉松来说，有人会说敢于参加就好了。但是实际上你不会知道她背后做了什么，各种准备，训练，以及比赛当天的赛程详细计划，多少米需要做什么，以及自己的目标，多少是基本目标，多少是超额的。我这么说并不说一些人会刻意隐瞒什么，而是这些一切的小事情上面所积累的习惯，造就了一个人的做事态度，价值观。</p>
-
-<p>1年前的这会，我写下了这样的一段话。</p>
-
-<p>“I would not be able to find the most difficult task in my life that is changing myself. 我将失去,或是更晚的意识到, 这个人生中最困难的任务,就是改变自己, 因为有太多的人, 别说改变自己, 面对自己都做不到, 因为自己可以骗得了任何人,但唯独骗不了自己。”</p>
-
-<p>今天和一个朋友聊天，也正好聊到了这个。人们最大的敌人是自己，真的真的只有极少数的人可以做到面对自己，可以自己揭开自己心中的伤疤。今天我清晰的感觉到了我心脏的跳动，那种砰砰砰跳动的感觉，我很害怕。非常害怕，害怕到想哭却哭不出来。因为很简单，这一年来不管我做过哪些改变以及努力，其实可以用8个字概况“看似忙碌，实则焦虑”——纤细的胳膊，蹩脚的英语，以及居无定所没有稳定收入来源的生活。</p>
-
-<p>不管是工作上面的总结，还是人际交往的总结，还是我做的一切一切的东西的源动力在于我过的生活和我想的不一样。胸围长5cm腰围小12cm绝对不会是“我希望我的身体强壮一点”一句话搞定的，同样那个钢筋铁骨的30多岁大姐姐也不是一句“我希望更漂亮健康”搞定的，有谁会理解从一个相夫教子的全职太太到孤身一人的心理落差呢？</p>
-
-<p>这就是现实的生活，生活中永远不缺努力的人，也不缺焦虑。虽然我现在要比1年前做得要好很多。我不会去抱怨。学会把用来抱怨的时间去做事情。人总会慢慢的发现自己似乎强壮起来了，就像温水煮青蛙，看上去不错，但实际上根本没有变化，我只是学得更会掩饰自己的内心，更会假装而已。</p>
-
-<p>越忙碌，学得越多，做的越多，只是在给自己掩饰自己的焦虑,暗示自己过的还好，但其实一点也不好。不得不承认自己处在一个下降的电梯，这就是我心中的“坑”。</p>
-
-<p>当然也有好消息。好消息就是不是我才有焦虑，这个几乎只要是一个有想法的年轻人都有的（好阴暗的感觉&#8230;）</p>
-
-<h1>要到那里去</h1>
-
-<p>当我们回头看自己走过来的路时，看到的似乎只是依稀莫辩的“或许”。我们所能明确认知的仅仅是现在这一瞬间，而这也只是与我们擦肩而过。看看自己，除了青春，什么都没有。青春就是时间，时间不像钱，可以存，可以攒，时间只能用于消费或是投资。不得不承认，过去的日子里面，我浪费了太多的时间，有太多的遗憾，小时候有太多的不懂事，让自己现在变成这个样子，但是我不后悔。我认定的事情我都全力去做，有部分做到了，有部分延期做到了，也有一部分最后失败了。</p>
-
-<p>2014年，把2013年的一些遗憾弥补上之后，给自己一个新的平台。到了找一个新电梯的时候了。多年以前做的决定，现在也是搏一把的时候了。</p>
-
-<h1>后记</h1>
-
-<p>这篇是在14号写的，实际上，在14号之前我已经想了1个多月了。如果一件事情还有遗憾，那么就还没有到放弃的时候。我从来没有这么长时间的思考过自己，也第一次帮别人思考自己。回头看自己思路的时候，发现还是有很多坑和不足，但我也看到了我在慢慢的变好。即将的26岁这一年，真的将是我非常重要的一年。鸡血又开始打上了。</p>
-
-		
-		
-	</div>
-
-
-<div class="meta">
-	<div class="date">
-
-
-
-
-
-
-
-
-  
-
-
-<time datetime="2013-12-14T22:24:00+08:00" pubdate data-updated="true">Dec 14<span>th</span>, 2013</time></div>
-	<div class="tags">
-
-
-	<a class='category' href='/blog/categories/emotion/'>emotion</a>
-
-
-</div>
-	
-	<div class="comments"><a href="/blog/2013/12/14/25years/#disqus_thread">Comments</a></div>
 	
 </div>
 </article>

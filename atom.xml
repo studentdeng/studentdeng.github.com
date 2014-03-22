@@ -4,7 +4,7 @@
   <title><![CDATA[不会开机的男孩]]></title>
   <link href="http://studentdeng.github.com/atom.xml" rel="self"/>
   <link href="http://studentdeng.github.com/"/>
-  <updated>2014-02-21T14:31:56+08:00</updated>
+  <updated>2014-03-22T16:32:03+08:00</updated>
   <id>http://studentdeng.github.com/</id>
   <author>
     <name><![CDATA[studentdeng]]></name>
@@ -12,6 +12,191 @@
   </author>
   <generator uri="http://octopress.org/">Octopress</generator>
 
+  
+  <entry>
+    <title type="html"><![CDATA[ancs]]></title>
+    <link href="http://studentdeng.github.com/blog/2014/03/22/ancs/"/>
+    <updated>2014-03-22T15:42:00+08:00</updated>
+    <id>http://studentdeng.github.com/blog/2014/03/22/ancs</id>
+    <content type="html"><![CDATA[<h1>名词解释与约定</h1>
+
+<h2>名词解释</h2>
+
+<ul>
+<li>Apple Notification Center Service 简称 ANCS。</li>
+<li>ANCS 服务（iOS设备，如iPhone，iPad等）的publisher 称为 Notification Provider。</li>
+<li>任意的ANCS服务的client（硬件设备，配件）称为 Notification Consumer。</li>
+<li>Generic Attribute Profile简称GATT。</li>
+<li>在iOS NotificationCenter 显示的通知称为 iOS notification。</li>
+<li>通过GATT characteristic 发布的通知称为 GATT notification。</li>
+<li>iPhone、 iPad等运行iOS系统的设备称为iOS设备</li>
+</ul>
+
+
+<h2>约定</h2>
+
+<p>文本档覆盖的内容中除特别描述外，和字节序相关的都是用Little-endian (小端模式)。
+文本档覆盖的内容中除特别描述外，和字符串传递相关的都是UTF-8</p>
+
+<p><em>注意：ANCS 并不保证始终存在，服务开启，关闭机制由iOS系统决定，Device 需要一直检测，查找ANCS是否存在。</em></p>
+
+<h1>协议内容</h1>
+
+<p>ANCS的uart profile UUID : ” 7905F431-B5CE-4E99-A40F-4B1E122D00D0”</p>
+
+<p>uart profile 中包括3个 characteristic</p>
+
+<ul>
+<li>Notification Source   UUID: “9FBF120D-6301-42D9-8C58-25E699A21DBD” (notifiable)</li>
+<li>Control Point             UUID: “69D1D8F3-45E1-49A8-9821-9BBDFDAAD9D9”(write with             response)</li>
+<li>Data Source           UUID:” 22EAC6E9-24D6-4BB5-BE44-B36ACE7C7BFB &#8220;(notifiable)</li>
+</ul>
+
+
+<p>Device端Notification Source 是必须实现的。Centrol Point 和 Data Source 可选。</p>
+
+<h2>Notification Source Characteristic</h2>
+
+<p>Notification Source characteristic 包括3个功能</p>
+
+<ul>
+<li>新的iOS设备通知</li>
+<li>iOS设备通知修改</li>
+<li>iOS设备通知删除</li>
+</ul>
+
+
+<p>当Device端 subscribes Notification Source characteristic时，GATT Notification 会立刻分发出去。所以，Notification consumer （Device）在subscribe之前就需要做好立马接受和处理消息的状态。</p>
+
+<h3>Notification Source response format</h3>
+
+<p><img src="http://studentdeng.github.io/images/ancs1.png" alt="图2-1 Notification Source characteristic 通过GATT Notification 的格式。" /></p>
+
+<ul>
+<li>EventID：描述iOS设备上面的通知是增加、删除、还是修改。</li>
+<li>EventFlags: 标志位，描述iOS设备通知（重要， 静默）</li>
+<li>CategoryID：iOS设备通知类型</li>
+<li>CategoryCount：给定类型的通知数量，比如有2个未读email消息通知，这时有一个新的未读消息通知push到iOS设备，这时CategoryCount = 3
+NotificationUID：通知的唯一标示，这个字段用于和Control Point characteristic 检索更多的信息。</li>
+</ul>
+
+
+<p><img src="http://studentdeng.github.io/images/ancs2.png" alt="image" /></p>
+
+<p>表格3-1：CategoryID的描述</p>
+
+<p><img src="http://studentdeng.github.io/images/ancs3.png" alt="image" /></p>
+
+<h3>Notification Source Response Example</h3>
+
+<p>Device 获取的来此Notification Source的数据是“00 01 00 01 43 00 00 00”</p>
+
+<p><img src="http://studentdeng.github.io/images/ancs4.png" alt="image" /></p>
+
+<p>图2-2一个iOS通知的生命周期。</p>
+
+<p>比如当iOS设备（如iPhone）收到一个iMessage消息，iOS NotificationCenter会产生一个Notification，ANCS会通知device 有一个新的通知。当iOS设备阅读这个iMessage消息之后，iOS Not ificationCenter 会删除掉这个通知，ANCS把这个删除通知push到device</p>
+
+<h2>Control Point 和 Data Source Characteristic</h2>
+
+<p>只是Notification Source 不能获得足够的信息，
+Control Point 和 Data Source characteristic用来解决这个问题。
+Device 向Control Point characteristic 写一个命令，如果成功，会从DataSource characteristic 获得response。</p>
+
+<h3>获取通知属性命令</h3>
+
+<p>该命令根据NotificationUID 查找通知的详细内容（通知属性）。</p>
+
+<p><img src="http://studentdeng.github.io/images/ancs5.png" alt="image" /></p>
+
+<p>图2-3 获取通知属性命令格式
+CommandID: 必须设置为0
+NotificationUID：通知的唯一标示（Notification Source 获得）
+AttributeIDS：需要检索信息list</p>
+
+<p><img src="http://studentdeng.github.io/images/ancs6.png" alt="image" /></p>
+
+<p>图3-5 可以检索的通知属性列表，其中Title， subtitle， Message 需要增加2个bytes的字段表示长度。</p>
+
+<p>获取通知属性命令Example
+“00 43 00 00 00 00 01 FF FF 02 05”</p>
+
+<p><img src="http://studentdeng.github.io/images/ancs7.png" alt="image" /></p>
+
+<h3>获取通知属性命令Response消息格式</h3>
+
+<p><img src="http://studentdeng.github.io/images/ancs8.png" alt="image" /></p>
+
+<p>图2-4 获取通知属性命令返回数据格式</p>
+
+<p>CommandID： 0
+NotificationUID：通知的唯一标示
+AttributeList：具体的属性返回数据列表. 如果返回的属性空，长度是0</p>
+
+<p>如果返回的数据长度大于 GATT MTU，那么数据会被分几段传输。Device 需要对数据拼接。</p>
+
+<h3>通知属性命令Response 消息格式Example</h3>
+
+<p>下图查找 NotificationUID为2的 AppIdentifier、Title、SubTitle、Message Date属性返回数据</p>
+
+<p><img src="http://studentdeng.github.io/images/ancs9.png" alt="image" /></p>
+
+<h2>获取APP属性命令</h2>
+
+<p>该命令通过APPIdentifier查找iOS设备中安装的APP的属性。</p>
+
+<p>图2-5 获取APP属性命令格式</p>
+
+<p>CommandID: 必须设置成1
+AppIdentifier：字符串’\0’ 结尾。
+AttributeIDS：查找ID列表</p>
+
+<h2>获取APP属性命令 Example</h2>
+
+<p>查找AppIdentifier 为 “com.apple.mobilemail” 的APP属性</p>
+
+<p><img src="http://studentdeng.github.io/images/ancs10.png" alt="image" /></p>
+
+<h2>获取APP属性命令Response消息格式</h2>
+
+<p><img src="http://studentdeng.github.io/images/ancs11.png" alt="image" /></p>
+
+<p>图2-6获取APP属性命令返回数据格式</p>
+
+<ul>
+<li>CommandID：必须是1</li>
+<li>AppIdentifier：字符串 ‘\0’结尾</li>
+<li>AttributeList：具体的属性返回数据列表. 如果返回的属性空，长度是0</li>
+</ul>
+
+
+<p>如果返回的数据长度大于 GATT MTU，那么数据会被分几段传输。Device 需要对数据拼接。</p>
+
+<h3>获取APP属性命令Response消息格式Example</h3>
+
+<p>查找AppIdentifier 为 “com.apple.mobilemail” 的APP属性返回数据
+汉字 “邮件”</p>
+
+<p><img src="http://studentdeng.github.io/images/ancs12.png" alt="image" /></p>
+
+<h2>sessions会话</h2>
+
+<p>ANCS 的 session 从设备订阅characteristic 开始到取消订阅或是disconnect结束。所有的Identifier 比如 NotificationUID，AppIdentifier 只在当前的session有效。</p>
+
+<p>当session结束后，设备需要删除掉所有的在session中获得的Identifier信息，这些信息会在session建立的时候重新通知设备.</p>
+
+<h1>错误代码</h1>
+
+<ul>
+<li>未知命令：（0xA0）</li>
+<li>无效命令:（0xA1）</li>
+<li>无效参数（0xA2） : 比如NotificationUID 找不到</li>
+</ul>
+
+
+<p><em>注意：如果产生了上面的错误，都不会再收到任何的GATT 通知。</em></p>
+]]></content>
+  </entry>
   
   <entry>
     <title type="html"><![CDATA[Xcode5 Plugins 开发简介]]></title>
@@ -2099,40 +2284,6 @@ self.mouseJoint = NULL;
 
 <div class="video-container">
     <iframe height=498 width=510 src="http://player.youku.com/embed/XNTg2NDQxNzAw" frameborder=0 allowfullscreen></iframe>
-</div>
-
-
-
-]]></content>
-  </entry>
-  
-  <entry>
-    <title type="html"><![CDATA[box2d 03 b2Joint 连接器]]></title>
-    <link href="http://studentdeng.github.com/blog/2013/07/20/box2d-03/"/>
-    <updated>2013-07-20T13:30:00+08:00</updated>
-    <id>http://studentdeng.github.com/blog/2013/07/20/box2d-03</id>
-    <content type="html"><![CDATA[<p>在真实世界中，一个物体很难孤立的存在，比如一个我们的自行车，2个轮子除了可以自由滚动以外，还必须保证2个轮子之间的距离不变，而保证这个距离不变的就是自行车的大梁。我们的胳膊，需要保证在一定范围的情况下围绕一个点旋转等等。Box2D中 连接器就是用来保证刚体和刚体之间的某种关系而出现的。</p>
-
-<p>我们先认识b2DistanceJoint——距离连接器。</p>
-
-<p><img src="http://www.ladeng6666.com/blog/wp-content/uploads/2012/08/zixingche.jpg" alt="image" /></p>
-
-<p>这是一个自行车的模型bodyA bodyB 就是之前熟悉的圆形刚体，中间的红线是我们的距离连接，anchorA，anchorB 则是连接器连接2个刚体的位置。非常的直观。</p>
-
-<pre><code>b2DistanceJointDef jointDef;
-jointDef.Initialize(ballA, ballB, ballA-&gt;GetPosition(), ballB-&gt;GetPosition());
-
-b2DistanceJoint *join = (b2DistanceJoint *)world-&gt;CreateJoint(&amp;jointDef);
-CGFloat distance = 30.0 / PTM_RATIO;
-join-&gt;SetLength(distance);
-</code></pre>
-
-<p>非常的直观，制定连接的位置和距离，就创建完毕了。下面是一个demo，每当触摸屏幕的时候给自行车一个向右的冲量。</p>
-
-<p><a href="https://github.com/studentdeng/box2d-tutorials/tree/master/03">demo代码</a></p>
-
-<div class="video-container">
-    <iframe height=498 width=510 src="http://player.youku.com/embed/XNTg1MjU2MTQ4" frameborder=0 allowfullscreen></iframe>
 </div>
 
 
