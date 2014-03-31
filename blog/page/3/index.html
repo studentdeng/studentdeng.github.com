@@ -7,7 +7,7 @@
 	<meta name="author" content="studentdeng">
 
 	
-	<meta name="description" content="最近已经发生了很多事情，将来也会发生一些事情，这里为了不让我负能量爆发，就不写这些细节了。昨天和老大聊到晚上3点半，这里我还很dt的查了一下，上一次聊这么晚也就是2个月前。刚刚突然发现有人赞了一下我的微博，哦，很好，长出一口气，终于不是强X的无脑赞了。微博的内容是一篇关于《女人明白要趁早》 &hellip;">
+	<meta name="description" content="当一个人每天都有做不完的事情时，不知道大家又没有这种感觉。各种各样的事情，各种deadline，甚至是一些无关紧要的琐碎事情也会不断的在大脑中被回想，而且还是反复的，没有任何理由的会冒出来。对像我这样非常懒惰的人来说，这就是一个非常致命的打击，因为我需要中断当前的事情，这会让我多消耗不少脑力 &hellip;">
 	
 	<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1">
 
@@ -78,6 +78,106 @@
 		
 	
 	<div id="content" class="inner">
+
+
+    <article class="post">
+	<h2 class="title">
+		
+		<a href="/blog/2013/09/16/algo-class-02-scheduling/">
+		
+			Stanford 算法课 Part 2 Scheduling</a>
+	</h2>
+	<div class="entry-content">
+		<p>当一个人每天都有做不完的事情时，不知道大家又没有这种感觉。各种各样的事情，各种deadline，甚至是一些无关紧要的琐碎事情也会不断的在大脑中被回想，而且还是反复的，没有任何理由的会冒出来。对像我这样非常懒惰的人来说，这就是一个非常致命的打击，因为我需要中断当前的事情，这会让我多消耗不少脑力。。。</p>
+
+<p>这应该算是时间管理中的一部分，如何给自己安排任务。人的大脑和电脑的工作模式还是有一些类似的，比如如果一直不断的记录一大堆事情而不是执行，那么就会影响到他们的工作效率。同样，如果重要的事情不作，最后也会不断的在大脑里面被回想，而造成效率降低。</p>
+
+<p>在我看来，解决这些回想问题最关键的事情就是把这些东西搞定，这样才能把大脑清空，然后去做那些更加有意义的事情。</p>
+
+<p>最近再跟algorithm part2里面正好有一个scheduling application的东西，挺有意思的。这里记录一下。</p>
+
+<h1>问题描述</h1>
+
+<h2>Setup</h2>
+
+<p>scheduling 的基本模型是有一个shared resource，比如CPU。但是有许多jobs，比如很多线程，需要使用CPU才能运行。</p>
+
+<h2>Question</h2>
+
+<p>我们应该如何调度这个jobs的顺序，哪一个job优先于其他job执行，从而让整个计划执行时间最少。</p>
+
+<h2>Assume</h2>
+
+<p>为了更清楚的定义数学模型，每一个job有2个维度。</p>
+
+<ul>
+<li>weight 重要性</li>
+<li>length 时间</li>
+</ul>
+
+
+<h2>Defintion</h2>
+
+<p>Completion time。 第J个任务的完成时间（Completion time）Cj 是 （任务J之前的等待时间 + 任务J的length）* 任务J的weight</p>
+
+<h1>思路</h1>
+
+<p>这里根据直觉可以很明显的知道 我们需要把重要的事情放在前面，把时间短的事情放置在前面，这样可以很快的打一个勾勾，清空大脑中的这个任务。也就是说Cj 和 Wj 正相关，和 Lj负相关。但是总是有一些事情让人欲罢不能，就是那些很重要，而且做起来还比较费劲，时间花费长的事情，和那些不重要但是时间花费短的事情。真实世界的事情太复杂，还是回到我们这个简单的模型中。</p>
+
+<p>一种常见的思维是设法将问题转换成之前我们已经解决了的思路之中，所以很容易想到我们需要找到单位长度中最重要的事情先做。因为我们的这个模型的任务调度不是抢占式的么。</p>
+
+<p>将上面的单位时间的含义翻译过来就是 wj / lj。 也就是我们的调度程序将按照w / l的值，从大到小排列
+<img src="https://raw.github.com/studentdeng/studentdeng.github.com/master/images/algo_schema_01.png" alt="scheduling 1" /></p>
+
+<p>这里我们假定任务i > j。这个图则表示这2个任务相连在一起，stuff表示之前的任务，more stuff表示之后的任务。</p>
+
+<p><img src="https://raw.github.com/studentdeng/studentdeng.github.com/master/images/algo_schema_02.png" alt="scheduling 2" /></p>
+
+<p>而这里，我们做一次任务i、j的交换，就像这样</p>
+
+<p><img src="https://raw.github.com/studentdeng/studentdeng.github.com/master/images/algo_schema_03.png" alt="image" /></p>
+
+<p>那个这2个scheduling中，i,j之前的任务的完成时间不会变，之后的任务完成时间也不会变。那么受到影响的只是任务i，j。</p>
+
+<p><img src="https://raw.github.com/studentdeng/studentdeng.github.com/master/images/algo_schema_04.png" alt="image" /></p>
+
+<p>那么这里显然scheduling 2 也就是后面的那张图的顺序比第一个要小。</p>
+
+<p>然后我们可以想象最后的任务流程，就如果冒泡排序一样，一次次的比较把相对重要的数据一次次的放置到前面。</p>
+
+<p>而当所有相邻的任务都按照这样的规则排列完毕后，得到的就是一个 wj / lj 的从大到小的序列。</p>
+
+		
+		
+	</div>
+
+
+<div class="meta">
+	<div class="date">
+
+
+
+
+
+
+
+
+  
+
+
+<time datetime="2013-09-16T20:46:00+08:00" pubdate data-updated="true">Sep 16<span>th</span>, 2013</time></div>
+	<div class="tags">
+
+
+	<a class='category' href='/blog/categories/algorithms/'>algorithms</a>
+
+
+</div>
+	
+	<div class="comments"><a href="/blog/2013/09/16/algo-class-02-scheduling/#disqus_thread">Comments</a></div>
+	
+</div>
+</article>
 
 
     <article class="post">
@@ -748,99 +848,6 @@ bulletJoint = (b2WeldJoint*)world-&gt;CreateJoint(&amp;weldJointDef);
 </div>
 	
 	<div class="comments"><a href="/blog/2013/08/08/box2d-05/#disqus_thread">Comments</a></div>
-	
-</div>
-</article>
-
-
-    <article class="post">
-	<h2 class="title">
-		
-		<a href="/blog/2013/08/08/skip-list/">
-		
-			跳跃表 Skip List</a>
-	</h2>
-	<div class="entry-content">
-		<p>最近在学习<a href="http://redis.cn">redis</a>，这时才知道了<a href="http://en.wikipedia.org/wiki/Skip_list">skip list</a>，结合<a href="http://v.163.com/movie/2010/12/7/S/M6UTT5U0I_M6V2TTJ7S.html">Mit 算法导论 lecture 12</a>，在奋斗了2个早上的时间后有了下面的东东。</p>
-
-<p>对于我们熟悉的binary search来说，我们需要能够做到random access才行。但是在普通的link这种数据结构中却不能做到。而这种情况下我们有很多类似的工具比如heap，tree，b tree，red－black tree。等等类似的都是来自AVL的变种。但是说实话，这些东东，的确是挺难实现的，需要做各种的旋转啊，调整啊，来保持平衡。特别是red－black tree。而这时的skip list 就为我们提供了一个很好的思路。</p>
-
-<h1>introduction</h1>
-
-<p>让我们先从简单的开始</p>
-
-<p><img src="http://studentdeng.github.io/images/skip_list1.png" alt="image" /></p>
-
-<p>如果最下面的数字是已经排序好的数列，我们想要快速查找其中一项，而不是简单的便利。我们可以增加一个link，也就是上面的一条，来让我们能够“跳过”一些元素，也就是减少一些不必要的比较。</p>
-
-<p>那么在2条时，我们的访问程度是多少呢？L2 + L1 / L2, 也就是第二条link的个数+ 每一个小端个数，这个是最差情况。显然，让这个不等式和最小，需要 L2 = L1 / L2。 显然L1是一个定值。这里设为N,那么，2条link下，我们的查找复杂度是 2 * √n</p>
-
-<p>如何再优化呢？这个思路很简单，就是在L2上面再构建一个link L3. 整个时间也就是 L3 ＋ L2 ／ L3 ＋ L1 ／ L2 ，根据不等式性质，他们的和最小时，也就是 L3 ＝ L2 ／ L3 ＝ L1 ／ L2。当L1 ＝ N时，他们的和时 3 * 立方根（N）</p>
-
-<p><img src="http://studentdeng.github.io/images/skip_list_l3.png" alt="image" /></p>
-
-<p>当第k层时， 我们的时间则是 k * k次方跟（N）</p>
-
-<p>当k = lgN 时，我们的时间为 lgN * lg 次方跟（N），根据对数的换底公式，我们可以得出 时间是 2lgN. 哈，我们现在已经降到O(lgN).我们满足了。</p>
-
-<p>这时我们可以想象一下，这个skip list的结构，其实就是一个binary tree。我们通过最上面的一层访问类似跟节点的情况，然后一层层link 相当于tree的孩子节点，整个比较过程和binary search 非常的相似。</p>
-
-<h1>insert</h1>
-
-<p>对于这些结构来说，搞定search不是难点，插入和删除则是最麻烦的东西。这里我们可以自己思考一下，为了保证我们的link的结构足够完美，可能需要记录没一段的个数，然后我们可能有一些节点要上几层或是下几层。但是这个其实，本质上和那些avl树又一样了。skip list则是基于一种随机的策略来决定这些节点。其实我们可以思考一下，最完美的分法就是和binary tree一样的，所以这种2倍数的关系就可以用抛硬币的方式来决定。</p>
-
-<p>这里为了程序时间方便，我们创建一个无穷小的节点作为我们的其实节点，这样，我们所有的开始都是从最左边。</p>
-
-<p><img src="http://studentdeng.github.io/images/skip_list_01.png" alt="image" /></p>
-
-<p>我们插入一个元素30，这时我们可以判断一下这个新的元素是否需要“升级”，这里我扔了一下，反面，不用升级了。</p>
-
-<p><img src="http://studentdeng.github.io/images/skip_list_02.png" alt="image" /></p>
-
-<p>这里我们插入一个15，我扔了一下，反面。不用升级</p>
-
-<p><img src="http://studentdeng.github.io/images/skip_list_03.png" alt="image" /></p>
-
-<p>这里我们插入一个20，我扔了一个正面，又扔了一个正面，额，好吧第三次终于是反面了。</p>
-
-<p><img src="http://studentdeng.github.io/images/skip_list_04.png" alt="image" /></p>
-
-<p>这里涉及到了一点点的随机算法的证明，这些东西实在是让人烦躁。主要还是大学时候的概率学得就不咋地，现在也都忘了。从最直观的来看，就是一层层升级的概率会越来越低，在随机算法足够独立和大量的数目上来看，不难形成这样子的一个类似tree的结构。</p>
-
-<h1>delete</h1>
-
-<p>删除这里的操作简直就是blazingly simple,因为我们整个list layer 都是建立在随机上的，删除则是直接删除就好了</p>
-
-<p>我在看到这里，基本已经受不了要吐槽了。实现这个也太简单了，相对red-black tree这种东西。</p>
-
-		
-		
-	</div>
-
-
-<div class="meta">
-	<div class="date">
-
-
-
-
-
-
-
-
-  
-
-
-<time datetime="2013-08-08T09:51:00+08:00" pubdate data-updated="true">Aug 8<span>th</span>, 2013</time></div>
-	<div class="tags">
-
-
-	<a class='category' href='/blog/categories/algorithms/'>algorithms</a>
-
-
-</div>
-	
-	<div class="comments"><a href="/blog/2013/08/08/skip-list/#disqus_thread">Comments</a></div>
 	
 </div>
 </article>

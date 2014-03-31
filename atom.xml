@@ -4,7 +4,7 @@
   <title><![CDATA[不会开机的男孩]]></title>
   <link href="http://studentdeng.github.com/atom.xml" rel="self"/>
   <link href="http://studentdeng.github.com/"/>
-  <updated>2014-03-27T11:29:59+08:00</updated>
+  <updated>2014-03-31T19:40:49+08:00</updated>
   <id>http://studentdeng.github.com/</id>
   <author>
     <name><![CDATA[studentdeng]]></name>
@@ -12,6 +12,57 @@
   </author>
   <generator uri="http://octopress.org/">Octopress</generator>
 
+  
+  <entry>
+    <title type="html"><![CDATA[Core Bluetooth Concept]]></title>
+    <link href="http://studentdeng.github.com/blog/2014/03/22/corebluetooth/"/>
+    <updated>2014-03-22T20:41:00+08:00</updated>
+    <id>http://studentdeng.github.com/blog/2014/03/22/corebluetooth</id>
+    <content type="html"><![CDATA[<p>Core Bluetooth 里面的名词还是挺多的，这里简单记录一下，一上来的时候，还是很容易混淆的，这里记录一下。</p>
+
+<h1>Basic Concept</h1>
+
+<p>Bluetooth low energy (<a href="http://en.wikipedia.org/wiki/Bluetooth_low_energy#Radio_interface">BLE</a>，还有地方叫做BTLE，最恨各种简写了) 简单说是一种低功耗的短距离无线传输技术，主要用于低功耗设备传输，比如心率、记步器、智能家居方向,还有连接其他iOS设备。</p>
+
+<p>Core Bluetooth API 支持BLE4.0，做了协议封装，让开发者不需要完整了解BLE协议就可以快速开发APP。</p>
+
+<h2>Central and Peripheral</h2>
+
+<p>BLE中有2个非常重要的概念就是Central和Peripheral，有一点类似Client Server。</p>
+
+<ul>
+<li>Peripheral是数据的发送方（比如运动手环需要把位置，步数等数据传递给其他设备）。</li>
+<li>Central是数据的接收方（比如手机接收手环传递来的步数）</li>
+</ul>
+
+
+<p><img src="http://studentdeng.github.com/Users/curer/Desktop/coreblue1.png" alt="1-1 Central 和 Peripheral 心率设备和Apple product" /></p>
+
+<h2>Centrals Discover and Connect to Peripherals That Are Advertising</h2>
+
+<ul>
+<li><p>Peripheral把advertising packets广播出去，advertising packet 包括会包含一些重要的信息，比如设备名字，所提供的服务。</p></li>
+<li><p>Central 则是扫描自己感兴趣的advertising packet，比如一个APP需要查找当前家里的室温，会通过参数设定，只是检索温度设备发来的packet。</p></li>
+</ul>
+
+
+<p><img src="http://studentdeng.github.com/Users/curer/Desktop/coreblue2.png" alt="1-2 一个简单的advertising模型" /></p>
+
+<h2>Data structure</h2>
+
+<ul>
+<li>Peripheral 是最上层的一种服务抽象，比如iOS 系统内置的<a href="http://studentdeng.github.io/blog/2014/03/22/ancs/">ANCS</a>服务,另外我们自己也可以创建自己的服务。</li>
+<li>characteristic 则是用来描述服务中的具体内容（比如手环有传递行走路程的接口，还有行走位置的接口），一个服务可以包含多个characteristics。</li>
+</ul>
+
+
+<p><img src="http://studentdeng.github.com/Users/curer/Desktop/coreblue3.png" alt="1-3 心率检测仪包含1个服务，1个服务中包含2个characteristics,一个用来传递心率，一个用来传递位置" /></p>
+
+<h1>How to</h1>
+
+<p><a href="https://github.com/kickingvegas/YmsCoreBluetooth">YmsCoreBluetooth</a> 是个不错的框架，有很详细的<a href="http://kickingvegas.github.io/YmsCoreBluetooth/appledoc/docs/tutorial/Tutorial.html">介绍</a>，这里就不赘述了。</p>
+]]></content>
+  </entry>
   
   <entry>
     <title type="html"><![CDATA[ancs]]></title>
@@ -2236,58 +2287,6 @@ $ git push prod +master:refs/heads/master
 
 <p>mysql2 image not found
 <a href="http://stackoverflow.com/questions/4546698/library-not-loaded-libmysqlclient-16-dylib-error-when-trying-to-run-rails-serv">soluation</a></p>
-]]></content>
-  </entry>
-  
-  <entry>
-    <title type="html"><![CDATA[box2d 04 多边形刚体和鼠标连接器]]></title>
-    <link href="http://studentdeng.github.com/blog/2013/07/22/box2d-04/"/>
-    <updated>2013-07-22T13:34:00+08:00</updated>
-    <id>http://studentdeng.github.com/blog/2013/07/22/box2d-04</id>
-    <content type="html"><![CDATA[<p>我们在真正做一些物体的时候，有一些情况不是标准的圆形，矩形。这时我们需要创建多边形的刚体。这里推荐一个工具<a href="https://github.com/jfahrenkrug/VertexHelper">VertexHelper</a>来帮我们生成刚体的定义。</p>
-
-<p>今天的东西似乎有一点太少了，再瞅瞅另一种连接器，b2MouseJoint——鼠标连接器。
-在使用鼠标连接器之前，我们需要找到我们选择的是那一个物体。</p>
-
-<ul>
-<li>获取手势的位置，也就是坐标向量</li>
-<li>创建一个小的物体，小到只是一个点，然后通过这个物体在物理世界中查找包含这个物体的刚体</li>
-</ul>
-
-
-<p>鼠标连接器的使用步骤
-当检测到碰撞时，创建连接器</p>
-
-<pre><code>b2MouseJointDef mouseJointDef;
-mouseJointDef.bodyA = groundBody; //通常连接地面
-mouseJointDef.bodyB = body;       //需要移动的刚体
-mouseJointDef.target = locationWorld; //当前位置
-mouseJointDef.maxForce = 1000 * body-&gt;GetMass(); //移动的最大力，这个决定移动的灵敏度
-//mouseJointDef.collideConnected = true; //这个场景不需要
-
-self.mouseJoint = (b2MouseJoint *) world-&gt;CreateJoint(&amp;mouseJointDef);
-//body-&gt;SetAwake(true);         //很多地方指定了这个，但是我实际测试，这个场景也不需要
-</code></pre>
-
-<p>在手势移动的时候重新设置</p>
-
-<pre><code>world-&gt;DestroyJoint(self.mouseJoint);
-self.mouseJoint = NULL;
-</code></pre>
-
-<p>在手势取消和结束时销毁</p>
-
-<pre><code>world-&gt;DestroyJoint(_mouseJoint);
-</code></pre>
-
-<p><a href="https://github.com/studentdeng/box2d-tutorials/tree/master/04">demo</a></p>
-
-<div class="video-container">
-    <iframe height=498 width=510 src="http://player.youku.com/embed/XNTg2NDQxNzAw" frameborder=0 allowfullscreen></iframe>
-</div>
-
-
-
 ]]></content>
   </entry>
   
