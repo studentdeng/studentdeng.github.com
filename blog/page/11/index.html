@@ -1,94 +1,103 @@
 
-<!DOCTYPE HTML>
-<html>
+<!DOCTYPE html>
+<!--[if IEMobile 7 ]><html class="no-js iem7"><![endif]-->
+<!--[if lt IE 9]><html class="no-js lte-ie8"><![endif]-->
+<!--[if (gt IE 8)|(gt IEMobile 7)|!(IEMobile)|!(IE)]><!--><html class="no-js" lang="en"><!--<![endif]-->
 <head>
-	<meta charset="utf-8">
-	<title>不会开机的男孩</title>
-	<meta name="author" content="studentdeng">
+  <meta charset="utf-8">
+  <title>不会开机的男孩</title>
+  <meta name="author" content="studentdeng">
 
-	
-	<meta name="description" content="object c 里面有一个非常有趣的设计，如果之前了解过c++的家伙们，对object c 中的把传统的调用函数变成了向这个类发送消息，这个过程总是令人琢磨不透，在实际过程中遇到的crash也很难调试清楚。这篇就要详细的解释消息这个家伙。当然，消息这个涉及的东西实在是太多了。这篇先简单介绍一下 &hellip;">
-	
-	<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1">
+  
+  <meta name="description" content="object c 里面有一个非常有趣的设计，如果之前了解过c++的家伙们，对object c 中的把传统的调用函数变成了向这个类发送消息，这个过程总是令人琢磨不透，在实际过程中遇到的crash也很难调试清楚。这篇就要详细的解释消息这个家伙。当然，消息这个涉及的东西实在是太多了。这篇先简单介绍一下 &hellip;">
+  
 
-	<link href="/atom.xml" rel="alternate" title="不会开机的男孩" type="application/atom+xml">
-	<link rel="canonical" href="">
-	<link href="/favicon.png" rel="shortcut icon">
-	<link href="/stylesheets/screen.css" media="screen, projection" rel="stylesheet" type="text/css">
-	<!--[if lt IE 9]><script src="//html5shiv.googlecode.com/svn/trunk/html5.js"></script><![endif]-->
-	<script async="true" src="//ajax.googleapis.com/ajax/libs/jquery/1.7.2/jquery.min.js"></script>
-	
+  <!-- http://t.co/dKP3o1e -->
+  <meta name="HandheldFriendly" content="True">
+  <meta name="MobileOptimized" content="320">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+
+  
+  <link rel="canonical" href="http://studentdeng.github.com/blog/page/11">
+  <link href="/favicon.png" rel="icon">
+  <link href="/stylesheets/screen.css" media="screen, projection" rel="stylesheet" type="text/css">
+  <link href="/atom.xml" rel="alternate" title="不会开机的男孩" type="application/atom+xml">
+  <script src="/javascripts/modernizr-2.0.js"></script>
+  <script src="//ajax.googleapis.com/ajax/libs/jquery/1.9.1/jquery.min.js"></script>
+  <script>!window.jQuery && document.write(unescape('%3Cscript src="./javascripts/lib/jquery.min.js"%3E%3C/script%3E'))</script>
+  <script src="/javascripts/octopress.js" type="text/javascript"></script>
+  <!--Fonts from Google"s Web font directory at http://google.com/webfonts -->
+<link href="http://fonts.googleapis.com/css?family=PT+Serif:regular,italic,bold,bolditalic" rel="stylesheet" type="text/css">
+<link href='http://fonts.googleapis.com/css?family=Open+Sans' rel='stylesheet' type='text/css'>
+<link href='http://fonts.googleapis.com/css?family=Fjalla+One' rel='stylesheet' type='text/css'>
+  
+
 </head>
 
-
-<body>
-	<header id="header" class="inner"><h1><a href="/">不会开机的男孩</a></h1>
-<nav id="main-nav"><ul class="main">
-	<li><a href="/">Blog</a></li>
-	<li><a href="/blog/archives">Archives</a></li>
-	<li><a href="/tags/index.html">Tags</a></li>
-	<li><a href="/favorite/index.html">Favorite</a></li>
-	<li><a href="/about/index.html">About</a></li>
-</ul>
-</nav>
-<nav id="mobile-nav">
-	<div class="alignleft menu">
-		<a class="button">Menu</a>
-		<div class="container"><ul class="main">
-	<li><a href="/">Blog</a></li>
-	<li><a href="/blog/archives">Archives</a></li>
-	<li><a href="/tags/index.html">Tags</a></li>
-	<li><a href="/favorite/index.html">Favorite</a></li>
-	<li><a href="/about/index.html">About</a></li>
-</ul>
-</div>
-	</div>
-	<div class="alignright search">
-		<a class="button"></a>
-		<div class="container">
-			<form action="http://google.com/search" method="get">
-				<input type="text" name="q" results="0">
-				<input type="hidden" name="q" value="site:studentdeng.github.com">
-			</form>
-		</div>
-	</div>
-</nav>
-<nav id="sub-nav" class="alignright">
-	<div class="social">
-		
-		
-		
-		
-		<a class="github" href="https://github.com/studentdeng" title="GitHub">GitHub</a>
-		
-    
-		
-		
-		
-		
-		
-		<a class="rss" href="/atom.xml" title="RSS">RSS</a>
-		
-    
-	</div>
-</nav>
+<body   class="collapse-sidebar sidebar-footer" >
+  <header role="banner"><hgroup>
+  <h1><a href="/">不会开机的男孩</a></h1>
+  
+</hgroup>
 
 </header>
-	
-		
-	
-	<div id="content" class="inner">
+  <nav role="navigation"><ul class="subscription" data-subscription="rss">
+  <li><a href="/atom.xml" rel="subscribe-rss" title="subscribe via RSS">RSS</a></li>
+  
+</ul>
+  
+<form action="http://google.com/search" method="get">
+  <fieldset role="search">
+    <input type="hidden" name="q" value="site:studentdeng.github.com" />
+    <input class="search" type="text" name="q" results="0" placeholder="Search"/>
+  </fieldset>
+</form>
+  
+<ul class="main-navigation">
+  	<li><a href="/">Blog</a></li>
+  	<li><a href="/blog/archives">Archives</a></li>
+	 <li><a href="/tags/index.html">Tags</a></li>
+	<li><a href="/favorite/index.html">Favorite</a></li>
+	<li><a href="/about/index.html">About</a></li>
+</ul>
+
+</nav>
+  <div id="main">
+    <div id="content">
+      <div class="blog-index">
+  
+  
+  
+    <article>
+      
+  <header>
+    
+      <h1 class="entry-title"><a href="/blog/2011/10/06/objcmessage/">Objective-C Message</a></h1>
+    
+    
+      <p class="meta">
+        
 
 
-    <article class="post">
-	<h2 class="title">
-		
-		<a href="/blog/2011/10/06/objcmessage/">
-		
-			Objective-C Message</a>
-	</h2>
-	<div class="entry-content">
-		<p>object c 里面有一个非常有趣的设计，如果之前了解过c++的家伙们，对object c 中的把传统的调用函数变成了向这个类发送消息，这个过程总是令人琢磨不透，在实际过程中遇到的crash也很难调试清楚。这篇就要详细的解释消息这个家伙。当然，消息这个涉及的东西实在是太多了。这篇先简单介绍一下。</p>
+
+
+
+
+
+
+  
+
+
+<time datetime="2011-10-06T23:35:00+08:00" pubdate data-updated="true">Oct 6<span>th</span>, 2011</time>
+        
+         | <a href="/blog/2011/10/06/objcmessage/#disqus_thread">Comments</a>
+        
+      </p>
+    
+  </header>
+
+
+  <div class="entry-content"><p>object c 里面有一个非常有趣的设计，如果之前了解过c++的家伙们，对object c 中的把传统的调用函数变成了向这个类发送消息，这个过程总是令人琢磨不透，在实际过程中遇到的crash也很难调试清楚。这篇就要详细的解释消息这个家伙。当然，消息这个涉及的东西实在是太多了。这篇先简单介绍一下。</p>
 
 <p>上一篇，我们了解了什么是类http://www.cnblogs.com/studentdeng/archive/2011/10/01/2197194.html。同理这一篇，我们首先需要了解什么是message。</p>
 
@@ -422,14 +431,23 @@ __private_extern__ IMP lookUpMethod(Class cls, SEL sel,
     return methodPC;
 }
 </code></pre>
+</div>
+  
+  
 
-		
-		
-	</div>
 
-
-<div class="meta">
-	<div class="date">
+    </article>
+  
+  
+    <article>
+      
+  <header>
+    
+      <h1 class="entry-title"><a href="/blog/2011/10/05/objcclass/">Objcclass</a></h1>
+    
+    
+      <p class="meta">
+        
 
 
 
@@ -441,30 +459,16 @@ __private_extern__ IMP lookUpMethod(Class cls, SEL sel,
   
 
 
-<time datetime="2011-10-06T23:35:00+08:00" pubdate data-updated="true">Oct 6<span>th</span>, 2011</time></div>
-	<div class="tags">
+<time datetime="2011-10-05T23:31:00+08:00" pubdate data-updated="true">Oct 5<span>th</span>, 2011</time>
+        
+         | <a href="/blog/2011/10/05/objcclass/#disqus_thread">Comments</a>
+        
+      </p>
+    
+  </header>
 
 
-	<a class='category' href='/blog/categories/objective-c/'>Objective-C</a>, <a class='category' href='/blog/categories/ios/'>iOS</a>
-
-
-</div>
-	
-	<div class="comments"><a href="/blog/2011/10/06/objcmessage/#disqus_thread">Comments</a></div>
-	
-</div>
-</article>
-
-
-    <article class="post">
-	<h2 class="title">
-		
-		<a href="/blog/2011/10/05/objcclass/">
-		
-			Objcclass</a>
-	</h2>
-	<div class="entry-content">
-		<p>之前一直做C++开发，最近2个多月转 Objective-C， 入门的时候，遇到了很多的困惑。现在过节，正是解决他们的好时机。</p>
+  <div class="entry-content"><p>之前一直做C++开发，最近2个多月转 Objective-C， 入门的时候，遇到了很多的困惑。现在过节，正是解决他们的好时机。</p>
 
 <p>主要参考来自http://www.sealiesoftware.com/blog/archive/2009/04/14/objc_explain_Classes_and_metaclasses.html</p>
 
@@ -522,14 +526,23 @@ typedef struct class_t {
 <p>事实上，我们并没有解决问题。metaclass 事实上又是root metaclass 的实例，而root metaclass 自己又是 root metaclass 的实例，一图胜千言，不做赘述。</p>
 
 <p><img src="/images/objc.png" alt="alt text" /></p>
+</div>
+  
+  
 
-		
-		
-	</div>
 
-
-<div class="meta">
-	<div class="date">
+    </article>
+  
+  
+    <article>
+      
+  <header>
+    
+      <h1 class="entry-title"><a href="/blog/2011/08/26/hash/">Hash</a></h1>
+    
+    
+      <p class="meta">
+        
 
 
 
@@ -541,30 +554,16 @@ typedef struct class_t {
   
 
 
-<time datetime="2011-10-05T23:31:00+08:00" pubdate data-updated="true">Oct 5<span>th</span>, 2011</time></div>
-	<div class="tags">
+<time datetime="2011-08-26T23:28:00+08:00" pubdate data-updated="true">Aug 26<span>th</span>, 2011</time>
+        
+         | <a href="/blog/2011/08/26/hash/#disqus_thread">Comments</a>
+        
+      </p>
+    
+  </header>
 
 
-	<a class='category' href='/blog/categories/objective-c/'>Objective-C</a>, <a class='category' href='/blog/categories/ios/'>iOS</a>
-
-
-</div>
-	
-	<div class="comments"><a href="/blog/2011/10/05/objcclass/#disqus_thread">Comments</a></div>
-	
-</div>
-</article>
-
-
-    <article class="post">
-	<h2 class="title">
-		
-		<a href="/blog/2011/08/26/hash/">
-		
-			Hash</a>
-	</h2>
-	<div class="entry-content">
-		<p>在应用程序中，常常需要将一个集合U（键值集合）和另一个集合T（数据集合）建立关系构造dictionary结构，来达到增删查改的需求。如果键值集合很小，那么可以直接采用Direct-address tables的方式实现。</p>
+  <div class="entry-content"><p>在应用程序中，常常需要将一个集合U（键值集合）和另一个集合T（数据集合）建立关系构造dictionary结构，来达到增删查改的需求。如果键值集合很小，那么可以直接采用Direct-address tables的方式实现。</p>
 
 <p>假如我们的集合 U = {0, 1, &#8230;, m - 1}, 而且m并不大。如果我们的键和值对应唯一，那么我们可以通过构造一个大的数组来保存集合U，如下结构。</p>
 
@@ -827,14 +826,23 @@ __STL_TEMPLATE_NULL struct hash&lt;unsigned long&gt; {
 <p>构造关键字是通过一个起始位置和长度来获取的。如 “REINDEX 、 INDEXED 、 INDEX 、 DESC”；将保存成“REINDEXEDESC”。那么 REINDEX = （0， 7）。而剩下的工作可以交给一些程序，他们会帮助我们生成perfect hash。</p>
 
 <p>大数据量下，hash信息指纹的应用。可以参考 google黑板报  http://www.google.com.hk/ggblog/googlechinablog/2006/08/blog-post_8115.html</p>
+</div>
+  
+  
 
-		
-		
-	</div>
 
-
-<div class="meta">
-	<div class="date">
+    </article>
+  
+  
+    <article>
+      
+  <header>
+    
+      <h1 class="entry-title"><a href="/blog/2011/03/31/sendthreadmessage/">为什么没有SendThreadMessage呢？</a></h1>
+    
+    
+      <p class="meta">
+        
 
 
 
@@ -846,30 +854,16 @@ __STL_TEMPLATE_NULL struct hash&lt;unsigned long&gt; {
   
 
 
-<time datetime="2011-08-26T23:28:00+08:00" pubdate data-updated="true">Aug 26<span>th</span>, 2011</time></div>
-	<div class="tags">
+<time datetime="2011-03-31T23:24:00+08:00" pubdate data-updated="true">Mar 31<span>st</span>, 2011</time>
+        
+         | <a href="/blog/2011/03/31/sendthreadmessage/#disqus_thread">Comments</a>
+        
+      </p>
+    
+  </header>
 
 
-	<a class='category' href='/blog/categories/stl/'>STL</a>, <a class='category' href='/blog/categories/algorithms/'>algorithms</a>
-
-
-</div>
-	
-	<div class="comments"><a href="/blog/2011/08/26/hash/#disqus_thread">Comments</a></div>
-	
-</div>
-</article>
-
-
-    <article class="post">
-	<h2 class="title">
-		
-		<a href="/blog/2011/03/31/sendthreadmessage/">
-		
-			为什么没有SendThreadMessage呢？</a>
-	</h2>
-	<div class="entry-content">
-		<p>最近忙公司的项目（或是毕设吧），发现很长时间没有总结了。是该换换脑子了。</p>
+  <div class="entry-content"><p>最近忙公司的项目（或是毕设吧），发现很长时间没有总结了。是该换换脑子了。</p>
 
 <p>“为什么没有SendThreadMessage呢？”这个问题，就来自自己平时实现的一些程序逻辑中。在一些具体的场景中，对像我这样的初学者来说，往往喜欢通过windwos的消息机制来完成UI线程和worker线程之间的同步，而不是去通过信号量或其他的去做。所以，这个问题一直困惑了自己很久。而现在，就来搞明白这个、</p>
 
@@ -1714,14 +1708,23 @@ DispatchMessage(&amp;msg);</p>
 <p>DispatchMessage的事情，就是做这个调用相对用的窗口过程部分。这部分主要是从系统调用我们的代码，目前对这个还没有什么兴趣。</p>
 
 <p>类似的还有模态窗口，产生模态窗口的窗口，会阻塞一些消息，但是却不是阻塞所有的消息，别的线程依然可以给发SendMessage。为什么呢？他们之间会有联系么？</p>
+</div>
+  
+  
 
-		
-		
-	</div>
 
-
-<div class="meta">
-	<div class="date">
+    </article>
+  
+  
+    <article>
+      
+  <header>
+    
+      <h1 class="entry-title"><a href="/blog/2011/02/27/computer2/">胡言乱语计算机二</a></h1>
+    
+    
+      <p class="meta">
+        
 
 
 
@@ -1733,30 +1736,16 @@ DispatchMessage(&amp;msg);</p>
   
 
 
-<time datetime="2011-03-31T23:24:00+08:00" pubdate data-updated="true">Mar 31<span>st</span>, 2011</time></div>
-	<div class="tags">
+<time datetime="2011-02-27T23:08:00+08:00" pubdate data-updated="true">Feb 27<span>th</span>, 2011</time>
+        
+         | <a href="/blog/2011/02/27/computer2/#disqus_thread">Comments</a>
+        
+      </p>
+    
+  </header>
 
 
-	<a class='category' href='/blog/categories/windows/'>windows</a>
-
-
-</div>
-	
-	<div class="comments"><a href="/blog/2011/03/31/sendthreadmessage/#disqus_thread">Comments</a></div>
-	
-</div>
-</article>
-
-
-    <article class="post">
-	<h2 class="title">
-		
-		<a href="/blog/2011/02/27/computer2/">
-		
-			胡言乱语计算机二</a>
-	</h2>
-	<div class="entry-content">
-		<p>中断和异常处理是OS中非常重要的组成部分，当然windows也不例外，他们是我们理解OS一些概念、机制的基础。</p>
+  <div class="entry-content"><p>中断和异常处理是OS中非常重要的组成部分，当然windows也不例外，他们是我们理解OS一些概念、机制的基础。</p>
 
 <p>中断和异常简单的来说，就是在程序正常执行流程中，突发一个事件，导致程序的执行流程转向另外的执行流程中。而我们绝大多数编写的程序都是顺序执行的，我们的确体会不到这样的机制能够给我们带来多少好处。但是这个在OS的设计中，确实深入到各个方面，以至于没有中断异常处理，现代OS根本无法构建。为了简单理解，我们可以看看这个例子。</p>
 
@@ -2011,61 +2000,38 @@ call    CommonDispatchException ; Never return
 <p>我发现我越来越罗嗦了。絮叨絮叨的像个大妈。
 后面的部分依然有点穿越。在不谈具体实现的细节下去说清楚SEH的基本过程，对我还是太复杂了，应该是我还没有理解透彻，慢慢来吧。具体过程可以参考我推荐的3篇文章，当然。最好的方法是自己推导。
 我真的不知道这篇文章是写给自己还是写给别人看的。是的。如果我是读者，当我看到这篇文章的时候，我真想向这个作者扔砖头。</p>
-
-		
-		
-	</div>
-
-
-<div class="meta">
-	<div class="date">
-
-
-
-
-
-
-
-
+</div>
+  
   
 
 
-<time datetime="2011-02-27T23:08:00+08:00" pubdate data-updated="true">Feb 27<span>th</span>, 2011</time></div>
-	<div class="tags">
-
-
-	<a class='category' href='/blog/categories/emotion/'>emotion</a>, <a class='category' href='/blog/categories/operating-system/'>operating_system</a>, <a class='category' href='/blog/categories/windows/'>windows</a>
-
-
+    </article>
+  
+  <div class="pagination">
+    
+      <a class="prev" href="/blog/page/12/">&larr; Older</a>
+    
+    <a href="/blog/archives">Blog Archives</a>
+    
+    <a class="next" href="/blog/page/10/">Newer &rarr;</a>
+    
+  </div>
 </div>
-	
-	<div class="comments"><a href="/blog/2011/02/27/computer2/#disqus_thread">Comments</a></div>
-	
-</div>
-</article>
+<aside class="sidebar">
+  
+    
+  
+</aside>
 
-<nav id="pagenavi">
-    
-        <a href="/blog/page/10/" class="prev">Prev</a>
-    
-    
-        <a href="/blog/page/12/" class="next">Next</a>
-    
-    <div class="center"><a href="/blog/archives">Blog Archives</a></div>
-</nav></div>
-	<footer id="footer" class="inner">Copyright &copy; 2014
-
-    studentdeng
+    </div>
+  </div>
+  <footer role="contentinfo"><p>
+  Copyright &copy; 2014 - studentdeng -
+  <span class="credit">Powered by <a href="http://octopress.org">Octopress</a> | Themed with <a href="https://github.com/lucaslew/whitespace">Whitespace</a></span>
+</p>
 
 </footer>
-	<script src="/javascripts/slash.js"></script>
-<script src="/javascripts/jquery.fancybox.pack.js"></script>
-<script type="text/javascript">
-(function($){
-	$('.fancybox').fancybox();
-})(jQuery);
-</script> <!-- Delete or comment this line to disable Fancybox -->
-
+  
 
 <script type="text/javascript">
       var disqus_shortname = 'studentdeng';
@@ -2075,10 +2041,19 @@ call    CommonDispatchException ; Never return
       
     (function () {
       var dsq = document.createElement('script'); dsq.type = 'text/javascript'; dsq.async = true;
-      dsq.src = '//go.disqus.com/' + disqus_script;
+      dsq.src = 'http://' + disqus_shortname + '.disqus.com/' + disqus_script;
       (document.getElementsByTagName('head')[0] || document.getElementsByTagName('body')[0]).appendChild(dsq);
     }());
 </script>
+
+
+
+
+
+
+
+
+
 
 
 

@@ -1,85 +1,100 @@
 
-<!DOCTYPE HTML>
-<html>
+<!DOCTYPE html>
+<!--[if IEMobile 7 ]><html class="no-js iem7"><![endif]-->
+<!--[if lt IE 9]><html class="no-js lte-ie8"><![endif]-->
+<!--[if (gt IE 8)|(gt IEMobile 7)|!(IEMobile)|!(IE)]><!--><html class="no-js" lang="en"><!--<![endif]-->
 <head>
-	<meta charset="utf-8">
-	<title>Objective C SEL - 不会开机的男孩</title>
-	<meta name="author" content="studentdeng">
+  <meta charset="utf-8">
+  <title>Objective C SEL - 不会开机的男孩</title>
+  <meta name="author" content="studentdeng">
 
-	
-	<meta name="description" content="上一篇http://www.cnblogs.com/studentdeng/archive/2011/10/06/2199873.html，总结了一点关于Objective C message send 的有意思的东西，中间穿插了一点关于SEL有趣的东西，之前，我们知道Objective-C &hellip;">
-	
-	<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1">
+  
+  <meta name="description" content="上一篇http://www.cnblogs.com/studentdeng/archive/2011/10/06/2199873.html，总结了一点关于Objective C message send 的有意思的东西，中间穿插了一点关于SEL有趣的东西，之前，我们知道Objective-C &hellip;">
+  
 
-	<link href="/atom.xml" rel="alternate" title="不会开机的男孩" type="application/atom+xml">
-	<link rel="canonical" href="">
-	<link href="/favicon.png" rel="shortcut icon">
-	<link href="/stylesheets/screen.css" media="screen, projection" rel="stylesheet" type="text/css">
-	<!--[if lt IE 9]><script src="//html5shiv.googlecode.com/svn/trunk/html5.js"></script><![endif]-->
-	<script async="true" src="//ajax.googleapis.com/ajax/libs/jquery/1.7.2/jquery.min.js"></script>
-	
+  <!-- http://t.co/dKP3o1e -->
+  <meta name="HandheldFriendly" content="True">
+  <meta name="MobileOptimized" content="320">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+
+  
+  <link rel="canonical" href="http://studentdeng.github.com/blog/2011/10/16/objcsel">
+  <link href="/favicon.png" rel="icon">
+  <link href="/stylesheets/screen.css" media="screen, projection" rel="stylesheet" type="text/css">
+  <link href="/atom.xml" rel="alternate" title="不会开机的男孩" type="application/atom+xml">
+  <script src="/javascripts/modernizr-2.0.js"></script>
+  <script src="//ajax.googleapis.com/ajax/libs/jquery/1.9.1/jquery.min.js"></script>
+  <script>!window.jQuery && document.write(unescape('%3Cscript src="./javascripts/lib/jquery.min.js"%3E%3C/script%3E'))</script>
+  <script src="/javascripts/octopress.js" type="text/javascript"></script>
+  <!--Fonts from Google"s Web font directory at http://google.com/webfonts -->
+<link href="http://fonts.googleapis.com/css?family=PT+Serif:regular,italic,bold,bolditalic" rel="stylesheet" type="text/css">
+<link href='http://fonts.googleapis.com/css?family=Open+Sans' rel='stylesheet' type='text/css'>
+<link href='http://fonts.googleapis.com/css?family=Fjalla+One' rel='stylesheet' type='text/css'>
+  
+
 </head>
 
-
-<body>
-	<header id="header" class="inner"><h1><a href="/">不会开机的男孩</a></h1>
-<nav id="main-nav"><ul class="main">
-	<li><a href="/">Blog</a></li>
-	<li><a href="/blog/archives">Archives</a></li>
-	<li><a href="/tags/index.html">Tags</a></li>
-	<li><a href="/favorite/index.html">Favorite</a></li>
-	<li><a href="/about/index.html">About</a></li>
-</ul>
-</nav>
-<nav id="mobile-nav">
-	<div class="alignleft menu">
-		<a class="button">Menu</a>
-		<div class="container"><ul class="main">
-	<li><a href="/">Blog</a></li>
-	<li><a href="/blog/archives">Archives</a></li>
-	<li><a href="/tags/index.html">Tags</a></li>
-	<li><a href="/favorite/index.html">Favorite</a></li>
-	<li><a href="/about/index.html">About</a></li>
-</ul>
-</div>
-	</div>
-	<div class="alignright search">
-		<a class="button"></a>
-		<div class="container">
-			<form action="http://google.com/search" method="get">
-				<input type="text" name="q" results="0">
-				<input type="hidden" name="q" value="site:studentdeng.github.com">
-			</form>
-		</div>
-	</div>
-</nav>
-<nav id="sub-nav" class="alignright">
-	<div class="social">
-		
-		
-		
-		
-		<a class="github" href="https://github.com/studentdeng" title="GitHub">GitHub</a>
-		
-    
-		
-		
-		
-		
-		
-		<a class="rss" href="/atom.xml" title="RSS">RSS</a>
-		
-    
-	</div>
-</nav>
+<body   class="collapse-sidebar sidebar-footer" >
+  <header role="banner"><hgroup>
+  <h1><a href="/">不会开机的男孩</a></h1>
+  
+</hgroup>
 
 </header>
-	
-		
-	
-	<div id="content" class="inner"><article class="post">
-	<h2 class="title">Objective C SEL</h2>
-	<div class="entry-content"><p>上一篇http://www.cnblogs.com/studentdeng/archive/2011/10/06/2199873.html，总结了一点关于Objective C message send 的有意思的东西，中间穿插了一点关于SEL有趣的东西，之前，我们知道Objective-C runtime 在处理selector时，是做一个unique hash set， 那么今天，我们看看这个set 是如何产生的。这篇文章参考了<a href="http://www.sealiesoftware.com/blog/archive/2009/09/01/objc_explain_Selector_uniquing_in_the_dyld_shared_cache.html">link</a></p>
+  <nav role="navigation"><ul class="subscription" data-subscription="rss">
+  <li><a href="/atom.xml" rel="subscribe-rss" title="subscribe via RSS">RSS</a></li>
+  
+</ul>
+  
+<form action="http://google.com/search" method="get">
+  <fieldset role="search">
+    <input type="hidden" name="q" value="site:studentdeng.github.com" />
+    <input class="search" type="text" name="q" results="0" placeholder="Search"/>
+  </fieldset>
+</form>
+  
+<ul class="main-navigation">
+  	<li><a href="/">Blog</a></li>
+  	<li><a href="/blog/archives">Archives</a></li>
+	 <li><a href="/tags/index.html">Tags</a></li>
+	<li><a href="/favorite/index.html">Favorite</a></li>
+	<li><a href="/about/index.html">About</a></li>
+</ul>
+
+</nav>
+  <div id="main">
+    <div id="content">
+      <div>
+<article class="hentry" role="article">
+  
+  <header>
+    
+      <h1 class="entry-title">Objective C SEL</h1>
+    
+    
+      <p class="meta">
+        
+
+
+
+
+
+
+
+
+  
+
+
+<time datetime="2011-10-16T23:37:00+08:00" pubdate data-updated="true">Oct 16<span>th</span>, 2011</time>
+        
+         | <a href="#disqus_thread">Comments</a>
+        
+      </p>
+    
+  </header>
+
+
+<div class="entry-content"><p>上一篇http://www.cnblogs.com/studentdeng/archive/2011/10/06/2199873.html，总结了一点关于Objective C message send 的有意思的东西，中间穿插了一点关于SEL有趣的东西，之前，我们知道Objective-C runtime 在处理selector时，是做一个unique hash set， 那么今天，我们看看这个set 是如何产生的。这篇文章参考了<a href="http://www.sealiesoftware.com/blog/archive/2009/09/01/objc_explain_Selector_uniquing_in_the_dyld_shared_cache.html">link</a></p>
 
 <p>unique set的好处是，字符串的比较可以非常迅速，但是也带来一个棘手的问题，创建一个这样的集合，真的不容易。虽然我们能够在compiler和 link的时候保证我们程序中唯一，但是这还远远不够，因为我们并不是生活在真空中，我们的程序需要和各种各样的其他程序协同工作，那么如何能够在这种繁杂的各种情况下，保证唯一呢？</p>
 
@@ -224,8 +239,14 @@ static SEL __sel_registerName(const char *name, int lock, int copy)
 </div>
 
 
-<div class="meta">
-	<div class="date">
+  <footer>
+    <p class="meta">
+      
+  
+
+<span class="byline author vcard">Posted by <span class="fn">studentdeng</span></span>
+
+      
 
 
 
@@ -237,51 +258,61 @@ static SEL __sel_registerName(const char *name, int lock, int copy)
   
 
 
-<time datetime="2011-10-16T23:37:00+08:00" pubdate data-updated="true">Oct 16<span>th</span>, 2011</time></div>
-	<div class="tags">
+<time datetime="2011-10-16T23:37:00+08:00" pubdate data-updated="true">Oct 16<span>th</span>, 2011</time>
+      
+
+<span class="categories">
+  
+    <a class='category' href='/blog/categories/objective-c/'>Objective-C</a>, <a class='category' href='/blog/categories/ios/'>iOS</a>
+  
+</span>
 
 
-	<a class='category' href='/blog/categories/objective-c/'>Objective-C</a>, <a class='category' href='/blog/categories/ios/'>iOS</a>
-
-
+    </p>
+    
+      <div class="sharing">
+  
+  
+  
 </div>
-	
-	<div class="comments"><a href="#disqus_thread">Comments</a></div>
-	
-</div>
+
+    
+    <p class="meta">
+      
+        <a class="basic-alignment left" href="/blog/2011/10/06/objcmessage/" title="Previous Post: Objective-C Message">&laquo; Objective-C Message</a>
+      
+      
+        <a class="basic-alignment right" href="/blog/2012/01/12/objcbase/" title="Next Post: Objective-C 一些很基础的总结">Objective-C 一些很基础的总结 &raquo;</a>
+      
+    </p>
+  </footer>
 </article>
 
-	<div class="share">
-	<div class="addthis_toolbox addthis_default_style ">
-		
-		
-		
-		
-	</div>
-	
-</div>
-
-
-
-<section id="comment">
-    <h2 class="title">Comments</h2>
+  <section>
+    <h1>Comments</h1>
     <div id="disqus_thread" aria-live="polite"><noscript>Please enable JavaScript to view the <a href="http://disqus.com/?ref_noscript">comments powered by Disqus.</a></noscript>
 </div>
-</section>
-</div>
-	<footer id="footer" class="inner">Copyright &copy; 2014
+  </section>
 
-    studentdeng
+
+</div>
+
+<aside class="sidebar">
+  
+    
+  
+</aside>
+
+
+    </div>
+  </div>
+  <footer role="contentinfo"><p>
+  Copyright &copy; 2014 - studentdeng -
+  <span class="credit">Powered by <a href="http://octopress.org">Octopress</a> | Themed with <a href="https://github.com/lucaslew/whitespace">Whitespace</a></span>
+</p>
 
 </footer>
-	<script src="/javascripts/slash.js"></script>
-<script src="/javascripts/jquery.fancybox.pack.js"></script>
-<script type="text/javascript">
-(function($){
-	$('.fancybox').fancybox();
-})(jQuery);
-</script> <!-- Delete or comment this line to disable Fancybox -->
-
+  
 
 <script type="text/javascript">
       var disqus_shortname = 'studentdeng';
@@ -294,10 +325,19 @@ static SEL __sel_registerName(const char *name, int lock, int copy)
       
     (function () {
       var dsq = document.createElement('script'); dsq.type = 'text/javascript'; dsq.async = true;
-      dsq.src = '//go.disqus.com/' + disqus_script;
+      dsq.src = 'http://' + disqus_shortname + '.disqus.com/' + disqus_script;
       (document.getElementsByTagName('head')[0] || document.getElementsByTagName('body')[0]).appendChild(dsq);
     }());
 </script>
+
+
+
+
+
+
+
+
+
 
 
 
