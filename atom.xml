@@ -4,7 +4,7 @@
   <title><![CDATA[不会开机的男孩]]></title>
   <link href="http://studentdeng.github.com/atom.xml" rel="self"/>
   <link href="http://studentdeng.github.com/"/>
-  <updated>2014-04-04T16:40:16+08:00</updated>
+  <updated>2014-04-04T19:04:21+08:00</updated>
   <id>http://studentdeng.github.com/</id>
   <author>
     <name><![CDATA[studentdeng]]></name>
@@ -12,6 +12,107 @@
   </author>
   <generator uri="http://octopress.org/">Octopress</generator>
 
+  
+  <entry>
+    <title type="html"><![CDATA[octopress notebox plugin]]></title>
+    <link href="http://studentdeng.github.com/blog/2014/04/04/octopress-notebox-plugin/"/>
+    <updated>2014-04-04T16:48:00+08:00</updated>
+    <id>http://studentdeng.github.com/blog/2014/04/04/octopress-notebox-plugin</id>
+    <content type="html"><![CDATA[<p>用了这么长时间的<a href="http://octopress.org/">octopress</a>总该扩展一点点事情了，在Blogging的时候，总有一些信息是需要被特殊标记的，但是我并不喜欢简单的加粗或是斜体。类似的东西在Apple Document中有很多</p>
+
+<p><span class='caption-wrapper'><img class='caption' src='http://studentdeng.github.com/images/octopress_notebox_plugin1.png' width='' height='' title='Apple Document Note sample'><span class='caption-text'>Apple Document Note sample</span></span></p>
+
+<p>这里我就把这个功能照搬到octopress中了。</p>
+
+<p>1.在<em>plugins</em>目录创建一个notebox.rb</p>
+
+<figure class='code'> <div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+<span class='line-number'>2</span>
+<span class='line-number'>3</span>
+<span class='line-number'>4</span>
+<span class='line-number'>5</span>
+<span class='line-number'>6</span>
+<span class='line-number'>7</span>
+<span class='line-number'>8</span>
+<span class='line-number'>9</span>
+<span class='line-number'>10</span>
+<span class='line-number'>11</span>
+<span class='line-number'>12</span>
+<span class='line-number'>13</span>
+<span class='line-number'>14</span>
+<span class='line-number'>15</span>
+<span class='line-number'>16</span>
+<span class='line-number'>17</span>
+<span class='line-number'>18</span>
+<span class='line-number'>19</span>
+<span class='line-number'>20</span>
+<span class='line-number'>21</span>
+<span class='line-number'>22</span>
+<span class='line-number'>23</span>
+<span class='line-number'>24</span>
+</pre></td><td class='code'><pre><code class='Ruby'><span class='line'><span class="k">module</span> <span class="nn">Jekyll</span>
+</span><span class='line'>  <span class="k">class</span> <span class="nc">Notebox</span> <span class="o">&lt;</span> <span class="ss">Liquid</span><span class="p">:</span><span class="ss">:Block</span>
+</span><span class='line'>
+</span><span class='line'>    <span class="k">def</span> <span class="nf">initialize</span><span class="p">(</span><span class="nb">name</span><span class="p">,</span> <span class="nb">id</span><span class="p">,</span> <span class="n">tokens</span><span class="p">)</span>
+</span><span class='line'>      <span class="k">super</span>
+</span><span class='line'>      <span class="vi">@id</span> <span class="o">=</span> <span class="nb">id</span>
+</span><span class='line'>    <span class="k">end</span>
+</span><span class='line'>
+</span><span class='line'>    <span class="k">def</span> <span class="nf">render</span><span class="p">(</span><span class="n">context</span><span class="p">)</span>
+</span><span class='line'>      <span class="n">stressText</span> <span class="o">=</span> <span class="n">paragraphize</span><span class="p">(</span><span class="k">super</span><span class="p">)</span>
+</span><span class='line'>
+</span><span class='line'>      <span class="n">source</span> <span class="o">=</span> <span class="s2">&quot;&lt;div class=&#39;notebox&#39;&gt;&lt;p&gt;&lt;strong&gt;Note: &lt;/strong&gt;</span><span class="si">#{</span><span class="n">stressText</span><span class="si">}</span><span class="s2">&lt;/p&gt;&lt;/div&gt;&quot;</span>
+</span><span class='line'>      <span class="n">source</span>
+</span><span class='line'>
+</span><span class='line'>    <span class="k">end</span>
+</span><span class='line'>
+</span><span class='line'>    <span class="k">def</span> <span class="nf">paragraphize</span><span class="p">(</span><span class="n">input</span><span class="p">)</span>
+</span><span class='line'>      <span class="s2">&quot;</span><span class="si">#{</span><span class="n">input</span><span class="o">.</span><span class="n">lstrip</span><span class="o">.</span><span class="n">rstrip</span><span class="o">.</span><span class="n">gsub</span><span class="p">(</span><span class="sr">/\n\n/</span><span class="p">,</span> <span class="s1">&#39;&lt;/p&gt;&lt;p&gt;&#39;</span><span class="p">)</span><span class="o">.</span><span class="n">gsub</span><span class="p">(</span><span class="sr">/\n/</span><span class="p">,</span> <span class="s1">&#39;&lt;br/&gt;&#39;</span><span class="p">)</span><span class="si">}</span><span class="s2">&quot;</span>
+</span><span class='line'>    <span class="k">end</span>
+</span><span class='line'>
+</span><span class='line'>  <span class="k">end</span>
+</span><span class='line'><span class="k">end</span>
+</span><span class='line'>
+</span><span class='line'><span class="ss">Liquid</span><span class="p">:</span><span class="ss">:Template</span><span class="o">.</span><span class="n">register_tag</span><span class="p">(</span><span class="s1">&#39;notebox&#39;</span><span class="p">,</span> <span class="ss">Jekyll</span><span class="p">:</span><span class="ss">:Notebox</span><span class="p">)</span>
+</span></code></pre></td></tr></table></div></figure>
+
+
+<p>2.在<em>sass/custom</em>中的文件<em>_stype.scss</em>的最后添加下面的代码</p>
+
+<figure class='code'> <div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+<span class='line-number'>2</span>
+<span class='line-number'>3</span>
+<span class='line-number'>4</span>
+<span class='line-number'>5</span>
+<span class='line-number'>6</span>
+<span class='line-number'>7</span>
+<span class='line-number'>8</span>
+<span class='line-number'>9</span>
+</pre></td><td class='code'><pre><code class='css'><span class='line'><span class="nc">.notebox</span> <span class="p">{</span>
+</span><span class='line'>  <span class="k">border</span><span class="o">:</span><span class="m">1px</span><span class="p">;</span>
+</span><span class='line'>  <span class="k">border-style</span><span class="o">:</span> <span class="k">solid</span><span class="p">;</span>
+</span><span class='line'>  <span class="k">border-color</span><span class="o">:</span> <span class="m">#5088C5</span><span class="p">;</span>
+</span><span class='line'>  <span class="k">background-color</span><span class="o">:</span><span class="m">#fff</span><span class="p">;</span>
+</span><span class='line'>  <span class="k">margin</span><span class="o">:.</span><span class="m">75em</span> <span class="m">0</span> <span class="m">1.5em</span><span class="p">;</span>
+</span><span class='line'>  <span class="k">padding</span><span class="o">:.</span><span class="m">75em</span> <span class="m">.667em</span> <span class="m">.75em</span> <span class="m">.750em</span><span class="p">;</span>
+</span><span class='line'>  <span class="k">text-align</span><span class="o">:</span><span class="k">left</span><span class="p">;</span>
+</span><span class='line'><span class="p">}</span>
+</span></code></pre></td></tr></table></div></figure>
+
+
+<p>3.markdown的语法（<em>因为格式问题写成了％，需要替换成%</em>）</p>
+
+<pre><code>{％ notebox ％}
+the text to note
+{％ endnotebox ％}
+</code></pre>
+
+<p>效果</p>
+
+<div class='notebox'><p><strong>Note: </strong>text</p></div>
+
+]]></content>
+  </entry>
   
   <entry>
     <title type="html"><![CDATA[Core Bluetooth Concept]]></title>
@@ -2276,18 +2377,6 @@ $ git push prod +master:refs/heads/master
 <p>之后我们只需要修改完成之后，git push prod 就可以自动部署代码了。</p>
 
 <p>第一次用，这里标记一下，看看后面当发生冲突的时候，时一个什么样的情况。： ）</p>
-]]></content>
-  </entry>
-  
-  <entry>
-    <title type="html"><![CDATA[安装环境遇到的dt问题]]></title>
-    <link href="http://studentdeng.github.com/blog/2013/07/26/tips-install/"/>
-    <updated>2013-07-26T17:30:00+08:00</updated>
-    <id>http://studentdeng.github.com/blog/2013/07/26/tips-install</id>
-    <content type="html"><![CDATA[<h1>ruby on rails</h1>
-
-<p>mysql2 image not found
-<a href="http://stackoverflow.com/questions/4546698/library-not-loaded-libmysqlclient-16-dylib-error-when-trying-to-run-rails-serv">soluation</a></p>
 ]]></content>
   </entry>
   

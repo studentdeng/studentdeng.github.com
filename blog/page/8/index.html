@@ -9,13 +9,8 @@
   <meta name="author" content="studentdeng">
 
   
-  <meta name="description" content="ARC 编译时遇到的相关问题
-install cocoapods 问题
-Adding Unit Tests to an existing iOS project with Xcode 4
-NSDateFormatter 问题
-写博客命令
-php apigen command demo
-ios6 &hellip;">
+  <meta name="description" content="内容主要来自http://www.galloway.me.uk/2012/01/a-look-under-arcs-hood-episode-1/ 里面加入了一点点自己的吐槽和理解 已经有很久很久没有写一些 under the hood 的东西了, 好久没有学习新的技术了, 不说废话了.
+ARC &hellip;">
   
 
   <!-- http://t.co/dKP3o1e -->
@@ -72,6 +67,238 @@ ios6 &hellip;">
     <div id="content">
       <div class="blog-index">
   
+  
+  
+    <article>
+      
+  <header>
+    
+      <h1 class="entry-title"><a href="/blog/2013/03/03/arc/">ARC 1</a></h1>
+    
+    
+      <p class="meta">
+        
+
+
+
+
+
+
+
+
+  
+
+
+<time datetime="2013-03-03T13:43:00+08:00" pubdate data-updated="true">Mar 3<span>rd</span>, 2013</time>
+        
+         | <a href="/blog/2013/03/03/arc/#disqus_thread">Comments</a>
+        
+      </p>
+    
+  </header>
+
+
+  <div class="entry-content"><p>内容主要来自http://www.galloway.me.uk/2012/01/a-look-under-arcs-hood-episode-1/ 里面加入了一点点自己的吐槽和理解</p>
+
+<p>已经有很久很久没有写一些 under the hood 的东西了, 好久没有学习新的技术了, 不说废话了.
+ARC 是编译器的技术, 不知道为什么, 我对编译器增加额外代码有着非常大的恐惧, 是因为和C++ 相关么? 不知道, anyway ARC 的确帮我这样的码农减少了工作量, 对于一向懒惰的我来说, 我还是更倾向于省事.</p>
+
+<p>在之前写block 的时候, 有些好奇的家伙们问我,是怎么发现编译器增加代码的. 这个其实很简单, 就是看一些文档了,但是总是有些人比较好奇编译器到底做了什么,不想理所当然的接受.</p>
+
+<p>先瞅瞅我们的测试函数 test_arc.m</p>
+
+<pre><code>    @interface ClassA : NSObject
+    @interface ClassA : NSObject
+    {
+            NSNumber *_foo;
+    }
+    @property (nonatomic, retain) NSNumber *foo;
+    @end
+
+    @implementation ClassA
+
+    @synthesize foo = _foo;
+
+    - (void)changeFooDirect:(NSNumber*)inFoo {
+        _foo = inFoo;
+    }
+
+    - (void)changeFooSetter:(NSNumber*)inFoo {
+        self.foo = inFoo;
+    }
+
+    - (NSNumber*)newNumber {
+        return [[NSNumber alloc] initWithInt:10];
+    }
+
+    - (NSNumber*)getNumber {
+        return [[NSNumber alloc] initWithInt:10];
+    }
+
+    @end
+</code></pre>
+
+<p>Mac 环境比较让人dt, 安装Xcode 后 安装Command Line Tools 否则, 会遇到各种各样的问题. 首先关闭ARC</p>
+
+<pre><code>clang -isysroot /Applications/Xcode.app/Contents/Developer/Platforms/iPhoneOS.platform/Developer/SDKs/iPhoneOS6.1.sdk/ -arch armv7 -fno-objc-arc -O3 -S -o test_arc.s test_arc.m
+</code></pre>
+
+<p>这个是开启ARC的命令</p>
+
+<pre><code>clang -isysroot /Applications/Xcode.app/Contents/Developer/Platforms/iPhoneOS.platform/Developer/SDKs/iPhoneOS6.1.sdk/ -arch armv7 -fobjc-arc -O3 -S -o test_arc_on.s test_arc.m
+</code></pre>
+
+<p>让我们先看一下 changeFooDirect 在没有开启arc时的样子, 当然, 如果有人和我一起工作,敢写出这样的代码, 肯定会让我喷的体无完肤的: )</p>
+
+<pre><code>.align  2
+.code   16                      @ @"\01-[ClassA changeFooDirect:]"
+.thumb_func "-[ClassA changeFooDirect:]"
+"-[ClassA changeFooDirect:]":
+@ BB#0:
+    movw    r1, :lower16:(_OBJC_IVAR_$_ClassA.foo-(LPC0_0+4))
+    movt    r1, :upper16:(_OBJC_IVAR_$_ClassA.foo-(LPC0_0+4))
+LPC0_0:
+    add r1, pc
+    ldr r1, [r1]
+    str r2, [r0, r1]
+    bx  lr
+</code></pre>
+
+<p>这里可以看出, 只是简单的覆盖变量, 没有retain release, 非常容易产生内存问题.
+再看一下 changeFooDirect 开启ARC后的样子</p>
+
+<pre><code>.align  2
+.code   16                      @ @"\01-[ClassA changeFooDirect:]"
+.thumb_func "-[ClassA changeFooDirect:]"
+"-[ClassA changeFooDirect:]":
+@ BB#0:
+    push    {r4, r7, lr}
+    mov r4, r0                          
+    mov r0, r2
+    add r7, sp, #4
+    blx _objc_retain
+    movw    r1, :lower16:(_OBJC_IVAR_$_ClassA._foo-(LPC0_0+4))
+    movt    r1, :upper16:(_OBJC_IVAR_$_ClassA._foo-(LPC0_0+4))
+LPC0_0:
+    add r1, pc                          
+    ldr r2, [r1]            //r2 = 变量foo在类实例中的偏移量
+    ldr r1, [r4, r2]            //r4 = self 这句的意思就是 r1 = foo;
+    str r0, [r4, r2]            //r0 表示参数inFoo, 这里相当于_foo = inFoo;
+    mov r0, r1              
+    pop.w   {r4, r7, lr}            
+    b.w _objc_release           //release ro的变量 也就是 _foo
+</code></pre>
+
+<p>这里我们可以看出, ARC retain 新变量, 然后release 旧的变量, 而这个正是我们想要的结果.这段坑爹的代码在ARC下是可以正确运行的</p>
+
+<p><strong>这里我再次声明一下, 类似changeFooDirect 这样的代码 只是用于研究, 访问类实例成员变量时都应该使用property方法而不是直接访问或是修改</strong></p>
+
+<p>changeFooSetter 这里我们看到无论是否开启ARC 生成的代码都是一样的.调用自动生成的setter 方法</p>
+
+<pre><code>.align  2
+.code   16                      @ @"\01-[ClassA changeFooSetter:]"
+.thumb_func "-[ClassA changeFooSetter:]"
+"-[ClassA changeFooSetter:]":
+@ BB#0:
+    movw    r1, :lower16:(L_OBJC_SELECTOR_REFERENCES_-(LPC1_0+4))
+    movt    r1, :upper16:(L_OBJC_SELECTOR_REFERENCES_-(LPC1_0+4))
+LPC1_0:
+    add r1, pc
+    ldr r1, [r1]
+    b.w _objc_msgSend
+</code></pre>
+
+<p>然后我们再看看getNumber 函数 开启ARC后的代码</p>
+
+<pre><code>.align  2
+.code   16                      @ @"\01-[ClassA getNumber]"
+.thumb_func "-[ClassA getNumber]"
+"-[ClassA getNumber]":
+@ BB#0:
+push    {r7, lr}
+movw    r0, :lower16:(L_OBJC_SELECTOR_REFERENCES_2-(LPC3_0+4))
+mov r7, sp
+movt    r0, :upper16:(L_OBJC_SELECTOR_REFERENCES_2-(LPC3_0+4))
+movw    r2, :lower16:(L_OBJC_CLASSLIST_REFERENCES_$_-(LPC3_1+4))
+movt    r2, :upper16:(L_OBJC_CLASSLIST_REFERENCES_$_-(LPC3_1+4))
+LPC3_0:
+add r0, pc
+LPC3_1:
+add r2, pc
+ldr r1, [r0]
+ldr r0, [r2]
+blx _objc_msgSend
+movw    r1, :lower16:(L_OBJC_SELECTOR_REFERENCES_4-(LPC3_2+4))
+movs    r2, #10
+movt    r1, :upper16:(L_OBJC_SELECTOR_REFERENCES_4-(LPC3_2+4))
+LPC3_2:
+add r1, pc
+ldr r1, [r1]
+blx _objc_msgSend
+pop.w   {r7, lr}
+b.w _objc_autoreleaseReturnValue               //如果没有开启ARC 则没有 _objc_autoreleaseReturnValue
+</code></pre>
+
+<p>关于_objc_autoreleaseReturnValue 也有很多有趣的事情, 如果把这个家伙简单的理解成autorelease就大错特错了, 编译器会对这些做优化, 减少一些无谓的retain release 来提高代码效率</p>
+
+<p>newNumber 和我们想的也一样, 在开启ARC的时候, 并没有增加 类似autorelease 的函数, 而是将retain count 保持为1.</p>
+
+<p>如果是普通的临时变量又是什么样子呢?</p>
+
+<pre><code>- (void)test
+{
+        NSNumber *test = [[NSNumber alloc] initWithInt:1];
+
+        NSLog(@"%@", test);
+}
+</code></pre>
+
+<p>开启ARC 后的代码</p>
+
+<pre><code>.align  2
+.code   16                      @ @"\01-[ClassA test]"
+.thumb_func "-[ClassA test]"
+"-[ClassA test]":
+@ BB#0:
+push    {r4, r7, lr}
+movw    r0, :lower16:(L_OBJC_SELECTOR_REFERENCES_2-(LPC4_0+4))
+add r7, sp, #4
+movt    r0, :upper16:(L_OBJC_SELECTOR_REFERENCES_2-(LPC4_0+4))
+movw    r2, :lower16:(L_OBJC_CLASSLIST_REFERENCES_$_-(LPC4_1+4))
+movt    r2, :upper16:(L_OBJC_CLASSLIST_REFERENCES_$_-(LPC4_1+4))
+LPC4_0:
+add r0, pc
+LPC4_1:
+add r2, pc
+ldr r1, [r0]
+ldr r0, [r2]
+blx _objc_msgSend
+movw    r1, :lower16:(L_OBJC_SELECTOR_REFERENCES_4-(LPC4_2+4))
+movs    r2, #1
+movt    r1, :upper16:(L_OBJC_SELECTOR_REFERENCES_4-(LPC4_2+4))
+LPC4_2:
+add r1, pc
+ldr r1, [r1]
+blx _objc_msgSend
+mov r4, r0
+movw    r0, :lower16:(L__unnamed_cfstring_-(LPC4_3+4))
+movt    r0, :upper16:(L__unnamed_cfstring_-(LPC4_3+4))
+mov r1, r4
+LPC4_3:
+add r0, pc
+blx _NSLog
+mov r0, r4
+pop.w   {r4, r7, lr}
+b.w _objc_release           // 这里我们看出release 掉了 test 变量 也和我们想想的一样.ARC 这里对带类成员变量和普通的临时变量是不同的
+</code></pre>
+
+<p>寄存器变量在第一个例子中已经列举了一点, 这个就不赘述啦.</p>
+</div>
+  
+  
+
+
+    </article>
   
   
     <article>
@@ -498,87 +725,6 @@ Tal说到,&#8221;人们是有权利去感受幸福,感受痛苦,悲伤的.
 <p>&#8220;你之所以受到影响只是因为你在乎他们的思想与情绪而已；你的“被影响“很直接的告诉了你你内心所渴望的是什么，我觉得在控制情绪之前，首先要做的是感受、体会你的情绪；因为一味的控制等于压制，而只有体会才能是你领悟到解决方法。顺其自然就好了，
 &#8221;
 给自己情绪自由…..</p>
-</div>
-  
-  
-
-
-    </article>
-  
-  
-    <article>
-      
-  <header>
-    
-      <h1 class="entry-title"><a href="/blog/2012/11/15/way-of-growth/">心理成长之旅一</a></h1>
-    
-    
-      <p class="meta">
-        
-
-
-
-
-
-
-
-
-  
-
-
-<time datetime="2012-11-15T07:07:39+08:00" pubdate data-updated="true">Nov 15<span>th</span>, 2012</time>
-        
-         | <a href="/blog/2012/11/15/way-of-growth/#disqus_thread">Comments</a>
-        
-      </p>
-    
-  </header>
-
-
-  <div class="entry-content"><p>这几天又经历了一小段特别有珍贵的心理过程.这里记录下</p>
-
-<p>倒序吧,这是结局</p>
-
-<p>&#8220;喜欢的女孩过生日,找了一家小咖啡店,用钢琴弹唱了一曲生日歌,另外送了一对翅膀做礼物.然后开始扯淡,扯了3个多小时,女孩突然说,&#8221;额,我发现这里有一个小天使&#8221;, 我说,&#8221;恩,本来就是tinker bell么&#8221;, 她说&#8221;那我觉得我就是小天使&#8221;. 我说&#8217;我看你是折翼的天使&#8217;,然后她开始打我,我也不知道为什么,我突然说,&#8217;所以我要送你一对翅膀&#8217;.女孩愣住了,然后牵了手,她手心出了好多汗,我问她,她说紧张,第一次牵手,我觉得这手好小,只有我一半吧,然后就吻了她的手.&#8221;</p>
-
-<p>事实上,我经历了从买礼物到后悔,不送.到想明白应该送,再到不送不弹琴,再到弹琴,送礼物的纠结过程.</p>
-
-<p>&#8220;一个人如何和自己相处,在很大程度不完全取决于头脑与理性.因为理性只能分析和认识情绪,而如何对待自己的情绪,这只能靠情绪的成熟度.情绪成熟人的发展才会正常.成熟的人首先能清晰的把自己和别人情绪分开,能够清晰的知道&#8221;情绪是我的&#8221;, &#8220;我为我的情绪负责&#8221;,&#8221;我需要照顾我的情绪&#8221;,知道我的情绪来源,然后找到情绪背后的东西,和它在一起,把它转成支撑我们生命的东西. 这个过程叫做情绪的自我控制.&#8221;</p>
-
-<p>上面是今天在书上看到的一段内容.</p>
-
-<p>很有意思的是在过去的这几天里,我自己第一次感受到了个人情绪的边界. 在之前,我真的不能理解自己的情绪. 前几天在和妈妈的对话中,妈妈觉得我受到了委屈,但我真正的感觉是,我让妈妈受到了委屈.听上去真的很奇怪,但却是真真正正的存在着, 这种情绪可能应该叫做情绪共生.这是我当时的感受.</p>
-
-<p>&#8220;前些天给一个女孩买了一个SWAROVSKI的吊坠,这几天觉得亏心的不行, 因为从来还没有给妈妈买过礼物,这么大了,25年了.昨天,喝了不少酒,空腹喝的伏特加,我也不知道为什么,烦躁的不行.第二天头疼,胃疼,之前的老毛病也犯了,因为医生说,不能喝酒的,不能辛辣.</p>
-
-<p>最后浑身痒,实在是睡不着觉.实在憋不住,吐了口水在空间. 老妈第一时间就来问我&#8221;怎么喝酒啊,那个女孩没要礼物么?人家不稀罕咋,咋不能糟践自己的身体,是不是屁屁又疼了&#8221;, 又想起来前几天的话&#8221;不要给妈妈买戒指,妈妈不需要&#8221;</p>
-
-<p>不知道为什么,一早上的重金属都没有阻挡住我的心情, 25年来第一次被感动了.真的.这个事情不能这么办.</p>
-
-<p>世上只有妈妈好,真的.这礼物不送了, 虽然这个也不能送妈妈.留着吧.送了的话,这辈子都不会过的舒坦.
-吐在这里吧,这篇不敢往空间发了&#8221;</p>
-
-<p>我第一次感觉到这个情绪不对是,因为有很多人都说我,这就是2件事情么,但为什么我觉得是一件事情.那天中午.在路上,我不断地再思考这件事情,吃饭的时候也在想.突然我想到之前看到的儿童在个人成长时需要经历一段母婴情感的分离.我突然明白,这是2件事情.妈妈的情绪完全的影响到我的情绪,我并把这个情绪,当成了我的情绪.天啊,我觉得我是一个思想独立的家伙,而且自认为在心理上已经独立很长时间了,但是情绪居然还没有做到分离.我感到非常的震惊,也感到非常的好奇.不是的,应该是神奇.</p>
-
-<p>另外一段剧情是这样子的.</p>
-
-<p>老大和我谈啊,因为我把这事情告我老大了.老大说</p>
-
-<p>&#8220;这个事情,太难讲,我觉得不合适,你别太着急,这是一个自然而然的过程,没有对错,成了不意味着就能怎么地,是另一个开始,失败了,可能就连朋友也没有了.&#8221;</p>
-
-<p>我先到的咖啡馆,然后,我坐在钢琴前发呆,反复的想这件事情.我觉得女孩不喜欢我,恩,这个是这样子的,然后我就不想干了.想收拾东西撤了.但是已经答应人了,不能随意反悔啊,然后就开始纠结啊,然后我感觉depression,这会服务员正好送来一杯柠檬水,喝水后,我突然想起之前一直看的positive psychology 的内容,我又感觉到情绪的边界,就是女孩的情绪和我的情绪不一样.我感到为之一振.这是一件太正常不过的事情了,我为啥这么激动或沮丧呢?在我理清楚2个人之间情绪的区别之后,我打开钢琴,试了音, 恩, 比我想的要好多了.</p>
-
-<p>在和女孩扯的过程中,这一段剧情也很有趣</p>
-
-<p>我对女孩说,&#8221;我不知道我是喜欢你,还是喜欢喜欢你的感觉&#8221;,我感觉喜欢一个人应该是自私的,我似乎只是喜欢一个喜欢人的感觉.因为这个过程又让我成长好多,写到这里我感觉我又乱了,本来想清楚的现在又糊涂了.</p>
-
-<p>现在我最能确定的是,我感觉和那个女孩一起很放松,可以说任何自己想说的事情,自己的想法,自己的缺点,自己的优点.上面的想法和理解很多都是在和女孩扯的时候理解明白的.</p>
-
-<p>第二天,老大问我咋样啊, 我说,她开心,我就很开心.</p>
-
-<p>今天想想,又长大了.</p>
-
-<p>这是一条少有人走的路,你不是一个人 : )</p>
 </div>
   
   

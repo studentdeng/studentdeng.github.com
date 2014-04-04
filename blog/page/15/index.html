@@ -9,7 +9,7 @@
   <meta name="author" content="studentdeng">
 
   
-  <meta name="description" content="终于把学校里面让人无语的论文搞定了。周末终于有时间干些自己想干的事了。想起了这2周做的关于编译原理的实验，代码优化这部分的确是个难题。哎，我实在是太笨了，其实答案就在自己电脑里。将c程序反汇编后，终于第一次感受到了debug 和release的区别。兴奋之余让我又产生了忧虑，自己汇编的能力太弱了， &hellip;">
+  <meta name="description" content="昨天和同学对c++虚继承这部分 产生了一些争论，发觉自己对技术越来越浮躁了。不得不痛下决心。一看c++虚继承的内部实现（很浅很浅的看看）。 以下内容来自自己实验，希望各位大哥指点。当然要想获得权威的解释，看《Inside C++ Object Model》 让我们从最简单的开始。以下测试代码。 &hellip;">
   
 
   <!-- http://t.co/dKP3o1e -->
@@ -66,6 +66,279 @@
     <div id="content">
       <div class="blog-index">
   
+  
+  
+    <article>
+      
+  <header>
+    
+      <h1 class="entry-title"><a href="/blog/2010/06/01/c-plus-plus-vtable/">C++虚继承初探</a></h1>
+    
+    
+      <p class="meta">
+        
+
+
+
+
+
+
+
+
+  
+
+
+<time datetime="2010-06-01T20:30:00+08:00" pubdate data-updated="true">Jun 1<span>st</span>, 2010</time>
+        
+         | <a href="/blog/2010/06/01/c-plus-plus-vtable/#disqus_thread">Comments</a>
+        
+      </p>
+    
+  </header>
+
+
+  <div class="entry-content"><p>昨天和同学对c++虚继承这部分 产生了一些争论，发觉自己对技术越来越浮躁了。不得不痛下决心。一看c++虚继承的内部实现（很浅很浅的看看）。</p>
+
+<p>以下内容来自自己实验，希望各位大哥指点。当然要想获得权威的解释，看《Inside C++ Object Model》</p>
+
+<p>让我们从最简单的开始。以下测试代码。</p>
+
+<pre><code>class Base
+{
+public:
+    Base()
+    {
+        printf("Base construct!\n");
+    }
+    //virtual void Test()=0;
+    virtual void f()
+    {
+        printf("Base\n");
+    }
+    virtual void f2()
+    {
+        printf("Base2\n");
+    }
+    virtual void f3()
+    {
+        printf("Base3\n");
+    }
+    void f4()
+    {
+        printf("Base4\n");
+    }
+};
+class Derived: public Base
+{
+public:
+    Derived()
+    {
+        printf("Derived construct!\n");
+    }
+    virtual void f()
+    {
+        printf("Derived\n");
+    }
+    virtual void f2()
+    {
+        printf("Derived2\n");
+    }
+    virtual void f3()
+    {
+        printf("Derived3\n");
+    }
+    void f4()
+    {
+        printf("Derived4\n");
+    }
+    /*virtual void Test()
+    {
+        printf("test\n");
+    }*/
+};
+int main()
+{
+    Base *p=new Base;
+    p-&gt;f();
+    p-&gt;f2();
+    p-&gt;f3();
+    p-&gt;f4();
+    /*Base *p = new Derived;*/
+    p = new Derived;
+    p-&gt;f();
+    p-&gt;f2();
+    p-&gt;f3();
+    p-&gt;f4();
+    //p-&gt;Test();
+    delete p;
+    return 0;
+}
+</code></pre>
+
+<p>以下是在我的环境下反汇编的部分代码。我的环境是vs2008 默认的Release。</p>
+
+<pre><code>.text:00401060 ; int __cdecl main(int argc, const char **argv, const char **envp)
+.text:00401060 _main           proc near               ; CODE XREF: __tmainCRTStartup+10Ap
+.text:00401060
+.text:00401060 argc            = dword ptr  4
+.text:00401060 argv            = dword ptr  8
+.text:00401060 envp            = dword ptr  0Ch
+.text:00401060
+.text:00401060                 push    esi
+.text:00401061                 push    edi
+.text:00401062                 push    4               ; unsigned int
+.text:00401064                 call    ??2@YAPAXI@Z_0  ; operator new(uint)
+.text:00401069                 mov     edi, ds:__imp__printf
+.text:0040106F                 mov     esi, eax
+.text:00401071                 add     esp, 4
+.text:00401074                 test    esi, esi
+.text:00401076                 jz      short loc_40108A
+.text:00401078                 push    offset aBaseConstruct ; "Base construct!\n"
+.text:0040107D                 mov     dword ptr [esi], offset ??_7Base@@6B@ ; const Base::`vftable'
+.text:00401083                 call    edi ; __imp__printf
+.text:00401085                 add     esp, 4
+.text:00401088                 jmp     short loc_40108C
+
+
+.text:0040107D mov dword ptr [esi], offset ??_7Base@@6B@ ; const Base::`vftable' 
+</code></pre>
+
+<p>是关键，根据上面分析，将指向Base类
+的虚表的指针保存到了向堆中分配的空间中，也就是 esi=**base_vtbl</p>
+
+<pre><code>.text:0040108C                 mov     eax, [esi]
+.text:0040108E                 mov     edx, [eax]   ;这里就好理解了，eax=*base_vtbl，edx=base_vtbl
+.text:00401090                 mov     ecx, esi
+.text:00401092                 call    edx          ;调用虚表中的第一个函数以下类推
+.text:00401094                 mov     eax, [esi]
+.text:00401096                 mov     edx, [eax+4]
+.text:00401099                 mov     ecx, esi
+.text:0040109B                 call    edx
+.text:0040109D                 mov     eax, [esi]
+.text:0040109F                 mov     edx, [eax+8]
+.text:004010A2                 mov     ecx, esi
+.text:004010A4                 call    edx
+.text:004010A6                 push    offset aBase4   ; "Base4\n" ;这里看出了非虚函数的优势，效率高，直接调用函数
+.text:004010AB                 call    edi ; __imp__printf
+</code></pre>
+
+<p>这是Base虚表内容</p>
+
+<pre><code>.rdata:0040216C ; const Base::`vftable'
+.rdata:0040216C ??_7Base@@6B@   dd offset ?f@Base@@UAEXXZ ; DATA XREF: _main+1Do  ;这里每个标号都指向相应函数
+.rdata:0040216C                                         ; _main+62o
+.rdata:0040216C                                         ; Base::f(void)
+.rdata:00402170                 dd offset ?f2@Base@@UAEXXZ ; Base::f2(void)
+.rdata:00402174                 dd offset ?f3@Base@@UAEXXZ ; Base::f3(void)
+.rdata:00402178                 dd offset ??_R4Derived@@6B@ ; const Derived::`RTTI Complete Object Locator' ;这个不懂
+</code></pre>
+
+<p>Base 还是比较简单的，让我们看Derived</p>
+
+<pre><code>.text:004010BD                 push    offset aBaseConstruct ; "Base construct!\n"
+.text:004010C2                 mov     dword ptr [esi], offset ??_7Base@@6B@ ; const Base::`vftable'
+.text:004010C8                 call    edi ; __imp__printf
+.text:004010CA                 push    offset aDerivedConstru ; "Derived construct!\n"
+.text:004010CF                 mov     dword ptr [esi], offset ??_7Derived@@6B@ ; const Derived::`vftable'
+.text:004010D5                 call    edi ; __imp__printf
+.text:004010D7                 add     esp, 8
+</code></pre>
+
+<p>可见在构造函数中和我们想象的完全一样，从基类开始，不过需要注意一点，最后esi=**Derived_vtbl
+ 以后的代码完全和在基类中调用函数一致。看来在VS2008中，c++的虚表其实就是数组（原来居然还以为是链表，不过似乎也有的编译器
+ 是用链表实现的）。这个例子的确不复杂，但是事实上却没有这么简单。看下一个稍微复杂一点的。</p>
+
+<pre><code>class A
+{
+public:
+    A()
+    {
+        printf("A construct\n");
+    }
+    virtual void f(){printf("A_F\n");}
+};
+class B
+{
+public:
+    B()
+    {
+        printf("B construct\n");
+    }
+    virtual void f(){printf("B_F\n");}
+    virtual void g(){printf("B_G\n");}
+};
+class C: public A,public B
+{
+public:
+    C()
+    {
+        printf("C construct\n");
+    }
+    void f(){printf("C_f\n");}
+};
+
+int _tmain(int argc, _TCHAR* argv[])
+{
+    A *a=new A;
+    B *b=new B;
+    C *c=new C;
+    a-&gt;f();
+    b-&gt;f();
+    b-&gt;g();
+    c-&gt;f();
+    return 0;
+}
+</code></pre>
+
+<p>先不看结果，花几分钟思考一下，class C 的虚表结构是什么？</p>
+
+<p>首先看代码，发现在class C中首先有一点不同，这个是之前的在class A,classB,classC中都是默认构造函数的代码</p>
+
+<pre><code>.text:00401077                 push    8               ; unsigned int      ;以前class只放一个指针，现在2个了。
+.text:00401079                 call    ??2@YAPAXI@Z_0  ; operator new(uint)
+.text:0040107E                 add     esp, 4
+.text:00401081                 test    eax, eax
+.text:00401083                 jz      short loc_40109D
+.text:00401085                 mov     dword ptr [eax+4], offset ??_7B@@6B@ ; const B::`vftable'
+.text:0040108C                 mov     dword ptr [eax], offset ??_7C@@6BA@@@ ; const C::`vftable'{for `A'}
+.text:00401092                 mov     dword ptr [eax+4], offset ??_7C@@6BB@@@ ; const C::`vftable'{for `B'}
+.text:00401099                 mov     edi, eax
+.text:0040109B                 jmp     short loc_40109F
+</code></pre>
+
+<p>这个是上面代码真正的反汇编代码，对比下，就可能对上面代码为什么有一个这么冗余的代码，似乎有些感觉了。</p>
+
+<pre><code>.text:004010A6                 push    offset aAConstruct ; "A construct\n"
+.text:004010AB                 mov     dword ptr [esi], offset ??_7A@@6B@ ; const A::`vftable'
+.text:004010B1                 call    edi ; __imp__printf
+.text:004010B3                 push    offset aBConstruct ; "B construct\n"
+.text:004010B8                 mov     dword ptr [esi+4], offset ??_7B@@6B@ ; const B::`vftable'
+.text:004010BF                 call    edi ; __imp__printf
+.text:004010C1                 push    offset aCConstruct ; "C construct\n"
+.text:004010C6                 mov     dword ptr [esi], offset ??_7C@@6BA@@@ ; const C::`vftable'{for `A'}
+.text:004010CC                 mov     dword ptr [esi+4], offset ??_7C@@6BB@@@ ; const C::`vftable'{for `B'}
+.text:004010D3                 call    edi ; __imp__printf
+.text:004010D5                 add     esp, 0Ch
+</code></pre>
+
+<p>下面的大部分容易理解，关键的是在class B的虚表中的f()。</p>
+
+<pre><code>; [thunk]:public: virtual void __thiscall C::f`adjustor{4}' (void)
+?f@C@@W3AEXXZ proc near               ;这时ecx 也就是this是指向class B的
+sub     ecx, 4                        ;这里很明显将原来的指向B:f()，指向了class C的虚表的开始部分。ecx放的是this指针
+jmp     ?f@C@@UAEXXZ    ; C::f(void)  ;这里顺理成章的变成了C::f()，this也在上部改变了
+?f@C@@W3AEXXZ endp
+</code></pre>
+
+<p>这里似乎就是传说中的“形式转换程序”，这个的确减少了虚表的体积。
+再看后面的代码，函数调用的时候和之前完全一致，也就是在class C中定义的f()，虽然没有被显示的声明为virtual，但vs2008已经
+把他默认当成虚函数调用了。至此，和同学的争论就此结束。</p>
+</div>
+  
+  
+
+
+    </article>
   
   
     <article>
@@ -719,386 +992,6 @@ DWORD WINAPI ThreadFunc(LPVOID n)
 </code></pre>
 
 <p><a href="http://files.cnblogs.com/studentdeng/MP_v2.rar">MP_v2.rar源码</a></p>
-</div>
-  
-  
-
-
-    </article>
-  
-  
-    <article>
-      
-  <header>
-    
-      <h1 class="entry-title"><a href="/blog/2010/03/24/thumb-pic1/">缩略图设计初探</a></h1>
-    
-    
-      <p class="meta">
-        
-
-
-
-
-
-
-
-
-  
-
-
-<time datetime="2010-03-24T18:35:00+08:00" pubdate data-updated="true">Mar 24<span>th</span>, 2010</time>
-        
-         | <a href="/blog/2010/03/24/thumb-pic1/#disqus_thread">Comments</a>
-        
-      </p>
-    
-  </header>
-
-
-  <div class="entry-content"><h2>第一部分简介：</h2>
-
-<p>最近有幸参加了一个网上的开源项目，需要我设计一个缩略图存储的方法。整个思路主要是模仿XP的实现方式，而对于Win7（或是Vista）里面将所有缩略图统一管理的模式没有采用。主要想法还是一切从简，这也就是初探的来由了。</p>
-
-<p>整个缩略图的核心算法来自《Inside MoPaQ》http://shadowflare.samods.org/inside_mopaq/</p>
-
-<p>核心是将文件名通过Hash散列到表中，从而达到快速查找的目的。</p>
-
-<p>MPQ文件，对于大部分大学时间沉浸的游戏——War3是非常重要的，每次War3版本的更替都对这个文件做了修改。的确，对于一个计算机系的非常爱玩的我，现在才分析MPQ实在是惭愧。</p>
-
-<p>对于我这个文件名，现在姑且命名为MP(MiniPic)。</p>
-
-<p>这是我第一次用c++来写程序，整个程序很简单，花了差不多1个半月（我这个效率实在不行），和第一篇一样，希望各位大哥能帮忙看看。</p>
-
-<h2>第二部分实现：</h2>
-
-<ol>
-<li>需求</li>
-</ol>
-
-
-<p>1.1          这里实现读取，修改固定大小的文件，即每个缩略图的存储空间大小一致。</p>
-
-<p>1.2          根据文件名添加，查找，删除功能。</p>
-
-<p>1.3          文件存储数目固定，不能动态增长。</p>
-
-<p>1.4          储存文件名，使用ID形式访问。</p>
-
-<p>2.存储方案</p>
-
-<p>2.1          表结构设计</p>
-
-<p>整个文件包括FileHeader，HashTable，BlockTable，DataHeader，Data构成。通过计算文件名的hash值，将文件名散列到HashTable中，然后根据HashTable中查找BlockTable（文件块表），在BlockTable中查找到实际文件data的位置。读入DataHeader和Data。</p>
-
-<p>FileHeader HashTableItem HashTableItem &#8230;&#8230; HashTableItem</p>
-
-<p>BlockTableItem BlockTableItem DataHeader Data DataHeader</p>
-
-<p>Data
-&#8230;</p>
-
-<p>2.2          内存中存储。</p>
-
-<p>内存中存储FileHeader、HashTable、BlockTable、DebrisBlock,dataBuffer。</p>
-
-<p>DebrisBlock是队列结构。存储因删除操作而产生的碎片。</p>
-
-<p>FileHeader，HashTable，BlockTable是数组。dataBuffer数据缓存</p>
-
-<p>3.实现方案</p>
-
-<p>实际还需要增加功能，以下是核心部分。对于每个功能的算法也只写核心部分。</p>
-
-<p>3.1       增加</p>
-
-<p>3.1.1     将文件名转换为数字。这里使用的是MPQ文件算法。</p>
-
-<pre><code>DWORD HashManager::HashString( TCHAR *lpszFileName,DWORD dwHashType )
-{
-    BYTE *key = (BYTE *)lpszFileName;   
-    DWORD seed1 = 0x7FED7FED, seed2 = 0xEEEEEEEE;   
-    int ch;   
-
-    while(*key != 0)   
-    {
-        ch = toupper(*key++);
-        //原来是char，这里处理TCHAR中的0，这里也有小问题，如果要更多的地方使用，还需要做大头小头机数据转换
-         if(!*key)
-        {
-            ++key;
-        }
-        seed1 = cryptTable[(dwHashType &lt;&lt; 8) + ch] ^ (seed1 + seed2);   
-        seed2 = ch + seed1 + seed2 + (seed2 &lt;&lt; 5) + 3;    
-    }   
-    return seed1; 
-}
-</code></pre>
-
-<p>3.1.2     插入HashTable。</p>
-
-<p>在处理冲突的时候，是采用最简单的线性探查法，在判断位置相同的时候，采用增加2个Hash值的方法。虽然不能保证肯定不会出问题。但是3个相同的概率很低，大概是10的22.3次方分之一，这个是在参考《Inside MoPaQ》，中的数据，是否可靠。我无法确定。</p>
-
-<pre><code>BOOL HashManager::InsertHashTable( TCHAR *lpszString, FILETIME FileTime, LONG &amp;HashPos, DWORD dwFlags,
-                                   BOOL &amp;isNew//设置，是否是新文件
-)
-{
-    ASSERT( m_pHashIndexTable!= NULL );
-    isNew = TRUE;
-    const DWORD HASH_OFFSET = 0, HASH_A = 1, HASH_B = 2;   
-    DWORD nHash = HashString(lpszString, HASH_OFFSET);   
-    DWORD nHashA = HashString(lpszString, HASH_A);   
-    DWORD nHashB = HashString(lpszString, HASH_B);   
-    DWORD nHashStart = nHash %m_hashTableLength;   
-    DWORD nHashPos = nHashStart;   
-    DWORD x=m_pHashIndexTable[nHashPos].dwFlag &amp; FILE_EXISTS;
-    DWORD y = m_pHashIndexTable[nHashPos].dwFlag &amp; FILE_DELETED;
-    while( x!=0 )
-    {   
-        if( y==FILE_DELETED )
-        {
-            isNew = FALSE;
-            break;
-        }
-        //如果有同名文件
-         if (m_pHashIndexTable[nHashPos].dwHashValueA == nHashA                &amp;&amp; m_pHashIndexTable[nHashPos].dwHashValueB == nHashB)
-        {
-            if( dwFlags &amp; INSERT_CHECK_FILETIME )
-            {
-                if(m_pHashIndexTable[nHashPos].dwFileLastModiTime.dwHighDateTime == FileTime.dwHighDateTime
-                   &amp;&amp; m_pHashIndexTable[nHashPos].dwFileLastModiTime.dwLowDateTime == FileTime.dwLowDateTime)
-                {
-                  return FALSE;//说明文件真实存在,插入失败
-                  }
-                else
-                {
-                    isNew = FALSE;
-                    break;
-                }
-            }
-            if( dwFlags &amp; INSERT_REPLACE_EXISTING )
-            {
-                isNew = FALSE;
-                break;
-            }
-            else
-            {
-                return FALSE;
-            }
-        }  
-        nHashPos = (nHashPos + 1) % m_hashTableLength;   
-        if(nHashPos == nHashStart)    
-        {   
-            return FALSE;    
-        }   
-        x=m_pHashIndexTable[nHashPos].dwFlag &amp; FILE_EXISTS;
-        y = m_pHashIndexTable[nHashPos].dwFlag &amp; FILE_DELETED;
-    }   
-    m_pHashIndexTable[nHashPos].dwFlag = FILE_EXISTS;  
-    m_pHashIndexTable[nHashPos].dwHashValueA = nHashA;   
-    m_pHashIndexTable[nHashPos].dwHashValueB = nHashB;   
-    m_pHashIndexTable[nHashPos].iBlockIndex=nHashPos;
-    if( dwFlags &amp; INSERT_CHECK_FILETIME )
-    {
-        m_pHashIndexTable[nHashPos].dwFileLastModiTime.dwHighDateTime = FileTime.dwHighDateTime;
-        m_pHashIndexTable[nHashPos].dwFileLastModiTime.dwLowDateTime = FileTime.dwLowDateTime;
-    }
-    HashPos = nHashPos;
-    return TRUE;  
-}
-</code></pre>
-
-<p>3.1.3     插入BlockTable</p>
-
-<p>如果DebrisBlock（空闲表）为空，则将BlockTable中的文件偏移量指向文件最后。</p>
-
-<p>如果DebrisBlock不为空，则将BlockTable中的文件偏移量指向BlockTable头结点，DebrisBlock头结点出列。</p>
-
-<p>3.2          查找</p>
-
-<p>3.2.1     查找HashTable</p>
-
-<pre><code>LONG HashManager::GetHashTablePos( TCHAR *lpszString )
-{
-    const DWORD HASH_OFFSET = 0, HASH_A = 1, HASH_B = 2;   
-    DWORD nHash = HashString(lpszString, HASH_OFFSET);   
-    DWORD nHashA = HashString(lpszString, HASH_A);   
-    DWORD nHashB = HashString(lpszString, HASH_B);   
-    DWORD nHashStart = nHash % m_hashTableLength;   
-    DWORD nHashPos = nHashStart; 
-
-    DWORD x=m_pHashIndexTable[nHashPos].dwFlag &amp; FILE_EXISTS;
-    while( x != 0 )
-    {    
-        if(m_pHashIndexTable[nHashPos].dwHashValueA == nHashA               &amp;&amp; m_pHashIndexTable[nHashPos].dwHashValueB == nHashB)
-        {
-            return nHashPos;  
-        }      
-        else
-        {
-            nHashPos = (nHashPos + 1) % m_hashTableLength; 
-        }  
-        if(nHashPos == nHashStart)    
-             break;    
-        x=m_pHashIndexTable[nHashPos].dwFlag &amp; FILE_EXISTS;
-    }
-    return -1; //没有找到
-}
-</code></pre>
-
-<p>3.3          删除</p>
-
-<p>3.3.1    查找HashTable ：GetHashTablePos；</p>
-
-<p>3.3.2    查找到则DebrisBlock入列文件偏移量，</p>
-
-<p>3.3.3    在HashTable中Flag标记位FILE_DELETED</p>
-
-<p>3.3.4    备注：这里不是真正删除。真正删除在MPFileClose()中的ManagerFileDebris进行。</p>
-
-<pre><code>BOOL    MiniPic::DeleteData(TCHAR *lpszString)
-{
-    ASSERT(m_isInit);
-    ASSERT( m_pHashManager != NULL );
-    ASSERT( lpszString != NULL );
-    LONG hashTablePos;
-    hashTablePos = m_pHashManager-&gt;GetHashTablePos(lpszString);
-    if( hashTablePos == -1 )
-    {
-        return FALSE;
-    }
-    MINIPICDEBRIS debris;
-    debris.dwBlockTableIndex = hashTablePos;
-    debris.dwDebrisStartAt = m_pBlockTableManager-&gt;GetBlockTable()[hashTablePos].FileStartAt;
-    m_pHashManager-&gt;DeleteHashTable(hashTablePos);
-    m_debrisBlock.push_back(debris);
-    DebugPrintString(L"Free data the pos is %d\n",hashTablePos);
-#ifdef TEST
-    if(count1&gt;=testNum)
-    {
-        count1=0;
-    }
-    testIns[count1++]=hashTablePos;
-#endif
-    m_fileHeader.childFileCount--;
-    return TRUE;
-}
-</code></pre>
-
-<p>3.4           回收资源</p>
-
-<p>因为在删除的时候只是在hashTable中做了一个Deleted的标记，并没有真正删除文件。若是长时间使用，则会浪费很多空间。此时需要整理。</p>
-
-<p>收集空闲区域。排序，将文件尾部数据移动至最早空闲处，删除空闲处，更新hashTable。</p>
-
-<pre><code>BOOL MiniPic::ManagerFileDebris( LPVOID lpBuffer, const UINT count )
-{
-    ASSERT( lpBuffer != NULL );
-    ASSERT( m_MPFile != NULL );
-    if( m_debrisBlock.empty() )
-    {
-        return TRUE;
-    }
-    MINIPICDATAITEMHEADER dataItemHeader;
-    m_debrisBlock.sort();
-
-    /*
-首先将比较Debris block末尾，若是处在文件的最后，则将Debris block末尾数据出列。并向前移动fileEndPointer     保证Debris block要小于文件末尾。
-确认Debris block是否为空。
-将末尾文件数据移动到Debris block的首部位置，fileEndPointer--，并将Debris block首部数据出列。
-    在判断条件1，2*/
-    //查找Debris。
-    while( !m_debrisBlock.empty() )
-   {
-        while( m_debrisBlock.back().dwDebrisStartAt + count                   + sizeof(MINIPICDATAITEMHEADER) == m_fileDataEndPointer )//处理文件末尾的空闲区域
-         {
-            m_fileDataEndPointer -= count + sizeof(MINIPICDATAITEMHEADER);
-            m_pHashManager-&gt;ClearHashTable( m_debrisBlock.back().dwBlockTableIndex );//New add
-            m_debrisBlock.pop_back();
-            if( m_debrisBlock.empty() )
-            {
-                break;
-            }
-        }
-        if( !m_debrisBlock.empty() )
-        {
-            if( 0xFFFFFFFF == m_MPFile-&gt;Seek( m_fileDataEndPointer - count - sizeof(MINIPICDATAITEMHEADER), 
-                FILE_BEGIN ))//指向最后文件块开始处
-              {
-                return FALSE;
-            }
-            m_MPFile-&gt;Read( &amp;dataItemHeader, sizeof(MINIPICDATAITEMHEADER) );
-            m_MPFile-&gt;Read( lpBuffer, count );
-            if( 0xFFFFFFFF == m_MPFile-&gt;Seek( m_debrisBlock.front().dwDebrisStartAt, FILE_BEGIN ) )
-            {
-                return FALSE;
-            }
-            m_MPFile-&gt;Write( &amp;dataItemHeader, sizeof(MINIPICDATAITEMHEADER) );
-            m_MPFile-&gt;Write( lpBuffer, count );
-            m_fileDataEndPointer -= count+sizeof(MINIPICDATAITEMHEADER);
-            m_pBlockTableManager-&gt;SetBlockTableFileStartAt( dataItemHeader.dwBlockTableIndex,
-            m_debrisBlock.front().dwDebrisStartAt );
-            //将原来指向空此间的HashTable标记位空。
-              m_pHashManager-&gt;ClearHashTable( m_debrisBlock.front().dwBlockTableIndex );
-            m_debrisBlock.pop_front();
-            DebugPrintString(L"find freedata set in it ,and the pos is %d\n",dataItemHeader.dwBlockTableIndex);
-        }
-    }
-    m_fileHeader.bfSize = m_fileDataEndPointer;
-    return TRUE;
-}
-</code></pre>
-
-<h2>第三部分 使用</h2>
-
-<pre><code>BOOL      MPFileOpen( LPCTSTR lpFileName );
-
-void          MPFileClose();                            
-
-BOOL      MPFileAddFile( LPCVOID lpBuffer, TCHAR *lpszString, const DWORD fileSize,
-
-                 const FILETIME LastModiTime, LONG &amp;lIndex, DWORD dwFlags
-
-);
-
-BOOL       MPFileReadFile( LPVOID lpBuffer, TCHAR *lpszString );
-
-BOOL       MPFileDeleteFile(TCHAR *lpszString);
-
-void           MPFileFlushData();
-
-BOOL       MPFileReadFileByIndex( LPVOID lpBuffer, const DWORD index );
-
-BOOL       MPFileGetFileName( TCHAR *FileNameBuffer, const  size_t count,
-
-                                                        const DWORD index
-
-);
-
-BOOL        MPFileReName( LPCTSTR lpNewFileName, LPCTSTR lpOldFileName);
-</code></pre>
-
-<h2>第四部分 未解决问题</h2>
-
-<p>没有实现动态增长，处理文件的最大值有限。
-没有对文件正确性做足够保证。没有加入CRC or MD5校验。
-没有设定返回的错误码只有TRUE,FALSE，不利于识别错误问题。
-算法的有些地方效率不高。还需改进。
-数据的大小没有做限制，插入过多数据会溢出。</p>
-
-<h2>第五部分 疑问</h2>
-
-<p>在处理非常多的数据时，是否该将文件压缩？
-许多管理文件系统都加入了最近访问文件列表，这些在有大量文件读入时效率高，是否可以设计类似结构？
-如何处理异常，特别是在写入时产生的异常，导致文件写入错误。如何能够更好的解决类似问题？在发生异常的时候，如何能够做到高效的完全释放资源？
-把HashTable，BlockTable放置到文件末尾，方便文件以后动态扩展。但是具体的如何扩容hashTable，可能不好办。
-在文件头部分增加一个Flag，标示文件的状态。（在读入的时候标记位0，最后如果没有异常则标记位1，那么如果在这个文件出现了问题，那么就可以通过检测这个Flag来判断文件异常），若是设计的更好，可以通过这个检测那部分有问题，而对问题修正。
-我之前谈到的异常情况，导致有的文件没有即时更新。我的想法是来自IE浏览器，他会记录上次出错的位置，那么这时候就可以启动恢复程序。要是MP文件的Flag是正常，那么就说明问题不在MP文件处理，可能是别的地方异常导致结束，那么就可以重新查找，根据文件创建的时间来判断是否文件变化过，那么这样就比重新生成要快多了。我这里应该提供用来恢复的接口，这个由外部程序调用它。
-第六部分 写给自己</p>
-
-<p>如果仔细看的话，这个并不是很复杂的东西，只是实现了最基本最简单的内容，但是自己做的依然很不完整。问题依然很多。这也映射出自己学习不仔细，编程依然马虎。很多问题都想的不周全。这也进一步说明自己基础不扎实。</p>
-
-<p>我相信我这里肯定还有不少问题，希望大家有时间给小弟看看，与此同时我也会不断改进，把这个做到自己的极限。</p>
 </div>
   
   

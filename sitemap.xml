@@ -305,8 +305,12 @@
         <lastmod>2014-04-03T19:43:58+08:00</lastmod>
     </url>
     <url>
+        <loc>http://studentdeng.github.com/blog/2014/04/04/octopress-notebox-plugin/</loc>
+        <lastmod>2014-04-04T18:55:46+08:00</lastmod>
+    </url>
+    <url>
         <loc>http://studentdeng.github.com/blog/archives/</loc>
-        <lastmod>2014-04-04T16:40:15+08:00</lastmod>
+        <lastmod>2014-04-04T18:55:46+08:00</lastmod>
     </url>
     <url>
         <loc>http://studentdeng.github.com/favorite/</loc>
@@ -314,7 +318,7 @@
     </url>
     <url>
         <loc>http://studentdeng.github.com/</loc>
-        <lastmod>2014-04-04T16:40:15+08:00</lastmod>
+        <lastmod>2014-04-04T18:55:46+08:00</lastmod>
     </url>
     <url>
         <loc>http://studentdeng.github.com/robots.txt</loc>

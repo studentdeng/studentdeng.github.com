@@ -9,7 +9,7 @@
   <meta name="author" content="studentdeng">
 
   
-  <meta name="description" content="Core Bluetooth 里面的名词还是挺多的，这里简单记录一下，一上来的时候，还是很容易混淆的，这里记录一下。 Basic Concept Bluetooth low energy (BLE，还有地方叫做BTLE，最恨各种简写了) 简单说是一种低功耗的短距离无线传输技术， &hellip;">
+  <meta name="description" content="用了这么长时间的octopress总该扩展一点点事情了，在Blogging的时候，总有一些信息是需要被特殊标记的，但是我并不喜欢简单的加粗或是斜体。类似的东西在Apple Document中有很多 Apple Document Note sample 这里我就把这个功能照搬到octopress中了 &hellip;">
   
 
   <!-- http://t.co/dKP3o1e -->
@@ -66,6 +66,136 @@
     <div id="content">
       <div class="blog-index">
   
+  
+  
+    <article>
+      
+  <header>
+    
+      <h1 class="entry-title"><a href="/blog/2014/04/04/octopress-notebox-plugin/">Octopress Notebox Plugin</a></h1>
+    
+    
+      <p class="meta">
+        
+
+
+
+
+
+
+
+
+  
+
+
+<time datetime="2014-04-04T16:48:00+08:00" pubdate data-updated="true">Apr 4<span>th</span>, 2014</time>
+        
+         | <a href="/blog/2014/04/04/octopress-notebox-plugin/#disqus_thread">Comments</a>
+        
+      </p>
+    
+  </header>
+
+
+  <div class="entry-content"><p>用了这么长时间的<a href="http://octopress.org/">octopress</a>总该扩展一点点事情了，在Blogging的时候，总有一些信息是需要被特殊标记的，但是我并不喜欢简单的加粗或是斜体。类似的东西在Apple Document中有很多</p>
+
+<p><span class='caption-wrapper'><img class='caption' src='/images/octopress_notebox_plugin1.png' width='' height='' title='Apple Document Note sample'><span class='caption-text'>Apple Document Note sample</span></span></p>
+
+<p>这里我就把这个功能照搬到octopress中了。</p>
+
+<p>1.在<em>plugins</em>目录创建一个notebox.rb</p>
+
+<figure class='code'> <div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+<span class='line-number'>2</span>
+<span class='line-number'>3</span>
+<span class='line-number'>4</span>
+<span class='line-number'>5</span>
+<span class='line-number'>6</span>
+<span class='line-number'>7</span>
+<span class='line-number'>8</span>
+<span class='line-number'>9</span>
+<span class='line-number'>10</span>
+<span class='line-number'>11</span>
+<span class='line-number'>12</span>
+<span class='line-number'>13</span>
+<span class='line-number'>14</span>
+<span class='line-number'>15</span>
+<span class='line-number'>16</span>
+<span class='line-number'>17</span>
+<span class='line-number'>18</span>
+<span class='line-number'>19</span>
+<span class='line-number'>20</span>
+<span class='line-number'>21</span>
+<span class='line-number'>22</span>
+<span class='line-number'>23</span>
+<span class='line-number'>24</span>
+</pre></td><td class='code'><pre><code class='Ruby'><span class='line'><span class="k">module</span> <span class="nn">Jekyll</span>
+</span><span class='line'>  <span class="k">class</span> <span class="nc">Notebox</span> <span class="o">&lt;</span> <span class="ss">Liquid</span><span class="p">:</span><span class="ss">:Block</span>
+</span><span class='line'>
+</span><span class='line'>    <span class="k">def</span> <span class="nf">initialize</span><span class="p">(</span><span class="nb">name</span><span class="p">,</span> <span class="nb">id</span><span class="p">,</span> <span class="n">tokens</span><span class="p">)</span>
+</span><span class='line'>      <span class="k">super</span>
+</span><span class='line'>      <span class="vi">@id</span> <span class="o">=</span> <span class="nb">id</span>
+</span><span class='line'>    <span class="k">end</span>
+</span><span class='line'>
+</span><span class='line'>    <span class="k">def</span> <span class="nf">render</span><span class="p">(</span><span class="n">context</span><span class="p">)</span>
+</span><span class='line'>      <span class="n">stressText</span> <span class="o">=</span> <span class="n">paragraphize</span><span class="p">(</span><span class="k">super</span><span class="p">)</span>
+</span><span class='line'>
+</span><span class='line'>      <span class="n">source</span> <span class="o">=</span> <span class="s2">&quot;&lt;div class=&#39;notebox&#39;&gt;&lt;p&gt;&lt;strong&gt;Note: &lt;/strong&gt;</span><span class="si">#{</span><span class="n">stressText</span><span class="si">}</span><span class="s2">&lt;/p&gt;&lt;/div&gt;&quot;</span>
+</span><span class='line'>      <span class="n">source</span>
+</span><span class='line'>
+</span><span class='line'>    <span class="k">end</span>
+</span><span class='line'>
+</span><span class='line'>    <span class="k">def</span> <span class="nf">paragraphize</span><span class="p">(</span><span class="n">input</span><span class="p">)</span>
+</span><span class='line'>      <span class="s2">&quot;</span><span class="si">#{</span><span class="n">input</span><span class="o">.</span><span class="n">lstrip</span><span class="o">.</span><span class="n">rstrip</span><span class="o">.</span><span class="n">gsub</span><span class="p">(</span><span class="sr">/\n\n/</span><span class="p">,</span> <span class="s1">&#39;&lt;/p&gt;&lt;p&gt;&#39;</span><span class="p">)</span><span class="o">.</span><span class="n">gsub</span><span class="p">(</span><span class="sr">/\n/</span><span class="p">,</span> <span class="s1">&#39;&lt;br/&gt;&#39;</span><span class="p">)</span><span class="si">}</span><span class="s2">&quot;</span>
+</span><span class='line'>    <span class="k">end</span>
+</span><span class='line'>
+</span><span class='line'>  <span class="k">end</span>
+</span><span class='line'><span class="k">end</span>
+</span><span class='line'>
+</span><span class='line'><span class="ss">Liquid</span><span class="p">:</span><span class="ss">:Template</span><span class="o">.</span><span class="n">register_tag</span><span class="p">(</span><span class="s1">&#39;notebox&#39;</span><span class="p">,</span> <span class="ss">Jekyll</span><span class="p">:</span><span class="ss">:Notebox</span><span class="p">)</span>
+</span></code></pre></td></tr></table></div></figure>
+
+
+<p>2.在<em>sass/custom</em>中的文件<em>_stype.scss</em>的最后添加下面的代码</p>
+
+<figure class='code'> <div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+<span class='line-number'>2</span>
+<span class='line-number'>3</span>
+<span class='line-number'>4</span>
+<span class='line-number'>5</span>
+<span class='line-number'>6</span>
+<span class='line-number'>7</span>
+<span class='line-number'>8</span>
+<span class='line-number'>9</span>
+</pre></td><td class='code'><pre><code class='css'><span class='line'><span class="nc">.notebox</span> <span class="p">{</span>
+</span><span class='line'>  <span class="k">border</span><span class="o">:</span><span class="m">1px</span><span class="p">;</span>
+</span><span class='line'>  <span class="k">border-style</span><span class="o">:</span> <span class="k">solid</span><span class="p">;</span>
+</span><span class='line'>  <span class="k">border-color</span><span class="o">:</span> <span class="m">#5088C5</span><span class="p">;</span>
+</span><span class='line'>  <span class="k">background-color</span><span class="o">:</span><span class="m">#fff</span><span class="p">;</span>
+</span><span class='line'>  <span class="k">margin</span><span class="o">:.</span><span class="m">75em</span> <span class="m">0</span> <span class="m">1.5em</span><span class="p">;</span>
+</span><span class='line'>  <span class="k">padding</span><span class="o">:.</span><span class="m">75em</span> <span class="m">.667em</span> <span class="m">.75em</span> <span class="m">.750em</span><span class="p">;</span>
+</span><span class='line'>  <span class="k">text-align</span><span class="o">:</span><span class="k">left</span><span class="p">;</span>
+</span><span class='line'><span class="p">}</span>
+</span></code></pre></td></tr></table></div></figure>
+
+
+<p>3.markdown的语法（<em>因为格式问题写成了％，需要替换成%</em>）</p>
+
+<pre><code>{％ notebox ％}
+the text to note
+{％ endnotebox ％}
+</code></pre>
+
+<p>效果</p>
+
+<div class='notebox'><p><strong>Note: </strong>text</p></div>
+
+</div>
+  
+  
+
+
+    </article>
   
   
     <article>
@@ -579,121 +709,6 @@ AttributeIDS：查找ID列表</p>
 <h1>困惑 2015-2018</h1>
 
 <p>上面的是我在一个月前写的，这几天我一直再思考一个问题，今天又失眠了。我未来的5年应该是什么打算呢？一直想不清楚，所以也不知道该如何写下去。其中有一个很重要的事情，就是成家是否在我的计划之中，同时它还附带了户口，房子，小孩上学等一系列问题。太原眼下，甚至是3年都很难有适合我的工作，但是生活还是未来小孩上学太原都要比北京的条件要好不少。花大量的时间和金钱拿一个北京的户口和房子值么？还是在太原的投资回报率高？抛开工作，太原的生活显然比北京舒适。但问问自己，甘心么？这一切都好难说。而且很多事情还涉及到父母，不是我一个人说了算，头疼。希望2014年底，我可以有一个自己的答案。恩，是希望，不是必须完成的事情。</p>
-</div>
-  
-  
-
-
-    </article>
-  
-  
-    <article>
-      
-  <header>
-    
-      <h1 class="entry-title"><a href="/blog/2014/02/11/baidu-interview/">百度面试</a></h1>
-    
-    
-      <p class="meta">
-        
-
-
-
-
-
-
-
-
-  
-
-
-<time datetime="2014-02-11T00:10:00+08:00" pubdate data-updated="true">Feb 11<span>th</span>, 2014</time>
-        
-         | <a href="/blog/2014/02/11/baidu-interview/#disqus_thread">Comments</a>
-        
-      </p>
-    
-  </header>
-
-
-  <div class="entry-content"><p>百度移动云可穿戴部门的面试经历，面试官都非常热情友好，一上来到弄的我挺不好意思的。下面记录一下自己的面试过程，因为我真的没啥面试经验，需要总结下。</p>
-
-<h1>1面</h1>
-
-<ul>
-<li>Objective C runtime library：Objective C的对象模型，block的底层实现结构，消息发送，消息转发，这些都需要背后C一层的描述，内存管理。</li>
-<li>Core Data：中多线程中处理大量数据同步时的操作。</li>
-<li>Multithreading：什么时候处理多线程，几种方式，优缺点。</li>
-<li>Delegate， Notification，KVO， other 优缺点</li>
-</ul>
-
-
-<p>runtime有一点追问，category，method 的实现机制，class的载入过程。
-1面整体感觉不错，40分钟不到，感觉回答的还可以。被通知一会儿二面。</p>
-
-<h1>2面</h1>
-
-<p>二面的时间非常长，差不多将近3个小时，直接面到快下班了。1面问的主要是知识点。2面问主要考察的是设计解决方案的能力，另外辅助追问的方式，考察深度和广度，回答过程中需要列出适合的具体例子，方案还需要细致到具体的关键的函数名称，方法。另外考察设计模式的理解，最后还考了算法。因为时间太长，这里记录一些重要的问题。</p>
-
-<ol>
-<li>设计一个progress bar解决方案，追问到 Core Graphic、CGPath、maskLayer。</li>
-<li>设计一个popup view被追问到 keyWindow、UIWindow的layer、UIView hierarchy。</li>
-<li>从设计模式的角度分析Delegate、Notification、KVO的区别。被追问到自己写的library和开源的项目中用到哪些设计模式，为什么使用，有哪些好处和坏处，现在能否改进。</li>
-<li>算是问题3的追问，设计一个方案来检测KVO的同步异步问题。willChange和 didChange的不同点，然后被追问到有没有其他地方也有类似情况，被追问到Core Data 中falut object。</li>
-<li>这个是问题4的追问，设计一个KVO系统。</li>
-<li>Multithreading，什么时候采用Multithreading方案，以及理由。追问到系统还有哪些在后台运行的thread，被追问到view life cycle、iOS6之后的不同以及内存管理。</li>
-<li>Multithreading中常常遇到的问题，追问到死锁，优先级翻转，线程池等。</li>
-<li>百度有一个亿级别的APP需要统计用户行为的日志系统。不使用数据库，只是使用普通文件，设计一个系统。被追问到内存映射文件。这个问题本来是服务器的问题，我表示从来没做过，回答很瞎。</li>
-</ol>
-
-
-<p>算法考了2个。一个是如何求2个集合的交集。另一个是百亿数据中查找相同的数字以及出现的次数。</p>
-
-<p>最后还补充了几个小问题</p>
-
-<ul>
-<li>自己对可穿戴设备的感受</li>
-<li>自己如果进入这个team，自己准备做那方面的事情</li>
-<li>为什么创业，自己未来规划</li>
-</ul>
-
-
-<p>一会被告知3面，但是因为太晚，约到次日下午3面。</p>
-
-<h1>3面</h1>
-
-<p>3面的时间和1面差不多40分钟，问了几个问题，主要是考察精神层面的东西。</p>
-
-<ul>
-<li>为什么做Windows Mobile</li>
-<li>为什么改iOS</li>
-<li>为什么来百度</li>
-<li>为什么iPhone 可以成功，那些吸引你</li>
-<li>如何看待AppStore 现在的生态圈</li>
-</ul>
-
-
-<p>后面就是他说的多一些，介绍团队遇到的困难以及14年团队的打算。最后他给了我2句话的评价，我觉得还是蛮对的。</p>
-
-<ul>
-<li>选择的时候都是经过深思熟虑的</li>
-<li>有野心，wanna make a difference</li>
-</ul>
-
-
-<p>有意思的是，他说他也wanna make a difference。</p>
-
-<h1>总结</h1>
-
-<p>整体还是挺尴尬的，几乎所有的知识点都是1，2年前积累的，13年积累的东西基本上没有，都是一些虚的东西。
-2面挺好的，暴露了自己不少问题，设计模式那部分几乎没有概念了。</p>
-
-<h1>最后</h1>
-
-<p>面试通过，我个人觉得2面我的问题在思考设计模式上面少，另外在window hierarchy 上面有不足。设计 KVO 上面在 didChange上面考虑不足。这些都是被当场戳穿的。
-有一点疑虑的是整个面试中并没有问到Core Animation。这个还是我蛮喜欢的部分。Anyway 个人很喜欢追问的方式，很容易考察出来理解的深度和广度。</p>
-
-<p>整个面试收获很大，发现了很多不足。另外1，2面的面试题目个人觉得也不错。这里分享给大家。</p>
 </div>
   
   
