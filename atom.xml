@@ -4,7 +4,7 @@
   <title><![CDATA[不会开机的男孩]]></title>
   <link href="http://studentdeng.github.com/atom.xml" rel="self"/>
   <link href="http://studentdeng.github.com/"/>
-  <updated>2014-04-04T19:04:21+08:00</updated>
+  <updated>2014-04-08T19:24:58+08:00</updated>
   <id>http://studentdeng.github.com/</id>
   <author>
     <name><![CDATA[studentdeng]]></name>
@@ -12,6 +12,130 @@
   </author>
   <generator uri="http://octopress.org/">Octopress</generator>
 
+  
+  <entry>
+    <title type="html"><![CDATA[Design Patterns in iOS — Class Clusters]]></title>
+    <link href="http://studentdeng.github.com/blog/2014/04/08/design-patterns-class-clusters/"/>
+    <updated>2014-04-08T14:49:00+08:00</updated>
+    <id>http://studentdeng.github.com/blog/2014/04/08/design-patterns-class-clusters</id>
+    <content type="html"><![CDATA[<p>我对设计模式一直都是一个若有若无的感觉，特别是在手机端开发，觉得用处不是很大，认为设计模式是为了大规模团队合作，分工才能体现出效果。设计模式可以通过分不同的“层”让大家协同开发，相互之间不产生影响。但是最近看法有点改变，觉得还是需要多少了解一些。</p>
+
+<p>天天使用的framework确实是一个庞大的项目，从framework的设计中可以找到很多设计模式的影子，而且还是一个很好的生产化的例子。这里先介绍 Class Clusters</p>
+
+<p>Class Clusters 几乎涉及到iOS日常的所有开发过程中，也可能正是这样，导致我们很容易把它彻底遗忘。这里就拿最常用的 NSString 来讲。</p>
+
+<figure class='code'> <div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+<span class='line-number'>2</span>
+<span class='line-number'>3</span>
+<span class='line-number'>4</span>
+<span class='line-number'>5</span>
+<span class='line-number'>6</span>
+<span class='line-number'>7</span>
+<span class='line-number'>8</span>
+<span class='line-number'>9</span>
+<span class='line-number'>10</span>
+</pre></td><td class='code'><pre><code class='objc'><span class='line'>  <span class="n">NSString</span> <span class="o">*</span><span class="n">string1</span> <span class="o">=</span> <span class="s">@&quot;helloworld&quot;</span><span class="p">;</span>
+</span><span class='line'>  <span class="n">NSString</span> <span class="o">*</span><span class="n">string2</span> <span class="o">=</span> <span class="p">[[</span><span class="n">NSString</span> <span class="n">alloc</span><span class="p">]</span> <span class="nl">initWithFormat:</span><span class="s">@&quot;:%@&quot;</span><span class="p">,</span> <span class="s">@&quot;helloworld&quot;</span><span class="p">];</span>
+</span><span class='line'>  <span class="n">NSString</span> <span class="o">*</span><span class="n">string3</span> <span class="o">=</span> <span class="p">[</span><span class="n">NSHomeDirectory</span><span class="p">()</span> <span class="nl">stringByAppendingPathComponent:</span><span class="n">string1</span><span class="p">];</span>
+</span><span class='line'>  <span class="n">NSTextStorage</span> <span class="o">*</span><span class="n">storage</span> <span class="o">=</span> <span class="p">[[</span><span class="n">NSTextStorage</span> <span class="n">alloc</span><span class="p">]</span> <span class="nl">initWithString:</span><span class="n">string1</span><span class="p">];</span>
+</span><span class='line'>  <span class="n">NSString</span> <span class="o">*</span><span class="n">string4</span> <span class="o">=</span> <span class="p">[</span><span class="n">storage</span> <span class="n">string</span><span class="p">];</span>
+</span><span class='line'>
+</span><span class='line'>  <span class="n">NSLog</span><span class="p">(</span><span class="s">@&quot;%@&quot;</span><span class="p">,</span> <span class="p">[[</span><span class="n">string1</span> <span class="n">class</span><span class="p">]</span> <span class="n">description</span><span class="p">]);</span>
+</span><span class='line'>  <span class="n">NSLog</span><span class="p">(</span><span class="s">@&quot;%@&quot;</span><span class="p">,</span> <span class="p">[[</span><span class="n">string2</span> <span class="n">class</span><span class="p">]</span> <span class="n">description</span><span class="p">]);</span>
+</span><span class='line'>  <span class="n">NSLog</span><span class="p">(</span><span class="s">@&quot;%@&quot;</span><span class="p">,</span> <span class="p">[[</span><span class="n">string3</span> <span class="n">class</span><span class="p">]</span> <span class="n">description</span><span class="p">]);</span>
+</span><span class='line'>  <span class="n">NSLog</span><span class="p">(</span><span class="s">@&quot;%@&quot;</span><span class="p">,</span> <span class="p">[[</span><span class="n">string4</span> <span class="n">class</span><span class="p">]</span> <span class="n">description</span><span class="p">]);</span>
+</span></code></pre></td></tr></table></div></figure>
+
+
+<p>不知道有多少人试过哈，string3的返回还是让我吃了一惊。下面的结果是在Xcode5.1 SDK7.1 下的结果。</p>
+
+<pre><code>__NSCFConstantString
+__NSCFString
+NSPathStore2
+NSBigMutableString
+</code></pre>
+
+<p>通过上面的方法创建的 NSString 最后都产生了不同的子类。有人可能会奇怪为什么需要不同的 NSString。因为对于大部分的以阅读内容为主的App来讲，很大部分资源消耗在了字符串处理上面（存储，解析，比较等等），所以对于字符串的存储需要有不同的方式来满足不同的情况，这样才能有性能上的提高。</p>
+
+<div class='notebox'><p><strong>Note: </strong>设想一下，在这些场景上面，如果Apple直接把这些类扔给开发者，会有什么问题呢？</p><p>那么开发者需要自己在不同的场景决定使用不同的子类，不仅学习成本提高，而且也容易生成性能不太好的代码。<br/>现在简单的 NSString 就可以直接覆盖上面的所有场景。而且随着iOS的软硬件的后续开发，开发者还可以在不修改代码的情况下获得性能提升。</p></div>
+
+
+<p>既然看到了它的强大之处，那么就开始了解吧。
+既然这是第一篇DesignPattern那么就从最简单开始 ：)</p>
+
+<h2>Abstract Classes</h2>
+
+<p>这里引用一下Mike的内容</p>
+
+<blockquote><p>An abstract class is a class which is not fully functional on its own. It must be subclassed, and the subclass must fill out the missing functionality.</p><p>An abstract class is not necessarily an empty shell. It can still contain a lot of functionality all on its own, but it&#8217;s not complete without a subclass to fill in the holes.</p><footer><strong>Mike Ash</strong> <cite><a href='https://mikeash.com/pyblog/friday-qa-2010-03-12-subclassing-class-clusters.html'>Friday Q&A 2010-03-12: Subclassing Class Clusters</a></cite></footer></blockquote>
+
+
+<p>Abstract Class 的概念很简单，类中所有的方法不需要全部有具体的实现，相当于定义了很多的接口。比如一开始的 NSString</p>
+
+<h2>Class Clusters</h2>
+
+<blockquote><p>A class cluster is a hierarchy of classes capped off by a public abstract class. The public class provides an interface and a lot of auxiliary functionality, and then core functionality is implemented by private subclasses. The public class then provides creation methods which return instances of the private subclasses, so that the public class can be used without knowledge of those subclasses.</p><footer><strong>Mike Ash</strong> <cite><a href='https://mikeash.com/pyblog/friday-qa-2010-03-12-subclassing-class-clusters.html'>Friday Q&A 2010-03-12: Subclassing Class Clusters</a></cite></footer></blockquote>
+
+
+<p>Clusters的角色不仅要实现 Abstract Class 的方法，还需要自己实现自己的特殊化需求。Abstract Class 负责提供一个“外壳”，真正“干活”的就是Cluster class。这样外部就只需要了解Abstract Class就可以了。</p>
+
+<h2>NSString Benefits</h2>
+
+<p>比如 __NSCFConstantString 负责 const string，类似 @&#8221;helloworld&#8221;这样的字符串。这样的字符串有一个特点，不会被修改，当真正处理的时候，可以分配大小合适的内存，甚至可以分配在只读 data segment上面，而不需要分配在堆上面，如果有相同的字符串引用就可以完全赋值相同的地址。那么在retainCount上面的处理也就和其他字符串处理有很大不同。</p>
+
+<p>NSPathStore2 看上去是处理有Path相关的字符串，因为没有源代码，这里我们可以大胆猜测一下，path相关的主要是做字符串的拼接操作，而这些字符串通常很长，占用空间大，但是重复的概率缺很高，那么就可以缓存一些字符串，这样可以减少一些内存的分配释放开销。</p>
+
+<h2>How to use</h2>
+
+<blockquote><p>The class cluster architecture involves a trade-off between simplicity and extensibility: Having a few public classes stand in for a multitude of private ones makes it easier to learn and use the classes in a framework but somewhat harder to create subclasses within any of the clusters.</p><footer><strong>Apple Develpoer Document</strong> <cite><a href='https://developer.apple.com/library/mac/documentation/general/conceptual/devpedia-cocoacore/ClassCluster.html'>Cocoa Core Competencies</a></cite></footer></blockquote>
+
+
+<p>就像Apple文档中提到的，Class Cluster 是在简单和扩展性上面做了一个妥协。Class Clusters 的子类化比较麻烦，而且也看上去也非常trick,Apple 更推荐的方法是用组合的方法来扩展。</p>
+
+<p>大家都知道设计模式有一个非常重的坑就是被过渡设计。Class Cluster 可以帮我们</p>
+
+<ul>
+<li>减少了if else 这样缺乏扩展性的代码</li>
+<li>增加新功能支持不影响其他代码</li>
+</ul>
+
+
+<p>那么这个非常适合应用在适配上面，比如不同屏幕的适配，不同厂家可能的不同的需求。</p>
+
+<figure class='code'> <div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+<span class='line-number'>2</span>
+<span class='line-number'>3</span>
+<span class='line-number'>4</span>
+<span class='line-number'>5</span>
+<span class='line-number'>6</span>
+<span class='line-number'>7</span>
+<span class='line-number'>8</span>
+<span class='line-number'>9</span>
+<span class='line-number'>10</span>
+<span class='line-number'>11</span>
+</pre></td><td class='code'><pre><code class='objc'><span class='line'><span class="k">+</span> <span class="p">(</span><span class="kt">id</span><span class="p">)</span><span class="nf">alloc</span> <span class="p">{</span>
+</span><span class='line'>    <span class="k">if</span> <span class="p">([</span><span class="n">self</span> <span class="n">class</span><span class="p">]</span> <span class="o">==</span> <span class="p">[</span><span class="n">SFSSearchTVC</span> <span class="n">class</span><span class="p">])</span> <span class="p">{</span>
+</span><span class='line'>        <span class="k">if</span> <span class="p">([</span><span class="n">UIDevice</span> <span class="n">currentDevice</span><span class="p">]</span> <span class="n">systemMajorVersion</span><span class="p">]</span> <span class="o">&lt;</span> <span class="mi">7</span><span class="p">)</span> <span class="p">{</span>
+</span><span class='line'>            <span class="k">return</span> <span class="p">[</span><span class="n">SFSSearchTVC6</span> <span class="n">alloc</span><span class="p">];</span>
+</span><span class='line'>        <span class="p">}</span> <span class="k">else</span> <span class="k">if</span> <span class="p">([</span><span class="n">UIDevice</span> <span class="n">currentDevice</span><span class="p">]</span> <span class="n">systemMajorVersion</span><span class="p">]</span> <span class="o">==</span> <span class="mi">7</span><span class="p">)</span> <span class="p">{</span>
+</span><span class='line'>            <span class="k">return</span> <span class="p">[</span><span class="n">SFSSearchTVC7</span> <span class="n">alloc</span><span class="p">];</span>
+</span><span class='line'>        <span class="p">}</span>
+</span><span class='line'>    <span class="p">}</span>
+</span><span class='line'>
+</span><span class='line'>    <span class="k">return</span> <span class="p">[</span><span class="n">super</span> <span class="n">alloc</span><span class="p">];</span>
+</span><span class='line'><span class="p">}</span>
+</span></code></pre></td></tr></table></div></figure>
+
+
+<p>上面是代码来自<a href="http://bjmiller.me/post/69043165385/a-cluster-to-remove-clutter">BJ Miller&#8217;s blog A Cluster to Remove Clutter</a>
+是用于适配iOS6，iOS7的简单例子。</p>
+
+<h2>Conclusion</h2>
+
+<p>很多设计模式都很像，也很容易糊涂，比如工厂模式和Class Clusters在某些地方就很类似，我自己也并不能很好的分清楚。
+设计模式的本质是为了解耦。不管使用哪个设计模式，我们最后追求的都是简单、容易维护和扩展的代码。</p>
+]]></content>
+  </entry>
   
   <entry>
     <title type="html"><![CDATA[octopress notebox plugin]]></title>
@@ -2316,67 +2440,6 @@ Swap:        0k total,        0k used,        0k free,    71048k cached
 <pre><code>Speed=2780 pages/min, 52868 bytes/sec.
 Requests: 2780 susceed, 0 failed.
 </code></pre>
-]]></content>
-  </entry>
-  
-  <entry>
-    <title type="html"><![CDATA[git 部署代码到服务器]]></title>
-    <link href="http://studentdeng.github.com/blog/2013/07/30/git-deploy/"/>
-    <updated>2013-07-30T22:34:00+08:00</updated>
-    <id>http://studentdeng.github.com/blog/2013/07/30/git-deploy</id>
-    <content type="html"><![CDATA[<p>之前常用的部署代码就是用svn，或是更老土的ftp。今天在写一个新玩具的时候，突然发现，每次的git pull实在是一个让人烦躁的东西，就网上查找了一下，整理在这里。<a href="http://toroid.org/ams/git-website-howto">参考原文</a></p>
-
-<p>实现原理是当我们push 代码到remote repository时，通过git的<a href="https://www.kernel.org/pub/software/scm/git/docs/githooks.html">post-receive hooks</a>。执行</p>
-
-<pre><code>git checkout prod -f
-</code></pre>
-
-<p>来帮助我们实现自动部署</p>
-
-<p>让我们从最简单的开始，现在<strong>本地创建</strong>一个git repository</p>
-
-<pre><code>$ mkdir test &amp;&amp; cd test
-$ git init 
-$ echo 'Hello, world!' &gt; index.html
-$ echo 'Hello, world!' &gt; index.html
-$ git add index.html
-$ git commit -q -m "The humble beginnings of my web site."
-</code></pre>
-
-<p>index.html 就是我们希望能够部署到服务器的代码</p>
-
-<p>然后在<strong>服务器</strong>创建一个repository, 这里可不是服务器部署代码的位置</p>
-
-<pre><code>$ mkdir test.git &amp;&amp; cd test.git
-$ git init --bare
-$ cat &gt; hooks/post-receive
-#!/bin/sh
-GIT_WORK_TREE=/mnt/www/test git checkout prod -f
-$ chmod +x hooks/post-receive
-</code></pre>
-
-<p>这是服务器的git代码目录</p>
-
-<pre><code>/repo/test.git
-</code></pre>
-
-<p>这里的 &#8216;/mnt/www/test&#8217; 就是我们将要部署服务器代码的位置，一般的lamp，我们喜欢放在www里，当然这里需要根据不同的环境更换就好了。</p>
-
-<p>这里我们在<strong>本地</strong>的git目录下增加一个remote</p>
-
-<pre><code>$ git remote add prod ssh://server_address/repo/test.git
-$ git push prod +master:refs/heads/master
-</code></pre>
-
-<p>server_address 可以ip，域名。</p>
-
-<p>我不太喜欢用这个命令行，我喜欢用<a href="http://www.sourcetreeapp.com">SourceTree</a>来做这个增加remote和最后的commit push 部分。</p>
-
-<p>这时我们切换到<strong>服务器</strong>目录下，就可以看到我们的index.html 在我们向prod push的之后，已经自动check out 到我们指定目录下了。</p>
-
-<p>之后我们只需要修改完成之后，git push prod 就可以自动部署代码了。</p>
-
-<p>第一次用，这里标记一下，看看后面当发生冲突的时候，时一个什么样的情况。： ）</p>
 ]]></content>
   </entry>
   

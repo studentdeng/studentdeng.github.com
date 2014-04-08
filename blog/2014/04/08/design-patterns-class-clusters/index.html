@@ -1,0 +1,319 @@
+
+<!DOCTYPE html>
+<!--[if IEMobile 7 ]><html class="no-js iem7"><![endif]-->
+<!--[if lt IE 9]><html class="no-js lte-ie8"><![endif]-->
+<!--[if (gt IE 8)|(gt IEMobile 7)|!(IEMobile)|!(IE)]><!--><html class="no-js" lang="en"><!--<![endif]-->
+<head>
+  <meta charset="utf-8">
+  <title>Design Patterns in iOS — Class Clusters - 不会开机的男孩</title>
+  <meta name="author" content="studentdeng">
+
+  
+  <meta name="description" content="我对设计模式一直都是一个若有若无的感觉，特别是在手机端开发，觉得用处不是很大，认为设计模式是为了大规模团队合作，分工才能体现出效果。设计模式可以通过分不同的“层”让大家协同开发，相互之间不产生影响。但是最近看法有点改变，觉得还是需要多少了解一些。 天天使用的framework确实是一个庞大的项目， &hellip;">
+  
+
+  <!-- http://t.co/dKP3o1e -->
+  <meta name="HandheldFriendly" content="True">
+  <meta name="MobileOptimized" content="320">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+
+  
+  <link rel="canonical" href="http://studentdeng.github.com/blog/2014/04/08/design-patterns-class-clusters">
+  <link href="/favicon.png" rel="icon">
+  <link href="/stylesheets/screen.css" media="screen, projection" rel="stylesheet" type="text/css">
+  <link href="/atom.xml" rel="alternate" title="不会开机的男孩" type="application/atom+xml">
+  <script src="/javascripts/modernizr-2.0.js"></script>
+  <script src="//ajax.googleapis.com/ajax/libs/jquery/1.9.1/jquery.min.js"></script>
+  <script>!window.jQuery && document.write(unescape('%3Cscript src="./javascripts/lib/jquery.min.js"%3E%3C/script%3E'))</script>
+  <script src="/javascripts/octopress.js" type="text/javascript"></script>
+  <!--Fonts from Google"s Web font directory at http://google.com/webfonts -->
+<link href="http://fonts.googleapis.com/css?family=PT+Serif:regular,italic,bold,bolditalic" rel="stylesheet" type="text/css">
+<link href='http://fonts.googleapis.com/css?family=Open+Sans' rel='stylesheet' type='text/css'>
+<link href='http://fonts.googleapis.com/css?family=Fjalla+One' rel='stylesheet' type='text/css'>
+  
+
+</head>
+
+<body   class="collapse-sidebar sidebar-footer" >
+  <header role="banner"><hgroup>
+  <h1><a href="/">不会开机的男孩</a></h1>
+  
+</hgroup>
+
+</header>
+  <nav role="navigation"><ul class="subscription" data-subscription="rss">
+  <li><a href="/atom.xml" rel="subscribe-rss" title="subscribe via RSS">RSS</a></li>
+  
+</ul>
+  
+<form action="http://google.com/search" method="get">
+  <fieldset role="search">
+    <input type="hidden" name="q" value="site:studentdeng.github.com" />
+    <input class="search" type="text" name="q" results="0" placeholder="Search"/>
+  </fieldset>
+</form>
+  
+<ul class="main-navigation">
+  	<li><a href="/">Blog</a></li>
+  	<li><a href="/blog/archives">Archives</a></li>
+	 <li><a href="/tags/index.html">Tags</a></li>
+	<li><a href="/favorite/index.html">Favorite</a></li>
+	<li><a href="/about/index.html">About</a></li>
+</ul>
+
+</nav>
+  <div id="main">
+    <div id="content">
+      <div>
+<article class="hentry" role="article">
+  
+  <header>
+    
+      <h1 class="entry-title">Design Patterns in iOS — Class Clusters</h1>
+    
+    
+      <p class="meta">
+        
+
+
+
+
+
+
+
+
+  
+
+
+<time datetime="2014-04-08T14:49:00+08:00" pubdate data-updated="true">Apr 8<span>th</span>, 2014</time>
+        
+         | <a href="#disqus_thread">Comments</a>
+        
+      </p>
+    
+  </header>
+
+
+<div class="entry-content"><p>我对设计模式一直都是一个若有若无的感觉，特别是在手机端开发，觉得用处不是很大，认为设计模式是为了大规模团队合作，分工才能体现出效果。设计模式可以通过分不同的“层”让大家协同开发，相互之间不产生影响。但是最近看法有点改变，觉得还是需要多少了解一些。</p>
+
+<p>天天使用的framework确实是一个庞大的项目，从framework的设计中可以找到很多设计模式的影子，而且还是一个很好的生产化的例子。这里先介绍 Class Clusters</p>
+
+<p>Class Clusters 几乎涉及到iOS日常的所有开发过程中，也可能正是这样，导致我们很容易把它彻底遗忘。这里就拿最常用的 NSString 来讲。</p>
+
+<figure class='code'> <div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+<span class='line-number'>2</span>
+<span class='line-number'>3</span>
+<span class='line-number'>4</span>
+<span class='line-number'>5</span>
+<span class='line-number'>6</span>
+<span class='line-number'>7</span>
+<span class='line-number'>8</span>
+<span class='line-number'>9</span>
+<span class='line-number'>10</span>
+</pre></td><td class='code'><pre><code class='objc'><span class='line'>  <span class="n">NSString</span> <span class="o">*</span><span class="n">string1</span> <span class="o">=</span> <span class="s">@&quot;helloworld&quot;</span><span class="p">;</span>
+</span><span class='line'>  <span class="n">NSString</span> <span class="o">*</span><span class="n">string2</span> <span class="o">=</span> <span class="p">[[</span><span class="n">NSString</span> <span class="n">alloc</span><span class="p">]</span> <span class="nl">initWithFormat:</span><span class="s">@&quot;:%@&quot;</span><span class="p">,</span> <span class="s">@&quot;helloworld&quot;</span><span class="p">];</span>
+</span><span class='line'>  <span class="n">NSString</span> <span class="o">*</span><span class="n">string3</span> <span class="o">=</span> <span class="p">[</span><span class="n">NSHomeDirectory</span><span class="p">()</span> <span class="nl">stringByAppendingPathComponent:</span><span class="n">string1</span><span class="p">];</span>
+</span><span class='line'>  <span class="n">NSTextStorage</span> <span class="o">*</span><span class="n">storage</span> <span class="o">=</span> <span class="p">[[</span><span class="n">NSTextStorage</span> <span class="n">alloc</span><span class="p">]</span> <span class="nl">initWithString:</span><span class="n">string1</span><span class="p">];</span>
+</span><span class='line'>  <span class="n">NSString</span> <span class="o">*</span><span class="n">string4</span> <span class="o">=</span> <span class="p">[</span><span class="n">storage</span> <span class="n">string</span><span class="p">];</span>
+</span><span class='line'>
+</span><span class='line'>  <span class="n">NSLog</span><span class="p">(</span><span class="s">@&quot;%@&quot;</span><span class="p">,</span> <span class="p">[[</span><span class="n">string1</span> <span class="n">class</span><span class="p">]</span> <span class="n">description</span><span class="p">]);</span>
+</span><span class='line'>  <span class="n">NSLog</span><span class="p">(</span><span class="s">@&quot;%@&quot;</span><span class="p">,</span> <span class="p">[[</span><span class="n">string2</span> <span class="n">class</span><span class="p">]</span> <span class="n">description</span><span class="p">]);</span>
+</span><span class='line'>  <span class="n">NSLog</span><span class="p">(</span><span class="s">@&quot;%@&quot;</span><span class="p">,</span> <span class="p">[[</span><span class="n">string3</span> <span class="n">class</span><span class="p">]</span> <span class="n">description</span><span class="p">]);</span>
+</span><span class='line'>  <span class="n">NSLog</span><span class="p">(</span><span class="s">@&quot;%@&quot;</span><span class="p">,</span> <span class="p">[[</span><span class="n">string4</span> <span class="n">class</span><span class="p">]</span> <span class="n">description</span><span class="p">]);</span>
+</span></code></pre></td></tr></table></div></figure>
+
+
+<p>不知道有多少人试过哈，string3的返回还是让我吃了一惊。下面的结果是在Xcode5.1 SDK7.1 下的结果。</p>
+
+<pre><code>__NSCFConstantString
+__NSCFString
+NSPathStore2
+NSBigMutableString
+</code></pre>
+
+<p>通过上面的方法创建的 NSString 最后都产生了不同的子类。有人可能会奇怪为什么需要不同的 NSString。因为对于大部分的以阅读内容为主的App来讲，很大部分资源消耗在了字符串处理上面（存储，解析，比较等等），所以对于字符串的存储需要有不同的方式来满足不同的情况，这样才能有性能上的提高。</p>
+
+<div class='notebox'><p><strong>Note: </strong>设想一下，在这些场景上面，如果Apple直接把这些类扔给开发者，会有什么问题呢？</p><p>那么开发者需要自己在不同的场景决定使用不同的子类，不仅学习成本提高，而且也容易生成性能不太好的代码。<br/>现在简单的 NSString 就可以直接覆盖上面的所有场景。而且随着iOS的软硬件的后续开发，开发者还可以在不修改代码的情况下获得性能提升。</p></div>
+
+
+<p>既然看到了它的强大之处，那么就开始了解吧。
+既然这是第一篇DesignPattern那么就从最简单开始 ：)</p>
+
+<h2>Abstract Classes</h2>
+
+<p>这里引用一下Mike的内容</p>
+
+<blockquote><p>An abstract class is a class which is not fully functional on its own. It must be subclassed, and the subclass must fill out the missing functionality.</p><p>An abstract class is not necessarily an empty shell. It can still contain a lot of functionality all on its own, but it&#8217;s not complete without a subclass to fill in the holes.</p><footer><strong>Mike Ash</strong> <cite><a href='https://mikeash.com/pyblog/friday-qa-2010-03-12-subclassing-class-clusters.html'>Friday Q&A 2010-03-12: Subclassing Class Clusters</a></cite></footer></blockquote>
+
+
+<p>Abstract Class 的概念很简单，类中所有的方法不需要全部有具体的实现，相当于定义了很多的接口。比如一开始的 NSString</p>
+
+<h2>Class Clusters</h2>
+
+<blockquote><p>A class cluster is a hierarchy of classes capped off by a public abstract class. The public class provides an interface and a lot of auxiliary functionality, and then core functionality is implemented by private subclasses. The public class then provides creation methods which return instances of the private subclasses, so that the public class can be used without knowledge of those subclasses.</p><footer><strong>Mike Ash</strong> <cite><a href='https://mikeash.com/pyblog/friday-qa-2010-03-12-subclassing-class-clusters.html'>Friday Q&A 2010-03-12: Subclassing Class Clusters</a></cite></footer></blockquote>
+
+
+<p>Clusters的角色不仅要实现 Abstract Class 的方法，还需要自己实现自己的特殊化需求。Abstract Class 负责提供一个“外壳”，真正“干活”的就是Cluster class。这样外部就只需要了解Abstract Class就可以了。</p>
+
+<h2>NSString Benefits</h2>
+
+<p>比如 __NSCFConstantString 负责 const string，类似 @&#8221;helloworld&#8221;这样的字符串。这样的字符串有一个特点，不会被修改，当真正处理的时候，可以分配大小合适的内存，甚至可以分配在只读 data segment上面，而不需要分配在堆上面，如果有相同的字符串引用就可以完全赋值相同的地址。那么在retainCount上面的处理也就和其他字符串处理有很大不同。</p>
+
+<p>NSPathStore2 看上去是处理有Path相关的字符串，因为没有源代码，这里我们可以大胆猜测一下，path相关的主要是做字符串的拼接操作，而这些字符串通常很长，占用空间大，但是重复的概率缺很高，那么就可以缓存一些字符串，这样可以减少一些内存的分配释放开销。</p>
+
+<h2>How to use</h2>
+
+<blockquote><p>The class cluster architecture involves a trade-off between simplicity and extensibility: Having a few public classes stand in for a multitude of private ones makes it easier to learn and use the classes in a framework but somewhat harder to create subclasses within any of the clusters.</p><footer><strong>Apple Develpoer Document</strong> <cite><a href='https://developer.apple.com/library/mac/documentation/general/conceptual/devpedia-cocoacore/ClassCluster.html'>Cocoa Core Competencies</a></cite></footer></blockquote>
+
+
+<p>就像Apple文档中提到的，Class Cluster 是在简单和扩展性上面做了一个妥协。Class Clusters 的子类化比较麻烦，而且也看上去也非常trick,Apple 更推荐的方法是用组合的方法来扩展。</p>
+
+<p>大家都知道设计模式有一个非常重的坑就是被过渡设计。Class Cluster 可以帮我们</p>
+
+<ul>
+<li>减少了if else 这样缺乏扩展性的代码</li>
+<li>增加新功能支持不影响其他代码</li>
+</ul>
+
+
+<p>那么这个非常适合应用在适配上面，比如不同屏幕的适配，不同厂家可能的不同的需求。</p>
+
+<figure class='code'> <div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+<span class='line-number'>2</span>
+<span class='line-number'>3</span>
+<span class='line-number'>4</span>
+<span class='line-number'>5</span>
+<span class='line-number'>6</span>
+<span class='line-number'>7</span>
+<span class='line-number'>8</span>
+<span class='line-number'>9</span>
+<span class='line-number'>10</span>
+<span class='line-number'>11</span>
+</pre></td><td class='code'><pre><code class='objc'><span class='line'><span class="k">+</span> <span class="p">(</span><span class="kt">id</span><span class="p">)</span><span class="nf">alloc</span> <span class="p">{</span>
+</span><span class='line'>    <span class="k">if</span> <span class="p">([</span><span class="n">self</span> <span class="n">class</span><span class="p">]</span> <span class="o">==</span> <span class="p">[</span><span class="n">SFSSearchTVC</span> <span class="n">class</span><span class="p">])</span> <span class="p">{</span>
+</span><span class='line'>        <span class="k">if</span> <span class="p">([</span><span class="n">UIDevice</span> <span class="n">currentDevice</span><span class="p">]</span> <span class="n">systemMajorVersion</span><span class="p">]</span> <span class="o">&lt;</span> <span class="mi">7</span><span class="p">)</span> <span class="p">{</span>
+</span><span class='line'>            <span class="k">return</span> <span class="p">[</span><span class="n">SFSSearchTVC6</span> <span class="n">alloc</span><span class="p">];</span>
+</span><span class='line'>        <span class="p">}</span> <span class="k">else</span> <span class="k">if</span> <span class="p">([</span><span class="n">UIDevice</span> <span class="n">currentDevice</span><span class="p">]</span> <span class="n">systemMajorVersion</span><span class="p">]</span> <span class="o">==</span> <span class="mi">7</span><span class="p">)</span> <span class="p">{</span>
+</span><span class='line'>            <span class="k">return</span> <span class="p">[</span><span class="n">SFSSearchTVC7</span> <span class="n">alloc</span><span class="p">];</span>
+</span><span class='line'>        <span class="p">}</span>
+</span><span class='line'>    <span class="p">}</span>
+</span><span class='line'>
+</span><span class='line'>    <span class="k">return</span> <span class="p">[</span><span class="n">super</span> <span class="n">alloc</span><span class="p">];</span>
+</span><span class='line'><span class="p">}</span>
+</span></code></pre></td></tr></table></div></figure>
+
+
+<p>上面是代码来自<a href="http://bjmiller.me/post/69043165385/a-cluster-to-remove-clutter">BJ Miller&#8217;s blog A Cluster to Remove Clutter</a>
+是用于适配iOS6，iOS7的简单例子。</p>
+
+<h2>Conclusion</h2>
+
+<p>很多设计模式都很像，也很容易糊涂，比如工厂模式和Class Clusters在某些地方就很类似，我自己也并不能很好的分清楚。
+设计模式的本质是为了解耦。不管使用哪个设计模式，我们最后追求的都是简单、容易维护和扩展的代码。</p>
+</div>
+
+
+  <footer>
+    <p class="meta">
+      
+  
+
+<span class="byline author vcard">Posted by <span class="fn">studentdeng</span></span>
+
+      
+
+
+
+
+
+
+
+
+  
+
+
+<time datetime="2014-04-08T14:49:00+08:00" pubdate data-updated="true">Apr 8<span>th</span>, 2014</time>
+      
+
+<span class="categories">
+  
+    <a class='category' href='/blog/categories/design-patterns/'>design_patterns</a>, <a class='category' href='/blog/categories/ios/'>iOS</a>
+  
+</span>
+
+
+    </p>
+    
+      <div class="sharing">
+  
+  
+  
+</div>
+
+    
+    <p class="meta">
+      
+        <a class="basic-alignment left" href="/blog/2014/04/04/octopress-notebox-plugin/" title="Previous Post: octopress notebox plugin">&laquo; octopress notebox plugin</a>
+      
+      
+    </p>
+  </footer>
+</article>
+
+  <section>
+    <h1>Comments</h1>
+    <div id="disqus_thread" aria-live="polite"><noscript>Please enable JavaScript to view the <a href="http://disqus.com/?ref_noscript">comments powered by Disqus.</a></noscript>
+</div>
+  </section>
+
+
+</div>
+
+<aside class="sidebar">
+  
+    
+  
+</aside>
+
+
+    </div>
+  </div>
+  <footer role="contentinfo"><p>
+  Copyright &copy; 2014 - studentdeng -
+  <span class="credit">Powered by <a href="http://octopress.org">Octopress</a> | Themed with <a href="https://github.com/lucaslew/whitespace">Whitespace</a></span>
+</p>
+
+</footer>
+  
+
+<script type="text/javascript">
+      var disqus_shortname = 'studentdeng';
+      
+        
+        // var disqus_developer = 1;
+        var disqus_identifier = 'http://studentdeng.github.com/blog/2014/04/08/design-patterns-class-clusters/';
+        var disqus_url = 'http://studentdeng.github.com/blog/2014/04/08/design-patterns-class-clusters/';
+        var disqus_script = 'embed.js';
+      
+    (function () {
+      var dsq = document.createElement('script'); dsq.type = 'text/javascript'; dsq.async = true;
+      dsq.src = 'http://' + disqus_shortname + '.disqus.com/' + disqus_script;
+      (document.getElementsByTagName('head')[0] || document.getElementsByTagName('body')[0]).appendChild(dsq);
+    }());
+</script>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+</body>
+</html>
