@@ -4,7 +4,7 @@
   <title><![CDATA[不会开机的男孩]]></title>
   <link href="http://studentdeng.github.com/atom.xml" rel="self"/>
   <link href="http://studentdeng.github.com/"/>
-  <updated>2014-05-18T12:43:01+08:00</updated>
+  <updated>2014-05-19T16:44:33+08:00</updated>
   <id>http://studentdeng.github.com/</id>
   <author>
     <name><![CDATA[studentdeng]]></name>
@@ -18,7 +18,9 @@
     <link href="http://studentdeng.github.com/blog/2014/05/09/pop-tweaks/"/>
     <updated>2014-05-09T19:39:00+08:00</updated>
     <id>http://studentdeng.github.com/blog/2014/05/09/pop-tweaks</id>
-    <content type="html"><![CDATA[<p>最近facebook开源了2个很有价值的project <a href="https://github.com/facebook/pop">pop</a>和<a href="https://github.com/facebook/Tweaks">Tweaks</a>。
+    <content type="html"><![CDATA[<p><a href="https://github.com/studentdeng/PopDemo">示例代码</a></p>
+
+<p>最近facebook开源了2个很有价值的project <a href="https://github.com/facebook/pop">pop</a>和<a href="https://github.com/facebook/Tweaks">Tweaks</a>。
 facebook提供了一个非常赞的topic-<a href="http://www.youtube.com/playlist?list=PLb0IAmt7-GS2sh8saWW4z8x2vo7puwgnR">Building Paper</a>。</p>
 
 <p>这篇文章来简单介绍一下<a href="https://github.com/facebook/pop">pop</a>的使用，最后使用<a href="https://github.com/facebook/Tweaks">Tweaks</a>来微小调整动画参数来达到我们最希望的效果。</p>
