@@ -9,7 +9,7 @@
   <meta name="author" content="studentdeng">
 
   
-  <meta name="description" content="之前我们知道了异常是什么样的，以及我们写好了出现异常时执行的代码。那么windows是如何调用我们的代码呢？在了解这个之后，global unwind，异常嵌套也就容易了解了。不得不说，如果之前没有了解SEH，这的确是一件非常有挑战的事情。当然，如果从根上，也就是从硬件到os &hellip;">
+  <meta name="description" content="又是一年过去了。转眼已经大四。活了这么多年，终于要开始走向社会了。也不得不面对人生n个第一次。 第一次一个人做火车。第一次一个人出远门。第一次和别人合租。第一次正经工作…… 　　看了一眼，发现自己的第一篇博客是2010-01-10 11:54。完成的。不知不觉在园子里面也混了将近一年了。 &hellip;">
   
 
   <!-- http://t.co/dKP3o1e -->
@@ -66,6 +66,112 @@
     <div id="content">
       <div class="blog-index">
   
+  
+  
+    <article>
+      
+  <header>
+    
+      <h1 class="entry-title"><a href="/blog/2010/12/25/plan/">又是一年过去了</a></h1>
+    
+    
+      <p class="meta">
+        
+
+
+
+
+
+
+
+
+  
+
+
+<time datetime="2010-12-25T21:31:00+08:00" pubdate data-updated="true">Dec 25<span>th</span>, 2010</time>
+        
+         | <a href="/blog/2010/12/25/plan/#disqus_thread">Comments</a>
+        
+      </p>
+    
+  </header>
+
+
+  <div class="entry-content"><p>又是一年过去了。转眼已经大四。活了这么多年，终于要开始走向社会了。也不得不面对人生n个第一次。 第一次一个人做火车。第一次一个人出远门。第一次和别人合租。第一次正经工作……</p>
+
+<p>　　看了一眼，发现自己的第一篇博客是2010-01-10 11:54。完成的。不知不觉在园子里面也混了将近一年了。看这这些文章，不禁又想总结这一年来的得与失。</p>
+
+<p>　　我一直以来有一个很坏的习惯。不喜欢去那笔记录一下自己。但是当我看到这篇文章之后，永远改变了我的看法。http://mindhacks.cn/2009/02/15/why-you-should-start-blogging-now。的确。写这一年的博客，真的让我收获颇丰，是的，如果没有写博客，那么就从现在开始吧。</p>
+
+<p>第一篇博客，WPF设计简单游戏初探。
+　　是我第一次看到深蓝大哥的博客之后，有感而写的。是WPF下的一个简易《弹弹堂》的实现。当第一次看到深蓝的博客之后，一股做游戏的冲动就无法遏制。的确。WPF/SL的强大的动画能力。给了想我这样的小白一个非常好的机会。一个月。从0到这个小游戏。真的。除了WPF/SL,世上真的没有其他能够比这个再快了，而且界面效率也在可接受范围之内。当然。这些的背后，必然是游戏的粗糙。但这不是最重要的。最重要的则是，自己完全对程序执行流程没有把握。我在完全不知道的情况下，都能写一个demo，说明了MS的强大和自己的无知，愚昧。.net的机制的完全陌生。使得我在这一个月看了大量的有关.net的资料。其中收获最大的就是http://www.cnblogs.com/anytao/。《你必须知道的.net》。可以说是深刻的点醒了我对.net的兴趣。后面的一个月也沉浸在这里学习。但是越学越迷茫。越来越多的东西，使我把c# 和c++彻底混乱了（当时也不懂c++）。最终，由于个人兴趣爱好，我放弃的C#(或是C# 放弃了我)。但是.net所给我带来的冲击直到现在也没有退去。真的，我从没有感觉到一个完全无知的coder。可以将一个程序跑成那样。</p>
+
+<p>　　虽然结果不很让人满意。但是再深蓝大哥的鼓励下。我发布了个人第一篇博客。这里万分感谢，万事开头难。</p>
+
+<pre><code>每一个
+从小在游戏中长大的孩子
+都有一个梦
+
+
+希望
+有天能玩到自己的游戏
+但是
+面对OpenGL、D3D
+面对动辄上万的代码
+有的只是无尽的
+遗憾!
+
+
+当第一次遇到WPF/SL时
+梦想的大门似乎再次打开
+一个个不眠之夜
+体会到了理想与现实是如此的
+接近!
+
+
+理想与现实总是和残酷对等
+想到丑陋的代码
+想到运行性能的低下
+想到GC，IL，CLR
+。。。
+
+
+面对自己
+笑!
+
+
+
+谨以此勉励自己最近一个月的努力
+</code></pre>
+
+<p>第二篇博客，第三篇博客，缩略图设计初探， 缩略图设计初探二
+　　这个可以说是我程序人生的第一次转折吧。这里感谢王克伟，Jake Li等大牛。能够加入itoday。应该是我真正开始接触编程吧。从一开始的写一个简单的写日志程序，到最后研究暴雪的MPQ文件格式，.net framework Dictionary。开始真正的体会到编程的乐趣。整个程序，现在看来也没有什么亮点。只是又重新复习了一遍hash table的相关知识。只是现在看来终于明白了为什么暴雪处理冲突的时候没有采用分离链表法，而是仅仅是很简单的线性再散列。分离链表法带来的空间的节省。但是带来了硬盘的多次seek。在面对600M的文件来说。真是不得不考虑的问题。同样，也是为什么像SQLite的文件型数据库，删除数据，文件也不会变小的原因之一。没有考虑seek，是我当时设计的最大缺憾。只是我的文件数据量小。问题不突出。</p>
+
+<p>2010-04-16 多线程程序设计笔记一 ，多线程程序设计笔记二
+　　开始学习几本windows 开发的核心书籍，《windows 核心编程》，《win32多线程程序设计》，《windows 程序设计》。写的一篇总结。同大部分初学者一样。对windows 的消息事件模型很不明白，在加上当时的对.net更糊涂。随之也冒出了各种各样的疑惑，现在看来真是小儿科的问题。但是多线程问题，可以说是又复杂又简单的问题。需要深入的理解判断。《win32多线程程序设计》当时就没有看明白。我还是需要从最基Critical Section开始理解，当时没有能力深入的理解Critical Section的机制。这次不能再错过了。</p>
+
+<p>2010-06-07 C++虚继承初探, 再谈C++虚继承
+　　2个月，第一次看到这本书《inside c++ object model》。这本书可以说是最最经典的c++书籍。其内容之深，内容之广，对我来说真是有如一个板砖拍在自己头上。读完这本书后，我的第一个感受就是，我恨死我在学校的c++老师了。她虽然交的东西很少，但是她连构造函数都教错我了，无语。也让我意识到了，学校学的那点c++，基本就是负的。还不如啥也没学，知道错的还不如不知道。了解C++虚函数，才能了解二进制复用，而这又是理解COM的基础基础，理解COM同样是理解.net的基础。想了解虚函数，必须通过了解类的构成，以及为什么这样构成。真的。在没有写过这门语言的编译器之前，真的没有资格对这门语言评头论足。天啊，我还是想说，C++，你太难了，太复杂了。</p>
+
+<p>　　有趣的是，我现在对c++的理解也仅仅在那个程度上。 在我眼里，c++ 就是一个加了函数指针的c（这个是一个很不恰当的比喻，但是请原谅我实在没有想出其他恰当比喻）。模板，构造函数，析构函数。以及泛型一无所知。</p>
+
+<p>2010-10-06 PE文件初探一, PE文件初探二
+　　之前的学习，让我完全迷茫了。真是学啥啥不会，问啥啥不会。这会终于清醒了。因为我终于找到了，我到底该怎么学。MSJ，绝对是最适合我的资料。under the hood 这一系列绝对是经典中的经典。如何了解编程。从了解程序是如何保存在计算机开始是最好不过的。《csapp》同样也是和《inside c++ object model》，给人一种板砖拍的感觉，同样也是这样的顺序。从机器的角度理解程序的编译，链接，以及中间的符号等等问题。将是学习编程最好的开始。PE文件，同样是一个非常古老的东东，虽然至少也有20年了。但是依然值得学，即使在.net平台开发。真的了解.net的程序是如何执行的么？先搞定win32程序的启动过程吧。这里面的遗憾，是没有总结资源类型数据。的确。一下次都搞定，真的需要毅力和强大的知识储备。</p>
+
+<p>　　我相信有很多和我一样的同学同样会遇到这样的问题。知道要学习的知识非常多，但是却无法下手。真的，有时候真想从95甚至dos开始理解OS，理解从无到有，才能理解nt存在的原因。但是这个真是不是一般人可以做到的，强大的知识储备是在是太必要了。而对像我这样的小白，真的无法想象。但是《csapp》+ under the hood 绝对能够给你指出学习的路径。一开始的确十分枯燥，就像练功的基本功，无聊，重复，看不到希望，需要放下浮躁、急功近利的心态，慢慢积累。好的基础，越学到最后，学习效率越快。就像动态规划，这些基础就是那张表，用来降低日后运算的复杂度。同样的智商，你才能学的更深，学的更快。当然，你也会遇到风险。谁能保证那张表的所有内容都会在日后的计算中用到？谁能保证你还没把表算完，便已经程序溢出了？而《csapp》+ under the hood就是那张表，在我的角度看。</p>
+
+<p>2010-12-15 SEH学习笔记一，SEH 学习笔记二
+　　SEH 给我们提供了一个如此出色的异常处理，但我们却对这个知之甚少。这2篇理解了SEH的编译器级的很基础的实现。我觉得真的非常值得一看。同样SEH背后的，安全漏洞，包括MS提供的各种安全机制保证OS安全。以及背后的有关编译器OS之前的“互动”。的确是非常的有意思，里面的水也不浅。如果你也对代码安全感兴趣，SEH的基本知识，不能只停留在几个key word上。</p>
+
+<p>　　回头看来，发现，自己学的太杂了。而且真是觉得太快了，很多东西都没有经过时间的沉淀变已经成为了一种习惯。如果一开始就是错的，那么该怎么办？</p>
+
+<p>　　最近由于项目实践，不得不看一些STL代码。挑战自己对模板的恐惧。但是，我真的后悔了。在STL面前，我之前的所有认识，都是shit。我连一个简单的快排，甚至一个简单的资源分配，释放都不会。真的，我还没有关闭盒子的情况下又打开了另一个盒子，我怕我的好奇心会驱使我陷入茫茫的细节而忽视了对知识的整体把握。真的。也许我离再次迷茫，已经不远了。</p>
+</div>
+  
+  
+
+
+    </article>
   
   
     <article>
@@ -1910,340 +2016,6 @@ LdrpRecordStaticImport 加载导入的一系列东东
 <p>“You might be wondering why you should care about the executable file format. The answer is the same now as it was then: an operating system&#8217;s executable format and data structures reveal quite a bit about the underlying operating system. By understanding what&#8217;s in your EXEs and DLLs, you&#8217;ll find that you&#8217;ve become a better programmer all around.”。</p>
 
 <p>　　当然，我不该提Matt Pietrek，因为我把“我”和他的名字放到一起就是其实就是对他的一种不尊敬。我也不敢扯我懂PE。我甚至只能皮毛都不了解。因为涉及到太多有关操纵系统、编译器、连接器的细节。对于我这个菜鸟来说也的确没有这个资本谈论这个问题。我也不想说别的。只是想发泄下自己的情绪。仅此而已。</p>
-</div>
-  
-  
-
-
-    </article>
-  
-  
-    <article>
-      
-  <header>
-    
-      <h1 class="entry-title"><a href="/blog/2010/10/06/pe1/">PE文件初探一</a></h1>
-    
-    
-      <p class="meta">
-        
-
-
-
-
-
-
-
-
-  
-
-
-<time datetime="2010-10-06T20:55:00+08:00" pubdate data-updated="true">Oct 6<span>th</span>, 2010</time>
-        
-         | <a href="/blog/2010/10/06/pe1/#disqus_thread">Comments</a>
-        
-      </p>
-    
-  </header>
-
-
-  <div class="entry-content"><p>最近一直在学习PE文件的相关知识。随着了解的增多，我不得不改变之前的学习方式。以前总是再理解更进一步后， 才总结上一层的知识。而且理解知识的时候总是喜欢从难到易得方式去理解知识。因为如果漫无目的的去学习，实在是 一个体力活。如果把一系列相关的知识比作一颗倒置的二叉树的话，我总是喜欢从根节点开始，然后再去遍历每个叶子 节点。只可惜我并没有掌握非递归算法。好吧，再没有处理尾递归的情况下，随着二叉树深度的增加。我的堆栈也果断溢 出。并导致一度中断学习过程。。。。。。。。。虽然我不断地去增加堆栈空间。但是总会有不能再增加的时候。好吧， 就是现在。该让我好好处理这个尾递归的问题。这也就是这篇文章的目的了。</p>
-
-<p>　　闲话扯得太多了。这篇文章主要内容是DLL的载入过程分析。以下部分主要来自《windows核心编程》和一些网上资料。 当然，如果想仔细理解相关内容。那么这3篇文章你是不该错过的。http://msdn.microsoft.com/zh-cn/magazine/cc301727(en-us).aspx， http://msdn.microsoft.com/en-us/magazine/cc301808.aspx ， http://msdn.microsoft.com/en-us/magazine/cc301805.aspx 事实上，你可能 还需要非常非常多的延伸知识需要帮助理解。如果对这部分知识不是很了解。而且英文也不是很好的话，《软件加密 技术内 幕》中的前几章的相关讲解，可能会更加易懂，还有老罗的书《Windows环境下32位汇编语言》，当然。这里讲的是最最基础 的部分。而且事实上，那3篇英文的分量对我来说还是很重的。这也是造成我堆栈溢出的原因。而且我脑子现在还没从错误中 恢复过来。。。。。</p>
-
-<h2>1.1 简短的背景知识</h2>
-
-<p>在操作系统中，执行的代码在载入内存之前，是以文件的方式存放在磁盘中。为了灵活的使用代码，在代码之前增加 一个文件头，在文件头中包括各种数据，文件入口，重定位表等信息。操作系统根据给定的信息，将部分代码载入内存，初始 化必要数据后，最后从指定位置开始执行。</p>
-
-<h2>1.2 开始了解PE</h2>
-
-<p>PE文件基本结构如下图。</p>
-
-<p><img src="/images/pm1.png" alt="alt text" /></p>
-
-<p>在PE文件中，代码、资源，导入表等信息被按照属性（可读，可读写，可执行等）分类放到了不同的节（section）中（上图是段）。每一个section的属性和位置用IMAGE_SECTION_HEADER结构描述。许多的IMAGE_SECTION_HEADER组成一个节表。由于数据是按照属性在节中放置，不同用途的数据可能被放在同一个节中。但是我们更关心数据的用途而属性是操作系统更为关心的。所以又有一个IMAGE_DATA_DIRECTORY来指明这些数据的位置。</p>
-
-<p>PE文件是如何映射到内存的</p>
-
-<p>windows并不在一开始将整个文件读入内存。windows在装载程序时，仅仅建立好虚拟地址和PE文件之前的映射关系，只有执行 到某个内存页中的指令或访问某页数据时，页面才会被提交到物理内存。这个机制类似于内存映射文件。但是不同的是，装载 可执行文件时，有些数据会被重新处理，装入到的数据相对位置也不一样，而且也有些数据是不会载入到内存中。</p>
-
-<p>原因</p>
-
-<p>windows按照节的属性载入，同一个节中所对应的内存页有相同的页属性。而windows对内存属性的设置是以页为单位进行，所以也在内存中的对齐单位至少是一个页的大小。在32位下，为默认为4KB。</p>
-
-<p>磁盘文件并没有这个设置，文件的对齐单位一般为200h。具体数据在IMAGE_OPTIONAL_HEADER32结构体中的SectionAlignment和FileAlignment设定。PE文件中的重要概念RVA（Relative Virtual Address）RVA是相对虚拟地址。由于数据可能发生重定向，所以所有数据都是保存为相对地址，而为了在运行时效率最大化，PE文件中保存的地址都是在内存中的虚拟地址偏移量。如果PE文件装入0x40000000h中的内存，而某个节中的某个数据被装入了0x40001000h，那么这个数据的RVA为1000h。下面了解下DLL的静态信息。</p>
-
-<p>如果需要调用DLL中的函数，那么DLL的imag必须映射到调用线程的进程地址空间中，我们可以通过2种方法处理。</p>
-
-<p>1、在源代码中引入DLL的符号。当应用程序启动运行时，loader会隐式加载链接需要的DLL。</p>
-
-<p>2、在程序运行时显示加载需要的DLL（调用LoadLibraryEx or LoadLibrary 卸载FreeLibrary），并显示链接到需要的输出符</p>
-
-<p>（GetProcAddress）。</p>
-
-<p>3、延迟加载DLL。这部分后面会解释。</p>
-
-<p>另外还有一些了解DLL必须的知识。这里罗列出来。</p>
-
-<h2>2、导入表</h2>
-
-<p>我们在编写程序的时候，几乎全部用到了导入函数的概念。导入函数就是程序执行的这段代码不在程序中，这些程序在</p>
-
-<p>一个或多个DLL中，而调用者仅仅保留一些必要的信息。主要是函数名和DLL名等。</p>
-
-<p>但是对于存储在磁盘上的PE文件来说，是无法得知导入函数会在内存的那个地方。只有PE文件被装入内存的时候，</p>
-
-<p>windows loader将DLL装入，并将执行导入函数的指令和函数真正的地址联系起来。有些抽象。让我们来看下代码真正执行</p>
-
-<p>的情况。</p>
-
-<p>让我们来试下最简单的Win32 HelloWorld，但是很让我“失望”，不得不佩服现在的vs，以前的可能影响效率的问题可能</p>
-
-<p>现在不是很重要了。 不过如果创建的是DLL文件，那么vs不会改变。依然是通过跳转表来实现。这里有一点不同是因为</p>
-
-<pre><code>int symbol(char *);
-__declspec(dllimport) int symbol2(char*);
-.text:10001000                 push    offset aBar     ; "bar"
-.text:10001005                 call    ?symbol@@YAHPAD@Z_0 ; 10001020
-.text:1000100A                 push    offset aBaz     ; "baz"
-.text:1000100F                 call    ds:__imp_?symbol2@@YAHPAD@Z ; symbol2(char *)
-.text:10001020                 jmp     ds:__imp_?symbol@@YAHPAD@Z ; symbol(char *).idata:10002080                 
-extrn __imp_?symbol2@@YAHPAD@Z:dword.idata:10002084                 
-extrn __imp_?symbol@@YAHPAD@Z:dword
-</code></pre>
-
-<p>我们告诉了编译器，symbol2是一个外部的函数调用，那么编译器将不生成跳转，而直接找到函数的入口地址。而symbol并</p>
-
-<p>没有指定是外部定义 函数，那么编译器默认生成一个跳转表，然后再跳转到真正执行的函数入口地址。看来vs还不是无</p>
-
-<p>所不能的。至于为什么.exe和.DLL vs的对待方式不同。没有想明白。不过，在dll中使用__declspec将大大缩短代码量，也</p>
-
-<p>不会降低缓存性能。而且如果我们需要共享一个变量（好吧，我承认这个的确不是一个好的主意）也只能使用__declspec，</p>
-
-<p>因为变量访问是不可能通过jmp来实现的。</p>
-
-<p>注：DLL的理解。为什么DLL默认不被优化。</p>
-
-<p>编译器在编译DLL文件的时候，为了提高效率，遇到调用函数的地方，并不回去查找这个函数是普通的内部函数，</p>
-
-<p>还是外部导入的函数，编译器统一生成一个指令 call xxxxxxx。而xxxxxx指令的地址将被linker修改。而对于外部导入函数</p>
-
-<p>的地址在载入内存的时候添入，而且还有可能要被修改。为了效率，而且linker不能随便修改compiler的数据，所以这些需</p>
-
-<p>要修改的函数入口需要集中放在一起，那么在每个call xxxxx指令下，最快速，简单的方法就是jmp到那个集中在一起的表</p>
-
-<p>的位置。这个位置，就是下面提到的IAT表。如果使用__declspec(dllimport)来标示函数，那么编译器将知道这个函数是由</p>
-
-<p>外部导入，那么生成的代码则是call    ds:<strong>imp_funcname, 而:</strong>imp_funcname在IAT表中也存在一样的函数符号。那么</p>
-
-<pre><code>call    ds:__imp_funcname将直接找到函数的真正入口。由于DLL是可以分开编译的，所以编译器不可能直接生成优化后的
-</code></pre>
-
-<p>代码（再考虑效率的情况下），在不加__declspec(dllimport)标号情况下。</p>
-
-<p>TODO：那么为什么.exe文件编译器会默认直接优化呢？</p>
-
-<p>好在使用一个老的编译器，在写好一段MessageBox(…); 会汇编成如下代码</p>
-
-<pre><code>.text:00401000                 public start
-.text:00401000 start           proc near
-.text:00401000                 push    0               ; uType
-.text:00401002                 push    offset Caption  ; "A MessageBox !"
-.text:00401007                 push    offset Text     ; "Hello, World !"
-.text:0040100C                 push    0               ; hWnd
-.text:0040100E                 call    MessageBoxA     ; 0040101A
-.text:00401013                 push    0               ; uExitCode
-.text:00401015                 call    ExitProcess
-.text:0040101A MessageBoxA     proc near               ; CODE XREF: start
-.text:0040101A                 jmp     ds:__imp_MessageBoxA; jmp 00402008
-.text:0040101A MessageBoxA     endp.idata:00402008                 
-extrn __imp_MessageBoxA:dword ;MessageBoxA
-</code></pre>
-
-<p>在老的编译器下，会生成2步去调用MessageBox。首先跳转到一个“跳转表”中，再根据跳转指令后，才能找到真正的</p>
-
-<p>函数入口。没有优化。</p>
-
-<p>但是现在的vs（我使用的是vs2008），很不好，它把这一部分直接给优化掉了。我们看到的代码是直接</p>
-
-<pre><code>call    ds:__imp__MessageBoxW@16。
-</code></pre>
-
-<p>vs真不是一个用来学习的编译器，太有进取心了。不过用来开发倒是不错。 ：）。</p>
-
-<p>回到正题，虽然这里有些改变，但是核心的东西并没有改变。</p>
-
-<pre><code>#include &lt;windows.h&gt;
-int WINAPI WinMain (HINSTANCE hInstance, HINSTANCE hPrevInstance,PSTR szCmdLine, int iCmdShow) 
-{
-　　TCHAR *t=L"HelloWorld";
-　　TCHAR *t2=L"hello";MessageBox(NULL,t,t2,NULL);
-　　return 0;
-}
-</code></pre>
-
-<p>让我们看下现在编译器的结果</p>
-
-<pre><code>.text:00401000                 push    0               ; uType
-.text:00401002                 push    offset Caption  ; "hello"
-.text:00401007                 push    offset Text     ; "HelloWorld"
-.text:0040100C                 push    0               ; hWnd.text:0040100E                 
-call    ds:__imp__MessageBoxW@16 ; 004020AC.idata:004020AC                 
-extrn __imp__MessageBoxW@16:dword
-很简单的代码，让我们先看看他的二进制文件。自己也可以做一个查看PE文件头信息的小程序。
-
-Machine 0000014C
-SecNum  00000005
-prop    00000102
-ImageBase       00400000
-**********************************************************
-session name            .text
-session size            0000087E
-session VirtualAddress  00001000
-session SizeOfRawData   00000A00
-session Raw_offset      00000400
-session prop            60000020
-**********************************************************
-session name            .rdata
-session size            0000062E
-session VirtualAddress  00002000
-session SizeOfRawData   00000800
-session Raw_offset      00000E00
-session prop            40000040
-**********************************************************
-session name            .data
-session size            00000384
-session VirtualAddress  00003000
-session SizeOfRawData   00000200
-session Raw_offset      00001600
-session prop            C0000040
-**********************************************************
-session name            .rsrc
-session size            000002B0
-session VirtualAddress  00004000
-session SizeOfRawData   00000400
-session Raw_offset      00001800
-session prop            40000040
-**********************************************************
-session name            .reloc
-session size            00000192
-session VirtualAddress  00005000
-session SizeOfRawData   00000200
-session Raw_offset      00001C00
-session prop            42000040
-**********************************************************
-</code></pre>
-
-<p>也可以查看DLL的数据，特别是kernel32.dll user32.dll等信息，会发现这些系统DLL加载的默认位置是不同的。 kernel32.dll 位于0x77DE0000 user32.dll 0x77D10000。定义不同的默认值将不会减慢载入的速度。具体会在重定位节中说明。 默认载入的地址是0x00400000，所以函数004020AC的RVA为AC，查看各节数据后发现，这段数据位于.rdata段， （VirtualAddress  00002000），而Raw_offset      00000E00，那么我们查看下 E00+AC = 0EAC在PE文件中的值是00002330。 这个显然不可能是函数的入口，但是如果把这个数字继续当成RVA来看，那么00002330-00002000=0330，再加上Raw_offset 0E00, 为1130，再跳过2个字节，那么正好是“MessageBoxW”。是个巧合么？当然不是。为什么后面会说明。 但是这里还有一个问题，我们在call   ds:<strong>imp</strong>MessageBoxW@16时，得到的东西是一个跳过2个字节然后是这个函数名。 这个显然不能正确执行。当然我们这里是在硬盘的文件，没有载入内存。在我们这个情况下，在载入内存中的时候， windows loader 会根据这个地址，并找到这个函数名，然后找到这个函数的真正地址，并写入004020AC位置，那么程序 就能正确运行了。那么问题似乎回到原点了，windows loader如何能够根据函数名来找到函数的真正地址呢？ 导入表的作用就体现出来了。</p>
-
-<p>首先找到导入表的信息</p>
-
-<p>PE文件的导入表的位置和大小可以从PE文件头中IMAGE_OPTIONAL_HEADER32结构的数据目录字段中获取，对应的项目是DataDirectory字段的第2个IMAGE_DATA_DIRECTORY结构。</p>
-
-<p>导入表是通过一系列的IMAGE_IMPORT_DESCRIPTOR结构组成。每一个结构描述一个DLL。最后以一个全0为这个结构 数组的结束。</p>
-
-<pre><code>typedef struct _IMAGE_IMPORT_DESCRIPTOR {
-    union {
-        DWORD   Characteristics;            // 0 for terminating null import descriptor
-        DWORD   OriginalFirstThunk;         // RVA to original unbound IAT (PIMAGE_THUNK_DATA)
-    } DUMMYUNIONNAME;
-    DWORD   TimeDateStamp;  // 0 if not bound,
-                                            // -1 if bound, and real date\time stamp
-                                            //     in IMAGE_DIRECTORY_ENTRY_BOUND_IMPORT (new BIND)
-                                            // O.W. date/time stamp of DLL bound to (Old BIND)
-
-    DWORD   ForwarderChain;                 // -1 if no forwarders
-    DWORD   Name;
-    DWORD   FirstThunk;                     // RVA to IAT (if bound this IAT has actual addresses)
-} IMAGE_IMPORT_DESCRIPTOR;
-typedef IMAGE_IMPORT_DESCRIPTOR UNALIGNED *PIMAGE_IMPORT_DESCRIPTOR;
-
-IMAGE_THUNK_DATA 是一个DWORD大小的共用体，包括以下含义。
-
-typedef struct _IMAGE_THUNK_DATA32 {
-    union {
-        DWORD ForwarderString;      // //转发函数字符串的RVA
-        DWORD Function;             //     导入函数的内存地址
-        DWORD Ordinal;              // 导入函数的序数
-        DWORD AddressOfData;        // IMAGE_IMPORT_BY_NAME和导入函数名称的RVA
-
-    } u1;
-} IMAGE_THUNK_DATA32;
-</code></pre>
-
-<p>IMAGE_THUNK_DATA  如何判断是序号还是RVA呢？ 通过IMAGE_THUNK_DATA的最高位来判断，如果为1， 那么就是导入函数的序数否则就是RVA。IAT 指向的IMAGE_THUNK_DATA 有2种。导入函数的序号数和IMAGE_IMPORT_BY_NAME结构的RVA</p>
-
-<pre><code>typedef struct _IMAGE_IMPORT_BY_NAME {
-    WORD    Hint;     //告诉loader带入函数的序号可能是什么。loader会在加载的时候检测这个值。并根据值来做查找
-
-字符串比较。
-    BYTE    Name[1]; //指向DLL名字字符串
-} IMAGE_IMPORT_BY_NAME, *PIMAGE_IMPORT_BY_NAME;
-</code></pre>
-
-<p>INT和IAT的内容一致，当文件没有加载进内存时。当文件加载进内存时(这个其实也不是很准确，后面会解释)，他并不覆盖INT。而IAT则会被覆盖成函数真正的地址。但是程序运行的时候是不需要INT的（我们只关心地址）。这里面涉及到一个绑定的概念，当绑定失败后，则需要根据INT中的信息，重新构建IAT OriginalFirstThunk 和FirstThunk在文件中指向同一地方。但是当载入内存中FirstThunk指向了函数真正的入口地址。</p>
-
-<p><img src="/images/pm2.png" alt="alt text" /></p>
-
-<p>我们看到的FirstThunk指向的位置，其实就是之前看到的jmp指令跳到的位置。是一个个顺序排列的&#8221;__impxxxx的函数入口地址，这部分数据也被IMAGE_DIRECTORY_ENTRY_IAT指向。在IMAGE_DIRECTORY的12号索引。</p>
-
-<p>2、导出表</p>
-
-<p><img src="/images/pm3.png" alt="alt text" /></p>
-
-<p>同导入表类似，当PE文件导出函数或变量的时候，这些信息被保存在了导出表中。这里导出的函数和变量统称为“符号”。</p>
-
-<pre><code>typedef struct _IMAGE_EXPORT_DIRECTORY {
-    DWORD   Characteristics;
-    DWORD   TimeDateStamp;
-    WORD    MajorVersion;
-    WORD    MinorVersion;
-    DWORD   Name;                                //RVA to 导出的DLL名字字符串
-    DWORD   Base;                                  //导出符号的起始值
-    DWORD   NumberOfFunctions;           //导出函数的总数
-    DWORD   NumberOfNames;              // 名称导出的函数总数
-    DWORD   AddressOfFunctions;     // RVA to 导出函数EAT    
-    DWORD   AddressOfNames;         // RVA to 导出函数名EAT
-    DWORD   AddressOfNameOrdinals;  // RVA to 导出函数序号表
-} IMAGE_EXPORT_DIRECTORY, *PIMAGE_EXPORT_DIRECTORY;
-</code></pre>
-
-<p>让我们模拟下如何找到函数的入口地址。通过函数名来查找，AddressOfNames遍历的函数名称地址表，并根据字符串找到对应的在AddressOfNames的序数，在根据这个序数，作为AddressOfFunctions的index，然后找到对应函数的RVA，在和dll的基地址相加，就得到了函数的真实地址。当然直接通过函数序数来查找函数将得到最快的性能。但是MS并不推荐这么做。因为函数导出的序数很可能在以后的系统中被改写。那么这个程序就不能在日后的操作系统下运行。导出表中还有一个重要概念是导出转发。 必须在windows 2000 windows XP中，kernel32 的HeapAlloc函数执行是被转发到了NTDLL中的RtlAllocHeap函数上。也就是说当执行HeapAlloc函数是，其实函数的真实地址不在kernel32 中，而是需要再次查找到NTDLL中的RtlAllocHeap，才能找到真正地址。而这实现着一切也很简单。只要把导出函数的RVA位于导出表中就可以。当转发一个符号时，首先找到的RVA指向了一个由DLL和转发的符号名称组成的字符串。比如“NTDLL.RtlAllocateHeap”。然后在通过递归的方式，在NTDLL的导出表中的RtlAllocateHeap找到真实地址。</p>
-
-<p>3、重定位。</p>
-
-<p>在IMAGE_OPTIONAL_HEADER32 结构中，有一个非常重要的字段ImageBase，他指明了可执行文件最希望载入的地址，而且任何涉及到直接操作地址的操作（比如全局变量，函数调用），所涉及到的地址都是根据这个imageBase算出来的。但是如果载入到内存的时候，ImageBase上已经有了其他的映射。那么必须要重新修正这些地址。而重定位表正式为了解决这个问题。它保存了这些需要修正的代码的地址。如果直接存储地址，在32位下。要花费4个字节，n个重定向，需要4n个字节。这将会大大的增加文件的长度，并浪费更多的空间。所以重定位表存储地址做了优化。在一组靠近的代码，32位中的高位地址总是相同，所以可以将高位地址统一标示来节省空间。当按照一个内存页来分隔时，一个页面寻址空间为4K，12位。把这12位凑齐16位并放入一个字类型数据，在加一个双字保存页的起始地址。 另一个双字表示重定位项数，那么大小会是4+4+2*n。</p>
-
-<pre><code>typedef struct _IMAGE_BASE_RELOCATION {
-    DWORD   VirtualAddress; //RVA to页面起始
-    DWORD   SizeOfBlock;    //重定位块长度，包括IMAGE_BASE_RELOCATION自身的大小
-//  WORD    TypeOffset[1];
-} IMAGE_BASE_RELOCATION; 
-</code></pre>
-
-<p>这个结构后面，将是n个重定位项，n可以根据SizeOfBlock算出。当然，根据一贯的设计风格，那高4位，不会被浪费。他被用来描述重定项种类。看过了以上的介绍，那么就初步明白了一个DLL是如何被载入的。而且这里面中有很多降低效率的部分。如，字符串比较，重定位数据，修改数据所引发的copy on write等。所以这引出了下面的部分。（我这里的资料都比较旧，以下的2个部分，MS可能又做了新的优化，所以可能和实际情况有些出入）首先解决重定位数据。可以使用Rebase.exe程序，它将修正多个DLL数据的imageBase。关于更多详细的介绍。MSDN。还剩下一个问题是字符串的比较。而这个处理的原因是在导入表中查到了DLLName，然后再在导出表中找到响应的函数名。最后把地址写入IAT中。好的。如果能找到一个方式在载入之前就把IAT建好，那么就不用载入的时候算这些数据了。而这个过程就是绑定。将.exe和DLL绑定起来，将会大大减少程序载入的时间。当然这也会带来一些问题。如何能够确定是被正确绑定的呢？windows loader载入的时候会判断绑定的合法性，如果不合法，他会根据之前的INT表重新查找那些地址再填入IAT中。而这一切和未绑定数据的情况一样，也就是没有额外的开销。</p>
-
-<pre><code>typedef struct _IMAGE_BOUND_IMPORT_DESCRIPTOR {
-    DWORD   TimeDateStamp;                     //导入dll的时间
-    WORD    OffsetModuleName;                 //指向导入DLL名字字符串偏移地址的值，这个值相对于首个结构体
-    WORD    NumberOfModuleForwarderRefs; //指向转发的DLL信息 //reserved?
-// Array of zero or more IMAGE_BOUND_FORWARDER_REF follows
-} IMAGE_BOUND_IMPORT_DESCRIPTOR,  *PIMAGE_BOUND_IMPORT_DESCRIPTOR;
-
-typedef struct _IMAGE_BOUND_FORWARDER_REF {
-    DWORD   TimeDateStamp;
-    WORD    OffsetModuleName;
-    WORD    Reserved;
-} IMAGE_BOUND_FORWARDER_REF, *PIMAGE_BOUND_FORWARDER_REF;
-</code></pre>
-
-<p>当然，构建一个正确的binding，需要的条件还是相当苛刻的。</p>
-
-<p>1、DLL需要加载到期望加载的基地址上。</p>
-
-<p>2、绑定成功后，DLL的导出表中的符号位置不能变。而且每个DLL的时间也必须和绑定时写入的时间一致。</p>
-
-<p>哦，差点忘记一个重要的话题，延迟加载DLL。这个概念依然是围绕如何加快程序载入速度这个问题上来的。当使用多个DLL的时候，由于loader需要把所有的需要的DLL映射到进程的地址空间中，那么它的初始化时间会变长。当然，我们可以手动控制DLL的装入，当他需要执行的时候。当然这么做会增加程序的复杂度。而延迟加载就是MS提供的一个非常好的方案。而且它的控制也很方便，在DLL载入失败时，可以由自己的选择，而不是想隐式加载而直接down掉。它的思想是，首先在载入的时候，添入一些基本信息，当这个DLL被真正调用时，根据这些添入的代码，去加载DLL。当完毕后将信息保存下来。那么下次加载的时候就可以直接找到函数的地址。而这个整个过程，最有趣的是这个过程是由编译器加入的代码完成。所以操作系统是不会分别出来的。现在，我们可以遍历整个导入表的项目。但这并没结束。这里需要的知识实在是太多了。下一篇一定要好好理解下函数导入的整个过程。我查到的PE文件的资料是在1994年，而直到现在从32位到64位数据执行文件加载，到.net的metadata IL，都有它的身影。能够经得起10多年的变化。真是不得不佩服。</p>
 </div>
   
   
