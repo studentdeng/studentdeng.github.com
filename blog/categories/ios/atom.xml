@@ -4,7 +4,7 @@
   <title><![CDATA[Category: iOS | 不会开机的男孩]]></title>
   <link href="http://studentdeng.github.com/blog/categories/ios/atom.xml" rel="self"/>
   <link href="http://studentdeng.github.com/"/>
-  <updated>2014-06-17T10:49:45+08:00</updated>
+  <updated>2014-06-17T11:22:17+08:00</updated>
   <id>http://studentdeng.github.com/</id>
   <author>
     <name><![CDATA[studentdeng]]></name>
@@ -14,7 +14,7 @@
 
   
   <entry>
-    <title type="html"><![CDATA[AutoLayout]]></title>
+    <title type="html"><![CDATA[AutoLayout 相关概念介绍和动画demo]]></title>
     <link href="http://studentdeng.github.com/blog/2014/06/13/auto-layout/"/>
     <updated>2014-06-13T18:28:00+08:00</updated>
     <id>http://studentdeng.github.com/blog/2014/06/13/auto-layout</id>
@@ -37,21 +37,21 @@
 
 <p>这里的坐标和笛卡尔坐标系不同的是Y的方向</p>
 
-<p><span class='caption-wrapper'><img class='caption' src='/images/autolayout-1.png' width='' height='' title='1-1 The default layer geometries for iOS'><span class='caption-text'>1-1 The default layer geometries for iOS</span></span></p>
+<p>{% imgcap /images/autolayout-1.png 1-1 The default layer geometries for iOS%}</p>
 
 <p>这里表示了anchorPoint含义，用于表示position相对bounds的位置，比如（0.5, 0.5）表示中心，（0,0）表示左上角</p>
 
-<p><span class='caption-wrapper'><img class='caption' src='/images/autolayout-2.png' width='' height='' title='1-2 The default unit coordinate systems for iOS'><span class='caption-text'>1-2 The default unit coordinate systems for iOS</span></span></p>
+<p>{% imgcap /images/autolayout-2.png 1-2 The default unit coordinate systems for iOS%}</p>
 
 <p>下面表示了frame bounds position anchorPoint之间的关系，你可能觉得这个anchorPoint似乎没有什么用</p>
 
-<p><span class='caption-wrapper'><img class='caption' src='/images/autolayout-3.png' width='' height='' title='1-3, 1-4  How the anchor point affects the layer’s position property'><span class='caption-text'>1-3, 1-4  How the anchor point affects the layer’s position property</span></span>
-<span class='caption-wrapper'><img class='caption' src='/images/autolayout-7.png' width='' height='' title=''><span class='caption-text'></span></span></p>
+<p>{% imgcap /images/autolayout-3.png 1-3, 1-4  How the anchor point affects the layer’s position property%}
+{% imgcap /images/autolayout-7.png%}</p>
 
 <p>但是当我们旋转一个View的时候，好处就来了</p>
 
-<p><span class='caption-wrapper'><img class='caption' src='/images/autolayout-4.png' width='' height='' title='1-5 , 1-6 How the anchor point affects the layer’s position property'><span class='caption-text'>1-5 , 1-6 How the anchor point affects the layer’s position property</span></span>
-<span class='caption-wrapper'><img class='caption' src='/images/autolayout-5.png' width='' height='' title=''><span class='caption-text'></span></span></p>
+<p>{% imgcap /images/autolayout-4.png 1-5 , 1-6 How the anchor point affects the layer’s position property%}
+{% imgcap /images/autolayout-5.png%}</p>
 
 <h1>传统布局的问题</h1>
 
@@ -84,11 +84,11 @@
 
 <p>一般来说<code>layoutSubviews</code>负责布局，比如调整View之间的距离，大小，<code>drawRect</code>负责绘制，比如使用什么颜色。而AutoLayout则是在layout之前增加了一个设定约束的过程,也就是上面提到了<code>update constraints</code>。</p>
 
-<p><span class='caption-wrapper'><img class='caption' src='/images/autolayout-8.png' width='' height='' title='1-7'><span class='caption-text'>1-7</span></span></p>
+<p>{% imgcap /images/autolayout-8.png 1-7%}</p>
 
 <p>在view的<code>layoutSubView</code>中，如果我们调用了<code>[super layoutSubView]</code> 系统就把设定的这些约束计算成每个view的bounds，center属性。当然我们也可以基于AutoLayout的结果,再做布局的调整。</p>
 
-<p><span class='caption-wrapper'><img class='caption' src='/images/autolayout-9.png' width='' height='' title='1-8'><span class='caption-text'>1-8</span></span></p>
+<p>{% imgcap /images/autolayout-9.png 1-8%}</p>
 
 <p><strong>Display 不是这篇文章的重点，这里略过</strong></p>
 
@@ -97,37 +97,25 @@
 <p>仔细阅读文档的同学会发现在Apple AutoLayout document中可以看到Alignment Rect 这个家伙。
 AutoLayout中的Left，Right等约束，并不是针对View的frame。而是根据Alignment Rect。在绝大多数情况下Alignment = Frame。但是如果对某些需要交互的元素，而图片素材很小的时候，就可以利用Alignment把交互区域变大。可以参考UIImage 中的 <code>imageWithAlignmentRectInsets</code>。</p>
 
-<p><span class='caption-wrapper'><img class='caption' src='/images/autolayout-10.png' width='' height='' title='1-9'><span class='caption-text'>1-9</span></span></p>
+<p>{% imgcap /images/autolayout-10.png 1-9%}</p>
 
 <h2>Animation</h2>
 
 <p>AutoLayout也可以配合传统的animation方法，整体代码结构如下。</p>
 
-<p><div class='bogus-wrapper'><notextile><figure class='code'> <div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
-<span class='line-number'>2</span>
-<span class='line-number'>3</span>
-<span class='line-number'>4</span>
-<span class='line-number'>5</span>
-<span class='line-number'>6</span>
-<span class='line-number'>7</span>
-<span class='line-number'>8</span>
-<span class='line-number'>9</span>
-<span class='line-number'>10</span>
-<span class='line-number'>11</span>
-<span class='line-number'>12</span>
-</pre></td><td class='code'><pre><code class='objc'><span class='line'>  <span class="p">[</span><span class="n">self</span><span class="p">.</span><span class="n">view</span> <span class="n">layoutIfNeeded</span><span class="p">];</span>
-</span><span class='line'>  <span class="p">[</span><span class="n">UIView</span> <span class="nl">animateWithDuration:</span><span class="mf">0.3f</span><span class="o">&lt;/</span><span class="n">p</span><span class="o">&gt;</span>
-</span><span class='line'>
-</span><span class='line'><span class="o">&lt;</span><span class="n">pre</span><span class="o">&gt;&lt;</span><span class="n">code</span><span class="o">&gt;</span>               <span class="nl">animations:</span><span class="o">^</span><span class="p">{</span>
-</span><span class='line'>
-</span><span class='line'>                 <span class="c1">//... update constraints  </span>
-</span><span class='line'>
-</span><span class='line'>                 <span class="p">[</span><span class="n">self</span><span class="p">.</span><span class="n">view</span> <span class="n">layoutIfNeeded</span><span class="p">];</span>
-</span><span class='line'>               <span class="p">}];</span>
-</span><span class='line'><span class="o">&lt;/</span><span class="n">code</span><span class="o">&gt;&lt;/</span><span class="n">pre</span><span class="o">&gt;</span>
-</span><span class='line'>
-</span><span class='line'><span class="o">&lt;</span><span class="n">p</span><span class="o">&gt;</span>
-</span></code></pre></td></tr></table></div></figure></notextile></div></p>
+<p>{% codeblock lang:objc %}
+  [self.view layoutIfNeeded];
+  [UIView animateWithDuration:0.3f</p>
+
+<pre><code>               animations:^{
+
+                 //... update constraints  
+
+                 [self.view layoutIfNeeded];
+               }];
+</code></pre>
+
+<p>{% endcodeblock %}</p>
 
 <p>使用AutoLayout也可以轻易的实现之前的设置frame很难实现的动画效果。比如下面的例子(很奇怪，优酷吃掉了后面几秒的动画...)</p>
 
@@ -188,73 +176,47 @@ facebook提供了一个非常赞的topic-<a href="http://www.youtube.com/playlis
 
 <p>这个动画效果很简单，有很多方式都可以做到，但是pop来实现它，只需要下面几行代码。</p>
 
-<p><div class='bogus-wrapper'><notextile><figure class='code'> <div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
-<span class='line-number'>2</span>
-<span class='line-number'>3</span>
-<span class='line-number'>4</span>
-<span class='line-number'>5</span>
-<span class='line-number'>6</span>
-<span class='line-number'>7</span>
-</pre></td><td class='code'><pre><code class='objc'><span class='line'>  <span class="n">POPBasicAnimation</span> <span class="o">*</span><span class="n">animation</span> <span class="o">=</span> <span class="p">[</span><span class="n">POPBasicAnimation</span> <span class="n">animation</span><span class="p">];</span>
-</span><span class='line'>  <span class="n">animation</span><span class="p">.</span><span class="n">property</span> <span class="o">=</span> <span class="p">[</span><span class="n">self</span> <span class="n">animationProperty</span><span class="p">];</span>
-</span><span class='line'>  <span class="n">animation</span><span class="p">.</span><span class="n">fromValue</span> <span class="o">=</span> <span class="err">@</span><span class="p">(</span><span class="mi">0</span><span class="p">);</span>
-</span><span class='line'>  <span class="n">animation</span><span class="p">.</span><span class="n">toValue</span> <span class="o">=</span> <span class="err">@</span><span class="p">(</span><span class="mi">8000</span><span class="p">);</span>
-</span><span class='line'>  <span class="n">animation</span><span class="p">.</span><span class="n">duration</span> <span class="o">=</span> <span class="mf">2.0f</span><span class="p">;</span><span class="o">&lt;/</span><span class="n">p</span><span class="o">&gt;</span>
-</span><span class='line'>
-</span><span class='line'><span class="o">&lt;</span><span class="n">p</span><span class="o">&gt;</span>  <span class="p">[</span><span class="n">self</span><span class="p">.</span><span class="n">numberLabel</span> <span class="nl">pop_addAnimation:</span><span class="n">animation</span> <span class="nl">forKey:</span><span class="s">@&quot;numberLabelAnimation&quot;</span><span class="p">];</span>
-</span></code></pre></td></tr></table></div></figure></notextile></div></p>
+<p>{% codeblock lang:objc %}
+  POPBasicAnimation *animation = [POPBasicAnimation animation];
+  animation.property = [self animationProperty];
+  animation.fromValue = @(0);
+  animation.toValue = @(8000);
+  animation.duration = 2.0f;</p>
 
-<p><div class='bogus-wrapper'><notextile><figure class='code'> <div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
-<span class='line-number'>2</span>
-<span class='line-number'>3</span>
-<span class='line-number'>4</span>
-<span class='line-number'>5</span>
-<span class='line-number'>6</span>
-<span class='line-number'>7</span>
-<span class='line-number'>8</span>
-<span class='line-number'>9</span>
-<span class='line-number'>10</span>
-<span class='line-number'>11</span>
-<span class='line-number'>12</span>
-<span class='line-number'>13</span>
-<span class='line-number'>14</span>
-<span class='line-number'>15</span>
-</pre></td><td class='code'><pre><code class='objc'><span class='line'>  <span class="o">-</span> <span class="p">(</span><span class="n">POPMutableAnimatableProperty</span> <span class="o">*</span><span class="p">)</span><span class="n">animationProperty</span> <span class="p">{</span>
-</span><span class='line'>  <span class="k">return</span> <span class="p">[</span><span class="n">POPMutableAnimatableProperty</span><span class="o">&lt;/</span><span class="n">p</span><span class="o">&gt;</span>
-</span><span class='line'>
-</span><span class='line'><span class="o">&lt;</span><span class="n">pre</span><span class="o">&gt;&lt;</span><span class="n">code</span><span class="o">&gt;</span>  <span class="nl">propertyWithName:</span><span class="s">@&quot;com.curer.test&quot;</span>
-</span><span class='line'>       <span class="nl">initializer:</span><span class="o">^</span><span class="p">(</span><span class="n">POPMutableAnimatableProperty</span> <span class="o">*</span><span class="n">prop</span><span class="p">)</span> <span class="p">{</span>
-</span><span class='line'>           <span class="n">prop</span><span class="p">.</span><span class="n">writeBlock</span> <span class="o">=</span> <span class="o">^</span><span class="p">(</span><span class="kt">id</span> <span class="n">obj</span><span class="p">,</span> <span class="k">const</span> <span class="n">CGFloat</span> <span class="n">values</span><span class="p">[])</span> <span class="p">{</span>
-</span><span class='line'>             <span class="n">UILabel</span> <span class="o">*</span><span class="n">label</span> <span class="o">=</span> <span class="p">(</span><span class="n">UILabel</span> <span class="o">*</span><span class="p">)</span><span class="n">obj</span><span class="p">;</span>
-</span><span class='line'>             <span class="n">NSNumber</span> <span class="o">*</span><span class="n">number</span> <span class="o">=</span> <span class="err">@</span><span class="p">(</span><span class="n">values</span><span class="p">[</span><span class="mi">0</span><span class="p">]);</span>
-</span><span class='line'>             <span class="kt">int</span> <span class="n">num</span> <span class="o">=</span> <span class="p">[</span><span class="n">number</span> <span class="n">intValue</span><span class="p">];</span>
-</span><span class='line'>             <span class="n">label</span><span class="p">.</span><span class="n">text</span> <span class="o">=</span> <span class="p">[</span><span class="err">@</span><span class="p">(</span><span class="n">num</span><span class="p">)</span> <span class="n">stringValue</span><span class="p">];</span>
-</span><span class='line'>           <span class="p">};</span>
-</span><span class='line'>       <span class="p">}];</span>
-</span><span class='line'><span class="o">&lt;/</span><span class="n">code</span><span class="o">&gt;&lt;/</span><span class="n">pre</span><span class="o">&gt;</span>
-</span><span class='line'>
-</span><span class='line'><span class="o">&lt;</span><span class="n">p</span><span class="o">&gt;</span><span class="p">}</span>
-</span></code></pre></td></tr></table></div></figure></notextile></div></p>
+<p>  [self.numberLabel pop_addAnimation:animation forKey:@"numberLabelAnimation"];
+{% endcodeblock %}</p>
+
+<p>{% codeblock lang:objc %}
+  - (POPMutableAnimatableProperty *)animationProperty {
+  return [POPMutableAnimatableProperty</p>
+
+<pre><code>  propertyWithName:@"com.curer.test"
+       initializer:^(POPMutableAnimatableProperty *prop) {
+           prop.writeBlock = ^(id obj, const CGFloat values[]) {
+             UILabel *label = (UILabel *)obj;
+             NSNumber *number = @(values[0]);
+             int num = [number intValue];
+             label.text = [@(num) stringValue];
+           };
+       }];
+</code></pre>
+
+<p>}
+{% endcodeblock %}</p>
 
 <p>哈哈，搞定了。pop太强大了。但是细心的同学会发现动画似乎不是我们想要的，我们希望做到那种一开始很快速很激动，最后却有一点慢慢的“欲求不能”的感觉。</p>
 
 <p>很直观的，我们使用了万能的EaseOut动画</p>
 
-<p><div class='bogus-wrapper'><notextile><figure class='code'> <div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
-<span class='line-number'>2</span>
-<span class='line-number'>3</span>
-<span class='line-number'>4</span>
-<span class='line-number'>5</span>
-<span class='line-number'>6</span>
-<span class='line-number'>7</span>
-</pre></td><td class='code'><pre><code class='objc'><span class='line'>  <span class="n">POPBasicAnimation</span> <span class="o">*</span><span class="n">animation</span> <span class="o">=</span> <span class="p">[</span><span class="n">POPBasicAnimation</span> <span class="n">animation</span><span class="p">];</span>
-</span><span class='line'>  <span class="n">animation</span><span class="p">.</span><span class="n">property</span> <span class="o">=</span> <span class="p">[</span><span class="n">self</span> <span class="n">animationProperty</span><span class="p">];</span>
-</span><span class='line'>  <span class="n">animation</span><span class="p">.</span><span class="n">fromValue</span> <span class="o">=</span> <span class="err">@</span><span class="p">(</span><span class="mi">0</span><span class="p">);</span>
-</span><span class='line'>  <span class="n">animation</span><span class="p">.</span><span class="n">toValue</span> <span class="o">=</span> <span class="err">@</span><span class="p">(</span><span class="mi">8000</span><span class="p">);</span>
-</span><span class='line'>  <span class="n">animation</span><span class="p">.</span><span class="n">duration</span> <span class="o">=</span> <span class="mf">2.0f</span><span class="p">;</span>
-</span><span class='line'>  <span class="c1">//增加animation 时间函数控制</span>
-</span><span class='line'>  <span class="n">animation</span><span class="p">.</span><span class="n">timingFunction</span> <span class="o">=</span> <span class="p">[</span><span class="n">CAMediaTimingFunction</span> <span class="nl">functionWithName:</span><span class="n">kCAMediaTimingFunctionEaseOut</span><span class="p">];</span>
-</span></code></pre></td></tr></table></div></figure></notextile></div></p>
+<p>{% codeblock lang:objc %}
+  POPBasicAnimation *animation = [POPBasicAnimation animation];
+  animation.property = [self animationProperty];
+  animation.fromValue = @(0);
+  animation.toValue = @(8000);
+  animation.duration = 2.0f;
+  //增加animation 时间函数控制
+  animation.timingFunction = [CAMediaTimingFunction functionWithName:kCAMediaTimingFunctionEaseOut];
+{% endcodeblock %}</p>
 
 <p>增加了一行代码，但是发现这个动画变化的时间还是不能让我们满意，一开始变化的还是慢，后面变化的又有点快。</p>
 
@@ -262,41 +224,35 @@ facebook提供了一个非常赞的topic-<a href="http://www.youtube.com/playlis
 
 <p>动画的实现其实很简单，抛开性能，就是一个个不断变化的图片，对于我们这个简单的动画，就是一个从0到8000的变化，如果x轴为时间，y轴为大小。我们第一个动画其实是这个样子</p>
 
-<p><span class='caption-wrapper'><img class='caption' src='/images/pop-demo-3.png' width='' height='' title=''><span class='caption-text'></span></span></p>
+<p>{% imgcap /images/pop-demo-3.png %}</p>
 
 <p>easeout好一点是这样子</p>
 
-<p><span class='caption-wrapper'><img class='caption' src='/images/pop-demo-1.png' width='' height='' title=''><span class='caption-text'></span></span></p>
+<p>{% imgcap /images/pop-demo-1.png %}</p>
 
 <p>我们其实希望是这个样子</p>
 
-<p><span class='caption-wrapper'><img class='caption' src='/images/pop-demo-2.png' width='' height='' title=''><span class='caption-text'></span></span></p>
+<p>{% imgcap /images/pop-demo-2.png %}</p>
 
 <p>CAMediaTimingFunction 实际上还提供另一个方法，不是很常用，但是却非常适合我们现在的场景。
-<div class='bogus-wrapper'><notextile><figure class='code'> <div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
-</pre></td><td class='code'><pre><code class='objc'><span class='line'><span class="k">+</span> <span class="p">(</span><span class="kt">id</span><span class="p">)</span><span class="nf">functionWithControlPoints:</span><span class="p">(</span><span class="kt">float</span><span class="p">)</span><span class="nv">c1x</span> <span class="o">:</span><span class="p">(</span><span class="kt">float</span><span class="p">)</span><span class="n">c1y</span> <span class="o">:</span><span class="p">(</span><span class="kt">float</span><span class="p">)</span><span class="n">c2x</span> <span class="o">:</span><span class="p">(</span><span class="kt">float</span><span class="p">)</span><span class="n">c2y</span><span class="p">;</span>
-</span></code></pre></td></tr></table></div></figure></notextile></div></p>
+{% codeblock lang:objc %}
++ (id)functionWithControlPoints:(float)c1x :(float)c1y :(float)c2x :(float)c2y;
+{% endcodeblock %}</p>
 
 <p>这里我们描述的“时间函数”其实就是<a href="http://en.wikipedia.org/wiki/B%C3%A9zier_curve">贝塞尔曲线</a>。</p>
 
 <p>这里推荐一个<a href="http://cubic-bezier.com/">网站</a>可以很直观的生成贝塞尔曲线。
 这里我们得到了参数（.12,1,.11,.94）。</p>
 
-<p><div class='bogus-wrapper'><notextile><figure class='code'> <div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
-<span class='line-number'>2</span>
-<span class='line-number'>3</span>
-<span class='line-number'>4</span>
-<span class='line-number'>5</span>
-<span class='line-number'>6</span>
-<span class='line-number'>7</span>
-</pre></td><td class='code'><pre><code class='objc'><span class='line'>  <span class="n">POPBasicAnimation</span> <span class="o">*</span><span class="n">animation</span> <span class="o">=</span> <span class="p">[</span><span class="n">POPBasicAnimation</span> <span class="n">animation</span><span class="p">];</span>
-</span><span class='line'>  <span class="n">animation</span><span class="p">.</span><span class="n">property</span> <span class="o">=</span> <span class="p">[</span><span class="n">self</span> <span class="n">animationProperty</span><span class="p">];</span>
-</span><span class='line'>  <span class="n">animation</span><span class="p">.</span><span class="n">fromValue</span> <span class="o">=</span> <span class="err">@</span><span class="p">(</span><span class="mi">0</span><span class="p">);</span>
-</span><span class='line'>  <span class="n">animation</span><span class="p">.</span><span class="n">toValue</span> <span class="o">=</span> <span class="err">@</span><span class="p">(</span><span class="mi">8000</span><span class="p">);</span>
-</span><span class='line'>  <span class="n">animation</span><span class="p">.</span><span class="n">duration</span> <span class="o">=</span> <span class="mf">2.0f</span><span class="p">;</span>
-</span><span class='line'>  <span class="c1">//修改animation 时间函数</span>
-</span><span class='line'>  <span class="n">animation</span><span class="p">.</span><span class="n">timingFunction</span> <span class="o">=</span> <span class="p">[</span><span class="n">CAMediaTimingFunction</span> <span class="nl">functionWithControlPoints:</span><span class="mf">0.12</span> <span class="o">:</span><span class="mi">1</span><span class="o">:</span> <span class="mf">0.11</span><span class="o">:</span><span class="mf">0.94</span><span class="p">];</span>
-</span></code></pre></td></tr></table></div></figure></notextile></div></p>
+<p>{% codeblock lang:objc %}
+  POPBasicAnimation *animation = [POPBasicAnimation animation];
+  animation.property = [self animationProperty];
+  animation.fromValue = @(0);
+  animation.toValue = @(8000);
+  animation.duration = 2.0f;
+  //修改animation 时间函数
+  animation.timingFunction = [CAMediaTimingFunction functionWithControlPoints:0.12 :1: 0.11:0.94];
+{% endcodeblock %}</p>
 
 <p>这里我们已经得到我们想要的动画效果了。而且看上去相当不错。</p>
 
@@ -305,82 +261,48 @@ facebook提供了一个非常赞的topic-<a href="http://www.youtube.com/playlis
 <p>如何才能有更好的效果呢？动画的速度，时间，等等参数都会影响到动画的效果是不是会完美。如何判断动画效果是否足够好。的确是个很难的问题。而解决这个问题的关键，不在于工程师自己折腾，应该找专业的人来做。而这时<a href="https://github.com/facebook/Tweaks">Tweaks</a>就闪亮登场了。</p>
 
 <p>初始化的时候创建2个tweak用来动态调整时间和目标数值。并修改一下默认的UIWindow为<code>FBTweakShakeWindow</code>
-<div class='bogus-wrapper'><notextile><figure class='code'> <div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
-<span class='line-number'>2</span>
-<span class='line-number'>3</span>
-<span class='line-number'>4</span>
-<span class='line-number'>5</span>
-<span class='line-number'>6</span>
-<span class='line-number'>7</span>
-<span class='line-number'>8</span>
-<span class='line-number'>9</span>
-<span class='line-number'>10</span>
-<span class='line-number'>11</span>
-<span class='line-number'>12</span>
-<span class='line-number'>13</span>
-<span class='line-number'>14</span>
-<span class='line-number'>15</span>
-<span class='line-number'>16</span>
-<span class='line-number'>17</span>
-<span class='line-number'>18</span>
-</pre></td><td class='code'><pre><code class='objc'><span class='line'>  <span class="c1">//reset window</span>
-</span><span class='line'>  <span class="n">self</span><span class="p">.</span><span class="n">window</span> <span class="o">=</span> <span class="p">[[</span><span class="n">FBTweakShakeWindow</span> <span class="n">alloc</span><span class="p">]</span> <span class="nl">initWithFrame:</span><span class="p">[[</span><span class="n">UIScreen</span> <span class="n">mainScreen</span><span class="p">]</span> <span class="n">bounds</span><span class="p">]];</span><span class="o">&lt;/</span><span class="n">p</span><span class="o">&gt;</span>
-</span><span class='line'>
-</span><span class='line'><span class="o">&lt;</span><span class="n">p</span><span class="o">&gt;</span>  <span class="n">FBTweak</span> <span class="o">*</span><span class="n">animationDurationTweak</span> <span class="o">=&lt;/</span><span class="n">p</span><span class="o">&gt;</span>
-</span><span class='line'>
-</span><span class='line'><span class="o">&lt;</span><span class="n">pre</span><span class="o">&gt;&lt;</span><span class="n">code</span><span class="o">&gt;</span>  <span class="n">FBTweakInline</span><span class="p">(</span><span class="s">@&quot;Content&quot;</span><span class="p">,</span> <span class="s">@&quot;Animation&quot;</span><span class="p">,</span> <span class="s">@&quot;Duration&quot;</span><span class="p">,</span> <span class="mf">2.0</span><span class="p">,</span> <span class="mf">1.0</span><span class="p">,</span> <span class="mf">3.0</span><span class="p">);</span>
-</span><span class='line'><span class="o">&lt;/</span><span class="n">code</span><span class="o">&gt;&lt;/</span><span class="n">pre</span><span class="o">&gt;</span>
-</span><span class='line'>
-</span><span class='line'><span class="o">&lt;</span><span class="n">p</span><span class="o">&gt;</span>  <span class="n">animationDurationTweak</span><span class="p">.</span><span class="n">stepValue</span> <span class="o">=</span> <span class="p">[</span><span class="n">NSNumber</span> <span class="nl">numberWithFloat:</span><span class="mf">0.1f</span><span class="p">];</span>
-</span><span class='line'>  <span class="n">animationDurationTweak</span><span class="p">.</span><span class="n">precisionValue</span> <span class="o">=</span> <span class="p">[</span><span class="n">NSNumber</span> <span class="nl">numberWithFloat:</span><span class="mf">3.0f</span><span class="p">];</span><span class="o">&lt;/</span><span class="n">p</span><span class="o">&gt;</span>
-</span><span class='line'>
-</span><span class='line'><span class="o">&lt;</span><span class="n">p</span><span class="o">&gt;</span>  <span class="n">FBTweak</span> <span class="o">*</span><span class="n">animationToValueTweak</span> <span class="o">=&lt;/</span><span class="n">p</span><span class="o">&gt;</span>
-</span><span class='line'>
-</span><span class='line'><span class="o">&lt;</span><span class="n">pre</span><span class="o">&gt;&lt;</span><span class="n">code</span><span class="o">&gt;</span>  <span class="n">FBTweakInline</span><span class="p">(</span><span class="s">@&quot;Content&quot;</span><span class="p">,</span> <span class="s">@&quot;Animation&quot;</span><span class="p">,</span> <span class="s">@&quot;ToValue&quot;</span><span class="p">,</span> <span class="mi">8000</span><span class="p">,</span> <span class="mi">1000</span><span class="p">,</span> <span class="mi">10000</span><span class="p">);</span>
-</span><span class='line'><span class="o">&lt;/</span><span class="n">code</span><span class="o">&gt;&lt;/</span><span class="n">pre</span><span class="o">&gt;</span>
-</span><span class='line'>
-</span><span class='line'><span class="o">&lt;</span><span class="n">p</span><span class="o">&gt;</span>  <span class="n">animationToValueTweak</span><span class="p">.</span><span class="n">stepValue</span> <span class="o">=</span> <span class="err">@</span><span class="p">(</span><span class="mi">1000</span><span class="p">);</span>
-</span><span class='line'>  <span class="n">animationDurationTweak</span><span class="p">.</span><span class="n">precisionValue</span> <span class="o">=</span> <span class="p">[</span><span class="n">NSNumber</span> <span class="nl">numberWithFloat:</span><span class="mf">1.0f</span><span class="p">];</span>
-</span></code></pre></td></tr></table></div></figure></notextile></div></p>
+{% codeblock lang:objc %}
+  //reset window
+  self.window = [[FBTweakShakeWindow alloc] initWithFrame:[[UIScreen mainScreen] bounds]];</p>
+
+<p>  FBTweak *animationDurationTweak =</p>
+
+<pre><code>  FBTweakInline(@"Content", @"Animation", @"Duration", 2.0, 1.0, 3.0);
+</code></pre>
+
+<p>  animationDurationTweak.stepValue = [NSNumber numberWithFloat:0.1f];
+  animationDurationTweak.precisionValue = [NSNumber numberWithFloat:3.0f];</p>
+
+<p>  FBTweak *animationToValueTweak =</p>
+
+<pre><code>  FBTweakInline(@"Content", @"Animation", @"ToValue", 8000, 1000, 10000);
+</code></pre>
+
+<p>  animationToValueTweak.stepValue = @(1000);
+  animationDurationTweak.precisionValue = [NSNumber numberWithFloat:1.0f];
+{% endcodeblock %}</p>
 
 <p>再把原来创建动画的代码稍微修正一下
-<div class='bogus-wrapper'><notextile><figure class='code'> <div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
-<span class='line-number'>2</span>
-<span class='line-number'>3</span>
-<span class='line-number'>4</span>
-<span class='line-number'>5</span>
-<span class='line-number'>6</span>
-<span class='line-number'>7</span>
-<span class='line-number'>8</span>
-<span class='line-number'>9</span>
-<span class='line-number'>10</span>
-<span class='line-number'>11</span>
-<span class='line-number'>12</span>
-<span class='line-number'>13</span>
-<span class='line-number'>14</span>
-<span class='line-number'>15</span>
-<span class='line-number'>16</span>
-<span class='line-number'>17</span>
-<span class='line-number'>18</span>
-</pre></td><td class='code'><pre><code class='objc'><span class='line'>  <span class="n">POPBasicAnimation</span> <span class="o">*</span><span class="n">animation</span> <span class="o">=</span> <span class="p">[</span><span class="n">POPBasicAnimation</span> <span class="n">animation</span><span class="p">];</span>
-</span><span class='line'>  <span class="n">animation</span><span class="p">.</span><span class="n">property</span> <span class="o">=</span> <span class="p">[</span><span class="n">self</span> <span class="n">animationProperty</span><span class="p">];</span>
-</span><span class='line'>  <span class="n">animation</span><span class="p">.</span><span class="n">timingFunction</span> <span class="o">=</span> <span class="p">[</span><span class="n">CAMediaTimingFunction</span> <span class="nl">functionWithControlPoints:</span><span class="mf">0.12</span> <span class="o">:</span><span class="mi">1</span><span class="o">:</span> <span class="mf">0.11</span><span class="o">:</span><span class="mf">0.94</span><span class="p">];</span>
-</span><span class='line'>  <span class="n">animation</span><span class="p">.</span><span class="n">fromValue</span> <span class="o">=</span> <span class="err">@</span><span class="p">(</span><span class="mi">0</span><span class="p">);</span><span class="o">&lt;/</span><span class="n">p</span><span class="o">&gt;</span>
-</span><span class='line'>
-</span><span class='line'><span class="o">&lt;</span><span class="n">p</span><span class="o">&gt;</span>  <span class="kt">double</span> <span class="n">animationDuration</span> <span class="o">=&lt;/</span><span class="n">p</span><span class="o">&gt;</span>
-</span><span class='line'>
-</span><span class='line'><span class="o">&lt;</span><span class="n">pre</span><span class="o">&gt;&lt;</span><span class="n">code</span><span class="o">&gt;</span>  <span class="n">FBTweakValue</span><span class="p">(</span><span class="s">@&quot;Content&quot;</span><span class="p">,</span> <span class="s">@&quot;Animation&quot;</span><span class="p">,</span> <span class="s">@&quot;Duration&quot;</span><span class="p">,</span> <span class="mf">2.0</span><span class="p">);</span>
-</span><span class='line'><span class="o">&lt;/</span><span class="n">code</span><span class="o">&gt;&lt;/</span><span class="n">pre</span><span class="o">&gt;</span>
-</span><span class='line'>
-</span><span class='line'><span class="o">&lt;</span><span class="n">p</span><span class="o">&gt;</span>  <span class="n">animation</span><span class="p">.</span><span class="n">toValue</span> <span class="o">=&lt;/</span><span class="n">p</span><span class="o">&gt;</span>
-</span><span class='line'>
-</span><span class='line'><span class="o">&lt;</span><span class="n">pre</span><span class="o">&gt;&lt;</span><span class="n">code</span><span class="o">&gt;</span>  <span class="err">@</span><span class="p">(</span><span class="n">FBTweakValue</span><span class="p">(</span><span class="s">@&quot;Content&quot;</span><span class="p">,</span> <span class="s">@&quot;Animation&quot;</span><span class="p">,</span> <span class="s">@&quot;ToValue&quot;</span><span class="p">,</span> <span class="mi">8000</span><span class="p">));</span>
-</span><span class='line'><span class="o">&lt;/</span><span class="n">code</span><span class="o">&gt;&lt;/</span><span class="n">pre</span><span class="o">&gt;</span>
-</span><span class='line'>
-</span><span class='line'><span class="o">&lt;</span><span class="n">p</span><span class="o">&gt;</span>  <span class="n">animation</span><span class="p">.</span><span class="n">duration</span> <span class="o">=</span> <span class="n">animationDuration</span><span class="p">;</span><span class="o">&lt;/</span><span class="n">p</span><span class="o">&gt;</span>
-</span><span class='line'>
-</span><span class='line'><span class="o">&lt;</span><span class="n">p</span><span class="o">&gt;</span>  <span class="p">[</span><span class="n">self</span><span class="p">.</span><span class="n">numberLabel</span> <span class="nl">pop_addAnimation:</span><span class="n">animation</span> <span class="nl">forKey:</span><span class="s">@&quot;numberLabelAnimation&quot;</span><span class="p">];</span>
-</span></code></pre></td></tr></table></div></figure></notextile></div></p>
+{% codeblock lang:objc %}
+  POPBasicAnimation *animation = [POPBasicAnimation animation];
+  animation.property = [self animationProperty];
+  animation.timingFunction = [CAMediaTimingFunction functionWithControlPoints:0.12 :1: 0.11:0.94];
+  animation.fromValue = @(0);</p>
+
+<p>  double animationDuration =</p>
+
+<pre><code>  FBTweakValue(@"Content", @"Animation", @"Duration", 2.0);
+</code></pre>
+
+<p>  animation.toValue =</p>
+
+<pre><code>  @(FBTweakValue(@"Content", @"Animation", @"ToValue", 8000));
+</code></pre>
+
+<p>  animation.duration = animationDuration;</p>
+
+<p>  [self.numberLabel pop_addAnimation:animation forKey:@"numberLabelAnimation"];
+{% endcodeblock %}</p>
 
 <p>这样当摇晃手机的时候就可以动态调整动画参数了，最后数据会保存在plist ：）。</p>
 
@@ -399,27 +321,18 @@ facebook提供了一个非常赞的topic-<a href="http://www.youtube.com/playlis
 
 <p>Class Clusters 几乎涉及到iOS日常的所有开发过程中，也可能正是这样，导致我们很容易把它彻底遗忘。这里就拿最常用的 NSString 来讲。</p>
 
-<p><div class='bogus-wrapper'><notextile><figure class='code'> <div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
-<span class='line-number'>2</span>
-<span class='line-number'>3</span>
-<span class='line-number'>4</span>
-<span class='line-number'>5</span>
-<span class='line-number'>6</span>
-<span class='line-number'>7</span>
-<span class='line-number'>8</span>
-<span class='line-number'>9</span>
-<span class='line-number'>10</span>
-</pre></td><td class='code'><pre><code class='objc'><span class='line'>  <span class="n">NSString</span> <span class="o">&lt;</span><span class="n">em</span><span class="o">&gt;</span><span class="n">string1</span> <span class="o">=</span> <span class="s">@&quot;helloworld&quot;</span><span class="p">;</span>
-</span><span class='line'>  <span class="n">NSString</span> <span class="o">&lt;/</span><span class="n">em</span><span class="o">&gt;</span><span class="n">string2</span> <span class="o">=</span> <span class="p">[[</span><span class="n">NSString</span> <span class="n">alloc</span><span class="p">]</span> <span class="nl">initWithFormat:</span><span class="s">@&quot;:%@&quot;</span><span class="p">,</span> <span class="s">@&quot;helloworld&quot;</span><span class="p">];</span>
-</span><span class='line'>  <span class="n">NSString</span> <span class="o">&lt;</span><span class="n">em</span><span class="o">&gt;</span><span class="n">string3</span> <span class="o">=</span> <span class="p">[</span><span class="n">NSHomeDirectory</span><span class="p">()</span> <span class="nl">stringByAppendingPathComponent:</span><span class="n">string1</span><span class="p">];</span>
-</span><span class='line'>  <span class="n">NSTextStorage</span> <span class="o">&lt;/</span><span class="n">em</span><span class="o">&gt;</span><span class="n">storage</span> <span class="o">=</span> <span class="p">[[</span><span class="n">NSTextStorage</span> <span class="n">alloc</span><span class="p">]</span> <span class="nl">initWithString:</span><span class="n">string1</span><span class="p">];</span>
-</span><span class='line'>  <span class="n">NSString</span> <span class="o">*</span><span class="n">string4</span> <span class="o">=</span> <span class="p">[</span><span class="n">storage</span> <span class="n">string</span><span class="p">];</span><span class="o">&lt;/</span><span class="n">p</span><span class="o">&gt;</span>
-</span><span class='line'>
-</span><span class='line'><span class="o">&lt;</span><span class="n">p</span><span class="o">&gt;</span>  <span class="n">NSLog</span><span class="p">(</span><span class="s">@&quot;%@&quot;</span><span class="p">,</span> <span class="p">[[</span><span class="n">string1</span> <span class="n">class</span><span class="p">]</span> <span class="n">description</span><span class="p">]);</span>
-</span><span class='line'>  <span class="n">NSLog</span><span class="p">(</span><span class="s">@&quot;%@&quot;</span><span class="p">,</span> <span class="p">[[</span><span class="n">string2</span> <span class="n">class</span><span class="p">]</span> <span class="n">description</span><span class="p">]);</span>
-</span><span class='line'>  <span class="n">NSLog</span><span class="p">(</span><span class="s">@&quot;%@&quot;</span><span class="p">,</span> <span class="p">[[</span><span class="n">string3</span> <span class="n">class</span><span class="p">]</span> <span class="n">description</span><span class="p">]);</span>
-</span><span class='line'>  <span class="n">NSLog</span><span class="p">(</span><span class="s">@&quot;%@&quot;</span><span class="p">,</span> <span class="p">[[</span><span class="n">string4</span> <span class="n">class</span><span class="p">]</span> <span class="n">description</span><span class="p">]);</span>
-</span></code></pre></td></tr></table></div></figure></notextile></div></p>
+<p>{% codeblock lang:objc %}
+  NSString <em>string1 = @"helloworld";
+  NSString </em>string2 = [[NSString alloc] initWithFormat:@":%@", @"helloworld"];
+  NSString <em>string3 = [NSHomeDirectory() stringByAppendingPathComponent:string1];
+  NSTextStorage </em>storage = [[NSTextStorage alloc] initWithString:string1];
+  NSString *string4 = [storage string];</p>
+
+<p>  NSLog(@"%@", [[string1 class] description]);
+  NSLog(@"%@", [[string2 class] description]);
+  NSLog(@"%@", [[string3 class] description]);
+  NSLog(@"%@", [[string4 class] description]);
+{% endcodeblock %}</p>
 
 <p>不知道有多少人试过哈，string3的返回还是让我吃了一惊。下面的结果是在Xcode5.1 SDK7.1 下的结果。</p>
 
@@ -431,7 +344,12 @@ NSBigMutableString
 
 <p>通过上面的方法创建的 NSString 最后都产生了不同的子类。有人可能会奇怪为什么需要不同的 NSString。因为对于大部分的以阅读内容为主的App来讲，很大部分资源消耗在了字符串处理上面（存储，解析，比较等等），所以对于字符串的存储需要有不同的方式来满足不同的情况，这样才能有性能上的提高。</p>
 
-<p><div class='notebox'><p><strong>Note: </strong>设想一下，在这些场景上面，如果Apple直接把这些类扔给开发者，会有什么问题呢？</p></p><p><p>那么开发者需要自己在不同的场景决定使用不同的子类，不仅学习成本提高，而且也容易生成性能不太好的代码。<br/>现在简单的 NSString 就可以直接覆盖上面的所有场景。而且随着iOS的软硬件的后续开发，开发者还可以在不修改代码的情况下获得性能提升。</p></div></p>
+<p>{% notebox %}
+设想一下，在这些场景上面，如果Apple直接把这些类扔给开发者，会有什么问题呢？</p>
+
+<p>那么开发者需要自己在不同的场景决定使用不同的子类，不仅学习成本提高，而且也容易生成性能不太好的代码。
+现在简单的 NSString 就可以直接覆盖上面的所有场景。而且随着iOS的软硬件的后续开发，开发者还可以在不修改代码的情况下获得性能提升。
+{% endnotebox %}</p>
 
 <p>既然看到了它的强大之处，那么就开始了解吧。
 既然这是第一篇DesignPattern那么就从最简单开始 ：)</p>
@@ -440,13 +358,19 @@ NSBigMutableString
 
 <p>这里引用一下Mike的内容</p>
 
-<p><blockquote><p>An abstract class is a class which is not fully functional on its own. It must be subclassed, and the subclass must fill out the missing functionality.</p></p><p><p>An abstract class is not necessarily an empty shell. It can still contain a lot of functionality all on its own, but it's not complete without a subclass to fill in the holes.</p><footer><strong>Mike Ash</strong> <cite><a href='https://mikeash.com/pyblog/friday-qa-2010-03-12-subclassing-class-clusters.html'>Friday Q&amp;A 2010-03-12: Subclassing Class Clusters</a></cite></footer></blockquote></p>
+<p>{% blockquote Mike Ash https://mikeash.com/pyblog/friday-qa-2010-03-12-subclassing-class-clusters.html Friday Q&amp;A 2010-03-12: Subclassing Class Clusters %}
+An abstract class is a class which is not fully functional on its own. It must be subclassed, and the subclass must fill out the missing functionality.</p>
+
+<p>An abstract class is not necessarily an empty shell. It can still contain a lot of functionality all on its own, but it's not complete without a subclass to fill in the holes.
+{% endblockquote %}</p>
 
 <p>Abstract Class 的概念很简单，类中所有的方法不需要全部有具体的实现，相当于定义了很多的接口。比如一开始的 NSString</p>
 
 <h2>Class Clusters</h2>
 
-<p><blockquote><p>A class cluster is a hierarchy of classes capped off by a public abstract class. The public class provides an interface and a lot of auxiliary functionality, and then core functionality is implemented by private subclasses. The public class then provides creation methods which return instances of the private subclasses, so that the public class can be used without knowledge of those subclasses.</p><footer><strong>Mike Ash</strong> <cite><a href='https://mikeash.com/pyblog/friday-qa-2010-03-12-subclassing-class-clusters.html'>Friday Q&amp;A 2010-03-12: Subclassing Class Clusters</a></cite></footer></blockquote></p>
+<p>{% blockquote Mike Ash https://mikeash.com/pyblog/friday-qa-2010-03-12-subclassing-class-clusters.html Friday Q&amp;A 2010-03-12: Subclassing Class Clusters %}
+A class cluster is a hierarchy of classes capped off by a public abstract class. The public class provides an interface and a lot of auxiliary functionality, and then core functionality is implemented by private subclasses. The public class then provides creation methods which return instances of the private subclasses, so that the public class can be used without knowledge of those subclasses.
+{% endblockquote %}</p>
 
 <p>Clusters的角色不仅要实现 Abstract Class 的方法，还需要自己实现自己的特殊化需求。Abstract Class 负责提供一个“外壳”，真正“干活”的就是Cluster class。这样外部就只需要了解Abstract Class就可以了。</p>
 
@@ -458,7 +382,9 @@ NSBigMutableString
 
 <h2>How to use</h2>
 
-<p><blockquote><p>The class cluster architecture involves a trade-off between simplicity and extensibility: Having a few public classes stand in for a multitude of private ones makes it easier to learn and use the classes in a framework but somewhat harder to create subclasses within any of the clusters.</p><footer><strong>Apple Develpoer Document</strong> <cite><a href='https://developer.apple.com/library/mac/documentation/general/conceptual/devpedia-cocoacore/ClassCluster.html'>Cocoa Core Competencies</a></cite></footer></blockquote></p>
+<p>{% blockquote Apple Develpoer Document https://developer.apple.com/library/mac/documentation/general/conceptual/devpedia-cocoacore/ClassCluster.html Cocoa Core Competencies %}
+The class cluster architecture involves a trade-off between simplicity and extensibility: Having a few public classes stand in for a multitude of private ones makes it easier to learn and use the classes in a framework but somewhat harder to create subclasses within any of the clusters.
+{% endblockquote %}</p>
 
 <p>就像Apple文档中提到的，Class Cluster 是在简单和扩展性上面做了一个妥协。Class Clusters 的子类化比较麻烦，而且也看上去也非常trick,Apple 更推荐的方法是用组合的方法来扩展。</p>
 
@@ -472,41 +398,24 @@ NSBigMutableString
 
 <p>那么这个非常适合应用在适配上面，比如不同屏幕的适配，不同厂家可能的不同的需求。</p>
 
-<p><div class='bogus-wrapper'><notextile><figure class='code'> <div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
-<span class='line-number'>2</span>
-<span class='line-number'>3</span>
-<span class='line-number'>4</span>
-<span class='line-number'>5</span>
-<span class='line-number'>6</span>
-<span class='line-number'>7</span>
-<span class='line-number'>8</span>
-<span class='line-number'>9</span>
-<span class='line-number'>10</span>
-<span class='line-number'>11</span>
-<span class='line-number'>12</span>
-<span class='line-number'>13</span>
-<span class='line-number'>14</span>
-<span class='line-number'>15</span>
-<span class='line-number'>16</span>
-<span class='line-number'>17</span>
-</pre></td><td class='code'><pre><code class='objc'><span class='line'><span class="o">&lt;/</span><span class="n">p</span><span class="o">&gt;</span>
-</span><span class='line'>
-</span><span class='line'><span class="o">&lt;</span><span class="n">ul</span><span class="o">&gt;</span>
-</span><span class='line'><span class="o">&lt;</span><span class="n">li</span><span class="o">&gt;</span><span class="p">(</span><span class="kt">id</span><span class="p">)</span><span class="n">alloc</span> <span class="p">{</span>
-</span><span class='line'>  <span class="k">if</span> <span class="p">([</span><span class="n">self</span> <span class="n">class</span><span class="p">]</span> <span class="o">==</span> <span class="p">[</span><span class="n">SFSSearchTVC</span> <span class="n">class</span><span class="p">])</span> <span class="p">{</span>
-</span><span class='line'>
-</span><span class='line'><span class="o">&lt;</span><span class="n">pre</span><span class="o">&gt;&lt;</span><span class="n">code</span><span class="o">&gt;</span>  <span class="k">if</span> <span class="p">([</span><span class="n">UIDevice</span> <span class="n">currentDevice</span><span class="p">]</span> <span class="n">systemMajorVersion</span><span class="p">]</span> <span class="o">&amp;</span><span class="n">lt</span><span class="p">;</span> <span class="mi">7</span><span class="p">)</span> <span class="p">{</span>
-</span><span class='line'>      <span class="k">return</span> <span class="p">[</span><span class="n">SFSSearchTVC6</span> <span class="n">alloc</span><span class="p">];</span>
-</span><span class='line'>  <span class="p">}</span> <span class="k">else</span> <span class="k">if</span> <span class="p">([</span><span class="n">UIDevice</span> <span class="n">currentDevice</span><span class="p">]</span> <span class="n">systemMajorVersion</span><span class="p">]</span> <span class="o">==</span> <span class="mi">7</span><span class="p">)</span> <span class="p">{</span>
-</span><span class='line'>      <span class="k">return</span> <span class="p">[</span><span class="n">SFSSearchTVC7</span> <span class="n">alloc</span><span class="p">];</span>
-</span><span class='line'>  <span class="p">}</span>
-</span><span class='line'><span class="o">&lt;/</span><span class="n">code</span><span class="o">&gt;&lt;/</span><span class="n">pre</span><span class="o">&gt;</span>
-</span><span class='line'>
-</span><span class='line'><span class="o">&lt;</span><span class="n">p</span><span class="o">&gt;</span>  <span class="p">}</span><span class="o">&lt;/</span><span class="n">p</span><span class="o">&gt;</span>
-</span><span class='line'>
-</span><span class='line'><span class="o">&lt;</span><span class="n">p</span><span class="o">&gt;</span>  <span class="k">return</span> <span class="p">[</span><span class="n">super</span> <span class="n">alloc</span><span class="p">];</span>
-</span><span class='line'><span class="p">}</span>
-</span></code></pre></td></tr></table></div></figure></notextile></div></p></li>
+<p>{% codeblock lang:objc %}</p>
+
+<ul>
+<li>(id)alloc {
+  if ([self class] == [SFSSearchTVC class]) {
+
+<pre><code>  if ([UIDevice currentDevice] systemMajorVersion] &lt; 7) {
+      return [SFSSearchTVC6 alloc];
+  } else if ([UIDevice currentDevice] systemMajorVersion] == 7) {
+      return [SFSSearchTVC7 alloc];
+  }
+</code></pre>
+
+<p>  }</p>
+
+<p>  return [super alloc];
+}
+{% endcodeblock %}</p></li>
 </ul>
 
 
@@ -596,7 +505,9 @@ NSBigMutableString
 <p>文本档覆盖的内容中除特别描述外，和字节序相关的都是用Little-endian (小端模式)。
 文本档覆盖的内容中除特别描述外，和字符串传递相关的都是UTF-8</p>
 
-<p><div class='notebox'><p><strong>Note: </strong>ANCS 并不保证始终存在，服务开启，关闭机制由iOS系统决定，Device 需要一直检测，查找ANCS是否存在。</p></div></p>
+<p>{% notebox %}
+ANCS 并不保证始终存在，服务开启，关闭机制由iOS系统决定，Device 需要一直检测，查找ANCS是否存在。
+{% endnotebox %}</p>
 
 <h1>协议内容</h1>
 
@@ -628,7 +539,7 @@ NSBigMutableString
 
 <h3>Notification Source response format</h3>
 
-<p><span class='caption-wrapper'><img class='caption' src='/images/ancs1.png' width='' height='' title='图2-1 Notification Source characteristic 通过GATT Notification 的格式。'><span class='caption-text'>图2-1 Notification Source characteristic 通过GATT Notification 的格式。</span></span></p>
+<p>{% imgcap /images/ancs1.png 图2-1 Notification Source characteristic 通过GATT Notification 的格式。%}</p>
 
 <ul>
 <li>EventID：描述iOS设备上面的通知是增加、删除、还是修改。</li>
