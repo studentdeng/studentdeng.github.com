@@ -264,7 +264,7 @@
 
 <p>附上PPT<a href="http://files.cnblogs.com/studentdeng/Objective-CPrimary.pptx">Objective-C Primary</a> 。资源99%来自WWDC 2010 session 113。</p>
 
-<p>Common Concepts</p>
+<h1>Common Concepts</h1>
 
 <p>Objective-C 相对其他更了解的C++语言来说，还是有些不同的。如下表</p>
 
@@ -272,25 +272,38 @@
 
 <p>这里面有几点比较重要</p>
 
-<p>Objective-C 中所有的类，其实是另一种“类”的对象，所以Objective-C 中的类方法，其实是另一种类的实例方法。 Objective-C Message
-Objective-C 中没有静态变量，都是用全局变量实现的。
-Category
-如何给一个类增加一个函数方法，在C++中是不可能的（或是很难）但是在Objective-C中确实很简单的事情，category 做的就是这件事情。</p>
+<ul>
+<li>Objective-C 中所有的类，其实是另一种“类”的对象，所以Objective-C 中的类方法，其实是另一种类的实例方法。 Objective-C Message</li>
+<li>Objective-C 中没有静态变量，都是用全局变量实现的。</li>
+</ul>
+
+
+<h1>Category</h1>
+
+<p>如何给一个类增加一个函数方法，在C++中是不可能的（或是很难）但是在Objective-C中确实很简单的事情，category 做的就是这件事情。</p>
 
 <p>当第一次看到category 时，我几乎肯定这是一个非常坑爹的设计，因为这个可以完美的覆盖原有类的方法，如果使用不当，绝对是灾难性的错误。但是，随着使用时间变长category 的好处也慢慢体会出来。</p>
 
-<p>给系统原有的类或是第三方的类增加函数，而不用使用一个新的类，这样使用会更加方便，特别是使用IB时，不需要将系统的类换成自己定义的类，这样减少了非常多的移植问题和同步工作。
-当然，如果使用不当，也会遇到问题</p>
+<ul>
+<li><p>给系统原有的类或是第三方的类增加函数，而不用使用一个新的类，这样使用会更加方便，特别是使用IB时，不需要将系统的类换成自己定义的类，这样减少了非常多的移植问题和同步工作。
+当然，如果使用不当，也会遇到问题</p></li>
+<li><p>函数覆盖问题，之前提到过</p></li>
+<li>增加大量的category 会降低系统性能，特别是如果大量的加到一些基础类上，如NSObject 等，因为，几乎整个系统都在使用这些类，而过多的category，不仅降低自己代码的效率，也会降低framework代码的效率，这里的效率，应该主要在类初始化上，和消息发送上面。</li>
+</ul>
 
-<p>函数覆盖问题，之前提到过
-增加大量的category 会降低系统性能，特别是如果大量的加到一些基础类上，如NSObject 等，因为，几乎整个系统都在使用这些类，而过多的category，不仅降低自己代码的效率，也会降低framework代码的效率，这里的效率，应该主要在类初始化上，和消息发送上面。
-SEL</p>
 
-<p>相关的内容在Objective C SEL
-Memory Management
-语言是离不开平台的，而内存管理，则是了解平台中最基础的部分。而cocoa touch 的内存设计也就是基于引用计数的设计，是针对很早以前的设备设计，显然不适合现在的硬件设备。但是，现在我们似乎没有其他的选择，在一开始学习时。</p>
+<h2>SEL</h2>
 
-<p>基于引用计数的内存管理，设计的本质其实就是一个Directed Acyclic Graph（有向无回图）</p>
+<ul>
+<li>相关的内容在<a href="http://studentdeng.github.io/blog/2011/10/16/objcsel/">Objective C SEL</a></li>
+</ul>
+
+
+<h1>Memory Management</h1>
+
+<p>语言是离不开平台的，而内存管理，则是了解平台中最基础的部分。而cocoa touch 的内存设计也就是基于引用计数的设计，是针对很早以前的设备设计，显然不适合现在的硬件设备。但是，现在我们似乎没有其他的选择，在一开始学习时。</p>
+
+<p>基于引用计数的内存管理，设计的本质其实就是一个<a href="http://en.wikipedia.org/wiki/Directed_Acyclic_Graph">DAG</a>（有向无回图）</p>
 
 <p><img src="/images/objbase-2.png" alt="alt text" /></p>
 
@@ -304,8 +317,9 @@ Memory Management
 
 <p>解决引用循环的方法很多，但是实质上，都是通过抽象成父子关系来做，一个强引用，一个弱引用，图形下方的节点通过弱引用连接上面的节点，图形上方的节点，通过强引用连接下方节点。实例就是delegate，属性被声明为assign</p>
 
-<p>Autorelease Pools
-autorelease 应该是初学者最容易糊涂的地方，一开始我也非常害怕使用Autorelease 变量，因为，这些变量不仅会增大内存开销，而且使用不当，crash的位置就是main函数，调试器几乎没有任何帮助，但是仍然有非常多的framework是基于autorelease 变量的，所以还是需要屡屡。</p>
+<h1>Autorelease Pools</h1>
+
+<p>autorelease 应该是初学者最容易糊涂的地方，一开始我也非常害怕使用Autorelease 变量，因为，这些变量不仅会增大内存开销，而且使用不当，crash的位置就是main函数，调试器几乎没有任何帮助，但是仍然有非常多的framework是基于autorelease 变量的，所以还是需要屡屡。</p>
 
 <p>cocoa touch 是事件驱动的，我们通过接受一个个的event来跑我们的程序，那么简单的讲，就是一个while的死循环，不断地获取一个event，处理一个event。</p>
 
@@ -367,11 +381,11 @@ autorelease 应该是初学者最容易糊涂的地方，一开始我也非常�
   </header>
 
 
-  <div class="entry-content"><p>上一篇http://www.cnblogs.com/studentdeng/archive/2011/10/06/2199873.html，总结了一点关于Objective C message send 的有意思的东西，中间穿插了一点关于SEL有趣的东西，之前，我们知道Objective-C runtime 在处理selector时，是做一个unique hash set， 那么今天，我们看看这个set 是如何产生的。这篇文章参考了<a href="http://www.sealiesoftware.com/blog/archive/2009/09/01/objc_explain_Selector_uniquing_in_the_dyld_shared_cache.html">link</a></p>
+  <div class="entry-content"><p>上一篇<a href="http://studentdeng.github.io/blog/2011/10/06/objcmessage/">《Objective-C Message》</a>，总结了一点关于Objective-C 消息发送中有意思的东西，中间穿插了一点关于SEL有趣的东西，之前，我们知道Objective-C runtime 在处理selector时，是做一个unique hash set， 那么今天，我们看看这个set 是如何产生的。这篇文章参考了<a href="http://www.sealiesoftware.com/blog/archive/2009/09/01/objc_explain_Selector_uniquing_in_the_dyld_shared_cache.html">link</a></p>
 
 <p>unique set的好处是，字符串的比较可以非常迅速，但是也带来一个棘手的问题，创建一个这样的集合，真的不容易。虽然我们能够在compiler和 link的时候保证我们程序中唯一，但是这还远远不够，因为我们并不是生活在真空中，我们的程序需要和各种各样的其他程序协同工作，那么如何能够在这种繁杂的各种情况下，保证唯一呢？</p>
 
-<p>简单说，就是在程序A中，有一个@selector（customInit），但在程序A中引入了程序B，而B中也有一个@selector（customInit），那么，显然，我们需要修正这2个selector，使他们指向同一个内存地址，这样才能保证消息发送正确。</p>
+<p>简单说，就是在程序A中，有一个<code>@selector（customInit）</code>，但在程序A中引入了程序B，而B中也有一个<code>@selector（customInit）</code>，那么，显然，我们需要修正这2个selector，使他们指向同一个内存地址，这样才能保证消息发送正确。</p>
 
 <p>好吧，我们程序员又要惊呼了，这是一个非常非常大的开销，因为</p>
 

@@ -9,7 +9,7 @@
   <meta name="author" content="studentdeng">
 
   
-  <meta name="description" content="上一篇http://www.cnblogs.com/studentdeng/archive/2011/10/06/2199873.html，总结了一点关于Objective C message send 的有意思的东西，中间穿插了一点关于SEL有趣的东西，之前，我们知道Objective-C &hellip;">
+  <meta name="description" content="上一篇《Objective-C Message》，总结了一点关于Objective-C 消息发送中有意思的东西，中间穿插了一点关于SEL有趣的东西，之前，我们知道Objective-C runtime 在处理selector时，是做一个unique hash set， 那么今天，我们看看这个set &hellip;">
   
 
   <!-- http://t.co/dKP3o1e -->
@@ -91,11 +91,11 @@
   </header>
 
 
-<div class="entry-content"><p>上一篇http://www.cnblogs.com/studentdeng/archive/2011/10/06/2199873.html，总结了一点关于Objective C message send 的有意思的东西，中间穿插了一点关于SEL有趣的东西，之前，我们知道Objective-C runtime 在处理selector时，是做一个unique hash set， 那么今天，我们看看这个set 是如何产生的。这篇文章参考了<a href="http://www.sealiesoftware.com/blog/archive/2009/09/01/objc_explain_Selector_uniquing_in_the_dyld_shared_cache.html">link</a></p>
+<div class="entry-content"><p>上一篇<a href="http://studentdeng.github.io/blog/2011/10/06/objcmessage/">《Objective-C Message》</a>，总结了一点关于Objective-C 消息发送中有意思的东西，中间穿插了一点关于SEL有趣的东西，之前，我们知道Objective-C runtime 在处理selector时，是做一个unique hash set， 那么今天，我们看看这个set 是如何产生的。这篇文章参考了<a href="http://www.sealiesoftware.com/blog/archive/2009/09/01/objc_explain_Selector_uniquing_in_the_dyld_shared_cache.html">link</a></p>
 
 <p>unique set的好处是，字符串的比较可以非常迅速，但是也带来一个棘手的问题，创建一个这样的集合，真的不容易。虽然我们能够在compiler和 link的时候保证我们程序中唯一，但是这还远远不够，因为我们并不是生活在真空中，我们的程序需要和各种各样的其他程序协同工作，那么如何能够在这种繁杂的各种情况下，保证唯一呢？</p>
 
-<p>简单说，就是在程序A中，有一个@selector（customInit），但在程序A中引入了程序B，而B中也有一个@selector（customInit），那么，显然，我们需要修正这2个selector，使他们指向同一个内存地址，这样才能保证消息发送正确。</p>
+<p>简单说，就是在程序A中，有一个<code>@selector（customInit）</code>，但在程序A中引入了程序B，而B中也有一个<code>@selector（customInit）</code>，那么，显然，我们需要修正这2个selector，使他们指向同一个内存地址，这样才能保证消息发送正确。</p>
 
 <p>好吧，我们程序员又要惊呼了，这是一个非常非常大的开销，因为</p>
 

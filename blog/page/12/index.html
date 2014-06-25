@@ -96,13 +96,13 @@
 
   <div class="entry-content"><p>object c 里面有一个非常有趣的设计，如果之前了解过c++的家伙们，对object c 中的把传统的调用函数变成了向这个类发送消息，这个过程总是令人琢磨不透，在实际过程中遇到的crash也很难调试清楚。这篇就要详细的解释消息这个家伙。当然，消息这个涉及的东西实在是太多了。这篇先简单介绍一下。</p>
 
-<p>上一篇，我们了解了什么是类http://www.cnblogs.com/studentdeng/archive/2011/10/01/2197194.html。同理这一篇，我们首先需要了解什么是message。</p>
+<p>上一篇，我们了解了什么是类<a href="http://studentdeng.github.io/blog/2011/10/05/objcclass/">《Objcclass》</a>。同理这一篇，我们首先需要了解什么是message。</p>
 
-<p>message（消息）：message的具体定义很难说，因为并没有真正的代码描述，简单的讲message 是一种抽象，包括了函数名+参数列表，他并没有实际的实体存在。</p>
+<p><strong>message（消息）</strong>：message的具体定义很难说，因为并没有真正的代码描述，简单的讲message 是一种抽象，包括了函数名+参数列表，他并没有实际的实体存在。</p>
 
-<p>method（方法）：method是真正的存在的代码。如：- (int)meaning { return 42; }</p>
+<p><strong>method（方法）</strong>：method是真正的存在的代码。如：<code>- (int)meaning { return 42; }</code></p>
 
-<p>selector: selector 通过SEL类型存在，描述一个特定的method or message。在实际编程中，可以通过selector来检索函数等操作。</p>
+<p><strong>selector:</strong>selector 通过SEL类型存在，描述一个特定的method or message。在实际编程中，可以通过selector来检索函数等操作。</p>
 
 <p>我不知道上面这种描述有多少人可以明白，因为我觉得这3个每个人都可以有自己的看法，在了解object c message 的整个过程之后。</p>
 
@@ -134,8 +134,9 @@
 
 <p>　　</p>
 
-<p>而 objc_msgSend 是一个我们非常熟悉的C函数定义 id objc_msgSend(id self, SEL    _cmd,&#8230;);
-那么，object c 发送消息就变成了一个表面上看似容易理解的C函数调用了，这里有必要解释一下几个名词</p>
+<p>而 <code>objc_msgSend</code> 是一个我们非常熟悉的C函数定义 <code>id objc_msgSend(id self, SEL    _cmd,...);</code></p>
+
+<p>那么，object c 发送消息就变成了一个表面上看似容易理解的C函数调用了，这里有必要解释一下几个名词</p>
 
 <pre><code>id：很多地方说id是一个void *的指针。事实上，id 其实是这样子的
 typedef struct objc_object {
@@ -155,7 +156,8 @@ NSLog (@"%s", (char *)selector);  //print message
 
 <p>　　</p>
 
-<p>注：这里之所以说粗鲁，是因为，这个的定义和object runtime 的具体实现息息相关，未来很可能改变，而这些定义也是没有文档化的，后面还会详细介绍SEL的具体实现。因为这里有不少为了提高效率而做的优化。</p>
+<div class='notebox'><p><strong>Note: </strong>这里之所以说粗鲁，是因为，这个的定义和object runtime 的具体实现息息相关，未来很可能改变，而这些定义也是没有文档化的，后面还会详细介绍SEL的具体实现。因为这里有不少为了提高效率而做的优化。</p></div>
+
 
 <p>不知道有没有人惊呼这个问题。特别是如果之前从事C++的家伙们。传统的C++ 编译器在处理函数上，为了支持函数重载。使用了一种函数别名的方式如</p>
 
@@ -195,7 +197,8 @@ NSLog (@"%s", (char *)selector);  //print message
 
 <p>　　</p>
 
-<p>注：这样的函数命名的好坏，只能说是因人而异的，站在我的角度来讲。object c 的这种命名实在是太臃肿了，这种冗长的名字让人感到作呕而没有任何美感。当然，这样的命名的确可以避免很多的错误，比如因C++ 函数重载而引起的人为上的小失误，而且减少了理解函数的负担。总有利弊，需要平衡：P，不过，我还是不喜欢object c 编译器，因为他彻底阻挡了你的想法，至于为什么这样设计，我的理解是为了runtime，在这里为了性能而做了妥协，具体原因，后面再讲。</p>
+<div class='notebox'><p><strong>Note: </strong>这样的函数命名的好坏，只能说是因人而异的，站在我的角度来讲。object c 的这种命名实在是太臃肿了，这种冗长的名字让人感到作呕而没有任何美感。当然，这样的命名的确可以避免很多的错误，比如因C++ 函数重载而引起的人为上的小失误，而且减少了理解函数的负担。总有利弊，需要平衡：P，不过，我还是不喜欢object c 编译器，因为他彻底阻挡了你的想法，至于为什么这样设计，我的理解是为了runtime，在这里为了性能而做了妥协，具体原因，后面再讲。</p></div>
+
 
 <pre><code>popup our brain stack
 </code></pre>
@@ -232,21 +235,23 @@ typedef struct method_t {
 
 <p>那么，我们就发现了。如果object c 这样设计，调用函数的成本实在是太高了，相对传统的C函数调用。那么编译器和runtime又做了那些优化呢？有意思的事情开始了。</p>
 
-<p>1、字符串比较
-我们发现了SEL 就是简单的一个char* 字符串。那么，光是比较这一串字符，就可以让object c 慢的让人作呕了。那么我们就需要再认识一下我们的SEL了。</p>
+<h2>1、字符串比较</h2>
+
+<p>我们发现了SEL 就是简单的一个char* 字符串。那么，光是比较这一串字符，就可以让object-c 慢的让人作呕了。那么我们就需要再认识一下我们的SEL了。</p>
 
 <p>runtime 在实现selector是，实现了一个很大的Set，简单的说就是一个经过了杠杠优化过的hash表。而Set的特点就是唯一，也就是SEL是唯一的。那么对于字符串的比较仅仅需要比较他们的地址就可以了。犀利，速度上无语伦比，但是，有一个问题，就是数量增多会增大hash冲突而导致的性能下降（或是没有冲突，因为也可能用的是perfect hash）。但是不管使用什么样的方法加速，如果能够将总量减少，那将是最犀利的方法。那么，我们就不难理解，为什么SEL仅仅是函数名了。这样如</p>
 
-<p>class A 有一个这样的method  -(void)setWidth:(int)width；</p>
+<p>class A 有一个这样的method  <code>-(void)setWidth:(int)width；</code></p>
 
-<p>而 classB 有一个这样的method -(void)setWidth:(double)width；</p>
+<p>而 classB 有一个这样的method <code>-(void)setWidth:(double)width；</code></p>
 
 <p>那么的selector 将指向同一个地方，使用同一个selector，如果真的需要在类中定义类似重载时，只能使用不同的函数名了。</p>
 
 <p>但是，这样的优化，依然不能让人满意，因为，根据二八原则，我们真正执行的只是少数代码。那么。就有</p>
 
-<p>2、cache
-cache的原则就是缓存那些可能要执行的函数地址，那么下次调用的时候，速度就可以快速很多。这个和CPU的各种缓存原理相通。好吧，说了这么多了，再来认识几个名词</p>
+<h2>2、cache</h2>
+
+<p>cache的原则就是缓存那些可能要执行的函数地址，那么下次调用的时候，速度就可以快速很多。这个和CPU的各种缓存原理相通。好吧，说了这么多了，再来认识几个名词</p>
 
 <pre><code>struct objc_cache {
     uintptr_t mask;            /* total = mask + 1 */
@@ -265,11 +270,11 @@ typedef struct {
 
 <p>看这个结构，有没有搞错又是hash table。</p>
 
-<p>objc_msgSend 首先在cache list 中找SEL 没有找到就在class 找，super class 找（当然super class 也有cache list）。</p>
+<p><code>objc_msgSend</code> 首先在cache list 中找SEL 没有找到就在class 找，super class 找（当然super class 也有cache list）。</p>
 
 <p>而cache的机制则非常复杂了，由于object c 是动态语言。所以，这里面还有很多的多线程同步问题，而这些锁又是效率的大敌，相关的内容已经远远超过本文讨论的范围。</p>
 
-<p>popup our brain stack</p>
+<h2>popup our brain stack</h2>
 
 <p>有了上面的粗略的介绍，是时候让我们看看objc_msgSend 的真面目了，当然，对于这个家伙是和性能息息相关的东西，没有任何缘由的是用汇编来写的。这里面贴出x86的，原谅我已经把arm汇编忘记了（主要原因是arm汇编是老师教得，x86是自学的，没有听学校老师的 ：P）。</p>
 
@@ -318,7 +323,7 @@ LMsgSendExit:
 
 <p>注释非常的详细+代码本身自解释，不做赘述，汇编的可读性都比我写的强，牛到不需要解释的代码。</p>
 
-<p>MethodTableLookup 跳到__class_lookupMethodAndLoadCache</p>
+<p><code>MethodTableLookup</code> 跳到<code>__class_lookupMethodAndLoadCache</code></p>
 
 <pre><code>/***********************************************************************
 * lookUpMethod.
@@ -467,9 +472,9 @@ __private_extern__ IMP lookUpMethod(Class cls, SEL sel,
 
   <div class="entry-content"><p>之前一直做C++开发，最近2个多月转 Objective-C， 入门的时候，遇到了很多的困惑。现在过节，正是解决他们的好时机。</p>
 
-<p>主要参考来自http://www.sealiesoftware.com/blog/archive/2009/04/14/objc_explain_Classes_and_metaclasses.html</p>
+<p>主要参考来自<a href="http://www.sealiesoftware.com/blog/archive/2009/04/14/objc_explain_Classes_and_metaclasses.html">link</a></p>
 
-<p> Objective-C 也是面向对象的语言，那么，首先需要知道的就是什么是class。</p>
+<p>Objective-C 也是面向对象的语言，那么，首先需要知道的就是什么是class。</p>
 
 <p>C++ 的class相对 Objective-C 中的class，就简单明了很多了。C++ 中class简单的说，就是一个大的struct， 绝大部分的class可以在编译时决定好class的布局（通过虚继承来的class成员变量只能动态确定）。当然，最关键的是，你不可能在运行时创建一个class，因为所有的class在运行之前已经确定下来，并保存在二进制文件中。</p>
 

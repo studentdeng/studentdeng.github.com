@@ -423,7 +423,7 @@ datadir=C:/mysql_code/mysql-5-1.1.68/win/data
   </header>
 
 
-  <div class="entry-content"><p>内容主要来自http://www.galloway.me.uk/2012/01/a-look-under-arcs-hood-episode-1/ 里面加入了一点点自己的吐槽和理解</p>
+  <div class="entry-content"><p>内容主要来自<a href="http://www.galloway.me.uk/2012/01/a-look-under-arcs-hood-episode-1/">《a-look-under-arcs-hood-episode-1》</a> 里面加入了一点点自己的吐槽和理解</p>
 
 <p>已经有很久很久没有写一些 under the hood 的东西了, 好久没有学习新的技术了, 不说废话了.
 ARC 是编译器的技术, 不知道为什么, 我对编译器增加额外代码有着非常大的恐惧, 是因为和C++ 相关么? 不知道, anyway ARC 的确帮我这样的码农减少了工作量, 对于一向懒惰的我来说, 我还是更倾向于省事.</p>
@@ -473,7 +473,7 @@ ARC 是编译器的技术, 不知道为什么, 我对编译器增加额外代码
 <pre><code>clang -isysroot /Applications/Xcode.app/Contents/Developer/Platforms/iPhoneOS.platform/Developer/SDKs/iPhoneOS6.1.sdk/ -arch armv7 -fobjc-arc -O3 -S -o test_arc_on.s test_arc.m
 </code></pre>
 
-<p>让我们先看一下 changeFooDirect 在没有开启arc时的样子, 当然, 如果有人和我一起工作,敢写出这样的代码, 肯定会让我喷的体无完肤的: )</p>
+<p>让我们先看一下 <code>changeFooDirect</code> 在没有开启arc时的样子, 当然, 如果有人和我一起工作,敢写出这样的代码, 肯定会让我喷的体无完肤的: )</p>
 
 <pre><code>.align  2
 .code   16                      @ @"\01-[ClassA changeFooDirect:]"
@@ -489,8 +489,8 @@ LPC0_0:
     bx  lr
 </code></pre>
 
-<p>这里可以看出, 只是简单的覆盖变量, 没有retain release, 非常容易产生内存问题.
-再看一下 changeFooDirect 开启ARC后的样子</p>
+<p>这里可以看出, 只是简单的覆盖变量, 没有<code>retain release</code>, 非常容易产生内存问题.
+再看一下 <code>changeFooDirect</code> 开启ARC后的样子</p>
 
 <pre><code>.align  2
 .code   16                      @ @"\01-[ClassA changeFooDirect:]"
@@ -518,7 +518,7 @@ LPC0_0:
 
 <p><strong>这里我再次声明一下, 类似changeFooDirect 这样的代码 只是用于研究, 访问类实例成员变量时都应该使用property方法而不是直接访问或是修改</strong></p>
 
-<p>changeFooSetter 这里我们看到无论是否开启ARC 生成的代码都是一样的.调用自动生成的setter 方法</p>
+<p><code>changeFooSetter</code> 这里我们看到无论是否开启ARC 生成的代码都是一样的.调用自动生成的setter 方法</p>
 
 <pre><code>.align  2
 .code   16                      @ @"\01-[ClassA changeFooSetter:]"
@@ -564,7 +564,7 @@ pop.w   {r7, lr}
 b.w _objc_autoreleaseReturnValue               //如果没有开启ARC 则没有 _objc_autoreleaseReturnValue
 </code></pre>
 
-<p>关于_objc_autoreleaseReturnValue 也有很多有趣的事情, 如果把这个家伙简单的理解成autorelease就大错特错了, 编译器会对这些做优化, 减少一些无谓的retain release 来提高代码效率</p>
+<p>关于<code>_objc_autoreleaseReturnValue</code> 也有很多有趣的事情, 如果把这个家伙简单的理解成autorelease就大错特错了, 编译器会对这些做优化, 减少一些无谓的retain release 来提高代码效率</p>
 
 <p>newNumber 和我们想的也一样, 在开启ARC的时候, 并没有增加 类似autorelease 的函数, 而是将retain count 保持为1.</p>
 
