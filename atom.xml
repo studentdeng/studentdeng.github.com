@@ -4,7 +4,7 @@
   <title><![CDATA[不会开机的男孩]]></title>
   <link href="http://studentdeng.github.com/atom.xml" rel="self"/>
   <link href="http://studentdeng.github.com/"/>
-  <updated>2014-07-02T13:35:20+08:00</updated>
+  <updated>2014-08-12T18:07:12+08:00</updated>
   <id>http://studentdeng.github.com/</id>
   <author>
     <name><![CDATA[studentdeng]]></name>
@@ -12,6 +12,171 @@
   </author>
   <generator uri="http://octopress.org/">Octopress</generator>
 
+  
+  <entry>
+    <title type="html"><![CDATA[机器学习(一) 简单的背景介绍、线性回归、梯度下降]]></title>
+    <link href="http://studentdeng.github.com/blog/2014/07/28/machine-learning-tutorial/"/>
+    <updated>2014-07-28T16:48:00+08:00</updated>
+    <id>http://studentdeng.github.com/blog/2014/07/28/machine-learning-tutorial</id>
+    <content type="html"><![CDATA[<h1>Introduction</h1>
+
+<p>机器学习很久之前就已经热得不行了，直到最近这几个星期，自己才打算了解一些这方面的东西。原因大概有这么3点。</p>
+
+<ol>
+<li>自从Andrew Ng 加入我厂之后(虽然和我毛关系也没有)，总觉得还是需要围观一下这个令他兴奋的领域。</li>
+<li>在听了IDL的有关手环算法分享后(其实毛也没有听懂), 在知道了一大堆的名词如最小二乘、梯度下降、SVM。以及里面很多的线性代数，微积分的概念，让我觉得这是一个很好的回收自己大学时期的沉默成本(微积分、现代是我在学校里面不多的用心学过的课程)的好机会。总之就是对这些很感兴趣。</li>
+<li>前一段时间受组里高工分享睡眠算法影响，对这种阅读paper，然后优化算法的过程感到很开心。</li>
+</ol>
+
+
+<p>有了这3条，足够我忙活好几个月了 : )</p>
+
+<h1>Background</h1>
+
+<p>在机器学习中，有2个很大的思路<code>监督学习(supervised learning)</code>和<code>非监督学习(unsupervised learning)</code></p>
+
+<p>监督学习，用通俗的话来说就是<code>你知道问题的答案，需要计算机给出一个更标准的答案</code>。</p>
+
+<p>非监督学习，用通俗的话来说就是<code>物以类聚，人以群分</code>。我们拿到了很多数据，但是不知道问题的答案，希望计算机给我们提供思路。</p>
+
+<p>在生产环境中，往往采用混合模式。比如图片搜索，如何能够查找网页中判断那个图片是老虎，那个是狗。就有2个思路。</p>
+
+<ol>
+<li>根据图片周围的文字。</li>
+<li>图片的图像数据分析。</li>
+</ol>
+
+
+<p>2个角度相互校验，稳定之后，就可以产生足够的标注信息了。</p>
+
+<h1>线性回归(Linear regression)</h1>
+
+<p>线性回归主要用于手环的里程部分的计算，涉及到更细节的是 最小二乘，梯度下降。这里从先从最简单的一元线性回归开始。</p>
+
+<h2>一元线性回归(Linear regression with one variable)</h2>
+
+<p>Regression Problem : Predict real-valued output</p>
+
+<p><span class='caption-wrapper'><img class='caption' src='http://studentdeng.github.com/images/ml/8.png' width='' height='' title='1-1 算法运行的过程'><span class='caption-text'>1-1 算法运行的过程</span></span></p>
+
+<p>最关键的在于如何描述hypothesis。</p>
+
+<p><span class='caption-wrapper'><img class='caption' src='http://studentdeng.github.com/images/ml/1.png' width='' height='' title='1-2 一元线性回归中的hypothesis函数'><span class='caption-text'>1-2 一元线性回归中的hypothesis函数</span></span></p>
+
+<p>那么应该如何选取参数呢？直觉告诉我们这个直线需要尽可能的拟合我们的数据集。</p>
+
+<p><span class='caption-wrapper'><img class='caption' src='http://studentdeng.github.com/images/ml/9.png' width='' height='' title='1-3 线性回归的目标函数'><span class='caption-text'>1-3 线性回归的目标函数</span></span></p>
+
+<p>通过下面的cost function 来评估参数的好坏。算法的目标也很清晰，让函数越小越好。</p>
+
+<p><span class='caption-wrapper'><img class='caption' src='http://studentdeng.github.com/images/ml/12.png' width='' height='' title='1-4 cost function'><span class='caption-text'>1-4 cost function</span></span></p>
+
+<p>那个这个cost function 到底是个什么样子呢？</p>
+
+<p><span class='caption-wrapper'><img class='caption' src='http://studentdeng.github.com/images/ml/2.png' width='' height='' title='1-5 图形化的cost function'><span class='caption-text'>1-5 图形化的cost function</span></span></p>
+
+<p>当然这个图还是看起来比较麻烦，Andrew 用了更为简单绘制的图来表示（有点类似等高线）。
+相同的圆圈上，有着相同的cost function value。这里可以看到和上面的图一样，有一个极值。</p>
+
+<p><span class='caption-wrapper'><img class='caption' src='http://studentdeng.github.com/images/ml/7.png' width='' height='' title='1-6 一个比较差的选择'><span class='caption-text'>1-6 一个比较差的选择</span></span></p>
+
+<p><span class='caption-wrapper'><img class='caption' src='http://studentdeng.github.com/images/ml/18.png' width='' height='' title='1-7 一个很接近极值的选择'><span class='caption-text'>1-7 一个很接近极值的选择</span></span></p>
+
+<h1>梯度下降 (Gradient descent)</h1>
+
+<p>梯度下降，不仅仅是用于线性回归，也可以用在其他机器学习的场景下。</p>
+
+<p><span class='caption-wrapper'><img class='caption' src='http://studentdeng.github.com/images/ml/3.png' width='' height='' title='1-8 梯度下降的思路（2个参数的情况）'><span class='caption-text'>1-8 梯度下降的思路（2个参数的情况）</span></span></p>
+
+<p><span class='caption-wrapper'><img class='caption' src='http://studentdeng.github.com/images/ml/10.png' width='' height='' title='1-9 梯度下降函数图形（2个参数的情况）'><span class='caption-text'>1-9 梯度下降函数图形（2个参数的情况）</span></span></p>
+
+<p>我们的目标是寻找这个图形中的最小值，也就是靠近蓝色的地方。直觉告诉我们，我们先随机一个点，然后沿着最大的坡度向下走最后就可以走到一个极值里。</p>
+
+<p><span class='caption-wrapper'><img class='caption' src='http://studentdeng.github.com/images/ml/16.png' width='' height='' title='1-10 一条算法路径，全局最优'><span class='caption-text'>1-10 一条算法路径，全局最优</span></span></p>
+
+<p>这个算法也有问题，随着第一个点的位置不同，我们可能找到一个局部最优的解，而不是全局最优。</p>
+
+<p><span class='caption-wrapper'><img class='caption' src='http://studentdeng.github.com/images/ml/14.png' width='' height='' title='1-11 另一条算法路径，局部最优'><span class='caption-text'>1-11 另一条算法路径，局部最优</span></span></p>
+
+<p>好在在很多实际问题中，我们遇到的情况要好很多，往往<strong>只有一个极值</strong>。</p>
+
+<p>那么梯度下降的算法就可以简单的描述出来，分别计算2个维度的偏导数，直到函数收敛</p>
+
+<p><span class='caption-wrapper'><img class='caption' src='http://studentdeng.github.com/images/ml/5.png' width='' height='' title='1-12'><span class='caption-text'>1-12</span></span></p>
+
+<p>通过分别计算偏导数,a 为learning rate，决定每一步的步长，太小函数收敛很慢，太大则可能无法找到极值，甚至函数无法收敛。</p>
+
+<p>这里Andrew 着重指出了一个叫做同步更新的概念</p>
+
+<p><span class='caption-wrapper'><img class='caption' src='http://studentdeng.github.com/images/ml/11.png' width='' height='' title='1-13'><span class='caption-text'>1-13</span></span></p>
+
+<p>如果不同步更新，最后也可以得到极致，但是Andrew 更推荐计算完成所有的参数之后，再一起同步更新。</p>
+
+<h2>梯度下降和一元线性回归</h2>
+
+<p>将图1-4分别偏导后</p>
+
+<p><span class='caption-wrapper'><img class='caption' src='http://studentdeng.github.com/images/ml/15.png' width='' height='' title='1-14 算法公式'><span class='caption-text'>1-14 算法公式</span></span></p>
+
+<h2>其他</h2>
+
+<ol>
+<li>根据上面的算法，如果我们的cost function 在一些地方不可导，那算法不就没法继续了？</li>
+<li>有其他的方法，可以不去循环计算而是直接根据工具计算</li>
+</ol>
+
+
+<h2>梯度下降和一般化的线性回归</h2>
+
+<p>很多时候我们不仅仅满足2个参数，决定事情的因素很多，我们需要更一般化的公式。</p>
+
+<p><span class='caption-wrapper'><img class='caption' src='http://studentdeng.github.com/images/ml/4.png' width='' height='' title='1-15'><span class='caption-text'>1-15</span></span></p>
+
+<p>算法</p>
+
+<p><span class='caption-wrapper'><img class='caption' src='http://studentdeng.github.com/images/ml/19.png' width='' height='' title='1-16'><span class='caption-text'>1-16</span></span></p>
+
+<p>分别求偏导后</p>
+
+<p><span class='caption-wrapper'><img class='caption' src='http://studentdeng.github.com/images/ml/17.png' width='' height='' title='1-17'><span class='caption-text'>1-17</span></span></p>
+
+<h1>梯度下降生产环境中的一些技巧</h1>
+
+<h2>Feature Scaling</h2>
+
+<p>思路: 希望所有的feature在相同或是类似的范围之内，这样梯度下降会更快收敛。</p>
+
+<p>下图是feature的范围不在一起的运算过程，可以看出来不是圆形，2个维度调整的步长不一样，导致很多反复</p>
+
+<p><span class='caption-wrapper'><img class='caption' src='http://studentdeng.github.com/images/ml/21.png' width='' height='' title='1-18 红色箭头表示算法的一次迭代'><span class='caption-text'>1-18 红色箭头表示算法的一次迭代</span></span></p>
+
+<p>下图则是调整过的feature，好了很多</p>
+
+<p><span class='caption-wrapper'><img class='caption' src='http://studentdeng.github.com/images/ml/23.png' width='' height='' title='1-19 红色箭头表示算法的一次迭代'><span class='caption-text'>1-19 红色箭头表示算法的一次迭代</span></span></p>
+
+<p>更一般的，Andrew 推荐每一个feature放在[-1, 1]区间范围内</p>
+
+<h2>Learning Rate</h2>
+
+<p>说到Learning Rate 就不能不提收敛(convergence)。一般应该定义多大的阀值来判断是否收敛呢？</p>
+
+<p><span class='caption-wrapper'><img class='caption' src='http://studentdeng.github.com/images/ml/6.png' width='' height='' title='1-20 Andrew 并不推荐使用一个阀值来判断是否收敛'><span class='caption-text'>1-20 Andrew 并不推荐使用一个阀值来判断是否收敛</span></span></p>
+
+<p>Andrew 更推荐用图表的形式，因为这个不仅仅可以看到是否马上收敛，而且还能看到算法是否运行正常，是不是一些参数的问题，导致算法无法收敛。</p>
+
+<p><span class='caption-wrapper'><img class='caption' src='http://studentdeng.github.com/images/ml/20.png' width='' height='' title='1-21'><span class='caption-text'>1-21</span></span></p>
+
+<p>下图是2个出了问题的J函数，通常来说是Learning Rate 过大。</p>
+
+<p><span class='caption-wrapper'><img class='caption' src='http://studentdeng.github.com/images/ml/25.png' width='' height='' title='1-22 一些过大的Learning Rate 导致的图形'><span class='caption-text'>1-22 一些过大的Learning Rate 导致的图形</span></span></p>
+
+<p>最后Andrew 还提供了一些practice的Learning Rate 选取方法，比如一些0.001, 0.003, 0.01, 0.03, 0.1, &#8230;</p>
+
+<h2>参考</h2>
+
+<p><a href="https://class.coursera.org/ml-006">Coursera 《Machine Learning》 Stanford Andrew Ng</a></p>
+]]></content>
+  </entry>
   
   <entry>
     <title type="html"><![CDATA[Core Animation基本概念和Additive Animation]]></title>
@@ -47,7 +212,6 @@
 <span class='line-number'>7</span>
 <span class='line-number'>8</span>
 <span class='line-number'>9</span>
-<span class='line-number'>10</span>
 </pre></td><td class='code'><pre><code class='objc'><span class='line'>   <span class="p">[</span><span class="n">UIView</span> <span class="nl">animateWithDuration:</span><span class="mf">5.0f</span>
 </span><span class='line'>                   <span class="nl">animations:</span><span class="o">^</span><span class="p">{</span>
 </span><span class='line'>                     <span class="n">self</span><span class="p">.</span><span class="n">animationLabel</span><span class="p">.</span><span class="n">center</span> <span class="o">=</span> <span class="n">CGPointMake</span><span class="p">(</span><span class="mi">200</span><span class="p">,</span> <span class="mi">400</span><span class="p">);</span>
@@ -57,7 +221,6 @@
 </span><span class='line'>  <span class="n">CALayer</span> <span class="o">*</span><span class="n">layer</span> <span class="o">=</span> <span class="n">self</span><span class="p">.</span><span class="n">animationLabel</span><span class="p">.</span><span class="n">layer</span><span class="p">.</span><span class="n">presentationLayer</span><span class="p">;</span>
 </span><span class='line'>
 </span><span class='line'>  <span class="n">NSLog</span><span class="p">(</span><span class="s">@&quot;model:%@, presentLayer%@&quot;</span><span class="p">,</span> <span class="n">NSStringFromCGPoint</span><span class="p">(</span><span class="n">self</span><span class="p">.</span><span class="n">animationLabel</span><span class="p">.</span><span class="n">layer</span><span class="p">.</span><span class="n">position</span><span class="p">),</span> <span class="n">NSStringFromCGPoint</span><span class="p">(</span><span class="n">layer</span><span class="p">.</span><span class="n">position</span><span class="p">));</span>
-</span><span class='line'>  
 </span></code></pre></td></tr></table></div></figure>
 
 
@@ -119,7 +282,6 @@ model:{200, 400}, presentLayer{200, 400}
 <span class='line-number'>7</span>
 <span class='line-number'>8</span>
 <span class='line-number'>9</span>
-<span class='line-number'>10</span>
 </pre></td><td class='code'><pre><code class='objc'><span class='line'>   <span class="n">animationView</span><span class="p">.</span><span class="n">center</span> <span class="o">=</span> <span class="n">CGPointMake</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="mi">0</span><span class="p">);</span>
 </span><span class='line'>    <span class="p">[</span><span class="n">UIView</span> <span class="nl">animateWithDuration:</span><span class="mf">1.0f</span>
 </span><span class='line'>                        <span class="nl">delay:</span><span class="mi">0</span>
@@ -129,7 +291,6 @@ model:{200, 400}, presentLayer{200, 400}
 </span><span class='line'>                   <span class="p">}</span> <span class="nl">completion:</span><span class="o">^</span><span class="p">(</span><span class="kt">BOOL</span> <span class="n">finished</span><span class="p">)</span> <span class="p">{</span>
 </span><span class='line'>
 </span><span class='line'>                   <span class="p">}];</span>
-</span><span class='line'>
 </span></code></pre></td></tr></table></div></figure>
 
 
@@ -165,7 +326,6 @@ model:{200, 400}, presentLayer{200, 400}
 <span class='line-number'>6</span>
 <span class='line-number'>7</span>
 <span class='line-number'>8</span>
-<span class='line-number'>9</span>
 </pre></td><td class='code'><pre><code class='objc'><span class='line'>   <span class="p">[</span><span class="n">UIView</span> <span class="nl">animateWithDuration:</span><span class="mf">1.0f</span>
 </span><span class='line'>                        <span class="nl">delay:</span><span class="mi">0</span>
 </span><span class='line'>                      <span class="nl">options:</span><span class="n">UIViewAnimationOptionCurveLinear</span>
@@ -174,7 +334,6 @@ model:{200, 400}, presentLayer{200, 400}
 </span><span class='line'>                   <span class="p">}</span> <span class="nl">completion:</span><span class="o">^</span><span class="p">(</span><span class="kt">BOOL</span> <span class="n">finished</span><span class="p">)</span> <span class="p">{</span>
 </span><span class='line'>
 </span><span class='line'>                   <span class="p">}];</span>
-</span><span class='line'>
 </span></code></pre></td></tr></table></div></figure>
 
 
@@ -2472,303 +2631,6 @@ end
 </code></pre>
 
 <p>如果希望更多的了解cocoapods，还是需要去<a href="https://github.com/CocoaPods/CocoaPods">Github</a>上面 :D</p>
-]]></content>
-  </entry>
-  
-  <entry>
-    <title type="html"><![CDATA[redis服务器启动流程]]></title>
-    <link href="http://studentdeng.github.com/blog/2013/08/19/redis-start-up/"/>
-    <updated>2013-08-19T10:26:00+08:00</updated>
-    <id>http://studentdeng.github.com/blog/2013/08/19/redis-start-up</id>
-    <content type="html"><![CDATA[<p><img src="http://pauladamsmith.com/articles/redis_under_the_hood/startup.png" alt="整个系统初始化流程图" /></p>
-
-<p>让我们从 redis.c -> main() 开始</p>
-
-<h1>读取配置文件</h1>
-
-<p>在初始化完毕一些系统时间之后，redis开始初始化服务器配置。</p>
-
-<h2>initServerConfig</h2>
-
-<p>在这个函数中，初始化全局变量</p>
-
-<pre><code>struct redisServer server; /* server global state */
-</code></pre>
-
-<p>struct redisServer 结构体描述了服务器的状态。这种庞大的数据结构实在是看的烦躁。
-这里可以很方便的看到redis的系统默认配置。另外还初始化了系统命令表。</p>
-
-<pre><code>server.commands = dictCreate(&amp;commandTableDictType,NULL);
-populateCommandTable();
-</code></pre>
-
-<p>这里我们可以找到redis的命令所对应的函数名称。</p>
-
-<pre><code>struct redisCommand redisCommandTable[] = {
-    {"get",getCommand,2,"r",0,NULL,1,1,1,0,0},
-    {"set",setCommand,3,"wm",0,noPreloadGetKeys,1,1,1,0,0},
-    {"setnx",setnxCommand,3,"wm",0,noPreloadGetKeys,1,1,1,0,0},
-    {"setex",setexCommand,4,"wm",0,noPreloadGetKeys,1,1,1,0,0},
-    {"psetex",psetexCommand,4,"wm",0,noPreloadGetKeys,1,1,1,0,0},
-    {"append",appendCommand,3,"wm",0,NULL,1,1,1,0,0},
-    //...
-}
-
-
-struct redisCommand {
-    // 命令的名字
-    char *name;
-    // 命令的实现函数
-    redisCommandProc *proc;
-    // 命令所需的参数数量
-    int arity;
-    // 字符形式表示的 FLAG 值
-    char *sflags; /* Flags as string represenation, one char per flag. */
-    // 实际的 FLAG 值，由 sflags 计算得出
-    int flags;    /* The actual flags, obtained from the 'sflags' field. */
-    /* Use a function to determine keys arguments in a command line.
-     * Used for Redis Cluster redirect. */
-    // 可选，在以下三个参数不足以决定命令的 key 参数时使用
-    redisGetKeysProc *getkeys_proc;
-    /* What keys should be loaded in background when calling this command? */
-    // 第一个 key 的位置
-    int firstkey; /* The first argument that's a key (0 = no keys) */
-    // 第二个 key 的位置
-    int lastkey;  /* THe last argument that's a key */
-    // 两个 key 之间的空隔
-    int keystep;  /* The step between first and last key */
-    // 这个命令被执行所耗费的总毫秒数
-    long long microseconds;
-    // 这个命令被调用的总次数
-    long long calls;
-};
-</code></pre>
-
-<p>这里可以看出，redis的命令配置，保存在底层数据结构dic中。</p>
-
-<h1>服务器初始化</h1>
-
-<h2>initServer</h2>
-
-<p>这里设置信号回调函数，和继续初始化</p>
-
-<pre><code>struct redisServer server; /* server global state */
-</code></pre>
-
-<p>结构外，创建了SharedObjects。</p>
-
-<h3>createSharedObjects</h3>
-
-<pre><code>initServer-&gt;createSharedObjects
-</code></pre>
-
-<p>redis这里将除了把一些常用的字符串保存起来，目的就是为了减少不断申请释放时CPU时间，内存碎片等等,常用的返回客户端的命令，消息等。如</p>
-
-<pre><code>shared.ok = createObject(REDIS_STRING,sdsnew("+OK\r\n"));
-shared.err = createObject(REDIS_STRING,sdsnew("-ERR\r\n"));
-
-//...
-
-shared.wrongtypeerr = createObject(REDIS_STRING,sdsnew(
-    "-WRONGTYPE Operation against a key holding the wrong kind of value\r\n"));
-//...
-</code></pre>
-
-<p>还初始化了一个很大的共享数字对象。</p>
-
-<pre><code>#define REDIS_SHARED_INTEGERS 10000
-
-for (j = 0; j &lt; REDIS_SHARED_INTEGERS; j++) {
-    shared.integers[j] = createObject(REDIS_STRING,(void*)(long)j);
-    shared.integers[j]-&gt;encoding = REDIS_ENCODING_INT;
-}
-</code></pre>
-
-<h3>aeCreateEventLoop</h3>
-
-<pre><code>initServer-&gt;aeCreateEventLoop
-
-
-
-/* Include the best multiplexing layer supported by this system.
-* The following should be ordered by performances, descending. */
-#ifdef HAVE_EVPORT
-    #include "ae_evport.c"
-#else
-    #ifdef HAVE_EPOLL
-        #include "ae_epoll.c"
-    #else
-        #ifdef HAVE_KQUEUE
-            #include "ae_kqueue.c"
-        #else
-            #include "ae_select.c"
-        #endif
-    #endif
-#endif
-</code></pre>
-
-<p>接下来创建eventloop。这里调用 aeApiCreate 创建event loop。redis这里根据不同平台会选择不同的event方式，
-Linux 使用epoll，BSD上面使用kqueue，其他选择select</p>
-
-<h3>初始化网络连接</h3>
-
-<pre><code>if (server.port != 0) {
-    server.ipfd = anetTcpServer(server.neterr,server.port,server.bindaddr);
-    if (server.ipfd == ANET_ERR) {
-        redisLog(REDIS_WARNING, "Opening port %d: %s",
-            server.port, server.neterr);
-        exit(1);
-    }
-}
-
-if (server.unixsocket != NULL) {
-    unlink(server.unixsocket); /* don't care if this fails */
-    server.sofd = anetUnixServer(server.neterr,server.unixsocket,server.unixsocketperm);
-    if (server.sofd == ANET_ERR) {
-        redisLog(REDIS_WARNING, "Opening socket: %s", server.neterr);
-        exit(1);
-    }
-}
-</code></pre>
-
-<h3>创建系统cron定时器</h3>
-
-<pre><code>aeCreateTimeEvent(server.el, 1, serverCron, NULL, NULL);
-
-aeCreateTimeEvent
-aeCreateTimeEvent accepts the following as parameters:
-eventLoop: This is server.el in redis.c
-milliseconds: The number of milliseconds from the current time after which the timer expires.
-proc: Function pointer. Stores the address of the function that has to be called after the timer expires.
-clientData: Mostly NULL.
-finalizerProc: Pointer to the function that has to be called before the timed event is removed from the list of timed events.
-</code></pre>
-
-<p>aeCreateTimeEvent 创建一个定时器，redis会在这个serverCron中清理系统变量，判断是否需要写入文件等操作。</p>
-
-<h3>在event loop中绑定回调函数</h3>
-
-<pre><code>if (server.ipfd &gt; 0 &amp;&amp; aeCreateFileEvent(server.el,server.ipfd,AE_READABLE,
-    acceptTcpHandler,NULL) == AE_ERR) redisPanic("Unrecoverable error creating server.ipfd file event.");            
-</code></pre>
-
-<h1>设置启动event loop</h1>
-
-<pre><code>// 设置事件执行前要运行的函数
-aeSetBeforeSleepProc(server.el,beforeSleep);
-
-// 启动服务器循环
-aeMain(server.el);
-
-// 关闭服务器，删除事件
-aeDeleteEventLoop(server.el);
-</code></pre>
-
-<p>aeMain函数和之前用的很多的windows中的message queue非常相似。redis不断循环等待执行event。这里不论是定时器还是socket event，都会在这个event loop中被执行。</p>
-
-<pre><code>void aeMain(aeEventLoop *eventLoop) {
-
-eventLoop-&gt;stop = 0;
-
-while (!eventLoop-&gt;stop) {
-
-    // 如果有需要在事件处理前执行的函数，那么运行它
-    if (eventLoop-&gt;beforesleep != NULL)
-        eventLoop-&gt;beforesleep(eventLoop);
-
-    // 开始处理事件
-    aeProcessEvents(eventLoop, AE_ALL_EVENTS);
-    }
-}
-</code></pre>
-
-<p>方便整理，这里重复一下一开始的流程图</p>
-
-<p><img src="http://pauladamsmith.com/articles/redis_under_the_hood/startup.png" alt="整个系统初始化流程图" /></p>
-
-<h1>处理客户端命令流程</h1>
-
-<p><img src="http://pauladamsmith.com/articles/redis_under_the_hood/request-response.png" alt="处理客户端命令流程图" /></p>
-
-<p>之前我们已经注册了socket acceptTcpHandler 回调函数，现在的流程是</p>
-
-<pre><code>acceptTcpHandler-&gt;acceptCommonHandler-&gt;createClient-&gt;aeCreateFileEvent
-
-if (aeCreateFileEvent(server.el, c-&gt;fd, AE_READABLE,
-    readQueryFromClient, c) == AE_ERR) {
-    freeClient(c);
-    return NULL;
-}
-</code></pre>
-
-<p>这里又向event loop中加入一个新的事件callback函数：aeCreateFileEvent 用于把event loop中的监听的事件和回调函数绑定在一起。</p>
-
-<p>readQueryFromClient 则是客户端一切命令的入口函数。</p>
-
-<pre><code>void readQueryFromClient(aeEventLoop *el, int fd, void *privdata, int mask) {
-    redisClient *c = (redisClient*) privdata;
-    char buf[REDIS_IOBUF_LEN];
-    int nread;
-    // ...
-
-    nread = read(fd, buf, REDIS_IOBUF_LEN);
-    // ...
-    if (nread) {
-        size_t oldlen = sdslen(c-&gt;querybuf);
-        c-&gt;querybuf = sdscatlen(c-&gt;querybuf, buf, nread);
-        c-&gt;lastinteraction = time(NULL);
-        /* Scan this new piece of the query for the newline. We do this
-        * here in order to make sure we perform this scan just one time
-        * per piece of buffer, leading to an O(N) scan instead of O(N*N) */
-        if (c-&gt;bulklen == -1 &amp;&amp; c-&gt;newline == NULL)
-            c-&gt;newline = strchr(c-&gt;querybuf+oldlen,'\n');
-    } else {
-        return;
-    }
-    Processinputbuffer(c);
-}
-</code></pre>
-
-<p> readQueryFromClient读取客户端命令，交给Processinputbuffer处理。</p>
-
-<pre><code>void processInputBuffer(redisClient *c) {
-    //...
-
-    if (processCommand(c) == REDIS_OK)
-        resetClient(c);
-}
-
-int processCommand(redisClient *c) {
-    //...
-    call(c,REDIS_CALL_FULL);
-}
-</code></pre>
-
-<p>这里call回根据command定义的callback函数，执行相对应的redis命令代码。</p>
-
-<p>当command执行完毕之后，准备将结果传递给客户端。这里可以看到注册了sendReplyToClient回调函数。</p>
-
-<pre><code>int prepareClientToWrite(redisClient *c) {
-    if (c-&gt;flags &amp; REDIS_LUA_CLIENT) return REDIS_OK;
-    if (c-&gt;fd &lt;= 0) return REDIS_ERR; /* Fake client */
-    if (c-&gt;bufpos == 0 &amp;&amp; listLength(c-&gt;reply) == 0 &amp;&amp;
-        (c-&gt;replstate == REDIS_REPL_NONE || c-&gt;replstate == REDIS_REPL_ONLINE) &amp;&amp;
-        aeCreateFileEvent(server.el, c-&gt;fd, AE_WRITABLE, sendReplyToClient, c) == AE_ERR)
-            return REDIS_ERR;
-    return REDIS_OK;
-}
-</code></pre>
-
-<p>读到这里，我们已经看到了。redis在处理event loop的时候，不仅仅是处理客户端的连接，很多redis内部的流程也是通过event loop实现的。这个是event driven常常遇到的方式。</p>
-
-<p>内容资料、图片、代码参考</p>
-
-<ul>
-<li><a href="https://github.com/huangz1990/annotated_redis_source">huangz的redis2.6代码注释</a></li>
-<li><a href="http://pauladamsmith.com/articles/redis-under-the-hood.html#back-up-to-main">Redis: under the hood</a></li>
-<li><a href="http://redis.io/topics/internals-rediseventlib">Redis Event Library</a></li>
-</ul>
-
 ]]></content>
   </entry>
   

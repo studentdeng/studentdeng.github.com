@@ -120,7 +120,6 @@
 <span class='line-number'>7</span>
 <span class='line-number'>8</span>
 <span class='line-number'>9</span>
-<span class='line-number'>10</span>
 </pre></td><td class='code'><pre><code class='objc'><span class='line'>   <span class="p">[</span><span class="n">UIView</span> <span class="nl">animateWithDuration:</span><span class="mf">5.0f</span>
 </span><span class='line'>                   <span class="nl">animations:</span><span class="o">^</span><span class="p">{</span>
 </span><span class='line'>                     <span class="n">self</span><span class="p">.</span><span class="n">animationLabel</span><span class="p">.</span><span class="n">center</span> <span class="o">=</span> <span class="n">CGPointMake</span><span class="p">(</span><span class="mi">200</span><span class="p">,</span> <span class="mi">400</span><span class="p">);</span>
@@ -130,7 +129,6 @@
 </span><span class='line'>  <span class="n">CALayer</span> <span class="o">*</span><span class="n">layer</span> <span class="o">=</span> <span class="n">self</span><span class="p">.</span><span class="n">animationLabel</span><span class="p">.</span><span class="n">layer</span><span class="p">.</span><span class="n">presentationLayer</span><span class="p">;</span>
 </span><span class='line'>
 </span><span class='line'>  <span class="n">NSLog</span><span class="p">(</span><span class="s">@&quot;model:%@, presentLayer%@&quot;</span><span class="p">,</span> <span class="n">NSStringFromCGPoint</span><span class="p">(</span><span class="n">self</span><span class="p">.</span><span class="n">animationLabel</span><span class="p">.</span><span class="n">layer</span><span class="p">.</span><span class="n">position</span><span class="p">),</span> <span class="n">NSStringFromCGPoint</span><span class="p">(</span><span class="n">layer</span><span class="p">.</span><span class="n">position</span><span class="p">));</span>
-</span><span class='line'>  
 </span></code></pre></td></tr></table></div></figure>
 
 
@@ -192,7 +190,6 @@ model:{200, 400}, presentLayer{200, 400}
 <span class='line-number'>7</span>
 <span class='line-number'>8</span>
 <span class='line-number'>9</span>
-<span class='line-number'>10</span>
 </pre></td><td class='code'><pre><code class='objc'><span class='line'>   <span class="n">animationView</span><span class="p">.</span><span class="n">center</span> <span class="o">=</span> <span class="n">CGPointMake</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="mi">0</span><span class="p">);</span>
 </span><span class='line'>    <span class="p">[</span><span class="n">UIView</span> <span class="nl">animateWithDuration:</span><span class="mf">1.0f</span>
 </span><span class='line'>                        <span class="nl">delay:</span><span class="mi">0</span>
@@ -202,7 +199,6 @@ model:{200, 400}, presentLayer{200, 400}
 </span><span class='line'>                   <span class="p">}</span> <span class="nl">completion:</span><span class="o">^</span><span class="p">(</span><span class="kt">BOOL</span> <span class="n">finished</span><span class="p">)</span> <span class="p">{</span>
 </span><span class='line'>
 </span><span class='line'>                   <span class="p">}];</span>
-</span><span class='line'>
 </span></code></pre></td></tr></table></div></figure>
 
 
@@ -238,7 +234,6 @@ model:{200, 400}, presentLayer{200, 400}
 <span class='line-number'>6</span>
 <span class='line-number'>7</span>
 <span class='line-number'>8</span>
-<span class='line-number'>9</span>
 </pre></td><td class='code'><pre><code class='objc'><span class='line'>   <span class="p">[</span><span class="n">UIView</span> <span class="nl">animateWithDuration:</span><span class="mf">1.0f</span>
 </span><span class='line'>                        <span class="nl">delay:</span><span class="mi">0</span>
 </span><span class='line'>                      <span class="nl">options:</span><span class="n">UIViewAnimationOptionCurveLinear</span>
@@ -247,7 +242,6 @@ model:{200, 400}, presentLayer{200, 400}
 </span><span class='line'>                   <span class="p">}</span> <span class="nl">completion:</span><span class="o">^</span><span class="p">(</span><span class="kt">BOOL</span> <span class="n">finished</span><span class="p">)</span> <span class="p">{</span>
 </span><span class='line'>
 </span><span class='line'>                   <span class="p">}];</span>
-</span><span class='line'>
 </span></code></pre></td></tr></table></div></figure>
 
 
@@ -368,6 +362,8 @@ model:{200, 400}, presentLayer{200, 400}
       
         <a class="basic-alignment left" href="/blog/2014/06/13/auto-layout/" title="Previous Post: AutoLayout 相关概念介绍和动画demo">&laquo; AutoLayout 相关概念介绍和动画demo</a>
       
+      
+        <a class="basic-alignment right" href="/blog/2014/07/28/machine-learning-tutorial/" title="Next Post: 机器学习(一) 简单的背景介绍、线性回归、梯度下降">机器学习(一) 简单的背景介绍、线性回归、梯度下降 &raquo;</a>
       
     </p>
   </footer>
