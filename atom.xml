@@ -4,7 +4,7 @@
   <title><![CDATA[不会开机的男孩]]></title>
   <link href="http://studentdeng.github.com/atom.xml" rel="self"/>
   <link href="http://studentdeng.github.com/"/>
-  <updated>2014-08-12T18:07:12+08:00</updated>
+  <updated>2014-08-16T10:52:51+08:00</updated>
   <id>http://studentdeng.github.com/</id>
   <author>
     <name><![CDATA[studentdeng]]></name>
@@ -12,6 +12,97 @@
   </author>
   <generator uri="http://octopress.org/">Octopress</generator>
 
+  
+  <entry>
+    <title type="html"><![CDATA[《中国古代历史与人物——秦始皇》笔记]]></title>
+    <link href="http://studentdeng.github.com/blog/2014/08/16/qinshihuang/"/>
+    <updated>2014-08-16T10:17:00+08:00</updated>
+    <id>http://studentdeng.github.com/blog/2014/08/16/qinshihuang</id>
+    <content type="html"><![CDATA[<p>最近在coursera学完了台湾国立大学的公开课——<a href="https://class.coursera.org/chinesehistory-002">《中国古代历史与人物——秦始皇》</a>。虽然自己看过不少课程，看过不少历史书，但是这门课程对我的影响超过了任何一本文史书。我自己完整的看过3遍，并做了作业(可惜没有认真做好)。这门课从某种角度来看，彻底改变了我对文史课程的认知，对自己之前的无知和误解感到深深的愧疚，并再次讥讽一下国内的文史课程。下面是自己整理的东东，方便自己日后review。</p>
+
+<ul>
+<li> 读历史需要思辨</li>
+<li> 每一个决定的结果是否成功是通过时间衡量的，做决定的关键是在于是否得到了自己想要的结果。得到就要付出，除非有其他人替自己付出</li>
+<li> 社会就是需要和有用，说服别人是因为知道别人需要什么</li>
+<li> 人和人的差别不在于遇到的问题，而是面对问题时的态度</li>
+<li> 看书要学会“沙金”，从沙子里面掏出金子，而不是一味的埋怨，批判。任何事情都有值得自己学习的东西。放下自己的成见，很多事情没有自己想象的那么简单。</li>
+</ul>
+
+
+<h3>2-5</h3>
+
+<p>秦国百战百胜，不在于它真能变法，而在于列国不能真正变法
+历史说明了一个道理，不能适应时代的，只有被淘汰消失</p>
+
+<h3>2-6</h3>
+
+<p>历史上的所谓的成功和失败，就看你站在什么位置，用什么尺度来衡量。而判断成功和失败的标准，最后还是问自己</p>
+
+<h3>3-4</h3>
+
+<p>想要成功，就要懂得把理智放在感情之上。</p>
+
+<p>谋事在人这是真得有用，有人用很多的时间去提高效率，但是节约的时间，并没有被真正利用起来。那么这个办法也很一般。
+自己需要自己不断的努力，才能让之前的办法真正变成好办法。。。</p>
+
+<p>方法和人关系太大了</p>
+
+<p>这个社会不外乎需要和有用。</p>
+
+<p>你需要知道别人需要什么，你才能变得有用</p>
+
+<h3>5-3</h3>
+
+<p>富家子弟处逆境难
+穷家子弟处顺境难</p>
+
+<h3>6-1</h3>
+
+<p>人生总会有赌博的时候，对错往往是命运差别巨大。
+百折不挠的民族</p>
+
+<p>人生：运气 ，自我要求。好好准备，让自己成为那样的条件。等待机会。</p>
+
+<p>理想是，你知道你下一步应该做什么
+妄想是，你只有目标却不知道从何做起</p>
+
+<p>自强的第一步，不自欺</p>
+
+<h3>6-8</h3>
+
+<p>在中国文化中，最高的道德和最高的智慧必然是合一的</p>
+
+<h3>7-3</h3>
+
+<p>学会认错，改过。</p>
+
+<h3>8-1</h3>
+
+<p>改变环境，需要改变自己，让自己适应那个自己想要的环境的要求。
+如何改变，通过学习</p>
+
+<h3>9-1</h3>
+
+<p>做事之前，为虑胜，先虑败，方能考虑周全</p>
+
+<h3>9-9</h3>
+
+<p>历史启发智慧，所有的学问都能带来智慧</p>
+
+<p>审时度势：</p>
+
+<p>时：你所处的环境。
+势：环境变动的方向</p>
+
+<p>变的是时间和环境。
+不变的是人性和良知</p>
+
+<p>不仅仅是自己改变，需要改变周围的人。</p>
+
+<p>历史用真，去伪。。。
+改动人心</p>
+]]></content>
+  </entry>
   
   <entry>
     <title type="html"><![CDATA[机器学习(一) 简单的背景介绍、线性回归、梯度下降]]></title>
@@ -2491,146 +2582,6 @@ CGSize size = view.bounds.size;
 <p>Tal在幸福课中提到一句，平庸和卓越在表面都很平静时是如何区分出来。卓越的人更会相信自己会做到。</p>
 
 <p>额，本来还是想写下去，发现自己已经不知不觉开始写心灵鸡汤了，看来我已经被毒害不少了，再删掉一大段之后，思路瞬间被阻塞了。一阵阵困意袭来，呼~，昨天睡得有一点少了。今天最开心的就是，去东直门上了一节跳舞课，按照我以往对我自己的了解，我应该死宅在家里才对，绝对不会出门，更别说走这么远。</p>
-]]></content>
-  </entry>
-  
-  <entry>
-    <title type="html"><![CDATA[cocoapods 入门]]></title>
-    <link href="http://studentdeng.github.com/blog/2013/09/13/cocoapods-tutorial/"/>
-    <updated>2013-09-13T23:48:00+08:00</updated>
-    <id>http://studentdeng.github.com/blog/2013/09/13/cocoapods-tutorial</id>
-    <content type="html"><![CDATA[<h1>介绍</h1>
-
-<p>最近一直在搞<a href="https://github.com/CocoaPods/CocoaPods">cocoapods</a>。 ios 这么多年终于有一个好使的包管理了。真的好激动好激动。。。
-之前开发一些App的时候，在一开始的时候，总是需要手动添加framework， library，设置一些 search path，有时候还会忘记那么几个，然后出来一大堆的link error。当一些library更新的时候，还需要自己手动去更换。3句话说就是</p>
-
-<ol>
-<li>手动增加framework，library</li>
-<li>手动增加编译参数</li>
-<li>手动维护代码更新</li>
-</ol>
-
-
-<p>完全是一大堆的体力活，当然，这些简单的配置和复制并不会花费太多的时间，但是，还是觉得在浪费生命，而这时候CocoaPods就出来了。我们只需要设置一个Podfile文件，执行</p>
-
-<pre><code>$ pod install 
-</code></pre>
-
-<p>CocoaPods会帮我们下载好代码，设置好编译参数，配置好framework， library。</p>
-
-<h1>安装和更新</h1>
-
-<pre><code>$ sudo gem install cocoapods
-</code></pre>
-
-<h1>使用</h1>
-
-<p>在project根目录下，create Podfile文件，下面一个例子</p>
-
-<pre><code>platform :ios, '5.0'
-pod 'CURestKit', '~&gt;1.0.1' 
-pod 'SDWebImage','~&gt;3.4'
-pod 'MBProgressHUD', '~&gt; 0.7'
-pod 'UALogger', '~&gt; 0.2.3'
-</code></pre>
-
-<p>CocoaPods 会帮我们从git clone下来配置好的这些代码。后面的部分表示代码的版本号，一般来说和tag挂钩。</p>
-
-<p>配置好Podfile之后，执行</p>
-
-<pre><code>$ pod install
-</code></pre>
-
-<p>则会帮我们配置好这些项目。并生成一个XXXX.xcworkspace。 以后project使用这个文件就可以了。CocoaPods其实就是帮我们配置一个静态库作为项目的依赖。</p>
-
-<p>CocoaPods里面有大量的代码，现在最新的版本安装后是在这里</p>
-
-<pre><code>~/.cocoapods/repo/master/ 
-</code></pre>
-
-<h1>制作自己的项目配置</h1>
-
-<p>实际开发过程中，我们还有不少代码需要被改动，而CocoaPods上面的代码，大部分都比较旧，都是很稳定的代码，当然也有一些不能用的（大部分是国内的公司做的，大家都懂的）。另外还有一些我们自己写的一些其他代码，暂时还么有被CocoaPods收录的。这时候我们就需要配置自己的项目啦。</p>
-
-<p>这里是我的一个项目配置例子。cocoapods的配置文件就是一个 *.podspec的文件，这是一个例子文件名ShareCenter.podspec。这是一个典型的ruby，</p>
-
-<pre><code>Pod::Spec.new do |s|
-s.name         = "ShareCenter"
-s.version      = "2.0"
-s.summary      = "share client include sina weibo ,tencent weibo, renren"
-
-s.description  = &lt;&lt;-DESC
-               share client include sina weibo ,tencent weibo, renren
-               DESC
-
-s.homepage     = "https://github.com/studentdeng/ShareCenterExample"
-s.license      = 'MIT'
-s.author       = { "curer" =&gt; "studentdeng@hotmail.com" }
-s.platform     = :ios, '5.0'
-
-s.source       = { :git =&gt; "https://github.com/studentdeng/ShareCenterExample.git", :tag =&gt; s.version.to_s }
-s.source_files  = 'ShareCenter', 'ShareCenter/**/*.{h,m}'
-
-s.frameworks   = 'QuartzCore', 'Security', 'CoreGraphics', 'AudioToolbox'
-s.library = 'sqlite3.0'
-s.vendored_libraries = 'ShareCenter/Vender/sina/libWeiboSDK/libWeiboSDK.a'
-
-s.prefix_header_contents = &lt;&lt;-EOS
-#ifdef __OBJC__
-#import "ROConnect.h"
-#endif /* __OBJC__*/
-EOS
-end
-</code></pre>
-
-<p>这个基本上都是自解释的，这里有几个需要说明一下</p>
-
-<h2>s.source s.source_files</h2>
-
-<p>这里的 <em>source</em> 我们看出是一个git 的地址，这里我们调试的时候，可以先暂时设置成本地git，调试完毕之后就可以发布 增加tag。想要最新的代码只需要这样设置就好</p>
-
-<pre><code>{ :git =&gt; "https://github.com/studentdeng/ShareCenterExample.git"}
-</code></pre>
-
-<p>我们的git项目中，并不是所有的代码都需要被引用到我们的代码中，通常project还会包括一些example，test cases等，这里的 <em>source_files</em> 就是用来指定一些文件夹，或是文件。我这里的设置也很容易理解，就是ShareCenter下面的递归后的所有后缀是h、m的子文件。</p>
-
-<h2>s.frameworks s.library</h2>
-
-<p>这里配置的就是我们的framework 和 library，这里注意一下library的名字规则就好。</p>
-
-<h2>vendored_libraries</h2>
-
-<p>这里用来指定外部的静态库。这里我们指定了sina sso认证的SDK</p>
-
-<h2>s.prefix_header_contents</h2>
-
-<p>这里用来指定预编译的配置，这里一定要鄙视一下renren的超级渣渣SDK。这里提供一种解决方法。</p>
-
-<h2>部署我们的配置到cocoapods中</h2>
-
-<p>cocoapods的代码配置文件是在这里<a href="https://github.com/CocoaPods/Specs">Specs</a></p>
-
-<p>这里最好是去fork一个自己的project，然后保存一个自己或是团队的配置，这样不会在更新cocoapods的时候，丢掉自己的配置。当然，如果觉得自己搞的还不错，也可以去pull requests。</p>
-
-<p>在之前提到的目录<em>~/.cocoapods/repo/master/</em> 下面，我们可以看到已经有超级多的项目了，我们可以也可以通过</p>
-
-<pre><code>$ pod search XXX
-</code></pre>
-
-<p>来查找项目，或是直接在这个文件夹下面找，可以学习不少project的配置技巧，我这里也是从他们学到的。</p>
-
-<p>最后添加一个project的配置是这样子的。</p>
-
-<p>例如上面的例子，
-在<em>~/.cocoapods/repo/master/</em> 下面创建一个文件夹ShareCenter，然后在创建一个2.0的文件夹表示这是version2.0的配置。
-然后在把之前的ShareCenter.podspec复制到2.0目录下面。</p>
-
-<p>也就是最后的目录是这样子的</p>
-
-<pre><code>~/.cocoapods/repo/master/ShareCenter/2.0/ShareCenter.podspec
-</code></pre>
-
-<p>如果希望更多的了解cocoapods，还是需要去<a href="https://github.com/CocoaPods/CocoaPods">Github</a>上面 :D</p>
 ]]></content>
   </entry>
   
