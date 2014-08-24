@@ -4,7 +4,7 @@
   <title><![CDATA[不会开机的男孩]]></title>
   <link href="http://studentdeng.github.com/atom.xml" rel="self"/>
   <link href="http://studentdeng.github.com/"/>
-  <updated>2014-08-16T10:52:51+08:00</updated>
+  <updated>2014-08-24T22:23:04+08:00</updated>
   <id>http://studentdeng.github.com/</id>
   <author>
     <name><![CDATA[studentdeng]]></name>
@@ -12,6 +12,141 @@
   </author>
   <generator uri="http://octopress.org/">Octopress</generator>
 
+  
+  <entry>
+    <title type="html"><![CDATA[机器学习(二) 线性回归、梯度下降实现]]></title>
+    <link href="http://studentdeng.github.com/blog/2014/08/24/machine-learning-2/"/>
+    <updated>2014-08-24T20:52:00+08:00</updated>
+    <id>http://studentdeng.github.com/blog/2014/08/24/machine-learning-2</id>
+    <content type="html"><![CDATA[<p>了解一个算法最好的方法就是实现它，不过在开始实现算法之前，有一些额外的概念需要理解。</p>
+
+<h1>Vectorization</h1>
+
+<p>这是<a href="http://studentdeng.github.io/blog/2014/07/28/machine-learning-tutorial/">上一篇</a>提到的hypothesis的计算公式。</p>
+
+<p><span class='caption-wrapper'><img class='caption' src='http://studentdeng.github.com/images/ml2_1.png' width='' height='' title=''><span class='caption-text'></span></span></p>
+
+<p>当计算这个表达式值的时候，往往第一个感觉是写一个for loop 然后累加求和</p>
+
+<pre><code>prediction = 0;
+for (int i = 0; i &lt; n; ++i) {
+    prediction += theta[j] * x[j];
+}
+</code></pre>
+
+<p>但是在machine learning中更倾向于使用矩阵的方式。
+比如同样的公式，会看成矩阵相乘。</p>
+
+<p><span class='caption-wrapper'><img class='caption' src='http://studentdeng.github.com/images/ml2_3.png' width='' height='' title=''><span class='caption-text'></span></span></p>
+
+<p>其中theta和X分别是</p>
+
+<p><span class='caption-wrapper'><img class='caption' src='http://studentdeng.github.com/images/ml2_2.png' width='' height='' title=''><span class='caption-text'></span></span></p>
+
+<p>这里通过矩阵或是向量来代替之前的loop。</p>
+
+<p>这是<a href="http://studentdeng.github.io/blog/2014/07/28/machine-learning-tutorial/">上一篇</a>提到的算法</p>
+
+<p><img src="http://studentdeng.github.io/images/ml/4.png" alt="image" /></p>
+
+<p>计算function J如果用octave来实现则是这个样子</p>
+
+<pre><code>function J = computeCost(X, y, theta)
+%COMPUTECOST Compute cost for linear regression
+%   J = COMPUTECOST(X, y, theta) computes the cost of using theta as the
+%   parameter for linear regression to fit the data points in X and y
+
+% Initialize some useful values
+m = length(y); % number of training examples
+
+% You need to return the following variables correctly 
+J = 0;
+
+% ====================== YOUR CODE HERE ======================
+% Instructions: Compute the cost of a particular choice of theta
+%               You should set J to the cost.
+
+
+t = (X * theta) - y;
+J = (sum(t .* t)) / (2 * m);
+
+% =========================================================================
+
+end
+</code></pre>
+
+<p><img src="http://studentdeng.github.io/images/ml/19.png" alt="image" /></p>
+
+<p>而求偏导数迭代更新theta的代码则是这个样子</p>
+
+<pre><code>function [theta, J_history] = gradientDescent(X, y, theta, alpha, num_iters)
+%GRADIENTDESCENT Performs gradient descent to learn theta
+%   theta = GRADIENTDESENT(X, y, theta, alpha, num_iters) updates theta by 
+%   taking num_iters gradient steps with learning rate alpha
+
+% Initialize some useful values
+m = length(y); % number of training examples
+J_history = zeros(num_iters, 1);
+
+for iter = 1:num_iters
+
+    % ====================== YOUR CODE HERE ======================
+    % Instructions: Perform a single gradient step on the parameter vector
+    %               theta. 
+    %
+    % Hint: While debugging, it can be useful to print out the values
+    %       of the cost function (computeCost) and gradient here.
+    %
+
+
+    s = sum(bsxfun(@times, X * theta - y, X));
+    theta = theta - (alpha / m) * s';
+
+    % ============================================================
+
+    % Save the cost J in every iteration    
+    J_history(iter) = computeCost(X, y, theta);
+
+end
+</code></pre>
+
+<p>上面的2部分代码如果做一些合并分别可以简化成1行代码。说到这里自己还是相当羞愧的。今天早上花了3个小时才搞定这2行代码&#8230;主要时间花在了
+2个地方。</p>
+
+<ol>
+<li>算好theta去predict的上面，和normal equations的方式计算的答案总是对不上，不得不怀疑人生了。。。后面才发现是因为函数没有完全收敛，在调整learning rate之后误差明显变小了。</li>
+<li>让大脑适应矩阵还是有点难，很多东西看上去很简单，反应很长时间，不过后面会好一些。</li>
+</ol>
+
+
+<h1>为什么用矩阵</h1>
+
+<p>在费了老半天力气搞定Vectorization的转变之后，不得不想想为什么要用这个方式做。obviously有2个好处，Andrew课上也提到了好多次。</p>
+
+<ol>
+<li>增加一个feature很简单，只要把输入增加一列就好，而算法不需要改动。</li>
+<li>矩阵的运算更容易优化，性能比循环更快。实际我们往往处理上百万个Example和N多的features</li>
+</ol>
+
+
+<p>第一个很好理解，而且把循环的一大堆代码写成一行，显得逼格很高。
+第二个会比较麻烦，涉及到了并行计算优化。</p>
+
+<h1>其他</h1>
+
+<p>在之前的算法中，我们看到了每一次调整theta都需要iterate整个所有的example，但实际中往往需要处理上百万个examples，而这样的iteration显然是不能接受的。实际上会随机选取一部分examples然后去迭代theta，最后得到一个较为可靠的theta向量。</p>
+
+<p>最后附上Andrew作业的图片，虽然Andrew 不希望把答案放在网上或是论坛什么的，不过我觉得都过去2年多了,应该没关系了。</p>
+
+<p><span class='caption-wrapper'><img class='caption' src='http://studentdeng.github.com/images/ml2_4.png' width='' height='' title='最后的预测效果图'><span class='caption-text'>最后的预测效果图</span></span></p>
+
+<p><span class='caption-wrapper'><img class='caption' src='http://studentdeng.github.com/images/ml2_5.png' width='' height='' title='cost function & theta'><span class='caption-text'>cost function &amp; theta</span></span></p>
+
+<p><span class='caption-wrapper'><img class='caption' src='http://studentdeng.github.com/images/ml2_6.png' width='' height='' title='cost function & theta 等高线'><span class='caption-text'>cost function &amp; theta 等高线</span></span></p>
+
+<p><span class='caption-wrapper'><img class='caption' src='http://studentdeng.github.com/images/ml2_7.png' width='' height='' title='learning rate'><span class='caption-text'>learning rate</span></span></p>
+]]></content>
+  </entry>
   
   <entry>
     <title type="html"><![CDATA[《中国古代历史与人物——秦始皇》笔记]]></title>
@@ -2557,31 +2692,6 @@ CGSize size = view.bounds.size;
 <p>然后我们可以想象最后的任务流程，就如果冒泡排序一样，一次次的比较把相对重要的数据一次次的放置到前面。</p>
 
 <p>而当所有相邻的任务都按照这样的规则排列完毕后，得到的就是一个 wj / lj 的从大到小的序列。</p>
-]]></content>
-  </entry>
-  
-  <entry>
-    <title type="html"><![CDATA[calm down]]></title>
-    <link href="http://studentdeng.github.com/blog/2013/09/15/calm-down/"/>
-    <updated>2013-09-15T23:03:00+08:00</updated>
-    <id>http://studentdeng.github.com/blog/2013/09/15/calm-down</id>
-    <content type="html"><![CDATA[<p>最近已经发生了很多事情，将来也会发生一些事情，这里为了不让我负能量爆发，就不写这些细节了。昨天和老大聊到晚上3点半，这里我还很dt的查了一下，上一次聊这么晚也就是2个月前。刚刚突然发现有人赞了一下我的微博，哦，很好，长出一口气，终于不是强X的无脑赞了。微博的内容是一篇关于《女人明白要趁早》的读书笔记，书里写过一句这样的话“这世上只有快乐的猪和悲伤的哲学家”，但在我看来，还有另一类人是悲伤的猪，而我显然属于后者。当然这不是我想说的，书中有一些这样的话。</p>
-
-<p>“当你一无所知、一无所有、一无所成的时候,没事不要去想“个人尊严”和“个人价值”这 类虚词儿。一、做好眼前事。二、假以时日。 有完美榜样是好的,能让我们矢志不渝地去为追求完美努力;知道榜样其实不完美也是好的, 避免我们成为偏执狂,或者因为目标难以企及而自暴自弃。”</p>
-
-<p>这个世界上面充斥这这样子的言论，你没有办法去反驳它，因为他本身说的就是事实，是正确的，而且是毫无疑问正确的，但是如果只是做到这些是不可能成功，或是更严格讲，这些都不是成功的关键因素，从心理学角度来看，这些话没有办法被证伪。这些话就是一个个成功人士为了安慰屌丝们的心灵鸡汤而已。</p>
-
-<p>对于年轻的人们来说，经历的苦难和挫折大概都是因为阅历，资历不足，内心却比地球还大，一开始就像构建一艘航空母舰。但最后发现这样的航母根本做不出来，或是做出来随便小小的浪头就能把它拍的粉碎。而也有不少人意识到了这一点，做出了一艘艘驱逐舰，潜艇。但最后发现，光这艘船，根本不可能带你穿过那些暴风雨频发的海域。</p>
-
-<p>我们害怕跌入日复一日平淡庸碌的结婚、生子、还房贷、终老一生的生活中去。但是现实就是这个社会最不缺的就是空想家，社会不仅不看你的想法，不在意你的未来，更不在意你的过去，只是看你的现在，你的所作所为。你所能掌握的资源，你能做出多少选择的能力。</p>
-
-<p>大家都会成长，会慢慢看淡这些ups and downs，大家都在说，现在社会多么浮躁，年轻人要学会等待，假以时日，每天坚持，就会变好的。我只想说“呵呵”。平静会很容易的掩饰内心的平庸，诚然平静很重要，但绝对不是逃避，需要cope，而这需要一个强大的内心。只有内心足够强大才能做出抵挡风浪的船，而不是随流漂动的木板，虽然他们都是在水上浮着，当然木板也有好处，船会翻。木板不会。</p>
-
-<p>一个朋友曾今问过我为什么给自己设定一个30岁的目标，因为有太多的东西我们不能左右，在到一定年纪就不得不考虑，作为一个男孩子，不得不去承担一些该来的责任，那么自由时间必定要被压缩，而且有一些事情，年纪大了，也就错过机会了，或是需要付出比年轻时候更多的投入。所以必须趁年轻，因为在再不疯狂就来不及了。</p>
-
-<p>Tal在幸福课中提到一句，平庸和卓越在表面都很平静时是如何区分出来。卓越的人更会相信自己会做到。</p>
-
-<p>额，本来还是想写下去，发现自己已经不知不觉开始写心灵鸡汤了，看来我已经被毒害不少了，再删掉一大段之后，思路瞬间被阻塞了。一阵阵困意袭来，呼~，昨天睡得有一点少了。今天最开心的就是，去东直门上了一节跳舞课，按照我以往对我自己的了解，我应该死宅在家里才对，绝对不会出门，更别说走这么远。</p>
 ]]></content>
   </entry>
   

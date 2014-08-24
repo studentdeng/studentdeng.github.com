@@ -9,9 +9,7 @@
   <meta name="author" content="studentdeng">
 
   
-  <meta name="description" content="最近一直想总结一点有关测试服务器性能的东西，今天先写一点入门的小东西了。
-网站的stress test 工具很多，这里介绍一个我觉得最简单的webbench 安装webbench wget http://www.ha97.com/code/webbench-1.5.tar.gz
-tar zxvf &hellip;">
+  <meta name="description" content="强连通图的应用场景我就不在这里赘述了。其中Kosaraju是最常见的一种。 这个也是Stanford 算法课弟四周的作业，现在看来是最难的一道题。那么这里我就给一个我自己的实现了。 这个作业的难度就在于他的输入是一个相当大的数据，处理不好，很容易溢出。那份大数据，我没有留在这里， &hellip;">
   
 
   <!-- http://t.co/dKP3o1e -->
@@ -65,6 +63,52 @@ tar zxvf &hellip;">
     <div id="content">
       <div class="blog-index">
   
+  
+  
+    <article>
+      
+  <header>
+    
+      <h1 class="entry-title"><a href="/blog/2013/08/04/algorithms-class4/">Stanford 算法课上 Kosaraju Algorithm</a></h1>
+    
+    
+      <p class="meta">
+        
+
+
+
+
+
+
+
+
+  
+
+
+<time datetime="2013-08-04T23:32:00+08:00" pubdate data-updated="true">Aug 4<span>th</span>, 2013</time>
+        
+         | <a href="/blog/2013/08/04/algorithms-class4/#disqus_thread">Comments</a>
+        
+      </p>
+    
+  </header>
+
+
+  <div class="entry-content"><p>强连通图的应用场景我就不在这里赘述了。其中<a href="http://en.wikipedia.org/wiki/Kosaraju's_algorithm">Kosaraju</a>是最常见的一种。</p>
+
+<p>这个也是Stanford 算法课<a href="https://class.coursera.org/algo-004/quiz/attempt?quiz_id=57">弟四周的作业</a>，现在看来是最难的一道题。那么这里我就给一个我自己的实现了。</p>
+
+<p>这个作业的难度就在于他的输入是一个相当大的数据，处理不好，很容易溢出。那份大数据，我没有留在这里，感兴趣的同学可以自己下载。70多M，实在不适合放在github上面。</p>
+
+<p><a href="https://github.com/studentdeng/algorithms_class">source_code</a></p>
+
+<p>由于是xcode的环境，在g++下是过不去的。。。</p>
+</div>
+  
+  
+
+
+    </article>
   
   
     <article>
@@ -442,69 +486,6 @@ self.mouseJoint = NULL;
 
 <div class="video-container">
     <iframe height=498 width=510 src="http://player.youku.com/embed/XNTg2NDQxNzAw" frameborder=0 allowfullscreen></iframe>
-</div>
-
-
-
-</div>
-  
-  
-
-
-    </article>
-  
-  
-    <article>
-      
-  <header>
-    
-      <h1 class="entry-title"><a href="/blog/2013/07/20/box2d-03/">Box2d 03 b2Joint 连接器</a></h1>
-    
-    
-      <p class="meta">
-        
-
-
-
-
-
-
-
-
-  
-
-
-<time datetime="2013-07-20T13:30:00+08:00" pubdate data-updated="true">Jul 20<span>th</span>, 2013</time>
-        
-         | <a href="/blog/2013/07/20/box2d-03/#disqus_thread">Comments</a>
-        
-      </p>
-    
-  </header>
-
-
-  <div class="entry-content"><p>在真实世界中，一个物体很难孤立的存在，比如一个我们的自行车，2个轮子除了可以自由滚动以外，还必须保证2个轮子之间的距离不变，而保证这个距离不变的就是自行车的大梁。我们的胳膊，需要保证在一定范围的情况下围绕一个点旋转等等。Box2D中 连接器就是用来保证刚体和刚体之间的某种关系而出现的。</p>
-
-<p>我们先认识b2DistanceJoint——距离连接器。</p>
-
-<p><img src="http://www.ladeng6666.com/blog/wp-content/uploads/2012/08/zixingche.jpg" alt="image" /></p>
-
-<p>这是一个自行车的模型bodyA bodyB 就是之前熟悉的圆形刚体，中间的红线是我们的距离连接，anchorA，anchorB 则是连接器连接2个刚体的位置。非常的直观。</p>
-
-<pre><code>b2DistanceJointDef jointDef;
-jointDef.Initialize(ballA, ballB, ballA-&gt;GetPosition(), ballB-&gt;GetPosition());
-
-b2DistanceJoint *join = (b2DistanceJoint *)world-&gt;CreateJoint(&amp;jointDef);
-CGFloat distance = 30.0 / PTM_RATIO;
-join-&gt;SetLength(distance);
-</code></pre>
-
-<p>非常的直观，制定连接的位置和距离，就创建完毕了。下面是一个demo，每当触摸屏幕的时候给自行车一个向右的冲量。</p>
-
-<p><a href="https://github.com/studentdeng/box2d-tutorials/tree/master/03">demo代码</a></p>
-
-<div class="video-container">
-    <iframe height=498 width=510 src="http://player.youku.com/embed/XNTg1MjU2MTQ4" frameborder=0 allowfullscreen></iframe>
 </div>
 
 

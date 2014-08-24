@@ -9,7 +9,8 @@
   <meta name="author" content="studentdeng">
 
   
-  <meta name="description" content="最近在coursera学完了台湾国立大学的公开课——《中国古代历史与人物——秦始皇》。虽然自己看过不少课程，看过不少历史书，但是这门课程对我的影响超过了任何一本文史书。我自己完整的看过3遍，并做了作业(可惜没有认真做好)。这门课从某种角度来看，彻底改变了我对文史课程的认知， &hellip;">
+  <meta name="description" content="了解一个算法最好的方法就是实现它，不过在开始实现算法之前，有一些额外的概念需要理解。 Vectorization 这是上一篇提到的hypothesis的计算公式。 当计算这个表达式值的时候，往往第一个感觉是写一个for loop 然后累加求和 prediction = 0;
+for (int i &hellip;">
   
 
   <!-- http://t.co/dKP3o1e -->
@@ -63,6 +64,170 @@
     <div id="content">
       <div class="blog-index">
   
+  
+  
+    <article>
+      
+  <header>
+    
+      <h1 class="entry-title"><a href="/blog/2014/08/24/machine-learning-2/">机器学习(二) 线性回归、梯度下降实现</a></h1>
+    
+    
+      <p class="meta">
+        
+
+
+
+
+
+
+
+
+  
+
+
+<time datetime="2014-08-24T20:52:00+08:00" pubdate data-updated="true">Aug 24<span>th</span>, 2014</time>
+        
+         | <a href="/blog/2014/08/24/machine-learning-2/#disqus_thread">Comments</a>
+        
+      </p>
+    
+  </header>
+
+
+  <div class="entry-content"><p>了解一个算法最好的方法就是实现它，不过在开始实现算法之前，有一些额外的概念需要理解。</p>
+
+<h1>Vectorization</h1>
+
+<p>这是<a href="http://studentdeng.github.io/blog/2014/07/28/machine-learning-tutorial/">上一篇</a>提到的hypothesis的计算公式。</p>
+
+<p><span class='caption-wrapper'><img class='caption' src='/images/ml2_1.png' width='' height='' title=''><span class='caption-text'></span></span></p>
+
+<p>当计算这个表达式值的时候，往往第一个感觉是写一个for loop 然后累加求和</p>
+
+<pre><code>prediction = 0;
+for (int i = 0; i &lt; n; ++i) {
+    prediction += theta[j] * x[j];
+}
+</code></pre>
+
+<p>但是在machine learning中更倾向于使用矩阵的方式。
+比如同样的公式，会看成矩阵相乘。</p>
+
+<p><span class='caption-wrapper'><img class='caption' src='/images/ml2_3.png' width='' height='' title=''><span class='caption-text'></span></span></p>
+
+<p>其中theta和X分别是</p>
+
+<p><span class='caption-wrapper'><img class='caption' src='/images/ml2_2.png' width='' height='' title=''><span class='caption-text'></span></span></p>
+
+<p>这里通过矩阵或是向量来代替之前的loop。</p>
+
+<p>这是<a href="http://studentdeng.github.io/blog/2014/07/28/machine-learning-tutorial/">上一篇</a>提到的算法</p>
+
+<p><img src="http://studentdeng.github.io/images/ml/4.png" alt="image" /></p>
+
+<p>计算function J如果用octave来实现则是这个样子</p>
+
+<pre><code>function J = computeCost(X, y, theta)
+%COMPUTECOST Compute cost for linear regression
+%   J = COMPUTECOST(X, y, theta) computes the cost of using theta as the
+%   parameter for linear regression to fit the data points in X and y
+
+% Initialize some useful values
+m = length(y); % number of training examples
+
+% You need to return the following variables correctly 
+J = 0;
+
+% ====================== YOUR CODE HERE ======================
+% Instructions: Compute the cost of a particular choice of theta
+%               You should set J to the cost.
+
+
+t = (X * theta) - y;
+J = (sum(t .* t)) / (2 * m);
+
+% =========================================================================
+
+end
+</code></pre>
+
+<p><img src="http://studentdeng.github.io/images/ml/19.png" alt="image" /></p>
+
+<p>而求偏导数迭代更新theta的代码则是这个样子</p>
+
+<pre><code>function [theta, J_history] = gradientDescent(X, y, theta, alpha, num_iters)
+%GRADIENTDESCENT Performs gradient descent to learn theta
+%   theta = GRADIENTDESENT(X, y, theta, alpha, num_iters) updates theta by 
+%   taking num_iters gradient steps with learning rate alpha
+
+% Initialize some useful values
+m = length(y); % number of training examples
+J_history = zeros(num_iters, 1);
+
+for iter = 1:num_iters
+
+    % ====================== YOUR CODE HERE ======================
+    % Instructions: Perform a single gradient step on the parameter vector
+    %               theta. 
+    %
+    % Hint: While debugging, it can be useful to print out the values
+    %       of the cost function (computeCost) and gradient here.
+    %
+
+
+    s = sum(bsxfun(@times, X * theta - y, X));
+    theta = theta - (alpha / m) * s';
+
+    % ============================================================
+
+    % Save the cost J in every iteration    
+    J_history(iter) = computeCost(X, y, theta);
+
+end
+</code></pre>
+
+<p>上面的2部分代码如果做一些合并分别可以简化成1行代码。说到这里自己还是相当羞愧的。今天早上花了3个小时才搞定这2行代码&#8230;主要时间花在了
+2个地方。</p>
+
+<ol>
+<li>算好theta去predict的上面，和normal equations的方式计算的答案总是对不上，不得不怀疑人生了。。。后面才发现是因为函数没有完全收敛，在调整learning rate之后误差明显变小了。</li>
+<li>让大脑适应矩阵还是有点难，很多东西看上去很简单，反应很长时间，不过后面会好一些。</li>
+</ol>
+
+
+<h1>为什么用矩阵</h1>
+
+<p>在费了老半天力气搞定Vectorization的转变之后，不得不想想为什么要用这个方式做。obviously有2个好处，Andrew课上也提到了好多次。</p>
+
+<ol>
+<li>增加一个feature很简单，只要把输入增加一列就好，而算法不需要改动。</li>
+<li>矩阵的运算更容易优化，性能比循环更快。实际我们往往处理上百万个Example和N多的features</li>
+</ol>
+
+
+<p>第一个很好理解，而且把循环的一大堆代码写成一行，显得逼格很高。
+第二个会比较麻烦，涉及到了并行计算优化。</p>
+
+<h1>其他</h1>
+
+<p>在之前的算法中，我们看到了每一次调整theta都需要iterate整个所有的example，但实际中往往需要处理上百万个examples，而这样的iteration显然是不能接受的。实际上会随机选取一部分examples然后去迭代theta，最后得到一个较为可靠的theta向量。</p>
+
+<p>最后附上Andrew作业的图片，虽然Andrew 不希望把答案放在网上或是论坛什么的，不过我觉得都过去2年多了,应该没关系了。</p>
+
+<p><span class='caption-wrapper'><img class='caption' src='/images/ml2_4.png' width='' height='' title='最后的预测效果图'><span class='caption-text'>最后的预测效果图</span></span></p>
+
+<p><span class='caption-wrapper'><img class='caption' src='/images/ml2_5.png' width='' height='' title='cost function & theta'><span class='caption-text'>cost function &amp; theta</span></span></p>
+
+<p><span class='caption-wrapper'><img class='caption' src='/images/ml2_6.png' width='' height='' title='cost function & theta 等高线'><span class='caption-text'>cost function &amp; theta 等高线</span></span></p>
+
+<p><span class='caption-wrapper'><img class='caption' src='/images/ml2_7.png' width='' height='' title='learning rate'><span class='caption-text'>learning rate</span></span></p>
+</div>
+  
+  
+
+
+    </article>
   
   
     <article>
@@ -808,67 +973,6 @@ AutoLayout中的Left，Right等约束，并不是针对View的frame。而是根�
 <li><a href="https://developer.apple.com/videos/wwdc/2012/?id=232">WWDC2012 session 232 – Auto Layout by Example</a></li>
 </ul>
 
-</div>
-  
-  
-
-
-    </article>
-  
-  
-    <article>
-      
-  <header>
-    
-      <h1 class="entry-title"><a href="/blog/2014/06/01/jingdizhiwa/">你和别人是相同的</a></h1>
-    
-    
-      <p class="meta">
-        
-
-
-
-
-
-
-
-
-  
-
-
-<time datetime="2014-06-01T09:22:00+08:00" pubdate data-updated="true">Jun 1<span>st</span>, 2014</time>
-        
-         | <a href="/blog/2014/06/01/jingdizhiwa/#disqus_thread">Comments</a>
-        
-      </p>
-    
-  </header>
-
-
-  <div class="entry-content"><p>最近又洗刷了我的一个人生信条。当然其实很早很早，大概2年前就已经动摇了，只是最近彻底想明白了，很开心，记录下来。</p>
-
-<p>很多人认为自己的独一无二的，包括我自己。这个独一无二的理解主要部分是认识到了人与人之间的不同。这种心理在面对选择的时候可以更好的follow your heart，虽然自己的认识很浅薄，但是却受到了上天的眷恋，好运的几个选择都看上去不错。但是上天是公平的，总会有做出错误选择的时候。这时候不得不思考是不是自己从一开始就错误了。</p>
-
-<p>现在看来当然是错的，因为每个人本来天生就是不一样的，这不是明摆着么，不同的长相，不同的家庭，往基础了说，DNA 每个人都完全完全不一样。每个人都会有自己的特殊情况。但是往长远了看，人们的社会地位是一样的。</p>
-
-<p>所以，从某种角度来看，<strong>你和别人是相同的</strong></p>
-
-<p>在遇到困难的时候，人们往往觉得自己是最痛苦，最迷茫的那个人（相同的倒霉事情人们往往觉得自己最痛苦，而发生在别人身上的时候却不这么认为，所以得出这个结论并不难），这个时候其实最治愈的话不是一些什么解决方案，而是“你不是一个人”。当真正的意识到这些事情别人也会遇到，别人也会有相同的感受时，才能真正的面对眼前的问题，并最后找到解决办法。相反，当好运的时候，相信这个世界上还有和你一样交好运的人，其实这并不是一件什么值得炫耀的 ：）</p>
-
-<p><strong>你和别人是相同的</strong>最重要的好处在于，你可以更容易的听取别人的意见，更容易去做改变。</p>
-
-<p>李笑来老师有一段我很喜欢的对井底之蛙的解释。</p>
-
-<blockquote><p>井底之蛙是不可能知道这世界还有很多其他的井，与它所在的那个井没什么不同。可能是大井，可能是小井；井口可能是方的，可能是圆的，但有一点是相同的，并且至关重要的，这些井的深度是青蛙跳不出去的深度。那只井底之蛙于是更不可能知道其他的井里可能有着与自己一模一样的青蛙，也可能是大一点的，也可能是小一点的；它（们）也不可能知道哪只（哪些）青蛙与自己有着一模一样的想法——尽管它可能从细微角度出发，都是独一无二的，并非100%相同的青蛙。</p><footer><strong>李笑来</strong> <cite><a href='http://book.douban.com/subject/3609132/'>book.douban.com/subject/3609132/&hellip;</a></cite></footer></blockquote>
-
-
-<p>一开始知道自己是一只青蛙的时候，还是挺沮丧的。因为在面对现在信息膨胀的社会，我就不拿那些太成功的例子来说好了，就拿简单的考试来说。很多人都说考试是一件痛苦的事情，要大量的记背，枯燥又乏味。我们因为做不了这么苦的事情，所以考试没有考好。这是一个非常常见的说辞。类似还有很多，比如人家2个人感情好是因为经历了很多人没有经历的事情，我反正平平淡淡的，就没机会拥有好的感情等等。这些说法本质上就是承认了<strong>你和别人是不同的，并以此为理由而拒绝改变</strong>。</p>
-
-<p>大家不能接受平平淡淡，似乎所有的成就必须经历一段常人不能忍受的苦难。所以很多人越来越愿意追求刺激，迫切的寻找翻身的机会。但是不能不面对的就是，绝大多数情况下生活都是平平淡淡的，而这些平平淡淡生活时候的态度则决定了一个人是否能够挺过不好的事情，是否有机会抓到好运。</p>
-
-<p>最近自己最大的收获，就是感恩，发现自己的人生路虽然走过了大量的弯路，自己的人生信条有超级多的不足，居然还是“成功”的活到现在，还真是受到了上天的保佑，真的应该好好珍惜这份来之不易的运气。当然受到上天眷顾的人也不仅仅是我一个人。其实每个人都受到过上天的眷顾，只是看发现了没有。</p>
-
-<p>承认<strong>你和别人是相同的</strong> 需要极大的勇气~</p>
 </div>
   
   
