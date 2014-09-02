@@ -9,9 +9,7 @@
   <meta name="author" content="studentdeng">
 
   
-  <meta name="description" content="名词解释与约定 名词解释 Apple Notification Center Service 简称 ANCS。
-ANCS 服务（iOS设备，如iPhone，iPad等）的publisher 称为 Notification Provider。
-任意的ANCS服务的client（硬件设备，配件）称为 &hellip;">
+  <meta name="description" content="Core Bluetooth 里面的名词还是挺多的，这里简单记录一下，一上来的时候，还是很容易混淆的，这里记录一下。 Basic Concept Bluetooth low energy (BLE，还有地方叫做BTLE，最恨各种简写了) 简单说是一种低功耗的短距离无线传输技术， &hellip;">
   
 
   <!-- http://t.co/dKP3o1e -->
@@ -65,6 +63,86 @@ ANCS 服务（iOS设备，如iPhone，iPad等）的publisher 称为 Notification
     <div id="content">
       <div class="blog-index">
   
+  
+  
+    <article>
+      
+  <header>
+    
+      <h1 class="entry-title"><a href="/blog/2014/03/22/corebluetooth/">Core Bluetooth Concept</a></h1>
+    
+    
+      <p class="meta">
+        
+
+
+
+
+
+
+
+
+  
+
+
+<time datetime="2014-03-22T20:41:00+08:00" pubdate data-updated="true">Mar 22<span>nd</span>, 2014</time>
+        
+         | <a href="/blog/2014/03/22/corebluetooth/#disqus_thread">Comments</a>
+        
+      </p>
+    
+  </header>
+
+
+  <div class="entry-content"><p>Core Bluetooth 里面的名词还是挺多的，这里简单记录一下，一上来的时候，还是很容易混淆的，这里记录一下。</p>
+
+<h1>Basic Concept</h1>
+
+<p>Bluetooth low energy (<a href="http://en.wikipedia.org/wiki/Bluetooth_low_energy#Radio_interface">BLE</a>，还有地方叫做BTLE，最恨各种简写了) 简单说是一种低功耗的短距离无线传输技术，主要用于低功耗设备传输，比如心率、记步器、智能家居方向,还有连接其他iOS设备。</p>
+
+<p>Core Bluetooth API 支持BLE4.0，做了协议封装，让开发者不需要完整了解BLE协议就可以快速开发APP。</p>
+
+<h2>Central and Peripheral</h2>
+
+<p>BLE中有2个非常重要的概念就是Central和Peripheral，有一点类似Client Server。</p>
+
+<ul>
+<li>Peripheral是数据的发送方（比如运动手环需要把位置，步数等数据传递给其他设备）。</li>
+<li>Central是数据的接收方（比如手机接收手环传递来的步数）</li>
+</ul>
+
+
+<p><img src="http://studentdeng.github.io/images/coreblue1.png" alt="1-1 Central 和 Peripheral 心率设备和Apple product" /></p>
+
+<h2>Centrals Discover and Connect to Peripherals That Are Advertising</h2>
+
+<ul>
+<li><p>Peripheral把advertising packets广播出去，advertising packet 包括会包含一些重要的信息，比如设备名字，所提供的服务。</p></li>
+<li><p>Central 则是扫描自己感兴趣的advertising packet，比如一个APP需要查找当前家里的室温，会通过参数设定，只是检索温度设备发来的packet。</p></li>
+</ul>
+
+
+<p><img src="http://studentdeng.github.io/images/coreblue2.png" alt="1-2 一个简单的advertising模型" /></p>
+
+<h2>Data structure</h2>
+
+<ul>
+<li>Peripheral 是最上层的一种服务抽象，比如iOS 系统内置的<a href="http://studentdeng.github.io/blog/2014/03/22/ancs/">ANCS</a>服务,另外我们自己也可以创建自己的服务。</li>
+<li>characteristic 则是用来描述服务中的具体内容（比如手环有传递行走路程的接口，还有行走位置的接口），一个服务可以包含多个characteristics。</li>
+</ul>
+
+
+<p><img src="http://studentdeng.github.io/images/coreblue3.png" alt="1-3 心率检测仪包含1个服务，1个服务中包含2个characteristics,一个用来传递心率，一个用来传递位置" /></p>
+
+<h1>How to</h1>
+
+<p><a href="https://github.com/kickingvegas/YmsCoreBluetooth">YmsCoreBluetooth</a> 是个不错的框架，有很详细的<a href="http://kickingvegas.github.io/YmsCoreBluetooth/appledoc/docs/tutorial/Tutorial.html">介绍</a>，这里就不赘述了。</p>
+</div>
+  
+  
+
+
+    </article>
   
   
     <article>
@@ -617,140 +695,6 @@ AttributeIDS：查找ID列表</p>
 有一点疑虑的是整个面试中并没有问到Core Animation。这个还是我蛮喜欢的部分。Anyway 个人很喜欢追问的方式，很容易考察出来理解的深度和广度。</p>
 
 <p>整个面试收获很大，发现了很多不足。另外1，2面的面试题目个人觉得也不错。这里分享给大家。</p>
-</div>
-  
-  
-
-
-    </article>
-  
-  
-    <article>
-      
-  <header>
-    
-      <h1 class="entry-title"><a href="/blog/2014/01/15/concurrent-api/">翻译 并发编程：API 和 挑战</a></h1>
-    
-    
-      <p class="meta">
-        
-
-
-
-
-
-
-
-
-  
-
-
-<time datetime="2014-01-15T20:21:00+08:00" pubdate data-updated="true">Jan 15<span>th</span>, 2014</time>
-        
-         | <a href="/blog/2014/01/15/concurrent-api/#disqus_thread">Comments</a>
-        
-      </p>
-    
-  </header>
-
-
-  <div class="entry-content"><p>并发（<a href="http://en.wikipedia.org/wiki/Concurrency_%28computer_science%29">Concurrency</a>）描述了一个同时运行多个任务的概念。他可以在单核设备上通过分时的方式实现，或者如果多个CPU则会真正的并行。</p>
-
-<p>OSX和iOS提供了多种不同的API来实现并发编程。每一个API都有不同的功能和局限，适用于不同的任务。他们有不同的抽象层次。我们可以操作底层API，但是这也意味着我们需要做很多事情来保证正确。</p>
-
-<p>并发编程是非常困难的，里面有很多陷阱。而且很容易被忘记，特别是我们使用API，比如 GCD 或者 NSOperationQueue。这篇文章来会总体介绍在iOS和OSX上面的不同的并发API，然后深入一点并发编程里面的固有的，每个API所独有的挑战。</p>
-
-<h1>OSX和iOS上面的并发API</h1>
-
-<p>Apple为移动和桌面操作系统提供了相同的并发编程API。这里我们会看一下pthread和NSThread。Grand Central Dispatch, NSOperationQueue 和 NSRunLoop。技术上来说，run loops 有一点奇怪。因为他们并不是真正的并发。但是他和这篇文章的主旨很接近，所以还是值得深入了解的。</p>
-
-<p>我们从底层API开始，然后到上层API。我们这样做，因为上层的API是通过底层的API实现的。当然，在实际中，我们需要反过来考虑：用最上面的一层抽象搞定事情会简单很多。</p>
-
-<p>你可能想知道为什么我们这个坚持推荐使用高抽象层会让并发编程代码简单。你可以阅读这篇文章的第二部分。也可以看 Peter Steinberger 的 <a href="http://www.objc.io/issue-2/thread-safe-class-design.html">线程安全</a>文章。</p>
-
-<h1>线程</h1>
-
-<p><a href="http://en.wikipedia.org/wiki/Thread_%28computing%29">线程</a>是进程的子单元，被操作系统独立调度执行。事实上，所有的并发API都基于线程。背后实际上的确是真的，不管是GCD还是operation queues。</p>
-
-<p>多线程可以在同一个时间执行，即时在单核的CPU上。（或是至少看上去是在同时）。操作系统赋予每个线程一个时间片，用户看上去多个任务就像是在同时执行一样。如果CPU是多核的，那么多个线程就可以真正的并发执行，因此总的执行时间就会减少。</p>
-
-<p>你可以使用<a href="https://developer.apple.com/library/mac/documentation/DeveloperTools/Conceptual/InstrumentsUserGuide/AnalysingCPUUsageinYourOSXApp/AnalysingCPUUsageinYourOSXApp.html">CPU strategy view</a>Instruments中的几个工具来深入了解一下你的代码或者是framework代码在多核下是如何调用和执行的。</p>
-
-<p>这里面有一个非常重要的需要记住的是你对什么时候执行代码，执行那段代码无能为力，执行多长时间，什么时候会被暂停去执行别的任务，也是不知道的。这个线程调度的技术非常强大。然而，也带来了非常大的复杂性，后面会提到。</p>
-
-<p>让我们把这个复杂的情况暂时放在一边。你可以使用pthread API，或是其他的Objective-C封装的代码，NSThread去创建自己的线程。这里有一个简单的代码，查找100W和数中的最小和最大的数。使用了4个线程并发执行。这就是一个非常好的例子，告你你最好不要直接使用pThread。</p>
-
-<pre><code>struct threadInfo {
-    uint32_t * inputValues;
-    size_t count;
-};
-
-struct threadResult {
-    uint32_t min;
-    uint32_t max;
-};
-
-void * findMinAndMax(void *arg)
-{
-    struct threadInfo const * const info = (struct threadInfo *) arg;
-    uint32_t min = UINT32_MAX;
-    uint32_t max = 0;
-    for (size_t i = 0; i &lt; info-&gt;count; ++i) {
-        uint32_t v = info-&gt;inputValues[i];
-        min = MIN(min, v);
-        max = MAX(max, v);
-    }
-    free(arg);
-    struct threadResult * const result = (struct threadResult *) malloc(sizeof(*result));
-    result-&gt;min = min;
-    result-&gt;max = max;
-    return result;
-}
-
-int main(int argc, const char * argv[])
-{
-    size_t const count = 1000000;
-    uint32_t inputValues[count];
-
-    // Fill input values with random numbers:
-    for (size_t i = 0; i &lt; count; ++i) {
-        inputValues[i] = arc4random();
-    }
-
-    // Spawn 4 threads to find the minimum and maximum:
-    size_t const threadCount = 4;
-    pthread_t tid[threadCount];
-    for (size_t i = 0; i &lt; threadCount; ++i) {
-        struct threadInfo * const info = (struct threadInfo *) malloc(sizeof(*info));
-        size_t offset = (count / threadCount) * i;
-        info-&gt;inputValues = inputValues + offset;
-        info-&gt;count = MIN(count - offset, count / threadCount);
-        int err = pthread_create(tid + i, NULL, &amp;findMinAndMax, info);
-        NSCAssert(err == 0, @"pthread_create() failed: %d", err);
-    }
-    // Wait for the threads to exit:
-    struct threadResult * results[threadCount];
-    for (size_t i = 0; i &lt; threadCount; ++i) {
-        int err = pthread_join(tid[i], (void **) &amp;(results[i]));
-        NSCAssert(err == 0, @"pthread_join() failed: %d", err);
-    }
-    // Find the min and max:
-    uint32_t min = UINT32_MAX;
-    uint32_t max = 0;
-    for (size_t i = 0; i &lt; threadCount; ++i) {
-        min = MIN(min, results[i]-&gt;min);
-        max = MAX(max, results[i]-&gt;max);
-        free(results[i]);
-        results[i] = NULL;
-    }
-
-    NSLog(@"min = %u", min);
-    NSLog(@"max = %u", max);
-    return 0;
-}
-</code></pre>
-
-<p>NSThread是</p>
 </div>
   
   

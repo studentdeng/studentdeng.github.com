@@ -4,7 +4,7 @@
   <title><![CDATA[Category: iOS | 不会开机的男孩]]></title>
   <link href="http://studentdeng.github.com/blog/categories/ios/atom.xml" rel="self"/>
   <link href="http://studentdeng.github.com/"/>
-  <updated>2014-08-24T22:23:04+08:00</updated>
+  <updated>2014-09-02T15:15:26+08:00</updated>
   <id>http://studentdeng.github.com/</id>
   <author>
     <name><![CDATA[studentdeng]]></name>
@@ -12,6 +12,270 @@
   </author>
   <generator uri="http://octopress.org/">Octopress</generator>
 
+  
+  <entry>
+    <title type="html"><![CDATA[iOS APP 架构漫谈]]></title>
+    <link href="http://studentdeng.github.com/blog/2014/08/29/ios-architecture/"/>
+    <updated>2014-08-29T15:48:00+08:00</updated>
+    <id>http://studentdeng.github.com/blog/2014/08/29/ios-architecture</id>
+    <content type="html"><![CDATA[<p>最近看了一些有关server的东西，一些很简单的东西，不外乎是一些文档规范，另外结合最近看的wwdc的一些video，觉得对软件架构（software architecture）认识又清楚了一些，这里记录下来。</p>
+
+<p>software architecture 听上去是一个很大的概念，实际上也包括很多东西，里面的争议也很多。在我看来软件架构最好放在小的场景中理解。</p>
+
+<h2>问题1</h2>
+
+<p>我们有2个页面。</p>
+
+<p><span class='caption-wrapper'><img class='caption' src='/images/architecture0.gif' width='' height='' title=''><span class='caption-text'></span></span></p>
+
+<ul>
+<li>页面A：主页面</li>
+<li>页面B：详情页面</li>
+</ul>
+
+
+<p><a href="https://github.com/studentdeng/CUArchitectureDemo/tree/1.0.0">demo code 1.0.0</a></p>
+
+<p>2个页面分别显示一个数字，这个数字应该相同。详情会修改这个数字，这里我们发现，详情页面和主页面数字不一样。</p>
+
+<p><span class='caption-wrapper'><img class='caption' src='/images/architecture1.gif' width='' height='' title='数据不一致'><span class='caption-text'>数据不一致</span></span></p>
+
+<h2>问题1 解决方法A</h2>
+
+<p>这里首先的感觉就是，详情页面返回，主页面数据没有刷新，导致数据不一致。
+那么Fix这个Bug的方法，就是在主页面出现的时候刷新界面</p>
+
+<pre><code>- (void)viewWillAppear:(BOOL)animated {
+    [super viewWillAppear:animated];
+
+    self.displayLabel.text = [[CUDataDAO selectData].data stringValue];
+}
+</code></pre>
+
+<p>现在来看，还不错。但是，我们调用selectData的次数则变得非常非常多。数据不是经常变化的。</p>
+
+<p><a href="https://github.com/studentdeng/CUArchitectureDemo/tree/1.0.1">demo code 1.0.1</a></p>
+
+<h2>问题1 解决方法B</h2>
+
+<p>我们发现既然数据的改变是在页面B进行的，那么页面B修改这个数据的时候，应该把数据变化"通知"给页面A，那么我们写了一个Delegate</p>
+
+<pre><code>@protocol CUDetailViewControllerDelegate &lt;NSObject&gt;
+
+- (void)detailVC:(CUDetailViewController *)vc dataChanged:(NSNumber *)data;
+
+@end
+</code></pre>
+
+<p>在页面B修改数据之后，通过delegate 通知给页面A。</p>
+
+<pre><code>- (IBAction)changeButtonClicked:(id)sender {
+    int value = arc4random() % 100;
+    [CUDataDAO setData:value];
+
+    self.displayLabel.text = [@(value) stringValue];
+
+    if ([self.delegate respondsToSelector:@selector(detailVC:dataChanged:)]) {
+        [self.delegate detailVC:self dataChanged:@(value)];
+    }
+}
+</code></pre>
+
+<p>到此场景1得到了不错的解决。</p>
+
+<p><a href="https://github.com/studentdeng/CUArchitectureDemo/tree/1.0.2">demo code 1.0.2</a></p>
+
+<h2>问题2</h2>
+
+<p>这时我们增加了另一个页面C。这个场景会稍微抽象一点，我们定义了3个数据</p>
+
+<ul>
+<li>页面A的数据dataA</li>
+<li>页面B的数据dataB</li>
+<li>页面C的数据dataC</li>
+</ul>
+
+
+<p>问题1中 dataA = dataB。在问题2中dataA = dataB + dataC;</p>
+
+<h2>问题2 解决方法C</h2>
+
+<p>也就是说页面C的修改，也会影响页面A的数据，那么我们是不是也要写一个XXXXDelegate呢？</p>
+
+<p>这时我们的大脑嗅出了一些不好的味道，如果再来个什么dataD，dataE，我们要写这么多的Delegate么？对于多对一"通知"这种味道，很自然的想到了不用Delegate，而是用<code>NSNotification</code>来做。让我们未雨绸缪一下，定义一个Notificaiton</p>
+
+<pre><code>NSString *const kCUDataChangedNotification = @"CUDataChangedNotification";
+
+[[NSNotificationCenter defaultCenter] postNotificationName:kCUDataChangedNotification
+                                                  object:nil
+                                                userInfo:nil];
+</code></pre>
+
+<p>那这个变化broadcast到listener，看上去是一个很赞的idea。</p>
+
+<p><a href="https://github.com/studentdeng/CUArchitectureDemo/tree/1.0.3">demo code 1.0.3</a></p>
+
+<h2>问题3</h2>
+
+<p>过了一段时间，我们发现问题2的方法有一个Bug，当界面停在页面B的时候，切换到页面C，修改数据，B中再返回时，数据和页面A的数据不一致。</p>
+
+<p><span class='caption-wrapper'><img class='caption' src='/images/architecture2.gif' width='' height='' title='数据不一致'><span class='caption-text'>数据不一致</span></span></p>
+
+<p>那也可以类比解决方法B，得到了下面的方法</p>
+
+<h2>解决方法D</h2>
+
+<p>既然A和B的数据不一致，而A的数据比B的新，那么保留一个B的指针，然后A变化的时候，更新B就好了。</p>
+
+<pre><code>- (void)handleDataChangedNotification {
+    [self updateLabel];
+    [self.vc updateLabel];
+}
+
+// In a storyboard-based application, you will often want to do a little preparation before navigation
+- (void)prepareForSegue:(UIStoryboardSegue *)segue sender:(id)sender
+{
+    if ([segue.identifier isEqualToString:@"push"]) {
+        CUDetailViewController *vc = [segue destinationViewController];
+        if ([vc isKindOfClass:[CUDetailViewController class]]) {
+            self.vc = vc;
+        }
+    }
+}
+</code></pre>
+
+<p><a href="https://github.com/studentdeng/CUArchitectureDemo/tree/1.0.4">demo code 1.0.4</a></p>
+
+<h2>问题4</h2>
+
+<p>页面C实在是太简单了，这次我们希望在页面C中显示页面A的数据。因为上次我们就产生了一个数据不一致的问题，这次我们注意到了，那么怎么修改呢？</p>
+
+<h2>解决方法E</h2>
+
+<p>在看了看整个APP各种通知之后，觉得挺麻烦，准备用一个取巧的方法。可以类比解决方法A。在页面C出现的时候，刷新数据，至于什么性能问题，不管了，先fix bug。</p>
+
+<pre><code>- (void)viewWillAppear:(BOOL)animated {
+    [self updateLabel];
+}
+
+- (void)updateLabel {
+    int dataB = [[CUDataDAO selectData].data intValue];
+    int dataC = [[CUDataDAO selectOtherData].data intValue];
+
+    self.dataLabel.text = [@(dataB + dataC) stringValue];
+}
+</code></pre>
+
+<p><a href="https://github.com/studentdeng/CUArchitectureDemo/tree/1.0.5">demo code 1.0.5</a></p>
+
+<h2>问题5</h2>
+
+<p>这时的数据需要不断的变化，我们在<code>CUDataDAO</code>加了一个timer 模拟数据变化，数据变化的原因可能是server push 一些数据。client 本地数据库更新了数据，需要在页面A、B、C中显示。</p>
+
+<p>页面C的数据又不一致了。。。。</p>
+
+<h1>问题到底在哪里呢</h1>
+
+<p>走到这里，我们需要重新思考为什么这个问题会不断的重复出现呢？<code>software architecture</code>就是来解决这个问题的。但是在提出一个合理的方案之前，先思考一个概念。</p>
+
+<p>我们把数据库中的数据，显示到屏幕上，或是传递给View时，这个过程其实是对data 做了一次copy。而且只要不是通过引用或是指针这些方式，通过值传递的方式都是对data做了一次copy。而这个copy的过程，非常类似<strong>Cache</strong>。</p>
+
+<p><span class='caption-wrapper'><img class='caption' src='/images/ios-architecture0.png' width='' height='' title=''><span class='caption-text'></span></span></p>
+
+<p>通常建立一个Cache会遇到2种问题。</p>
+
+<ul>
+<li>Cache情况A: 与original Data 数据不一致，没有及时更新</li>
+<li>Cache情况B: 重复建立Cache</li>
+</ul>
+
+
+<p>让我们用这个思路来看我们的解决方案</p>
+
+<h2>解决方法A</h2>
+
+<p>这是一个非常典型的<code>Cache情况B</code>。数据库的数据并没有变化，但我们却多次重复计算cache</p>
+
+<h2>解决方法B</h2>
+
+<p>页面之间的关系可以用下面来描述</p>
+
+<p><span class='caption-wrapper'><img class='caption' src='/images/ios-architecture1.png' width='' height='' title=''><span class='caption-text'></span></span></p>
+
+<p>这里我们隐隐能够感觉到问题，A的数据变化依赖于2个地方。不急，再往后看</p>
+
+<h2>解决方法C</h2>
+
+<p><span class='caption-wrapper'><img class='caption' src='/images/ios-architecture2.png' width='' height='' title=''><span class='caption-text'></span></span></p>
+
+<h2>解决方法D</h2>
+
+<p><span class='caption-wrapper'><img class='caption' src='/images/ios-architecture3.png' width='' height='' title=''><span class='caption-text'></span></span></p>
+
+<p>事情变得更糟了</p>
+
+<h2>解决方法E</h2>
+
+<p>和解决方法A类似，同样的重复计算Cache问题。</p>
+
+<h2>实际上问题还会更糟</h2>
+
+<p>现在还是一个简单的Model，如果project变得很大，那么就会变成这个样子</p>
+
+<p><span class='caption-wrapper'><img class='caption' src='/images/ios-architecture4.png' width='' height='' title=''><span class='caption-text'></span></span></p>
+
+<p>每一个<code>X</code>都可能是一个Bug。</p>
+
+<h1>我们似乎已经找到问题了</h1>
+
+<p><a href="https://developer.apple.com/videos/wwdc/2014/?id=229">《Advanced iOS Application Architecture and Patterns》</a> 中，把这个图叫做information flow。我们的直觉会告诉我们，这个信息的传递，应该是自上而下的树或是森林，而且最好是一个层次平衡结构，要清晰，每一个位置都有相对于的职责。那我们就需要制定一个规则。</p>
+
+<p>在想这个规则之前，如果把上面的图背后的数据忘记，我们感觉这很类似内存模型。当然内存模型会比较复杂。但是我们可以借鉴很多"内存管理中的规则"，比如<strong>谁创建，谁销毁</strong>。同样，在我们的information flow中，我们希望<strong>谁创建Cache，谁更新Cache变化</strong></p>
+
+<p>DAO的数据库似乎很难做这件事情，我们引入了一个新的元素<code>dataSource</code>（当然他本身又是DAO的一个Cache)。其中A、B、C3个都会显示数据，那么他们应该在一个层级，其中B、C会修改数据，他们会把这个数据返回给<code>dataSource</code>，而通过<code>dataSource</code>来把这个变化通知到A、B、C。</p>
+
+<p><span class='caption-wrapper'><img class='caption' src='/images/ios-architecture5.png' width='' height='' title=''><span class='caption-text'></span></span></p>
+
+<p>这样带来的好处很明显，我们再添加一个D，也不会对其他地方的数据产生任何影响，我们的Unit Test、Mock也更加好写。</p>
+
+<h1>我们之前的思路错在哪里呢？</h1>
+
+<p>从局部来看，我们之前的思路都没有任何问题，但是整体来看却把问题隐藏化。关键的问题是在于没有找到<code>Truth</code>，找到问题真正的地方。而找到真正的地方，需要我们在大脑中有一个清晰的<code>information flow</code>或是<code>data flow</code>。了解之间元素的相互关系，才能建立一个个的层。才能坐到真正的<strong>解耦</strong>,<strong>解耦并不是仅仅一个个的<code>Manager</code>，更重要的是建立一套清晰的flow机制，或是消息机制，如果没有一套flow，中间引入的各种各样的方法，即便使用了各种设计模式，整个software 依然是深度耦合</strong>。</p>
+
+<h1>疑问</h1>
+
+<h2>这个APP看上去交互非常复杂</h2>
+
+<p>上面的model，有些同学还可能觉得这是交互上面的问题，这个交互看上去非常的复杂，不是一个好设计。</p>
+
+<p>我这里列举一个实际的例子：</p>
+
+<p>A页面要创建动画，动画背后包括很多数据，这些数据会在B，C甚至更多的页面，或是后台被修改。动画本身实际上体现在View，而这些view可能不仅仅在A中有，B，C可能也会有部分的View。</p>
+
+<h2>单例怎么样</h2>
+
+<p>当然我们可以用单例的法子。单例是个魔鬼，被很多滥用，这个场景用单例，其实仅仅是把全局变量合理的封装在了单例下，因为这份数据，并没有任何理由要一定是一份copy。</p>
+
+<h1>recap</h1>
+
+<p>在了解这个概念后，再看一些server的架构，规则时，也会更容易理解这些层之间的关系。包括</p>
+
+<ul>
+<li>为什么要规定那些层之间，不能相互调用，不能有静态方法。</li>
+<li>一个层之间的model，不能有重叠功能，不能连表查询。</li>
+<li>在哪个层才能调用另一个服务，而调用这个服务还必须要通过统一的接口</li>
+</ul>
+
+
+<p>software architecture 涵盖的东西非常多。这篇只是一个引子，介绍了设计之前的准备工作。但是在实际过程中，我们的模型可能要比我这里写的还要复杂很多。下一篇会介绍一种策略用来处理更加复杂模型的情况。</p>
+
+<p>最后附上一个完整功能的 <a href="https://github.com/studentdeng/CUArchitectureDemo/tree/1.0.6">demo code</a></p>
+
+<h1>参考</h1>
+
+<p><a href="https://developer.apple.com/videos/wwdc/2014/?id=229">《Advanced iOS Application Architecture and Patterns》</a></p>
+]]></content>
+  </entry>
   
   <entry>
     <title type="html"><![CDATA[Core Animation基本概念和Additive Animation]]></title>
@@ -774,57 +1038,6 @@ NSBigMutableString
 
 <p>很多设计模式都很像，也很容易糊涂，比如工厂模式和Class Clusters在某些地方就很类似，我自己也并不能很好的分清楚。
 设计模式的本质是为了解耦。不管使用哪个设计模式，我们最后追求的都是简单、容易维护和扩展的代码。</p>
-]]></content>
-  </entry>
-  
-  <entry>
-    <title type="html"><![CDATA[Core Bluetooth Concept]]></title>
-    <link href="http://studentdeng.github.com/blog/2014/03/22/corebluetooth/"/>
-    <updated>2014-03-22T20:41:00+08:00</updated>
-    <id>http://studentdeng.github.com/blog/2014/03/22/corebluetooth</id>
-    <content type="html"><![CDATA[<p>Core Bluetooth 里面的名词还是挺多的，这里简单记录一下，一上来的时候，还是很容易混淆的，这里记录一下。</p>
-
-<h1>Basic Concept</h1>
-
-<p>Bluetooth low energy (<a href="http://en.wikipedia.org/wiki/Bluetooth_low_energy#Radio_interface">BLE</a>，还有地方叫做BTLE，最恨各种简写了) 简单说是一种低功耗的短距离无线传输技术，主要用于低功耗设备传输，比如心率、记步器、智能家居方向,还有连接其他iOS设备。</p>
-
-<p>Core Bluetooth API 支持BLE4.0，做了协议封装，让开发者不需要完整了解BLE协议就可以快速开发APP。</p>
-
-<h2>Central and Peripheral</h2>
-
-<p>BLE中有2个非常重要的概念就是Central和Peripheral，有一点类似Client Server。</p>
-
-<ul>
-<li>Peripheral是数据的发送方（比如运动手环需要把位置，步数等数据传递给其他设备）。</li>
-<li>Central是数据的接收方（比如手机接收手环传递来的步数）</li>
-</ul>
-
-
-<p><img src="http://studentdeng.github.io/images/coreblue1.png" alt="1-1 Central 和 Peripheral 心率设备和Apple product" /></p>
-
-<h2>Centrals Discover and Connect to Peripherals That Are Advertising</h2>
-
-<ul>
-<li><p>Peripheral把advertising packets广播出去，advertising packet 包括会包含一些重要的信息，比如设备名字，所提供的服务。</p></li>
-<li><p>Central 则是扫描自己感兴趣的advertising packet，比如一个APP需要查找当前家里的室温，会通过参数设定，只是检索温度设备发来的packet。</p></li>
-</ul>
-
-
-<p><img src="http://studentdeng.github.io/images/coreblue2.png" alt="1-2 一个简单的advertising模型" /></p>
-
-<h2>Data structure</h2>
-
-<ul>
-<li>Peripheral 是最上层的一种服务抽象，比如iOS 系统内置的<a href="http://studentdeng.github.io/blog/2014/03/22/ancs/">ANCS</a>服务,另外我们自己也可以创建自己的服务。</li>
-<li>characteristic 则是用来描述服务中的具体内容（比如手环有传递行走路程的接口，还有行走位置的接口），一个服务可以包含多个characteristics。</li>
-</ul>
-
-
-<p><img src="http://studentdeng.github.io/images/coreblue3.png" alt="1-3 心率检测仪包含1个服务，1个服务中包含2个characteristics,一个用来传递心率，一个用来传递位置" /></p>
-
-<h1>How to</h1>
-
-<p><a href="https://github.com/kickingvegas/YmsCoreBluetooth">YmsCoreBluetooth</a> 是个不错的框架，有很详细的<a href="http://kickingvegas.github.io/YmsCoreBluetooth/appledoc/docs/tutorial/Tutorial.html">介绍</a>，这里就不赘述了。</p>
 ]]></content>
   </entry>
   

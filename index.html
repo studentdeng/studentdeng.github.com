@@ -9,8 +9,7 @@
   <meta name="author" content="studentdeng">
 
   
-  <meta name="description" content="了解一个算法最好的方法就是实现它，不过在开始实现算法之前，有一些额外的概念需要理解。 Vectorization 这是上一篇提到的hypothesis的计算公式。 当计算这个表达式值的时候，往往第一个感觉是写一个for loop 然后累加求和 prediction = 0;
-for (int i &hellip;">
+  <meta name="description" content="最近看了一些有关server的东西，一些很简单的东西，不外乎是一些文档规范，另外结合最近看的wwdc的一些video，觉得对软件架构（software architecture）认识又清楚了一些，这里记录下来。 software architecture 听上去是一个很大的概念， &hellip;">
   
 
   <!-- http://t.co/dKP3o1e -->
@@ -64,6 +63,299 @@ for (int i &hellip;">
     <div id="content">
       <div class="blog-index">
   
+  
+  
+    <article>
+      
+  <header>
+    
+      <h1 class="entry-title"><a href="/blog/2014/08/29/ios-architecture/">iOS APP 架构漫谈</a></h1>
+    
+    
+      <p class="meta">
+        
+
+
+
+
+
+
+
+
+  
+
+
+<time datetime="2014-08-29T15:48:00+08:00" pubdate data-updated="true">Aug 29<span>th</span>, 2014</time>
+        
+         | <a href="/blog/2014/08/29/ios-architecture/#disqus_thread">Comments</a>
+        
+      </p>
+    
+  </header>
+
+
+  <div class="entry-content"><p>最近看了一些有关server的东西，一些很简单的东西，不外乎是一些文档规范，另外结合最近看的wwdc的一些video，觉得对软件架构（software architecture）认识又清楚了一些，这里记录下来。</p>
+
+<p>software architecture 听上去是一个很大的概念，实际上也包括很多东西，里面的争议也很多。在我看来软件架构最好放在小的场景中理解。</p>
+
+<h2>问题1</h2>
+
+<p>我们有2个页面。</p>
+
+<p><span class='caption-wrapper'><img class='caption' src='/images/architecture0.gif' width='' height='' title=''><span class='caption-text'></span></span></p>
+
+<ul>
+<li>页面A：主页面</li>
+<li>页面B：详情页面</li>
+</ul>
+
+
+<p><a href="https://github.com/studentdeng/CUArchitectureDemo/tree/1.0.0">demo code 1.0.0</a></p>
+
+<p>2个页面分别显示一个数字，这个数字应该相同。详情会修改这个数字，这里我们发现，详情页面和主页面数字不一样。</p>
+
+<p><span class='caption-wrapper'><img class='caption' src='/images/architecture1.gif' width='' height='' title='数据不一致'><span class='caption-text'>数据不一致</span></span></p>
+
+<h2>问题1 解决方法A</h2>
+
+<p>这里首先的感觉就是，详情页面返回，主页面数据没有刷新，导致数据不一致。
+那么Fix这个Bug的方法，就是在主页面出现的时候刷新界面</p>
+
+<pre><code>- (void)viewWillAppear:(BOOL)animated {
+    [super viewWillAppear:animated];
+
+    self.displayLabel.text = [[CUDataDAO selectData].data stringValue];
+}
+</code></pre>
+
+<p>现在来看，还不错。但是，我们调用selectData的次数则变得非常非常多。数据不是经常变化的。</p>
+
+<p><a href="https://github.com/studentdeng/CUArchitectureDemo/tree/1.0.1">demo code 1.0.1</a></p>
+
+<h2>问题1 解决方法B</h2>
+
+<p>我们发现既然数据的改变是在页面B进行的，那么页面B修改这个数据的时候，应该把数据变化&#8221;通知&#8221;给页面A，那么我们写了一个Delegate</p>
+
+<pre><code>@protocol CUDetailViewControllerDelegate &lt;NSObject&gt;
+
+- (void)detailVC:(CUDetailViewController *)vc dataChanged:(NSNumber *)data;
+
+@end
+</code></pre>
+
+<p>在页面B修改数据之后，通过delegate 通知给页面A。</p>
+
+<pre><code>- (IBAction)changeButtonClicked:(id)sender {
+    int value = arc4random() % 100;
+    [CUDataDAO setData:value];
+
+    self.displayLabel.text = [@(value) stringValue];
+
+    if ([self.delegate respondsToSelector:@selector(detailVC:dataChanged:)]) {
+        [self.delegate detailVC:self dataChanged:@(value)];
+    }
+}
+</code></pre>
+
+<p>到此场景1得到了不错的解决。</p>
+
+<p><a href="https://github.com/studentdeng/CUArchitectureDemo/tree/1.0.2">demo code 1.0.2</a></p>
+
+<h2>问题2</h2>
+
+<p>这时我们增加了另一个页面C。这个场景会稍微抽象一点，我们定义了3个数据</p>
+
+<ul>
+<li>页面A的数据dataA</li>
+<li>页面B的数据dataB</li>
+<li>页面C的数据dataC</li>
+</ul>
+
+
+<p>问题1中 dataA = dataB。在问题2中dataA = dataB + dataC;</p>
+
+<h2>问题2 解决方法C</h2>
+
+<p>也就是说页面C的修改，也会影响页面A的数据，那么我们是不是也要写一个XXXXDelegate呢？</p>
+
+<p>这时我们的大脑嗅出了一些不好的味道，如果再来个什么dataD，dataE，我们要写这么多的Delegate么？对于多对一&#8221;通知&#8221;这种味道，很自然的想到了不用Delegate，而是用<code>NSNotification</code>来做。让我们未雨绸缪一下，定义一个Notificaiton</p>
+
+<pre><code>NSString *const kCUDataChangedNotification = @"CUDataChangedNotification";
+
+[[NSNotificationCenter defaultCenter] postNotificationName:kCUDataChangedNotification
+                                                  object:nil
+                                                userInfo:nil];
+</code></pre>
+
+<p>那这个变化broadcast到listener，看上去是一个很赞的idea。</p>
+
+<p><a href="https://github.com/studentdeng/CUArchitectureDemo/tree/1.0.3">demo code 1.0.3</a></p>
+
+<h2>问题3</h2>
+
+<p>过了一段时间，我们发现问题2的方法有一个Bug，当界面停在页面B的时候，切换到页面C，修改数据，B中再返回时，数据和页面A的数据不一致。</p>
+
+<p><span class='caption-wrapper'><img class='caption' src='/images/architecture2.gif' width='' height='' title='数据不一致'><span class='caption-text'>数据不一致</span></span></p>
+
+<p>那也可以类比解决方法B，得到了下面的方法</p>
+
+<h2>解决方法D</h2>
+
+<p>既然A和B的数据不一致，而A的数据比B的新，那么保留一个B的指针，然后A变化的时候，更新B就好了。</p>
+
+<pre><code>- (void)handleDataChangedNotification {
+    [self updateLabel];
+    [self.vc updateLabel];
+}
+
+// In a storyboard-based application, you will often want to do a little preparation before navigation
+- (void)prepareForSegue:(UIStoryboardSegue *)segue sender:(id)sender
+{
+    if ([segue.identifier isEqualToString:@"push"]) {
+        CUDetailViewController *vc = [segue destinationViewController];
+        if ([vc isKindOfClass:[CUDetailViewController class]]) {
+            self.vc = vc;
+        }
+    }
+}
+</code></pre>
+
+<p><a href="https://github.com/studentdeng/CUArchitectureDemo/tree/1.0.4">demo code 1.0.4</a></p>
+
+<h2>问题4</h2>
+
+<p>页面C实在是太简单了，这次我们希望在页面C中显示页面A的数据。因为上次我们就产生了一个数据不一致的问题，这次我们注意到了，那么怎么修改呢？</p>
+
+<h2>解决方法E</h2>
+
+<p>在看了看整个APP各种通知之后，觉得挺麻烦，准备用一个取巧的方法。可以类比解决方法A。在页面C出现的时候，刷新数据，至于什么性能问题，不管了，先fix bug。</p>
+
+<pre><code>- (void)viewWillAppear:(BOOL)animated {
+    [self updateLabel];
+}
+
+- (void)updateLabel {
+    int dataB = [[CUDataDAO selectData].data intValue];
+    int dataC = [[CUDataDAO selectOtherData].data intValue];
+
+    self.dataLabel.text = [@(dataB + dataC) stringValue];
+}
+</code></pre>
+
+<p><a href="https://github.com/studentdeng/CUArchitectureDemo/tree/1.0.5">demo code 1.0.5</a></p>
+
+<h2>问题5</h2>
+
+<p>这时的数据需要不断的变化，我们在<code>CUDataDAO</code>加了一个timer 模拟数据变化，数据变化的原因可能是server push 一些数据。client 本地数据库更新了数据，需要在页面A、B、C中显示。</p>
+
+<p>页面C的数据又不一致了。。。。</p>
+
+<h1>问题到底在哪里呢</h1>
+
+<p>走到这里，我们需要重新思考为什么这个问题会不断的重复出现呢？<code>software architecture</code>就是来解决这个问题的。但是在提出一个合理的方案之前，先思考一个概念。</p>
+
+<p>我们把数据库中的数据，显示到屏幕上，或是传递给View时，这个过程其实是对data 做了一次copy。而且只要不是通过引用或是指针这些方式，通过值传递的方式都是对data做了一次copy。而这个copy的过程，非常类似<strong>Cache</strong>。</p>
+
+<p><span class='caption-wrapper'><img class='caption' src='/images/ios-architecture0.png' width='' height='' title=''><span class='caption-text'></span></span></p>
+
+<p>通常建立一个Cache会遇到2种问题。</p>
+
+<ul>
+<li>Cache情况A: 与original Data 数据不一致，没有及时更新</li>
+<li>Cache情况B: 重复建立Cache</li>
+</ul>
+
+
+<p>让我们用这个思路来看我们的解决方案</p>
+
+<h2>解决方法A</h2>
+
+<p>这是一个非常典型的<code>Cache情况B</code>。数据库的数据并没有变化，但我们却多次重复计算cache</p>
+
+<h2>解决方法B</h2>
+
+<p>页面之间的关系可以用下面来描述</p>
+
+<p><span class='caption-wrapper'><img class='caption' src='/images/ios-architecture1.png' width='' height='' title=''><span class='caption-text'></span></span></p>
+
+<p>这里我们隐隐能够感觉到问题，A的数据变化依赖于2个地方。不急，再往后看</p>
+
+<h2>解决方法C</h2>
+
+<p><span class='caption-wrapper'><img class='caption' src='/images/ios-architecture2.png' width='' height='' title=''><span class='caption-text'></span></span></p>
+
+<h2>解决方法D</h2>
+
+<p><span class='caption-wrapper'><img class='caption' src='/images/ios-architecture3.png' width='' height='' title=''><span class='caption-text'></span></span></p>
+
+<p>事情变得更糟了</p>
+
+<h2>解决方法E</h2>
+
+<p>和解决方法A类似，同样的重复计算Cache问题。</p>
+
+<h2>实际上问题还会更糟</h2>
+
+<p>现在还是一个简单的Model，如果project变得很大，那么就会变成这个样子</p>
+
+<p><span class='caption-wrapper'><img class='caption' src='/images/ios-architecture4.png' width='' height='' title=''><span class='caption-text'></span></span></p>
+
+<p>每一个<code>X</code>都可能是一个Bug。</p>
+
+<h1>我们似乎已经找到问题了</h1>
+
+<p><a href="https://developer.apple.com/videos/wwdc/2014/?id=229">《Advanced iOS Application Architecture and Patterns》</a> 中，把这个图叫做information flow。我们的直觉会告诉我们，这个信息的传递，应该是自上而下的树或是森林，而且最好是一个层次平衡结构，要清晰，每一个位置都有相对于的职责。那我们就需要制定一个规则。</p>
+
+<p>在想这个规则之前，如果把上面的图背后的数据忘记，我们感觉这很类似内存模型。当然内存模型会比较复杂。但是我们可以借鉴很多&#8221;内存管理中的规则&#8221;，比如<strong>谁创建，谁销毁</strong>。同样，在我们的information flow中，我们希望<strong>谁创建Cache，谁更新Cache变化</strong></p>
+
+<p>DAO的数据库似乎很难做这件事情，我们引入了一个新的元素<code>dataSource</code>（当然他本身又是DAO的一个Cache)。其中A、B、C3个都会显示数据，那么他们应该在一个层级，其中B、C会修改数据，他们会把这个数据返回给<code>dataSource</code>，而通过<code>dataSource</code>来把这个变化通知到A、B、C。</p>
+
+<p><span class='caption-wrapper'><img class='caption' src='/images/ios-architecture5.png' width='' height='' title=''><span class='caption-text'></span></span></p>
+
+<p>这样带来的好处很明显，我们再添加一个D，也不会对其他地方的数据产生任何影响，我们的Unit Test、Mock也更加好写。</p>
+
+<h1>我们之前的思路错在哪里呢？</h1>
+
+<p>从局部来看，我们之前的思路都没有任何问题，但是整体来看却把问题隐藏化。关键的问题是在于没有找到<code>Truth</code>，找到问题真正的地方。而找到真正的地方，需要我们在大脑中有一个清晰的<code>information flow</code>或是<code>data flow</code>。了解之间元素的相互关系，才能建立一个个的层。才能坐到真正的<strong>解耦</strong>,<strong>解耦并不是仅仅一个个的<code>Manager</code>，更重要的是建立一套清晰的flow机制，或是消息机制，如果没有一套flow，中间引入的各种各样的方法，即便使用了各种设计模式，整个software 依然是深度耦合</strong>。</p>
+
+<h1>疑问</h1>
+
+<h2>这个APP看上去交互非常复杂</h2>
+
+<p>上面的model，有些同学还可能觉得这是交互上面的问题，这个交互看上去非常的复杂，不是一个好设计。</p>
+
+<p>我这里列举一个实际的例子：</p>
+
+<p>A页面要创建动画，动画背后包括很多数据，这些数据会在B，C甚至更多的页面，或是后台被修改。动画本身实际上体现在View，而这些view可能不仅仅在A中有，B，C可能也会有部分的View。</p>
+
+<h2>单例怎么样</h2>
+
+<p>当然我们可以用单例的法子。单例是个魔鬼，被很多滥用，这个场景用单例，其实仅仅是把全局变量合理的封装在了单例下，因为这份数据，并没有任何理由要一定是一份copy。</p>
+
+<h1>recap</h1>
+
+<p>在了解这个概念后，再看一些server的架构，规则时，也会更容易理解这些层之间的关系。包括</p>
+
+<ul>
+<li>为什么要规定那些层之间，不能相互调用，不能有静态方法。</li>
+<li>一个层之间的model，不能有重叠功能，不能连表查询。</li>
+<li>在哪个层才能调用另一个服务，而调用这个服务还必须要通过统一的接口</li>
+</ul>
+
+
+<p>software architecture 涵盖的东西非常多。这篇只是一个引子，介绍了设计之前的准备工作。但是在实际过程中，我们的模型可能要比我这里写的还要复杂很多。下一篇会介绍一种策略用来处理更加复杂模型的情况。</p>
+
+<p>最后附上一个完整功能的 <a href="https://github.com/studentdeng/CUArchitectureDemo/tree/1.0.6">demo code</a></p>
+
+<h1>参考</h1>
+
+<p><a href="https://developer.apple.com/videos/wwdc/2014/?id=229">《Advanced iOS Application Architecture and Patterns》</a></p>
+</div>
+  
+  
+
+
+    </article>
   
   
     <article>
@@ -797,180 +1089,6 @@ model:{200, 400}, presentLayer{200, 400}
 <li><a href="https://developer.apple.com/videos/wwdc/2014/?id=236">《WWDC2014 236_building_interruptible_and_responsive_interactions》</a></li>
 <li><a href="https://developer.apple.com/library/ios/documentation/cocoa/conceptual/coreanimation_guide/CoreAnimationBasics/CoreAnimationBasics.html#//apple_ref/doc/uid/TP40004514-CH2-SW3">《Core Animation Programming Guide:Core Animation Basics》</a></li>
 <li><a href="http://kxdx.org/additive-core-animation/">《additive-core-animation》</a></li>
-</ul>
-
-</div>
-  
-  
-
-
-    </article>
-  
-  
-    <article>
-      
-  <header>
-    
-      <h1 class="entry-title"><a href="/blog/2014/06/13/auto-layout/">AutoLayout 相关概念介绍和动画demo</a></h1>
-    
-    
-      <p class="meta">
-        
-
-
-
-
-
-
-
-
-  
-
-
-<time datetime="2014-06-13T18:28:00+08:00" pubdate data-updated="true">Jun 13<span>th</span>, 2014</time>
-        
-         | <a href="/blog/2014/06/13/auto-layout/#disqus_thread">Comments</a>
-        
-      </p>
-    
-  </header>
-
-
-  <div class="entry-content"><h1>前言</h1>
-
-<p>最近Apple的动作还是蛮多的，其中有3条很有意思。</p>
-
-<ul>
-<li>iOS8中设备旋转，布局的变化</li>
-<li>可能的iPhone6屏幕的变化，iPhone和iPad Mac开发越来越趋于统一</li>
-<li>Xcode6中Interface Builder的变化（IB中显示自定义View）</li>
-</ul>
-
-
-<p>cocoa touch 开发中适配各种屏幕尺寸已经是能够预测的了，那么跟进AutoLayout 也就是必备技能了。</p>
-
-<h1>传统的布局是如何做的</h1>
-
-<p>一开始接触iOS的时候，我还是蛮喜欢他的布局系统。简单来说，一个图像，我们通过中心点坐标，旋转角度和轮廓大小来定义他在窗口中的位置</p>
-
-<p>这里的坐标和笛卡尔坐标系不同的是Y的方向</p>
-
-<p><span class='caption-wrapper'><img class='caption' src='/images/autolayout-1.png' width='' height='' title='1-1 The default layer geometries for iOS'><span class='caption-text'>1-1 The default layer geometries for iOS</span></span></p>
-
-<p>这里表示了anchorPoint含义，用于表示position相对bounds的位置，比如（0.5, 0.5）表示中心，（0,0）表示左上角</p>
-
-<p><span class='caption-wrapper'><img class='caption' src='/images/autolayout-2.png' width='' height='' title='1-2 The default unit coordinate systems for iOS'><span class='caption-text'>1-2 The default unit coordinate systems for iOS</span></span></p>
-
-<p>下面表示了frame bounds position anchorPoint之间的关系，你可能觉得这个anchorPoint似乎没有什么用</p>
-
-<p><span class='caption-wrapper'><img class='caption' src='/images/autolayout-3.png' width='' height='' title='1-3, 1-4  How the anchor point affects the layer’s position property'><span class='caption-text'>1-3, 1-4  How the anchor point affects the layer’s position property</span></span>
-<span class='caption-wrapper'><img class='caption' src='/images/autolayout-7.png' width='' height='' title=''><span class='caption-text'></span></span></p>
-
-<p>但是当我们旋转一个View的时候，好处就来了</p>
-
-<p><span class='caption-wrapper'><img class='caption' src='/images/autolayout-4.png' width='' height='' title='1-5 , 1-6 How the anchor point affects the layer’s position property'><span class='caption-text'>1-5 , 1-6 How the anchor point affects the layer’s position property</span></span>
-<span class='caption-wrapper'><img class='caption' src='/images/autolayout-5.png' width='' height='' title=''><span class='caption-text'></span></span></p>
-
-<h1>传统布局的问题</h1>
-
-<p>传统布局是非常高效的，组合各种变化，可以轻易得实现任意的2D动画，当然也可以轻易的解决静态的布局问题。但是在面对多个屏幕，屏幕旋转时，或是需要在2个View 中间动态增加一个View的时候显得非常繁琐。需要不断的写一些计算距离，位置的代码（甚至还有一些magic number）。网上有很多例子，比如<a href="http://www.raywenderlich.com/20881/beginning-auto-layout-part-1-of-2">beginning-auto-layout-part-1-of-2</a>，或是大家在平时工作中遇到的3.5inch和4inch屏幕之间的适配。</p>
-
-<h1>AutoLayout</h1>
-
-<p>AutoLayout使用非常简单，Xcode的支持也非常直观。但是因为和之前的方式有很大的不同，新手一开始很容易遇到一大堆的异常，crash在main函数里面，让人非常沮丧。但是在了解AutoLayout之后，就会发现这是一个非常非常elegant的布局解决方案，也很容易理解为什么crash，以及应该如何debug。</p>
-
-<h2>constraints 约束</h2>
-
-<p>AutoLayout 是一个描述各种约束的行为，比如，一个View 距离父View上边距多少，相邻之间的间隔，各个View之间的宽高关系等等。这一系列的条件就是为了最终确定之前提到的传统布局中需要的东西，这个View的大小，位置。所以，当我们设置的条件不足，或是条件冲突时，就会产生异常。</p>
-
-<h2>Intrinsic Content Size 固有大小</h2>
-
-<p>在使用AutoLayout的时候，UILabel 我们只需要设定他的position，不需要设置宽高，而一个自定义的UIView，我们不仅仅需要位置，还需要设定宽高，这是为什么呢？</p>
-
-<p>每一个View 都有一个特别的属性叫做Intrinsic Content Size，这个可以理解成是一个View的最合适而且最小的宽度和高度。对于UILabe来说，就是至少得把我设定的文字都显示完整吧，所以系统只需要知道UILabel的位置。而UIView的Intrinsic Content是（0，0）所以需要设置UIView的宽高（或是设定周围的边距等等其他关系可以让系统知道这个View应该多宽，多高）。而Intrinsic Content Size，也是未来自定义View显示到Xcode中必须设置的属性之一。</p>
-
-<h2>Phases of Display</h2>
-
-<p>使用AutoLayout之后，把view显示到屏幕上面大体分成3步。</p>
-
-<ul>
-<li>Update constraints</li>
-<li>Layout views</li>
-<li>Display</li>
-</ul>
-
-
-<p>一般来说<code>layoutSubviews</code>负责布局，比如调整View之间的距离，大小，<code>drawRect</code>负责绘制，比如使用什么颜色。而AutoLayout则是在layout之前增加了一个设定约束的过程,也就是上面提到了<code>update constraints</code>。</p>
-
-<p><span class='caption-wrapper'><img class='caption' src='/images/autolayout-8.png' width='' height='' title='1-7'><span class='caption-text'>1-7</span></span></p>
-
-<p>在view的<code>layoutSubView</code>中，如果我们调用了<code>[super layoutSubView]</code> 系统就把设定的这些约束计算成每个view的bounds，center属性。当然我们也可以基于AutoLayout的结果,再做布局的调整。</p>
-
-<p><span class='caption-wrapper'><img class='caption' src='/images/autolayout-9.png' width='' height='' title='1-8'><span class='caption-text'>1-8</span></span></p>
-
-<p><strong>Display 不是这篇文章的重点，这里略过</strong></p>
-
-<h2>Alignment Rect</h2>
-
-<p>仔细阅读文档的同学会发现在Apple AutoLayout document中可以看到Alignment Rect 这个家伙。
-AutoLayout中的Left，Right等约束，并不是针对View的frame。而是根据Alignment Rect。在绝大多数情况下Alignment = Frame。但是如果对某些需要交互的元素，而图片素材很小的时候，就可以利用Alignment把交互区域变大。可以参考UIImage 中的 <code>imageWithAlignmentRectInsets</code>。</p>
-
-<p><span class='caption-wrapper'><img class='caption' src='/images/autolayout-10.png' width='' height='' title='1-9'><span class='caption-text'>1-9</span></span></p>
-
-<h2>Animation</h2>
-
-<p>AutoLayout也可以配合传统的animation方法，整体代码结构如下。</p>
-
-<figure class='code'> <div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
-<span class='line-number'>2</span>
-<span class='line-number'>3</span>
-<span class='line-number'>4</span>
-<span class='line-number'>5</span>
-<span class='line-number'>6</span>
-<span class='line-number'>7</span>
-<span class='line-number'>8</span>
-</pre></td><td class='code'><pre><code class='objc'><span class='line'>  <span class="p">[</span><span class="n">self</span><span class="p">.</span><span class="n">view</span> <span class="n">layoutIfNeeded</span><span class="p">];</span>
-</span><span class='line'>  <span class="p">[</span><span class="n">UIView</span> <span class="nl">animateWithDuration:</span><span class="mf">0.3f</span>
-</span><span class='line'>                   <span class="nl">animations:</span><span class="o">^</span><span class="p">{</span>
-</span><span class='line'>
-</span><span class='line'>                     <span class="c1">//... update constraints  </span>
-</span><span class='line'>
-</span><span class='line'>                     <span class="p">[</span><span class="n">self</span><span class="p">.</span><span class="n">view</span> <span class="n">layoutIfNeeded</span><span class="p">];</span>
-</span><span class='line'>                   <span class="p">}];</span>
-</span></code></pre></td></tr></table></div></figure>
-
-
-<p>使用AutoLayout也可以轻易的实现之前的设置frame很难实现的动画效果。比如下面的例子(很奇怪，优酷吃掉了后面几秒的动画&#8230;)</p>
-
-<p><embed src="http://player.youku.com/player.php/sid/XNzI3NTQxOTI0/v.swf" allowFullScreen="true" quality="high" width="480" height="400" align="middle" allowScriptAccess="always" type="application/x-shockwave-flash"></embed></p>
-
-<p>使用之前传统的动画，实现这个过程，需要计算所有subView之间的距离，位置。而且在修改一个view的frame时，很难做到和其他View的移动速度同步。除非是custom <code>layoutsubview</code>。做起来相当麻烦。但是用AutoLayout则非常简洁直观，只需要设置第一个View的position，然后其他view约定好高度和间隔依次排列就好了。</p>
-
-<p><a href="https://github.com/studentdeng/AutoLayoutAnimation">demo code</a></p>
-
-<p>当然AutoLayout做动画的时候有的地方也很麻烦，比如希望旋转view A 的时候，或是使用transform时，很容易产生奇怪的结果。一般来说会设置一个host View通过AutoLayout设定位置，然后在旋转view A。一句话就是混合起来，各取优点。</p>
-
-<h2>其他</h2>
-
-<ul>
-<li>Compression Resistance</li>
-<li>Content Hugging</li>
-<li>优先级</li>
-</ul>
-
-
-<p>简单的来说Compression Resistance 设置view有多大意愿（优先级），愿意压缩里面的内容。Content Hugging设置view 有多大愿意（优先级），愿意显示里面内容之外的部分。</p>
-
-<p>stackoverflow上面有一个很清晰的通过UIButton解释的<a href="http://stackoverflow.com/questions/15850417/cocoa-autolayout-content-hugging-vs-content-compression-resistance-priority">[例子]</a>，可以很容易理解这2个属性。</p>
-
-<h1>参考</h1>
-
-<ul>
-<li><a href="https://developer.apple.com/library/ios/documentation/cocoa/conceptual/coreanimation_guide/CoreAnimationBasics/CoreAnimationBasics.html#//apple_ref/doc/uid/TP40004514-CH2-SW3">Core Animation Programming Guide:Core Animation Basics</a></li>
-<li><a href="http://www.objc.io/issue-3/advanced-auto-layout-toolbox.html">Advanced Auto Layout Toolbox-objc.io</a></li>
-<li><a href="https://developer.apple.com/videos/wwdc/2012/?id=202">WWDC2012 session 202 – Introduction to Auto Layout for iOS and OS X</a></li>
-<li><a href="https://developer.apple.com/videos/wwdc/2012/?id=228">WWDC2012 session 228 – Best Practices for Mastering Auto Layout</a></li>
-<li><a href="https://developer.apple.com/videos/wwdc/2012/?id=232">WWDC2012 session 232 – Auto Layout by Example</a></li>
 </ul>
 
 </div>
