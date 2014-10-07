@@ -9,7 +9,15 @@
   <meta name="author" content="studentdeng">
 
   
-  <meta name="description" content="之前一直希望能够看STL源代码，因为他一直存放在我的硬盘深处。但是由于复杂性，我一直再绕。而且纠结的是，我一直推荐我的学弟去研读STL。由于最近的工作需要，使我不得不一看STL的究竟。当然，STL对我来说依然是太庞大了，有相当多的相关的基础知识的缺乏导致整个过程实在是太艰难了，直到我看到了《SGI &hellip;">
+  <meta name="description" content="sequence containers Array
+Vector
+Heap
+Priority_queue
+List
+sList（not in standard）
+Deque
+Stack
+Queue Sequence Containers 其中的元素 都是可序的（ordered），但并不一定有序（ &hellip;">
   
 
   <!-- http://t.co/dKP3o1e -->
@@ -63,6 +71,403 @@
     <div id="content">
       <div class="blog-index">
   
+  
+  
+    <article>
+      
+  <header>
+    
+      <h1 class="entry-title"><a href="/blog/2011/01/01/sgi-stl-vector/">SGI STL 学习笔记二 Vector</a></h1>
+    
+    
+      <p class="meta">
+        
+
+
+
+
+
+
+
+
+  
+
+
+<time datetime="2011-01-01T21:39:00+08:00" pubdate data-updated="true">Jan 1<span>st</span>, 2011</time>
+        
+         | <a href="/blog/2011/01/01/sgi-stl-vector/#disqus_thread">Comments</a>
+        
+      </p>
+    
+  </header>
+
+
+  <div class="entry-content"><p>sequence containers</p>
+
+<pre><code>Array
+Vector
+Heap
+Priority_queue
+List
+sList（not in standard）
+Deque
+Stack
+Queue
+</code></pre>
+
+<p>Sequence Containers 其中的元素 都是可序的（ordered），但并不一定有序（sorted）。STL 中有vector ，list ，deque，stack，queue，priority_queue等序列容器。Stack queue 由于只是将deque重新封装而成，在技术上被归类为一种配接器(adapter)。</p>
+
+<p>Vector
+Vector 的数据为动态空间，随着元素的加入。内部会通过机制自行扩充空间，以容纳新元素。
+Vector 的效率，在于对大小的控制，重新分配时数据移动效率。当空间不足时，vector会选择策略扩充容量。
+Vector resize之后，很可能使所有迭代器均失效。 插入后，插入点之前的Iterator 有效，其他则无效。eraser迭代器失效。
+Vector实现
+Vector 实现比较简单。这里仅仅作为打开SGI STL的敲门砖。</p>
+
+<p>我这里的SGI STL 对vector有进行了进一步封装。在头文件中，也给出了我们的解释。</p>
+
+<p>// The vector base class serves two purposes. First, its constructor</p>
+
+<p>// and destructor allocate (but don&#8217;t initialize) storage. This makes</p>
+
+<p>// exception safety easier. Second, the base class encapsulates all of</p>
+
+<p>// the differences between SGI-style allocators and standard-conforming</p>
+
+<p>// allocators.</p>
+
+<p>这里根据 宏 <strong>STL_USE_STD_ALLOCATORS 来决定是否资源分配器。如果定义了</strong>STL_USE_STD_ALLOCATORS， 则使用allocator&lt; _Tp >，否则为alloc</p>
+
+<pre><code>//这里的 _Vector_base 为我们隐藏了 使用STL 标准分配器，和SGI 自己特有的分配器之间的不同
+//我们现在先把这里具体的分配细节透明。
+//这是，使用SGI 自己的分配器
+template &lt;class _Tp, class _Alloc&gt; 
+class _Vector_base {
+public:
+  typedef _Alloc allocator_type;
+  allocator_type get_allocator() const { return allocator_type(); }
+
+  _Vector_base(const _Alloc&amp;)
+    : _M_start(0), _M_finish(0), _M_end_of_storage(0) {}
+  _Vector_base(size_t __n, const _Alloc&amp;)
+    : _M_start(0), _M_finish(0), _M_end_of_storage(0) 
+  {
+    _M_start = _M_allocate(__n);
+    _M_finish = _M_start;
+    _M_end_of_storage = _M_start + __n;
+  }
+
+  ~_Vector_base() { _M_deallocate(_M_start, _M_end_of_storage - _M_start); }
+
+protected:
+  _Tp* _M_start;
+  _Tp* _M_finish;
+  _Tp* _M_end_of_storage;
+
+  typedef simple_alloc&lt;_Tp, _Alloc&gt; _M_data_allocator;
+  _Tp* _M_allocate(size_t __n)
+    { return _M_data_allocator::allocate(__n); }
+  void _M_deallocate(_Tp* __p, size_t __n) 
+    { _M_data_allocator::deallocate(__p, __n); }
+};
+
+
+template &lt;class _Tp, class _Alloc = __STL_DEFAULT_ALLOCATOR(_Tp) &gt;
+class vector : protected _Vector_base&lt;_Tp, _Alloc&gt; 
+{
+private:
+  typedef _Vector_base&lt;_Tp, _Alloc&gt; _Base;
+public:
+  typedef _Tp value_type;
+  typedef value_type* pointer;
+  typedef const value_type* const_pointer;
+  typedef value_type* iterator;
+  typedef const value_type* const_iterator;
+  typedef value_type&amp; reference;
+  typedef const value_type&amp; const_reference;
+  typedef size_t size_type;
+  typedef ptrdiff_t difference_type;
+
+  typedef typename _Base::allocator_type allocator_type;
+  allocator_type get_allocator() const { return _Base::get_allocator(); }
+…
+...
+};
+</code></pre>
+
+<p>分析vector，首先看他的Iterator。</p>
+
+<p>typedef value_type* iterator;</p>
+
+<p>typedef const value_type* const_iterator;</p>
+
+<p>我们可以看出，vector的Iterator 就是一个指针。若是定义</p>
+
+<p>vector<int>:: iterator iter1;</p>
+
+<p>vector<RECT>:: iterator iter2;</p>
+
+<p>那么，Iter1 其实，就是int *， iter2其实就是RECT * 。</p>
+
+<p>看一下，部分的vector 函数，也是我们常常使用的。</p>
+
+<p>Vector 的数据，什么时候被释放。我们需要看析构函数。</p>
+
+<pre><code>~vector() { destroy(_M_start, _M_finish); }
+
+template &lt;class _ForwardIterator&gt;
+inline void destroy(_ForwardIterator __first, _ForwardIterator __last) {
+  __destroy(__first, __last, __VALUE_TYPE(__first));
+}
+
+#define __VALUE_TYPE(__i)        __value_type(__i)
+</code></pre>
+
+<p>下面是2个偏特化版本。可以看出，在一些特殊情况下，我们找到了最快速的方法。什么也不干。</p>
+
+<pre><code>inline void destroy(char*, char*) {}
+inline void destroy(wchar_t*, wchar_t*) {}
+
+template &lt;class _Iter&gt;
+inline typename iterator_traits&lt;_Iter&gt;::value_type*
+__value_type(const _Iter&amp;)
+{
+   //这里，仅仅构造一个临时对象（准确说是指针）来做返回值，事实上，我们不关心他到底是个什么，只是关心她的类型。
+    //用这个类型来激发函数重载，所以，用0来构造也无妨。
+  return static_cast&lt;typename iterator_traits&lt;_Iter&gt;::value_type*&gt;(0);
+}
+
+template &lt;class _ForwardIterator, class _Tp&gt;
+inline void
+__destroy(_ForwardIterator __first, _ForwardIterator __last, _Tp*)//这里多了一个接受这个类型对象参数
+{
+    //根据这个类型_Tp，我们根据__type_traits&lt;_Tp&gt;，找到了这个类型是否有has_trivial_destructor。
+  typedef typename __type_traits&lt;_Tp&gt;::has_trivial_destructor _Trivial_destructor;
+    //然后构造一个临时的对象来激发函数重载。
+  __destroy_aux(__first, __last, _Trivial_destructor());
+}
+
+//下面2个便是特化后的结果。
+//__false_type,我们老老实实的该干什么干什么。
+template &lt;class _ForwardIterator&gt;
+inline void
+__destroy_aux(_ForwardIterator __first, _ForwardIterator __last, __false_type)
+{
+  for ( ; __first != __last; ++__first)
+    destroy(&amp;*__first);
+}
+
+//__true_type 我们实在是没有这个必要和他纠结了。
+template &lt;class _ForwardIterator&gt;
+inline void __destroy_aux(_ForwardIterator, _ForwardIterator, __true_type) {}
+</code></pre>
+
+<p>这是可能怀疑，内存到那里释放呢？ 别忘了，我们的vector 是继承自_Vector_base，内存释放，管理都隐藏在他那里。</p>
+
+<p>~<em>Vector_base() { </em>M_deallocate(<em>M_start, </em>M_end_of_storage - _M_start); }</p>
+
+<p>这里才真正的执行内存的回收。但是这里又涉及到了SGI STL 的内存管理，这部分是给操作系统，还是给内存池呢？</p>
+
+<p>在没有研究过细致的内存管理之前。我们还是将这里透明吧。</p>
+
+<p>基本操作</p>
+
+<pre><code>iterator begin() { return _M_start; }
+const_iterator begin() const { return _M_start; }
+iterator end() { return _M_finish; }
+const_iterator end() const { return _M_finish; }
+size_type size() const { return size_type(end() - begin()); }
+size_type capacity() const { return size_type(_M_end_of_storage - begin()); }
+bool empty() const { return begin() == end(); }
+
+void push_back(const _Tp&amp; __x) {
+    if (_M_finish != _M_end_of_storage) {
+      construct(_M_finish, __x);
+      ++_M_finish;
+    }
+    else
+      _M_insert_aux(end(), __x);
+  }
+
+  void push_back() {
+    if (_M_finish != _M_end_of_storage) {
+      construct(_M_finish);
+      ++_M_finish;
+    }
+    else
+      _M_insert_aux(end());
+  }
+
+void resize(size_type __new_size, const _Tp&amp; __x) {
+    if (__new_size &lt; size()) 
+      erase(begin() + __new_size, end());
+    else
+      insert(end(), __new_size - size(), __x);
+  }
+
+  void resize(size_type __new_size) { resize(__new_size, _Tp()); }
+</code></pre>
+
+<p>删除 erase</p>
+
+<pre><code>iterator erase(iterator __position) {
+    if (__position + 1 != end())
+      copy(__position + 1, _M_finish, __position);
+    --_M_finish;
+    destroy(_M_finish);
+    return __position;
+  }
+  iterator erase(iterator __first, iterator __last) {
+    iterator __i = copy(__last, _M_finish, __first);
+    destroy(__i, _M_finish);
+    _M_finish = _M_finish - (__last - __first);
+    return __first;
+  }
+</code></pre>
+
+<p>Copy 是全局函数，操作简单，同样有多个特化版本。Vector 和一般数组的删除动作一样，将后面元素一个个往前搬。最后修改个数。</p>
+
+<p>插入 insert</p>
+
+<pre><code>iterator insert(iterator __position, const _Tp&amp; __x) {
+    size_type __n = __position - begin();
+    if (_M_finish != _M_end_of_storage &amp;&amp; __position == end()) {
+      construct(_M_finish, __x);
+      ++_M_finish;
+    }
+    else
+      _M_insert_aux(__position, __x);
+    return begin() + __n;
+  }
+  iterator insert(iterator __position) {
+    size_type __n = __position - begin();
+    if (_M_finish != _M_end_of_storage &amp;&amp; __position == end()) {
+      construct(_M_finish);
+      ++_M_finish;
+    }
+    else
+      _M_insert_aux(__position);
+    return begin() + __n;
+  }
+
+
+template &lt;class _Tp, class _Alloc&gt;
+void
+vector&lt;_Tp, _Alloc&gt;::_M_insert_aux(iterator __position)
+{
+  if (_M_finish != _M_end_of_storage) {
+    construct(_M_finish, *(_M_finish - 1));
+    ++_M_finish;
+    copy_backward(__position, _M_finish - 2, _M_finish - 1);
+    *__position = _Tp();
+  }
+  else {
+    const size_type __old_size = size();
+    const size_type __len = __old_size != 0 ? 2 * __old_size : 1;
+    iterator __new_start = _M_allocate(__len);
+    iterator __new_finish = __new_start;
+    __STL_TRY {
+      __new_finish = uninitialized_copy(_M_start, __position, __new_start);
+      construct(__new_finish);
+      ++__new_finish;
+      __new_finish = uninitialized_copy(__position, _M_finish, __new_finish);
+    }
+    __STL_UNWIND((destroy(__new_start,__new_finish), 
+                  _M_deallocate(__new_start,__len)));
+    destroy(begin(), end());
+    _M_deallocate(_M_start, _M_end_of_storage - _M_start);
+    _M_start = __new_start;
+    _M_finish = __new_finish;
+    _M_end_of_storage = __new_start + __len;
+  }
+}
+</code></pre>
+
+<p>的确很简单，和我们在学校学的并没有什么大的不同，只是在对新增元素的构造上不同。</p>
+
+<pre><code>construct(__new_finish)，
+
+construct(_M_finish, *(_M_finish - 1));
+
+以上construct是全局函数，同样有特化版本。将类的构造分成，资源分配 + 构造函数，来做到提高效率。这样在大量数据上效果应该很明显，并没有具体测试。
+
+对一次插入大量元素时，vector 的策略是。
+if (插入元素个数 == 0 ) return
+if (判断容量是否足够)
+{
+    if (插入点后的元素个数 &gt; 待插入元素个数)
+    {
+       按照最后一个元素，构造插入元素个数个元素。
+         向插入点数据向后搬运。
+         移动指针。
+         将待插入元素顺次插入。
+    }
+    else
+    {
+       先以__x构造元素，在不需要移动位置的地方。
+         将原来的元素，移动到最后。
+         在插入位置处，以__x构造元素。
+    }
+}
+else
+{
+    根据策略分配空间（这里至少PJ 和SGI的策略不同，这里应该和不同的内存管理策略有关）
+    将插入点之前的原有的数据复制到新空间
+    依次复制新元素到新空间。
+    依次复制原来数据到新空间
+}
+
+
+template &lt;class _Tp, class _Alloc&gt;
+void vector&lt;_Tp, _Alloc&gt;::insert(iterator __position, size_type __n, const _Tp&amp; __x)
+{
+  if (__n != 0) {
+    if (size_type(_M_end_of_storage - _M_finish) &gt;= __n) {
+      _Tp __x_copy = __x;
+      const size_type __elems_after = _M_finish - __position;
+      iterator __old_finish = _M_finish;
+      if (__elems_after &gt; __n) {
+        uninitialized_copy(_M_finish - __n, _M_finish, _M_finish);
+        _M_finish += __n;
+        copy_backward(__position, __old_finish - __n, __old_finish);
+        fill(__position, __position + __n, __x_copy);
+      }
+      else {
+        uninitialized_fill_n(_M_finish, __n - __elems_after, __x_copy);
+        _M_finish += __n - __elems_after;
+        uninitialized_copy(__position, __old_finish, _M_finish);
+        _M_finish += __elems_after;
+        fill(__position, __old_finish, __x_copy);
+      }
+    }
+    else {
+      const size_type __old_size = size();        
+      const size_type __len = __old_size + max(__old_size, __n);
+      iterator __new_start = _M_allocate(__len);
+      iterator __new_finish = __new_start;
+      __STL_TRY {
+        __new_finish = uninitialized_copy(_M_start, __position, __new_start);
+        __new_finish = uninitialized_fill_n(__new_finish, __n, __x);
+        __new_finish
+          = uninitialized_copy(__position, _M_finish, __new_finish);
+      }
+      __STL_UNWIND((destroy(__new_start,__new_finish), 
+                    _M_deallocate(__new_start,__len)));
+      destroy(_M_start, _M_finish);
+      _M_deallocate(_M_start, _M_end_of_storage - _M_start);
+      _M_start = __new_start;
+      _M_finish = __new_finish;
+      _M_end_of_storage = __new_start + __len;
+    }
+  }
+}
+</code></pre>
+</div>
+  
+  
+
+
+    </article>
   
   
     <article>
@@ -1995,61 +2400,6 @@ EBP-18 Standard ESP in frame
 <p>2、本来想尽可能的在这一篇中没有或是少有汇编，但是这个的确对我来说，是一个比较复杂的问题，而且越到最后，其实汇编也是不可避免的，因为真实的代码也很有可能就是汇编写的，我们实在是没有必要去把他翻译成c。</p>
 
 <p>这篇文章里面的问题还是很多的，也很有可能会给第一次接触这些的同学一些误解，下一篇将更深入的理解SEH机制，将尽可能的减少这些误解（也包括自己理解错误），内容包括global unwind，异常嵌套和一些很基础很基础的SEH安全机制的总结。</p>
-</div>
-  
-  
-
-
-    </article>
-  
-  
-    <article>
-      
-  <header>
-    
-      <h1 class="entry-title"><a href="/blog/2010/11/19/plan/">未来一年的小计划</a></h1>
-    
-    
-      <p class="meta">
-        
-
-
-
-
-
-
-
-
-  
-
-
-<time datetime="2010-11-19T21:18:00+08:00" pubdate data-updated="true">Nov 19<span>th</span>, 2010</time>
-        
-         | <a href="/blog/2010/11/19/plan/#disqus_thread">Comments</a>
-        
-      </p>
-    
-  </header>
-
-
-  <div class="entry-content"><p>虽然目标，任务给自己下了不知道多少次，但是总没有坚持下来过。这次破例，再给自己下一次。这也算是自己未来1年的计划吧。</p>
-
-<p>第一年，我的事情主要有2个。第一个是参与创业，第二个是加强自己的基础知识。</p>
-
-<p>　　参与创业这个事情，对现在的我来说，说容易也容易，说难也难。创业到底是什么，其实我也不知道，对他来说，我不知道他的过去，也无法预知他的将来。也不知道我能为我们这个创业团队带来什么，但是好在我现在能知道他能给我带来什么。自由，这可以说是我加入这个团队最大的原因。在这里，我可以自己去支配自己的时间，能够有一个宽松的技术氛围，去做我感兴趣的事情。报酬么，现在还不是考虑他的时候，如何最大限度的提高自己的能力，则是最重要的。在这里可以我可以真实的体会一个项目的启动，完善以及最后的维护。虽然不可能像那些外企那样一上来就可以做哪些拥有大客户量的产品，但是我相信大道至简，没有最基本的体验，是不可能体会到真实的软件。</p>
-
-<p>　　对于我这种没有任何经验的开发者来说，我的确很难有真正的对产品的认识，在目前的创业团队中也并没有找到自己的位置，这个事情，我目前完全是踩着石头过河。虽然其中可能会走一些弯路，但是只要其中的每一步都是真实的，在我们这个多维空间下，那么也就没有弯路这回事了。</p>
-
-<p>　　如果说，这2件事情谁更重要，说实话，当然是第二个重要，当然也可以说，第二个和第一个并不矛盾。的确，但是这里分出来的主要原因，是这个在技术上的关联有些距离，创业的范围是移动互联，而这里的基础则是操作系统和编译原理。</p>
-
-<p>　　很难讲我是为什么去喜欢上了这2个非常枯燥的东东，我只知道未来的3年里，我将会用自己三分之一以上的精力专注在这2个部分，我相信，这2部分的能力将构成我整个知识体系金字塔的基石。由于平台的相关性和个人兴趣。我准备专注在windows 和vc这2块。希望我通过对windows 和vc底层实现的理解，加深自己对程序的认识。当然，想要真正的理解这2部分，没有10年20年是不可能有结果的。在第一年里，我将专注在OS user mode下，初步了解windows运行机制以及相对应的vc在os 和 code之前做桥梁的部分，这部分将包括编程语言（主要是c\c++）实现的底层部分，特别是在windows平台下，vc和os之间相辅相成的部分，包括windows是如何保证代码安全，漏洞，以及vc代码效率等方面。我希望通过对这些的了解，加深自己对计算机的认知。</p>
-
-<p>　　最后，再一次很无耻的给自己一个硬性的目标。</p>
-
-<p>每天用半个小时到一个小时的时间听英文的webcast,pdc,或是其他的资料。听不懂也要坚持。至少要达到听1个小时英语不恶心的程度。
-每天一道算法题，之前只是坚持了2个月。这次一定要坚持下来。每天不多，也不少。
-每2个月研究一篇有价值，感兴趣的大牛写的技术文章以及相应的周边知识，并写1-2篇博客记录这个学习过程。
-　　先这么多把，其实想想。这个对我来说已经是很满很满的计划了。</p>
 </div>
   
   
