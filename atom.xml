@@ -4,7 +4,7 @@
   <title><![CDATA[不会开机的男孩]]></title>
   <link href="http://studentdeng.github.com/atom.xml" rel="self"/>
   <link href="http://studentdeng.github.com/"/>
-  <updated>2014-10-07T10:36:32+08:00</updated>
+  <updated>2014-10-14T22:45:31+08:00</updated>
   <id>http://studentdeng.github.com/</id>
   <author>
     <name><![CDATA[studentdeng]]></name>
@@ -12,6 +12,172 @@
   </author>
   <generator uri="http://octopress.org/">Octopress</generator>
 
+  
+  <entry>
+    <title type="html"><![CDATA[分布式系统原理--日志技术Redo Log]]></title>
+    <link href="http://studentdeng.github.com/blog/2014/10/13/log-system/"/>
+    <updated>2014-10-13T19:21:00+08:00</updated>
+    <id>http://studentdeng.github.com/blog/2014/10/13/log-system</id>
+    <content type="html"><![CDATA[<h2>问题概述</h2>
+
+<p>在分布式系统中，宕机是需要考虑的重要组成部分。日志技术是宕机恢复的重要技术之一。日志技术应用广泛，早些更是广泛应用在数据库设计实现中。本文先介绍基本原理概念，最后通过redis介绍生产环境中的实现方法。</p>
+
+<h2>Redo Log</h2>
+
+<p>数据库设计中，需要满足ACID，尤其是在支持事务的系统中。当系统遇到未知错误时，可以恢复到一个稳定可靠的状态。有一个很简单的思路，就是记录所有对数据库的写操作日志。那么一旦发生故障，即使丢失掉内存中所有数据，当下一次启动时，通过复现已经记录的数据库写操作日志，依然可以回到故障之前的状态（如果在写操作作日志的时候发生故障，那么这次数据库操作失败）。</p>
+
+<p>操作流程简单如下（假设每次数据变化，都提交）：</p>
+
+<ol>
+<li>更新的操作方式依次记录到磁盘日志文件。</li>
+<li>更新内存中的数据。</li>
+<li>返回更新成功结果。</li>
+</ol>
+
+
+<p>恢复流程：</p>
+
+<ol>
+<li>读取日志文件，依次修改内存中的数据。</li>
+</ol>
+
+
+<p>优点：</p>
+
+<ol>
+<li>日志文件有序，可以通过append的方式写入磁盘，性能很高。</li>
+<li>简单可靠，应用广泛。可以把内存中的数据，做备份在磁盘中。</li>
+</ol>
+
+
+<p>缺点：</p>
+
+<ol>
+<li>使用时间一长，恢复宕机的时间很慢。</li>
+</ol>
+
+
+<h3>解决办法</h3>
+
+<p>先具体化下，如果我们内存中保留一个a的值，记录了写操作比如 <code>a = 4; a++; a--;</code> 当这些操作上千万、亿之后，恢复非常慢。甚至可能最后一条就是<code>a=0</code>，按照之前的算法，我们却跑了很长时间。</p>
+
+<p>那么根据这个场景，很容易想到一个解决方案。</p>
+
+<p>操作流程：</p>
+
+<ol>
+<li>日志文件记录<code>begin check point</code></li>
+<li>在某个时刻，把内存中的数值，直接snapshot或dump到磁盘上。（比如直接记录a=4）</li>
+<li>日志文件记录<code>end check point</code></li>
+</ol>
+
+
+<p>恢复流程：</p>
+
+<ol>
+<li>扫描日志文件，找到最后的<code>end check point</code>中配对的<code>begin check point</code>。</li>
+<li>读入dump文件。</li>
+<li>依次回放记录的日志操作。</li>
+</ol>
+
+
+<p>优点：</p>
+
+<ol>
+<li>应用广泛，包括 mysql，oracle。</li>
+</ol>
+
+
+<p>一些棘手的问题：</p>
+
+<ol>
+<li><p>在做snapshot的时候，往往不能停止数据库的服务，那么很可能记录了<code>begin check point</code>之后的日志。那么在重新load <code>begin check point</code>之后的日志时，最后恢复的数据很有可能不对。比如我们记录的是<code>a++</code>这样的日志, 那么重复一条日志，就会让a的值加1。反之如果我们记录是幂等的，比如一直是 <code>a=5</code> 这种操作，那么就对最后结果没有影响。很显然，设计幂等操作系统很麻烦。</p></li>
+<li><p>设计一个支持snapshot的内存数据结构，也比较麻烦。</p></li>
+</ol>
+
+
+<p>典型的是通过copy-on-write机制。和操作系统中的概念一样。当这个数据结构被修改，就创建一份真正的copy。老数据增加一份dirty flag。如果没有修改就继续使用之前的内存。这样在做snapshot的时候，保证我们的dump数据是<code>begin check point</code>这个时刻的数据。显然这个也比较麻烦。</p>
+
+<p>还有一种支持snapshot的思路是<code>begin check point</code>后，不动老的数据。内存中的数据在新的地方，日志也写在新的地方。最后在<code>end check point</code>做一次merge。这个实现起来简单，但是内存消耗不小。</p>
+
+<h2>Redis是如何解决日志问题的</h2>
+
+<p>Redis 是一个基于内存的database，不同于memcached，他支持持久化。另外由于redis处理client request 和 response 都是在一个thread里面，也没有抢占式的调度系统，核心业务都是按照event loop顺序执行，而磁盘写日志又开销很大，所以redis实现日志功能做了很多优化。并且提供2种持久化方案。我们需要在不同的场景下，采用不同的方式配置。</p>
+
+<h3>snapshotting</h3>
+
+<p>某个时刻，redis会把内存中的所有数据snapshot到磁盘文件。更通俗的说法是fork一个child process，把内存中的数据序列化到临时文件，然后在main event loop 中原子的更换文件名。redis，利用了操作系统VM的copy-on-write机制，在不阻塞主线程的情况下，利用子进程和父进程共享的data segment实现snapshot。具体是代码实现在<code>rdb.c</code>, function at <code>rdbSaveBackground</code></p>
+
+<p>优点：</p>
+
+<ol>
+<li>简单可靠，如果database 不大，执行的效果非常好。</li>
+</ol>
+
+
+<p>缺点：</p>
+
+<ol>
+<li>如果database size 很大，每一次snapshot时间非常长。不得不配置大的间隔，提高了宕机时数据丢失的风险。</li>
+</ol>
+
+
+<p>为了解决上面的问题，redis增加了AOF。</p>
+
+<h3>Append Only File（AOF）</h3>
+
+<p>在database术语中，也被叫做<a href="http://en.wikipedia.org/wiki/Write-ahead_logging">WAL</a>。如果开启的AOF的配置，redis会记录所有写操作到日志文件中。那么redis同样会遇到之前我们提到过的问题。</p>
+
+<ol>
+<li>即便是追加写，磁盘的操作依然比内存慢好几个数量级，频繁的操作容易产生瓶颈。</li>
+<li>如果数据量操作频繁，会产生大量的重复日志数据，导致恢复时间太长。比如记录一条微博的浏览量，会记录大量重复的<code>+1</code>日志。</li>
+</ol>
+
+
+<p>那么redis是如何解决的呢？</p>
+
+<ol>
+<li>文件写操作消耗的时间很长，redis会先把记录日志写在内存buffer中，在每一次event loop 结束之后，根据配置判断是否做写操作。每个buffer的大小有限制，这样每次写操作时间不会太长。</li>
+<li>即便是调用write操作，OS并没有立即写入磁盘，redis 同样提供了一些方案决定刷新OS IO buffer的时机（1秒、从不、每次）。</li>
+<li>redis 提供一种AOF重写的方式<code>rewriteAppendOnlyFile</code>来处理AOF文件过大情况。</li>
+</ol>
+
+
+<p>前面我们知道了，这种<code>check point</code>的机制还是比较麻烦的。那么redis是这么设计的。</p>
+
+<p><img src="http://i.gyazo.com/314a668a8443b0de126685cfb4197fbc.png" alt="image" /></p>
+
+<ol>
+<li>为了避免加锁，redis 依然创建了一个child process，利用VM的copy-on-write，共享数据。同时保证主线程依然可以处理client请求。</li>
+<li>根据KV的类型，先从内存读取数据，然后再写数据到磁盘，和之前的AOF文件无关。</li>
+<li>那么当子进程rewrite AOF的过程中，main thread依然可以处理新的client request。新增的数据会被放在rewrite buffer中，而且写到原有的AOF文件中。</li>
+<li>child process完成后会通知主线程。主线程有一个定时任务，也就是会不断轮询child process是否已经完成（通过信号量）。</li>
+<li>主线程会merge 变化的数据到temp file。</li>
+<li>主线程原子的rename到一个新的AOF文件，之前的AOF就不起作用了。</li>
+</ol>
+
+
+<p>优点：</p>
+
+<ol>
+<li>除了merge 和 rename需要阻塞主线程，rewrite不会阻塞主线程。（前提是使用bgrewrite command）。</li>
+</ol>
+
+
+<h3>最后</h3>
+
+<p>这些都是性能和稳定性之间做的权衡，根据不同场景需要调整。</p>
+
+<h2>参考</h2>
+
+<ul>
+<li><a href="http://redis.io/topics/latency">Redis latency problems troubleshooting</a></li>
+<li><a href="http://wenku.baidu.com/view/53b7505777232f60ddcca1e0.html">分布式系统原理介绍</a></li>
+<li><a href="http://blog.kennejima.com/post/1226487020/thoughts-on-redis#">Thoughts on Redis</a></li>
+</ul>
+
+]]></content>
+  </entry>
   
   <entry>
     <title type="html"><![CDATA[缚心猿，锁六耗]]></title>
@@ -2678,203 +2844,6 @@ CGSize size = view.bounds.size;
 <h1>翻译吐槽</h1>
 
 <p>这篇文章实在是太长了，而且太啰嗦了。真是累觉不爱。觉得侮辱读者智商，不过内容还是非常值得学习的。</p>
-]]></content>
-  </entry>
-  
-  <entry>
-    <title type="html"><![CDATA[翻译：《iOS7 新功能 视图控制器API》]]></title>
-    <link href="http://studentdeng.github.com/blog/2013/11/19/ios7-viewcontroller/"/>
-    <updated>2013-11-19T18:12:00+08:00</updated>
-    <id>http://studentdeng.github.com/blog/2013/11/19/ios7-viewcontroller</id>
-    <content type="html"><![CDATA[<p>这篇文章投稿在 <a href="http://blog.jobbole.com/51588/">伯乐在线</a></p>
-
-<p>原文出处: <a href="http://www.objc.io/issue-5/view-controller-transitions.html">objc</a></p>
-
-<h1>View Controller Transitions</h1>
-
-<p><a href="http://www.objc.io/issue-5/index.html">Issue #5 iOS 7</a>, October 2013</p>
-
-<p>作者 <a href="http://twitter.com/chriseidhof">Chris Eidhof</a></p>
-
-<h1>自定义动画</h1>
-
-<p>iOS7对我来说最激动人心的特性就是新的 View Controller Transitioning API。 iOS7之前，View Controller之间切换，我需要创建自定义的transitions。 而且这些方法都支持不完整，让人头疼。在transitions中增加交互功能就更难了。</p>
-
-<p>在开始这篇文章之前，我要提醒一下：这是一个新的API，我们尽最大努力让他可以实用，但是并不能保证是最佳。可能需要至少一个月后才能确定，这篇文章是不是最佳的实用方案，这里只是一个对新功能的探索。如果有更好的使用这个API的方法，请联系我们，这样就可以修正这篇文章。</p>
-
-<p>在开始介绍这个API之前，我们需要知道导航控制器的默认行为在iOS7下已经改变了：导航控制器下，切换2个view controller的动画有一点细微的改变，变得更有交互性。例如，当你希望弹出一个view controller时，可以从屏幕左边开始拖动，把整个内容拖动到屏幕右边。</p>
-
-<p>让我们仔细看一下这个API，我发现这个被重度使用的接口是协议并不是一个实体。虽然一上来看上去有一点怪，但是我喜欢这个API，它给了我们更多的灵活性。我们从简单开始：用自定义动画代替原有的view controller的push动画（这里是<a href="https://github.com/objcio/issue5-view-controller-transitions">sample project</a> 在github）。我们首先需要实现这个新的 UINavigationControllerDelegate 方法：</p>
-
-<pre><code>- (id&lt;UIViewControllerAnimatedTransitioning&gt;)
-               navigationController:(UINavigationController *)navigationController
-    animationControllerForOperation:(UINavigationControllerOperation)operation
-                 fromViewController:(UIViewController*)fromVC
-                   toViewController:(UIViewController*)toVC
-{
-    if (operation == UINavigationControllerOperationPush) {
-        return self.animator;
-    }
-    return nil;
-}
-</code></pre>
-
-<p>我们可以观察一下这种类型的操作（push 和 pop）返回一个不同的 animator。如果我们分享代码的话，这个可能是一个对象。我们可能需要把这个变量通过property保存下来。我们也可以为不同的操作创建不同的对象，这里有很高的灵活性。</p>
-
-<p>让这个动画运行起来，我们创建一个自定义对象实现 UIViewControllerContextTransitioning 协议。</p>
-
-<pre><code>@interface Animator : NSObject &lt;UIViewControllerAnimatedTransitioning&gt;
-
-@end
-</code></pre>
-
-<p>这个协议要求我们实现2个方法，其中一个是描述动画的执行时间</p>
-
-<pre><code>- (NSTimeInterval)transitionDuration:(id &lt;UIViewControllerContextTransitioning&gt;)transitionContext
-{
-    return 0.25;
-}
-</code></pre>
-
-<p>另一个是描述动画的执行。</p>
-
-<pre><code>- (void)animateTransition:(id&lt;UIViewControllerContextTransitioning&gt;)transitionContext
-{
-    UIViewController* toViewController = [transitionContext viewControllerForKey:UITransitionContextToViewControllerKey];
-    UIViewController* fromViewController = [transitionContext viewControllerForKey:UITransitionContextFromViewControllerKey];
-    [[transitionContext containerView] addSubview:toViewController.view];
-    toViewController.view.alpha = 0;
-
-    [UIView animateWithDuration:[self transitionDuration:transitionContext] animations:^{
-        fromViewController.view.transform = CGAffineTransformMakeScale(0.1, 0.1);
-        toViewController.view.alpha = 1;
-    } completion:^(BOOL finished) {
-        fromViewController.view.transform = CGAffineTransformIdentity;
-        [transitionContext completeTransition:![transitionContext transitionWasCancelled]];
-
-    }];
-
-}
-</code></pre>
-
-<p>这里你可以看到这个协议是怎么用的：没有提供实体的对象参数，而是通过这个类型 id<UIViewControllerContextTransitioning> 得到transitionContext
-唯一的最重要的东西就是在完成动画之后要调用 completeTransition 这个告诉 transitionContext 我们已经完成动画并且相应的更新了 view controller的状态。其他代码是标准的，我们通过transitionContext得到2个UIViewController，然后使用简单的 UIView 动画，这里我们很简单的做了一个zooming的动画</p>
-
-<p>注意，我们只是写了push的自定义动画，当view controller pop时,iOS系统还是会使用默认的滑动动画。而且，实现这个方法后。导航栏也不能交互了（就是从左到右拖动实现pop view controller）。下面完善他</p>
-
-<h1>交互动画</h1>
-
-<p>让之前的动画变得能够交互起来非常简单。我们需要实现另一个UINavigationControllerDelegate</p>
-
-<pre><code>- (id &lt;UIViewControllerInteractiveTransitioning&gt;)navigationController:(UINavigationController*)navigationController
-                          interactionControllerForAnimationController:(id &lt;UIViewControllerAnimatedTransitioning&gt;)animationController
-{
-    return self.interactionController;
-}
-</code></pre>
-
-<p>注意，如果在一个不能交互的动画中，这里会返回nil。（译注：当不能交互时 self.interactionController 为 nil）</p>
-
-<p>interactionController是UIPercentDrivenInteractionTransition的实例，没有必要更多的设置。我们通过创建拖动手势（UIPanGestureRecognizer）来实现：</p>
-
-<pre><code>if (panGestureRecognizer.state == UIGestureRecognizerStateBegan) {
-    if (location.x &gt;  CGRectGetMidX(view.bounds)) {
-        navigationControllerDelegate.interactionController = [[UIPercentDrivenInteractiveTransition alloc] init];
-        [self performSegueWithIdentifier:PushSegueIdentifier sender:self];
-    }
-} 
-</code></pre>
-
-<p>只有当用户在屏幕右边操作时，我们才设置动画是可以交互的（通过设置interactionController 属性）。然后我们调用performSegueWithIdentifier（或是不用storyboards，直接push view controller）
-在这个手势变化中，我们调用interactionController 的一个方法 updateInteractiveTransition:</p>
-
-<pre><code>else if (panGestureRecognizer.state == UIGestureRecognizerStateChanged) {
-    CGFloat d = (translation.x / CGRectGetWidth(view.bounds)) * -1;
-    [interactionController updateInteractiveTransition:d];
-} 
-</code></pre>
-
-<p>这里根据拖动的距离设置百分比，非常cool的事情是交互控制器（interactionController）和 动画控制器（animation controller）相互协作。而且因为是普通的 UIView 动画，它控制着动画的进程。我们不需要处理他们之前的事情，
-所有的事情都在背后默默的自动搞定了。</p>
-
-<p>最后，当手势停止或是取消掉，我们需要调用interaction controller相应的方法</p>
-
-<pre><code>else if (panGestureRecognizer.state == UIGestureRecognizerStateEnded) {
-    if ([panGestureRecognizer velocityInView:view].x &lt; 0) {
-        [interactionController finishInteractiveTransition];
-    } else {
-        [interactionController cancelInteractiveTransition];
-    }
-    navigationControllerDelegate.interactionController = nil;
-}
-</code></pre>
-
-<p>当切换动画完毕时，设定interactionController为nil非常重要。如果下一个动画是非交互的，我们不希望得到一个奇怪的 interactionController</p>
-
-<p>现在我们已经有一个完整的自定义的可交互的过度变换（transition）了。通过普通的拖动手势和一个UIKit提供的实体对象，几行代码就搞定了。对于大多数的自定义交互过度变换，你可以在这里停下来，用上面提到的方法做任何你想做得动画
-或是交互。</p>
-
-<h1>GPUImage自定义动画</h1>
-
-<p>我们现在已经能够实现一个完整的自定义动画了，可以不用UIView 甚至Core Animation，做自己喜欢的动画。一开始，我用Core Image实现了一个项目<a href="http://www.macstories.net/featured/a-conversation-with-loren-brichter/">Letterpress-style</a>。但是在我的旧iPhone4上面只能跑到大约9FPS，这个和我所期望的60FPS差距太大了。</p>
-
-<p>但是当我使用<a href="https://github.com/BradLarson/GPUImage">GPUImage</a>后，实现一个非常漂亮的自定义动画效果变得非常简单。我们希望这个动画能够做到像素级的消融在2个view controller切换的时候。这个是通过分别对2个view controller 截屏，然后应用GPUImage的图片滤镜实现的。</p>
-
-<p>首先，我们创建一个自定义类，实现animation 和 interactive transition 协议。</p>
-
-<pre><code>@interface GPUImageAnimator : NSObject
-  &lt;UIViewControllerAnimatedTransitioning,
-   UIViewControllerInteractiveTransitioning&gt;
-
-@property (nonatomic) BOOL interactive;
-@property (nonatomic) CGFloat progress;
-
-- (void)finishInteractiveTransition;
-- (void)cancelInteractiveTransition;
-
-@end
-</code></pre>
-
-<p>为了让这个动画跑的飞快，我们只把图片传给GPU一次，然后把所有的图像处理绘制交给GPU，而不是传给CPU（GPU和CPU之间的数据传输非常慢）。通过GPUImageView，我们可以用OpenGL绘制动画效果（不需要手动编写底层的OpenGL代码，我们可以继续编写上层代码）</p>
-
-<p>创建这样的滤镜链非常方便。这里可以看一下下面的例子。有一点挑战的是实现动态的滤镜。GPUImage不能给我们直接提供动画效果。这里我们通过在每一帧的时候更新滤镜来实现动画的绘制。我们使用CADisplayLink类来做这个。</p>
-
-<pre><code>self.displayLink = [CADisplayLink displayLinkWithTarget:self selector:@selector(frame:)];
-[self.displayLink addToRunLoop:[NSRunLoop mainRunLoop] forMode:NSRunLoopCommonModes];
-</code></pre>
-
-<p>在frame:方法中，我们根据时间更新动画进度，然后更新滤镜</p>
-
-<pre><code>- (void)frame:(CADisplayLink*)link
-{
-    self.progress = MAX(0, MIN((link.timestamp - self.startTime) / duration, 1));
-    self.blend.mix = self.progress;
-    self.sourcePixellateFilter.fractionalWidthOfAPixel = self.progress *0.1;
-    self.targetPixellateFilter.fractionalWidthOfAPixel = (1- self.progress)*0.1;
-    [self triggerRenderOfNextFrame];
-}
-</code></pre>
-
-<p>以上就是我们所有要讲得了。在交互变换中，我们需要确保我们的进度是根据手势识别设置的，而不是根据时间。但是剩下的代码几乎都一样了。</p>
-
-<p>这个真的太强大了，你可以使用GPUImage提供的任何滤镜或是自己写的OpenGL代码来实现上面的效果。</p>
-
-<h1>小结</h1>
-
-<p>我们这里仅仅提到了导航控制器下面的2个 view controller 之间的动画，事实上你可以做相同的事情在tabbar controller 或是自定义的container view controller。而且 UICollectionViewController 现在已经可以在layout上面自动实现交互动画了。他们都是使用相同的机制。这个真的太强大了。</p>
-
-<p>当我和<a href="https://twitter.com/orta">Orta</a>提到这个API时，他指出他已经使用这个功能创建了一些轻量级的view controller。不要在每一个view controller 保存管理动画的代码，而是创建一个新的view controller，然后实现2个view controlller视图切换时的自定义的动画效果。</p>
-
-<h1>更多</h1>
-
-<ul>
-<li><a href="http://asciiwwdc.com/2013/sessions/218">WWDC: Custom Transitions using View Controllers</a></li>
-<li><a href="http://www.teehanlax.com/blog/custom-uiviewcontroller-transitions/">Custom UIViewController transitions</a></li>
-<li><a href="http://www.doubleencore.com/2013/09/ios-7-custom-transitions/">iOS 7: Custom Transitions</a></li>
-<li><a href="http://whoisryannystrom.com/2013/10/01/View-Controller-Transition-Orientation/">Custom View Controller Transitions with Orientation
-</a></li>
-</ul>
-
 ]]></content>
   </entry>
   

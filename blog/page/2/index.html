@@ -9,7 +9,8 @@
   <meta name="author" content="studentdeng">
 
   
-  <meta name="description" content="上一篇《AutoLayout 相关概念介绍和动画demo》提到了一些Core Aniamtion的基础知识，这篇依然介绍一些基本概念，最后提到一点iOS8的动画改动。 一些基本概念 说到Core Animation 不能不说Layer, 一个个Layer通过tree的结构组织起来， &hellip;">
+  <meta name="description" content="Introduction 机器学习很久之前就已经热得不行了，直到最近这几个星期，自己才打算了解一些这方面的东西。原因大概有这么3点。 自从Andrew Ng 加入我厂之后(虽然和我毛关系也没有)，总觉得还是需要围观一下这个令他兴奋的领域。
+在听了IDL的有关手环算法分享后(其实毛也没有听懂), &hellip;">
   
 
   <!-- http://t.co/dKP3o1e -->
@@ -63,6 +64,200 @@
     <div id="content">
       <div class="blog-index">
   
+  
+  
+    <article>
+      
+  <header>
+    
+      <h1 class="entry-title"><a href="/blog/2014/07/28/machine-learning-tutorial/">机器学习(一) 简单的背景介绍、线性回归、梯度下降</a></h1>
+    
+    
+      <p class="meta">
+        
+
+
+
+
+
+
+
+
+  
+
+
+<time datetime="2014-07-28T16:48:00+08:00" pubdate data-updated="true">Jul 28<span>th</span>, 2014</time>
+        
+         | <a href="/blog/2014/07/28/machine-learning-tutorial/#disqus_thread">Comments</a>
+        
+      </p>
+    
+  </header>
+
+
+  <div class="entry-content"><h1>Introduction</h1>
+
+<p>机器学习很久之前就已经热得不行了，直到最近这几个星期，自己才打算了解一些这方面的东西。原因大概有这么3点。</p>
+
+<ol>
+<li>自从Andrew Ng 加入我厂之后(虽然和我毛关系也没有)，总觉得还是需要围观一下这个令他兴奋的领域。</li>
+<li>在听了IDL的有关手环算法分享后(其实毛也没有听懂), 在知道了一大堆的名词如最小二乘、梯度下降、SVM。以及里面很多的线性代数，微积分的概念，让我觉得这是一个很好的回收自己大学时期的沉默成本(微积分、现代是我在学校里面不多的用心学过的课程)的好机会。总之就是对这些很感兴趣。</li>
+<li>前一段时间受组里高工分享睡眠算法影响，对这种阅读paper，然后优化算法的过程感到很开心。</li>
+</ol>
+
+
+<p>有了这3条，足够我忙活好几个月了 : )</p>
+
+<h1>Background</h1>
+
+<p>在机器学习中，有2个很大的思路<code>监督学习(supervised learning)</code>和<code>非监督学习(unsupervised learning)</code></p>
+
+<p>监督学习，用通俗的话来说就是<code>你知道问题的答案，需要计算机给出一个更标准的答案</code>。</p>
+
+<p>非监督学习，用通俗的话来说就是<code>物以类聚，人以群分</code>。我们拿到了很多数据，但是不知道问题的答案，希望计算机给我们提供思路。</p>
+
+<p>在生产环境中，往往采用混合模式。比如图片搜索，如何能够查找网页中判断那个图片是老虎，那个是狗。就有2个思路。</p>
+
+<ol>
+<li>根据图片周围的文字。</li>
+<li>图片的图像数据分析。</li>
+</ol>
+
+
+<p>2个角度相互校验，稳定之后，就可以产生足够的标注信息了。</p>
+
+<h1>线性回归(Linear regression)</h1>
+
+<p>线性回归主要用于手环的里程部分的计算，涉及到更细节的是 最小二乘，梯度下降。这里从先从最简单的一元线性回归开始。</p>
+
+<h2>一元线性回归(Linear regression with one variable)</h2>
+
+<p>Regression Problem : Predict real-valued output</p>
+
+<p><span class='caption-wrapper'><img class='caption' src='/images/ml/8.png' width='' height='' title='1-1 算法运行的过程'><span class='caption-text'>1-1 算法运行的过程</span></span></p>
+
+<p>最关键的在于如何描述hypothesis。</p>
+
+<p><span class='caption-wrapper'><img class='caption' src='/images/ml/1.png' width='' height='' title='1-2 一元线性回归中的hypothesis函数'><span class='caption-text'>1-2 一元线性回归中的hypothesis函数</span></span></p>
+
+<p>那么应该如何选取参数呢？直觉告诉我们这个直线需要尽可能的拟合我们的数据集。</p>
+
+<p><span class='caption-wrapper'><img class='caption' src='/images/ml/9.png' width='' height='' title='1-3 线性回归的目标函数'><span class='caption-text'>1-3 线性回归的目标函数</span></span></p>
+
+<p>通过下面的cost function 来评估参数的好坏。算法的目标也很清晰，让函数越小越好。</p>
+
+<p><span class='caption-wrapper'><img class='caption' src='/images/ml/12.png' width='' height='' title='1-4 cost function'><span class='caption-text'>1-4 cost function</span></span></p>
+
+<p>那个这个cost function 到底是个什么样子呢？</p>
+
+<p><span class='caption-wrapper'><img class='caption' src='/images/ml/2.png' width='' height='' title='1-5 图形化的cost function'><span class='caption-text'>1-5 图形化的cost function</span></span></p>
+
+<p>当然这个图还是看起来比较麻烦，Andrew 用了更为简单绘制的图来表示（有点类似等高线）。
+相同的圆圈上，有着相同的cost function value。这里可以看到和上面的图一样，有一个极值。</p>
+
+<p><span class='caption-wrapper'><img class='caption' src='/images/ml/7.png' width='' height='' title='1-6 一个比较差的选择'><span class='caption-text'>1-6 一个比较差的选择</span></span></p>
+
+<p><span class='caption-wrapper'><img class='caption' src='/images/ml/18.png' width='' height='' title='1-7 一个很接近极值的选择'><span class='caption-text'>1-7 一个很接近极值的选择</span></span></p>
+
+<h1>梯度下降 (Gradient descent)</h1>
+
+<p>梯度下降，不仅仅是用于线性回归，也可以用在其他机器学习的场景下。</p>
+
+<p><span class='caption-wrapper'><img class='caption' src='/images/ml/3.png' width='' height='' title='1-8 梯度下降的思路（2个参数的情况）'><span class='caption-text'>1-8 梯度下降的思路（2个参数的情况）</span></span></p>
+
+<p><span class='caption-wrapper'><img class='caption' src='/images/ml/10.png' width='' height='' title='1-9 梯度下降函数图形（2个参数的情况）'><span class='caption-text'>1-9 梯度下降函数图形（2个参数的情况）</span></span></p>
+
+<p>我们的目标是寻找这个图形中的最小值，也就是靠近蓝色的地方。直觉告诉我们，我们先随机一个点，然后沿着最大的坡度向下走最后就可以走到一个极值里。</p>
+
+<p><span class='caption-wrapper'><img class='caption' src='/images/ml/16.png' width='' height='' title='1-10 一条算法路径，全局最优'><span class='caption-text'>1-10 一条算法路径，全局最优</span></span></p>
+
+<p>这个算法也有问题，随着第一个点的位置不同，我们可能找到一个局部最优的解，而不是全局最优。</p>
+
+<p><span class='caption-wrapper'><img class='caption' src='/images/ml/14.png' width='' height='' title='1-11 另一条算法路径，局部最优'><span class='caption-text'>1-11 另一条算法路径，局部最优</span></span></p>
+
+<p>好在在很多实际问题中，我们遇到的情况要好很多，往往<strong>只有一个极值</strong>。</p>
+
+<p>那么梯度下降的算法就可以简单的描述出来，分别计算2个维度的偏导数，直到函数收敛</p>
+
+<p><span class='caption-wrapper'><img class='caption' src='/images/ml/5.png' width='' height='' title='1-12'><span class='caption-text'>1-12</span></span></p>
+
+<p>通过分别计算偏导数,a 为learning rate，决定每一步的步长，太小函数收敛很慢，太大则可能无法找到极值，甚至函数无法收敛。</p>
+
+<p>这里Andrew 着重指出了一个叫做同步更新的概念</p>
+
+<p><span class='caption-wrapper'><img class='caption' src='/images/ml/11.png' width='' height='' title='1-13'><span class='caption-text'>1-13</span></span></p>
+
+<p>如果不同步更新，最后也可以得到极致，但是Andrew 更推荐计算完成所有的参数之后，再一起同步更新。</p>
+
+<h2>梯度下降和一元线性回归</h2>
+
+<p>将图1-4分别偏导后</p>
+
+<p><span class='caption-wrapper'><img class='caption' src='/images/ml/15.png' width='' height='' title='1-14 算法公式'><span class='caption-text'>1-14 算法公式</span></span></p>
+
+<h2>其他</h2>
+
+<ol>
+<li>根据上面的算法，如果我们的cost function 在一些地方不可导，那算法不就没法继续了？</li>
+<li>有其他的方法，可以不去循环计算而是直接根据工具计算</li>
+</ol>
+
+
+<h2>梯度下降和一般化的线性回归</h2>
+
+<p>很多时候我们不仅仅满足2个参数，决定事情的因素很多，我们需要更一般化的公式。</p>
+
+<p><span class='caption-wrapper'><img class='caption' src='/images/ml/4.png' width='' height='' title='1-15'><span class='caption-text'>1-15</span></span></p>
+
+<p>算法</p>
+
+<p><span class='caption-wrapper'><img class='caption' src='/images/ml/19.png' width='' height='' title='1-16'><span class='caption-text'>1-16</span></span></p>
+
+<p>分别求偏导后</p>
+
+<p><span class='caption-wrapper'><img class='caption' src='/images/ml/17.png' width='' height='' title='1-17'><span class='caption-text'>1-17</span></span></p>
+
+<h1>梯度下降生产环境中的一些技巧</h1>
+
+<h2>Feature Scaling</h2>
+
+<p>思路: 希望所有的feature在相同或是类似的范围之内，这样梯度下降会更快收敛。</p>
+
+<p>下图是feature的范围不在一起的运算过程，可以看出来不是圆形，2个维度调整的步长不一样，导致很多反复</p>
+
+<p><span class='caption-wrapper'><img class='caption' src='/images/ml/21.png' width='' height='' title='1-18 红色箭头表示算法的一次迭代'><span class='caption-text'>1-18 红色箭头表示算法的一次迭代</span></span></p>
+
+<p>下图则是调整过的feature，好了很多</p>
+
+<p><span class='caption-wrapper'><img class='caption' src='/images/ml/23.png' width='' height='' title='1-19 红色箭头表示算法的一次迭代'><span class='caption-text'>1-19 红色箭头表示算法的一次迭代</span></span></p>
+
+<p>更一般的，Andrew 推荐每一个feature放在[-1, 1]区间范围内</p>
+
+<h2>Learning Rate</h2>
+
+<p>说到Learning Rate 就不能不提收敛(convergence)。一般应该定义多大的阀值来判断是否收敛呢？</p>
+
+<p><span class='caption-wrapper'><img class='caption' src='/images/ml/6.png' width='' height='' title='1-20 Andrew 并不推荐使用一个阀值来判断是否收敛'><span class='caption-text'>1-20 Andrew 并不推荐使用一个阀值来判断是否收敛</span></span></p>
+
+<p>Andrew 更推荐用图表的形式，因为这个不仅仅可以看到是否马上收敛，而且还能看到算法是否运行正常，是不是一些参数的问题，导致算法无法收敛。</p>
+
+<p><span class='caption-wrapper'><img class='caption' src='/images/ml/20.png' width='' height='' title='1-21'><span class='caption-text'>1-21</span></span></p>
+
+<p>下图是2个出了问题的J函数，通常来说是Learning Rate 过大。</p>
+
+<p><span class='caption-wrapper'><img class='caption' src='/images/ml/25.png' width='' height='' title='1-22 一些过大的Learning Rate 导致的图形'><span class='caption-text'>1-22 一些过大的Learning Rate 导致的图形</span></span></p>
+
+<p>最后Andrew 还提供了一些practice的Learning Rate 选取方法，比如一些0.001, 0.003, 0.01, 0.03, 0.1, &#8230;</p>
+
+<h2>参考</h2>
+
+<p><a href="https://class.coursera.org/ml-006">Coursera 《Machine Learning》 Stanford Andrew Ng</a></p>
+</div>
+  
+  
+
+
+    </article>
   
   
     <article>
@@ -789,159 +984,6 @@ facebook提供了一个非常赞的topic-<a href="http://www.youtube.com/playlis
 <p>这样当摇晃手机的时候就可以动态调整动画参数了，最后数据会保存在plist ：）。</p>
 
 <p>越简单的越强大~</p>
-</div>
-  
-  
-
-
-    </article>
-  
-  
-    <article>
-      
-  <header>
-    
-      <h1 class="entry-title"><a href="/blog/2014/04/08/design-patterns-class-clusters/">Design Patterns in iOS — Class Clusters</a></h1>
-    
-    
-      <p class="meta">
-        
-
-
-
-
-
-
-
-
-  
-
-
-<time datetime="2014-04-08T14:49:00+08:00" pubdate data-updated="true">Apr 8<span>th</span>, 2014</time>
-        
-         | <a href="/blog/2014/04/08/design-patterns-class-clusters/#disqus_thread">Comments</a>
-        
-      </p>
-    
-  </header>
-
-
-  <div class="entry-content"><p>我对设计模式一直都是一个若有若无的感觉，特别是在手机端开发，觉得用处不是很大，认为设计模式是为了大规模团队合作，分工才能体现出效果。设计模式可以通过分不同的“层”让大家协同开发，相互之间不产生影响。但是最近看法有点改变，觉得还是需要多少了解一些。</p>
-
-<p>天天使用的framework确实是一个庞大的项目，从framework的设计中可以找到很多设计模式的影子，而且还是一个很好的生产化的例子。这里先介绍 Class Clusters</p>
-
-<p>Class Clusters 几乎涉及到iOS日常的所有开发过程中，也可能正是这样，导致我们很容易把它彻底遗忘。这里就拿最常用的 NSString 来讲。</p>
-
-<figure class='code'> <div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
-<span class='line-number'>2</span>
-<span class='line-number'>3</span>
-<span class='line-number'>4</span>
-<span class='line-number'>5</span>
-<span class='line-number'>6</span>
-<span class='line-number'>7</span>
-<span class='line-number'>8</span>
-<span class='line-number'>9</span>
-<span class='line-number'>10</span>
-</pre></td><td class='code'><pre><code class='objc'><span class='line'>  <span class="n">NSString</span> <span class="o">*</span><span class="n">string1</span> <span class="o">=</span> <span class="s">@&quot;helloworld&quot;</span><span class="p">;</span>
-</span><span class='line'>  <span class="n">NSString</span> <span class="o">*</span><span class="n">string2</span> <span class="o">=</span> <span class="p">[[</span><span class="n">NSString</span> <span class="n">alloc</span><span class="p">]</span> <span class="nl">initWithFormat:</span><span class="s">@&quot;:%@&quot;</span><span class="p">,</span> <span class="s">@&quot;helloworld&quot;</span><span class="p">];</span>
-</span><span class='line'>  <span class="n">NSString</span> <span class="o">*</span><span class="n">string3</span> <span class="o">=</span> <span class="p">[</span><span class="n">NSHomeDirectory</span><span class="p">()</span> <span class="nl">stringByAppendingPathComponent:</span><span class="n">string1</span><span class="p">];</span>
-</span><span class='line'>  <span class="n">NSTextStorage</span> <span class="o">*</span><span class="n">storage</span> <span class="o">=</span> <span class="p">[[</span><span class="n">NSTextStorage</span> <span class="n">alloc</span><span class="p">]</span> <span class="nl">initWithString:</span><span class="n">string1</span><span class="p">];</span>
-</span><span class='line'>  <span class="n">NSString</span> <span class="o">*</span><span class="n">string4</span> <span class="o">=</span> <span class="p">[</span><span class="n">storage</span> <span class="n">string</span><span class="p">];</span>
-</span><span class='line'>
-</span><span class='line'>  <span class="n">NSLog</span><span class="p">(</span><span class="s">@&quot;%@&quot;</span><span class="p">,</span> <span class="p">[[</span><span class="n">string1</span> <span class="n">class</span><span class="p">]</span> <span class="n">description</span><span class="p">]);</span>
-</span><span class='line'>  <span class="n">NSLog</span><span class="p">(</span><span class="s">@&quot;%@&quot;</span><span class="p">,</span> <span class="p">[[</span><span class="n">string2</span> <span class="n">class</span><span class="p">]</span> <span class="n">description</span><span class="p">]);</span>
-</span><span class='line'>  <span class="n">NSLog</span><span class="p">(</span><span class="s">@&quot;%@&quot;</span><span class="p">,</span> <span class="p">[[</span><span class="n">string3</span> <span class="n">class</span><span class="p">]</span> <span class="n">description</span><span class="p">]);</span>
-</span><span class='line'>  <span class="n">NSLog</span><span class="p">(</span><span class="s">@&quot;%@&quot;</span><span class="p">,</span> <span class="p">[[</span><span class="n">string4</span> <span class="n">class</span><span class="p">]</span> <span class="n">description</span><span class="p">]);</span>
-</span></code></pre></td></tr></table></div></figure>
-
-
-<p>不知道有多少人试过哈，string3的返回还是让我吃了一惊。下面的结果是在Xcode5.1 SDK7.1 下的结果。</p>
-
-<pre><code>__NSCFConstantString
-__NSCFString
-NSPathStore2
-NSBigMutableString
-</code></pre>
-
-<p>通过上面的方法创建的 NSString 最后都产生了不同的子类。有人可能会奇怪为什么需要不同的 NSString。因为对于大部分的以阅读内容为主的App来讲，很大部分资源消耗在了字符串处理上面（存储，解析，比较等等），所以对于字符串的存储需要有不同的方式来满足不同的情况，这样才能有性能上的提高。</p>
-
-<div class='notebox'><p><strong>Note: </strong>设想一下，在这些场景上面，如果Apple直接把这些类扔给开发者，会有什么问题呢？</p><p>那么开发者需要自己在不同的场景决定使用不同的子类，不仅学习成本提高，而且也容易生成性能不太好的代码。<br/>现在简单的 NSString 就可以直接覆盖上面的所有场景。而且随着iOS的软硬件的后续开发，开发者还可以在不修改代码的情况下获得性能提升。</p></div>
-
-
-<p>既然看到了它的强大之处，那么就开始了解吧。
-既然这是第一篇DesignPattern那么就从最简单开始 ：)</p>
-
-<h2>Abstract Classes</h2>
-
-<p>这里引用一下Mike的内容</p>
-
-<blockquote><p>An abstract class is a class which is not fully functional on its own. It must be subclassed, and the subclass must fill out the missing functionality.</p><p>An abstract class is not necessarily an empty shell. It can still contain a lot of functionality all on its own, but it&#8217;s not complete without a subclass to fill in the holes.</p><footer><strong>Mike Ash</strong> <cite><a href='https://mikeash.com/pyblog/friday-qa-2010-03-12-subclassing-class-clusters.html'>Friday Q&A 2010-03-12: Subclassing Class Clusters</a></cite></footer></blockquote>
-
-
-<p>Abstract Class 的概念很简单，类中所有的方法不需要全部有具体的实现，相当于定义了很多的接口。比如一开始的 NSString</p>
-
-<h2>Class Clusters</h2>
-
-<blockquote><p>A class cluster is a hierarchy of classes capped off by a public abstract class. The public class provides an interface and a lot of auxiliary functionality, and then core functionality is implemented by private subclasses. The public class then provides creation methods which return instances of the private subclasses, so that the public class can be used without knowledge of those subclasses.</p><footer><strong>Mike Ash</strong> <cite><a href='https://mikeash.com/pyblog/friday-qa-2010-03-12-subclassing-class-clusters.html'>Friday Q&A 2010-03-12: Subclassing Class Clusters</a></cite></footer></blockquote>
-
-
-<p>Clusters的角色不仅要实现 Abstract Class 的方法，还需要自己实现自己的特殊化需求。Abstract Class 负责提供一个“外壳”，真正“干活”的就是Cluster class。这样外部就只需要了解Abstract Class就可以了。</p>
-
-<h2>NSString Benefits</h2>
-
-<p>比如 __NSCFConstantString 负责 const string，类似 @&#8221;helloworld&#8221;这样的字符串。这样的字符串有一个特点，不会被修改，当真正处理的时候，可以分配大小合适的内存，甚至可以分配在只读 data segment上面，而不需要分配在堆上面，如果有相同的字符串引用就可以完全赋值相同的地址。那么在retainCount上面的处理也就和其他字符串处理有很大不同。</p>
-
-<p>NSPathStore2 看上去是处理有Path相关的字符串，因为没有源代码，这里我们可以大胆猜测一下，path相关的主要是做字符串的拼接操作，而这些字符串通常很长，占用空间大，但是重复的概率缺很高，那么就可以缓存一些字符串，这样可以减少一些内存的分配释放开销。</p>
-
-<h2>How to use</h2>
-
-<blockquote><p>The class cluster architecture involves a trade-off between simplicity and extensibility: Having a few public classes stand in for a multitude of private ones makes it easier to learn and use the classes in a framework but somewhat harder to create subclasses within any of the clusters.</p><footer><strong>Apple Develpoer Document</strong> <cite><a href='https://developer.apple.com/library/mac/documentation/general/conceptual/devpedia-cocoacore/ClassCluster.html'>Cocoa Core Competencies</a></cite></footer></blockquote>
-
-
-<p>就像Apple文档中提到的，Class Cluster 是在简单和扩展性上面做了一个妥协。Class Clusters 的子类化比较麻烦，而且也看上去也非常trick,Apple 更推荐的方法是用组合的方法来扩展。</p>
-
-<p>大家都知道设计模式有一个非常重的坑就是被过渡设计。Class Cluster 可以帮我们</p>
-
-<ul>
-<li>减少了if else 这样缺乏扩展性的代码</li>
-<li>增加新功能支持不影响其他代码</li>
-</ul>
-
-
-<p>那么这个非常适合应用在适配上面，比如不同屏幕的适配，不同厂家可能的不同的需求。</p>
-
-<figure class='code'> <div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
-<span class='line-number'>2</span>
-<span class='line-number'>3</span>
-<span class='line-number'>4</span>
-<span class='line-number'>5</span>
-<span class='line-number'>6</span>
-<span class='line-number'>7</span>
-<span class='line-number'>8</span>
-<span class='line-number'>9</span>
-<span class='line-number'>10</span>
-<span class='line-number'>11</span>
-</pre></td><td class='code'><pre><code class='objc'><span class='line'><span class="k">+</span> <span class="p">(</span><span class="kt">id</span><span class="p">)</span><span class="nf">alloc</span> <span class="p">{</span>
-</span><span class='line'>    <span class="k">if</span> <span class="p">([</span><span class="n">self</span> <span class="n">class</span><span class="p">]</span> <span class="o">==</span> <span class="p">[</span><span class="n">SFSSearchTVC</span> <span class="n">class</span><span class="p">])</span> <span class="p">{</span>
-</span><span class='line'>        <span class="k">if</span> <span class="p">([</span><span class="n">UIDevice</span> <span class="n">currentDevice</span><span class="p">]</span> <span class="n">systemMajorVersion</span><span class="p">]</span> <span class="o">&lt;</span> <span class="mi">7</span><span class="p">)</span> <span class="p">{</span>
-</span><span class='line'>            <span class="k">return</span> <span class="p">[</span><span class="n">SFSSearchTVC6</span> <span class="n">alloc</span><span class="p">];</span>
-</span><span class='line'>        <span class="p">}</span> <span class="k">else</span> <span class="k">if</span> <span class="p">([</span><span class="n">UIDevice</span> <span class="n">currentDevice</span><span class="p">]</span> <span class="n">systemMajorVersion</span><span class="p">]</span> <span class="o">==</span> <span class="mi">7</span><span class="p">)</span> <span class="p">{</span>
-</span><span class='line'>            <span class="k">return</span> <span class="p">[</span><span class="n">SFSSearchTVC7</span> <span class="n">alloc</span><span class="p">];</span>
-</span><span class='line'>        <span class="p">}</span>
-</span><span class='line'>    <span class="p">}</span>
-</span><span class='line'>
-</span><span class='line'>    <span class="k">return</span> <span class="p">[</span><span class="n">super</span> <span class="n">alloc</span><span class="p">];</span>
-</span><span class='line'><span class="p">}</span>
-</span></code></pre></td></tr></table></div></figure>
-
-
-<p>上面是代码来自<a href="http://bjmiller.me/post/69043165385/a-cluster-to-remove-clutter">BJ Miller&#8217;s blog A Cluster to Remove Clutter</a>
-是用于适配iOS6，iOS7的简单例子。</p>
-
-<h2>Conclusion</h2>
-
-<p>很多设计模式都很像，也很容易糊涂，比如工厂模式和Class Clusters在某些地方就很类似，我自己也并不能很好的分清楚。
-设计模式的本质是为了解耦。不管使用哪个设计模式，我们最后追求的都是简单、容易维护和扩展的代码。</p>
 </div>
   
   

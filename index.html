@@ -9,7 +9,7 @@
   <meta name="author" content="studentdeng">
 
   
-  <meta name="description" content="转载自Coursera 公开课 professionalism forums thread 【作者徐冰，1994年从中国成都到新加坡。目前修读中医学士学位，兼职电台主持】 无论是谁，有怎样的社会地位，在光鲜亮丽或毫不起眼的外表下，谁没有自己的故事？谁不是一路走来跌跌撞撞留了或深或浅的伤？ &hellip;">
+  <meta name="description" content="问题概述 在分布式系统中，宕机是需要考虑的重要组成部分。日志技术是宕机恢复的重要技术之一。日志技术应用广泛，早些更是广泛应用在数据库设计实现中。本文先介绍基本原理概念，最后通过redis介绍生产环境中的实现方法。 Redo Log 数据库设计中，需要满足ACID，尤其是在支持事务的系统中。 &hellip;">
   
 
   <!-- http://t.co/dKP3o1e -->
@@ -63,6 +63,201 @@
     <div id="content">
       <div class="blog-index">
   
+  
+  
+    <article>
+      
+  <header>
+    
+      <h1 class="entry-title"><a href="/blog/2014/10/13/log-system/">分布式系统原理&#8211;日志技术Redo Log</a></h1>
+    
+    
+      <p class="meta">
+        
+
+
+
+
+
+
+
+
+  
+
+
+<time datetime="2014-10-13T19:21:00+08:00" pubdate data-updated="true">Oct 13<span>th</span>, 2014</time>
+        
+         | <a href="/blog/2014/10/13/log-system/#disqus_thread">Comments</a>
+        
+      </p>
+    
+  </header>
+
+
+  <div class="entry-content"><h2>问题概述</h2>
+
+<p>在分布式系统中，宕机是需要考虑的重要组成部分。日志技术是宕机恢复的重要技术之一。日志技术应用广泛，早些更是广泛应用在数据库设计实现中。本文先介绍基本原理概念，最后通过redis介绍生产环境中的实现方法。</p>
+
+<h2>Redo Log</h2>
+
+<p>数据库设计中，需要满足ACID，尤其是在支持事务的系统中。当系统遇到未知错误时，可以恢复到一个稳定可靠的状态。有一个很简单的思路，就是记录所有对数据库的写操作日志。那么一旦发生故障，即使丢失掉内存中所有数据，当下一次启动时，通过复现已经记录的数据库写操作日志，依然可以回到故障之前的状态（如果在写操作作日志的时候发生故障，那么这次数据库操作失败）。</p>
+
+<p>操作流程简单如下（假设每次数据变化，都提交）：</p>
+
+<ol>
+<li>更新的操作方式依次记录到磁盘日志文件。</li>
+<li>更新内存中的数据。</li>
+<li>返回更新成功结果。</li>
+</ol>
+
+
+<p>恢复流程：</p>
+
+<ol>
+<li>读取日志文件，依次修改内存中的数据。</li>
+</ol>
+
+
+<p>优点：</p>
+
+<ol>
+<li>日志文件有序，可以通过append的方式写入磁盘，性能很高。</li>
+<li>简单可靠，应用广泛。可以把内存中的数据，做备份在磁盘中。</li>
+</ol>
+
+
+<p>缺点：</p>
+
+<ol>
+<li>使用时间一长，恢复宕机的时间很慢。</li>
+</ol>
+
+
+<h3>解决办法</h3>
+
+<p>先具体化下，如果我们内存中保留一个a的值，记录了写操作比如 <code>a = 4; a++; a--;</code> 当这些操作上千万、亿之后，恢复非常慢。甚至可能最后一条就是<code>a=0</code>，按照之前的算法，我们却跑了很长时间。</p>
+
+<p>那么根据这个场景，很容易想到一个解决方案。</p>
+
+<p>操作流程：</p>
+
+<ol>
+<li>日志文件记录<code>begin check point</code></li>
+<li>在某个时刻，把内存中的数值，直接snapshot或dump到磁盘上。（比如直接记录a=4）</li>
+<li>日志文件记录<code>end check point</code></li>
+</ol>
+
+
+<p>恢复流程：</p>
+
+<ol>
+<li>扫描日志文件，找到最后的<code>end check point</code>中配对的<code>begin check point</code>。</li>
+<li>读入dump文件。</li>
+<li>依次回放记录的日志操作。</li>
+</ol>
+
+
+<p>优点：</p>
+
+<ol>
+<li>应用广泛，包括 mysql，oracle。</li>
+</ol>
+
+
+<p>一些棘手的问题：</p>
+
+<ol>
+<li><p>在做snapshot的时候，往往不能停止数据库的服务，那么很可能记录了<code>begin check point</code>之后的日志。那么在重新load <code>begin check point</code>之后的日志时，最后恢复的数据很有可能不对。比如我们记录的是<code>a++</code>这样的日志, 那么重复一条日志，就会让a的值加1。反之如果我们记录是幂等的，比如一直是 <code>a=5</code> 这种操作，那么就对最后结果没有影响。很显然，设计幂等操作系统很麻烦。</p></li>
+<li><p>设计一个支持snapshot的内存数据结构，也比较麻烦。</p></li>
+</ol>
+
+
+<p>典型的是通过copy-on-write机制。和操作系统中的概念一样。当这个数据结构被修改，就创建一份真正的copy。老数据增加一份dirty flag。如果没有修改就继续使用之前的内存。这样在做snapshot的时候，保证我们的dump数据是<code>begin check point</code>这个时刻的数据。显然这个也比较麻烦。</p>
+
+<p>还有一种支持snapshot的思路是<code>begin check point</code>后，不动老的数据。内存中的数据在新的地方，日志也写在新的地方。最后在<code>end check point</code>做一次merge。这个实现起来简单，但是内存消耗不小。</p>
+
+<h2>Redis是如何解决日志问题的</h2>
+
+<p>Redis 是一个基于内存的database，不同于memcached，他支持持久化。另外由于redis处理client request 和 response 都是在一个thread里面，也没有抢占式的调度系统，核心业务都是按照event loop顺序执行，而磁盘写日志又开销很大，所以redis实现日志功能做了很多优化。并且提供2种持久化方案。我们需要在不同的场景下，采用不同的方式配置。</p>
+
+<h3>snapshotting</h3>
+
+<p>某个时刻，redis会把内存中的所有数据snapshot到磁盘文件。更通俗的说法是fork一个child process，把内存中的数据序列化到临时文件，然后在main event loop 中原子的更换文件名。redis，利用了操作系统VM的copy-on-write机制，在不阻塞主线程的情况下，利用子进程和父进程共享的data segment实现snapshot。具体是代码实现在<code>rdb.c</code>, function at <code>rdbSaveBackground</code></p>
+
+<p>优点：</p>
+
+<ol>
+<li>简单可靠，如果database 不大，执行的效果非常好。</li>
+</ol>
+
+
+<p>缺点：</p>
+
+<ol>
+<li>如果database size 很大，每一次snapshot时间非常长。不得不配置大的间隔，提高了宕机时数据丢失的风险。</li>
+</ol>
+
+
+<p>为了解决上面的问题，redis增加了AOF。</p>
+
+<h3>Append Only File（AOF）</h3>
+
+<p>在database术语中，也被叫做<a href="http://en.wikipedia.org/wiki/Write-ahead_logging">WAL</a>。如果开启的AOF的配置，redis会记录所有写操作到日志文件中。那么redis同样会遇到之前我们提到过的问题。</p>
+
+<ol>
+<li>即便是追加写，磁盘的操作依然比内存慢好几个数量级，频繁的操作容易产生瓶颈。</li>
+<li>如果数据量操作频繁，会产生大量的重复日志数据，导致恢复时间太长。比如记录一条微博的浏览量，会记录大量重复的<code>+1</code>日志。</li>
+</ol>
+
+
+<p>那么redis是如何解决的呢？</p>
+
+<ol>
+<li>文件写操作消耗的时间很长，redis会先把记录日志写在内存buffer中，在每一次event loop 结束之后，根据配置判断是否做写操作。每个buffer的大小有限制，这样每次写操作时间不会太长。</li>
+<li>即便是调用write操作，OS并没有立即写入磁盘，redis 同样提供了一些方案决定刷新OS IO buffer的时机（1秒、从不、每次）。</li>
+<li>redis 提供一种AOF重写的方式<code>rewriteAppendOnlyFile</code>来处理AOF文件过大情况。</li>
+</ol>
+
+
+<p>前面我们知道了，这种<code>check point</code>的机制还是比较麻烦的。那么redis是这么设计的。</p>
+
+<p><img src="http://i.gyazo.com/314a668a8443b0de126685cfb4197fbc.png" alt="image" /></p>
+
+<ol>
+<li>为了避免加锁，redis 依然创建了一个child process，利用VM的copy-on-write，共享数据。同时保证主线程依然可以处理client请求。</li>
+<li>根据KV的类型，先从内存读取数据，然后再写数据到磁盘，和之前的AOF文件无关。</li>
+<li>那么当子进程rewrite AOF的过程中，main thread依然可以处理新的client request。新增的数据会被放在rewrite buffer中，而且写到原有的AOF文件中。</li>
+<li>child process完成后会通知主线程。主线程有一个定时任务，也就是会不断轮询child process是否已经完成（通过信号量）。</li>
+<li>主线程会merge 变化的数据到temp file。</li>
+<li>主线程原子的rename到一个新的AOF文件，之前的AOF就不起作用了。</li>
+</ol>
+
+
+<p>优点：</p>
+
+<ol>
+<li>除了merge 和 rename需要阻塞主线程，rewrite不会阻塞主线程。（前提是使用bgrewrite command）。</li>
+</ol>
+
+
+<h3>最后</h3>
+
+<p>这些都是性能和稳定性之间做的权衡，根据不同场景需要调整。</p>
+
+<h2>参考</h2>
+
+<ul>
+<li><a href="http://redis.io/topics/latency">Redis latency problems troubleshooting</a></li>
+<li><a href="http://wenku.baidu.com/view/53b7505777232f60ddcca1e0.html">分布式系统原理介绍</a></li>
+<li><a href="http://blog.kennejima.com/post/1226487020/thoughts-on-redis#">Thoughts on Redis</a></li>
+</ul>
+
+</div>
+  
+  
+
+
+    </article>
   
   
     <article>
@@ -708,200 +903,6 @@ end
 
 <p>历史用真，去伪。。。
 改动人心</p>
-</div>
-  
-  
-
-
-    </article>
-  
-  
-    <article>
-      
-  <header>
-    
-      <h1 class="entry-title"><a href="/blog/2014/07/28/machine-learning-tutorial/">机器学习(一) 简单的背景介绍、线性回归、梯度下降</a></h1>
-    
-    
-      <p class="meta">
-        
-
-
-
-
-
-
-
-
-  
-
-
-<time datetime="2014-07-28T16:48:00+08:00" pubdate data-updated="true">Jul 28<span>th</span>, 2014</time>
-        
-         | <a href="/blog/2014/07/28/machine-learning-tutorial/#disqus_thread">Comments</a>
-        
-      </p>
-    
-  </header>
-
-
-  <div class="entry-content"><h1>Introduction</h1>
-
-<p>机器学习很久之前就已经热得不行了，直到最近这几个星期，自己才打算了解一些这方面的东西。原因大概有这么3点。</p>
-
-<ol>
-<li>自从Andrew Ng 加入我厂之后(虽然和我毛关系也没有)，总觉得还是需要围观一下这个令他兴奋的领域。</li>
-<li>在听了IDL的有关手环算法分享后(其实毛也没有听懂), 在知道了一大堆的名词如最小二乘、梯度下降、SVM。以及里面很多的线性代数，微积分的概念，让我觉得这是一个很好的回收自己大学时期的沉默成本(微积分、现代是我在学校里面不多的用心学过的课程)的好机会。总之就是对这些很感兴趣。</li>
-<li>前一段时间受组里高工分享睡眠算法影响，对这种阅读paper，然后优化算法的过程感到很开心。</li>
-</ol>
-
-
-<p>有了这3条，足够我忙活好几个月了 : )</p>
-
-<h1>Background</h1>
-
-<p>在机器学习中，有2个很大的思路<code>监督学习(supervised learning)</code>和<code>非监督学习(unsupervised learning)</code></p>
-
-<p>监督学习，用通俗的话来说就是<code>你知道问题的答案，需要计算机给出一个更标准的答案</code>。</p>
-
-<p>非监督学习，用通俗的话来说就是<code>物以类聚，人以群分</code>。我们拿到了很多数据，但是不知道问题的答案，希望计算机给我们提供思路。</p>
-
-<p>在生产环境中，往往采用混合模式。比如图片搜索，如何能够查找网页中判断那个图片是老虎，那个是狗。就有2个思路。</p>
-
-<ol>
-<li>根据图片周围的文字。</li>
-<li>图片的图像数据分析。</li>
-</ol>
-
-
-<p>2个角度相互校验，稳定之后，就可以产生足够的标注信息了。</p>
-
-<h1>线性回归(Linear regression)</h1>
-
-<p>线性回归主要用于手环的里程部分的计算，涉及到更细节的是 最小二乘，梯度下降。这里从先从最简单的一元线性回归开始。</p>
-
-<h2>一元线性回归(Linear regression with one variable)</h2>
-
-<p>Regression Problem : Predict real-valued output</p>
-
-<p><span class='caption-wrapper'><img class='caption' src='/images/ml/8.png' width='' height='' title='1-1 算法运行的过程'><span class='caption-text'>1-1 算法运行的过程</span></span></p>
-
-<p>最关键的在于如何描述hypothesis。</p>
-
-<p><span class='caption-wrapper'><img class='caption' src='/images/ml/1.png' width='' height='' title='1-2 一元线性回归中的hypothesis函数'><span class='caption-text'>1-2 一元线性回归中的hypothesis函数</span></span></p>
-
-<p>那么应该如何选取参数呢？直觉告诉我们这个直线需要尽可能的拟合我们的数据集。</p>
-
-<p><span class='caption-wrapper'><img class='caption' src='/images/ml/9.png' width='' height='' title='1-3 线性回归的目标函数'><span class='caption-text'>1-3 线性回归的目标函数</span></span></p>
-
-<p>通过下面的cost function 来评估参数的好坏。算法的目标也很清晰，让函数越小越好。</p>
-
-<p><span class='caption-wrapper'><img class='caption' src='/images/ml/12.png' width='' height='' title='1-4 cost function'><span class='caption-text'>1-4 cost function</span></span></p>
-
-<p>那个这个cost function 到底是个什么样子呢？</p>
-
-<p><span class='caption-wrapper'><img class='caption' src='/images/ml/2.png' width='' height='' title='1-5 图形化的cost function'><span class='caption-text'>1-5 图形化的cost function</span></span></p>
-
-<p>当然这个图还是看起来比较麻烦，Andrew 用了更为简单绘制的图来表示（有点类似等高线）。
-相同的圆圈上，有着相同的cost function value。这里可以看到和上面的图一样，有一个极值。</p>
-
-<p><span class='caption-wrapper'><img class='caption' src='/images/ml/7.png' width='' height='' title='1-6 一个比较差的选择'><span class='caption-text'>1-6 一个比较差的选择</span></span></p>
-
-<p><span class='caption-wrapper'><img class='caption' src='/images/ml/18.png' width='' height='' title='1-7 一个很接近极值的选择'><span class='caption-text'>1-7 一个很接近极值的选择</span></span></p>
-
-<h1>梯度下降 (Gradient descent)</h1>
-
-<p>梯度下降，不仅仅是用于线性回归，也可以用在其他机器学习的场景下。</p>
-
-<p><span class='caption-wrapper'><img class='caption' src='/images/ml/3.png' width='' height='' title='1-8 梯度下降的思路（2个参数的情况）'><span class='caption-text'>1-8 梯度下降的思路（2个参数的情况）</span></span></p>
-
-<p><span class='caption-wrapper'><img class='caption' src='/images/ml/10.png' width='' height='' title='1-9 梯度下降函数图形（2个参数的情况）'><span class='caption-text'>1-9 梯度下降函数图形（2个参数的情况）</span></span></p>
-
-<p>我们的目标是寻找这个图形中的最小值，也就是靠近蓝色的地方。直觉告诉我们，我们先随机一个点，然后沿着最大的坡度向下走最后就可以走到一个极值里。</p>
-
-<p><span class='caption-wrapper'><img class='caption' src='/images/ml/16.png' width='' height='' title='1-10 一条算法路径，全局最优'><span class='caption-text'>1-10 一条算法路径，全局最优</span></span></p>
-
-<p>这个算法也有问题，随着第一个点的位置不同，我们可能找到一个局部最优的解，而不是全局最优。</p>
-
-<p><span class='caption-wrapper'><img class='caption' src='/images/ml/14.png' width='' height='' title='1-11 另一条算法路径，局部最优'><span class='caption-text'>1-11 另一条算法路径，局部最优</span></span></p>
-
-<p>好在在很多实际问题中，我们遇到的情况要好很多，往往<strong>只有一个极值</strong>。</p>
-
-<p>那么梯度下降的算法就可以简单的描述出来，分别计算2个维度的偏导数，直到函数收敛</p>
-
-<p><span class='caption-wrapper'><img class='caption' src='/images/ml/5.png' width='' height='' title='1-12'><span class='caption-text'>1-12</span></span></p>
-
-<p>通过分别计算偏导数,a 为learning rate，决定每一步的步长，太小函数收敛很慢，太大则可能无法找到极值，甚至函数无法收敛。</p>
-
-<p>这里Andrew 着重指出了一个叫做同步更新的概念</p>
-
-<p><span class='caption-wrapper'><img class='caption' src='/images/ml/11.png' width='' height='' title='1-13'><span class='caption-text'>1-13</span></span></p>
-
-<p>如果不同步更新，最后也可以得到极致，但是Andrew 更推荐计算完成所有的参数之后，再一起同步更新。</p>
-
-<h2>梯度下降和一元线性回归</h2>
-
-<p>将图1-4分别偏导后</p>
-
-<p><span class='caption-wrapper'><img class='caption' src='/images/ml/15.png' width='' height='' title='1-14 算法公式'><span class='caption-text'>1-14 算法公式</span></span></p>
-
-<h2>其他</h2>
-
-<ol>
-<li>根据上面的算法，如果我们的cost function 在一些地方不可导，那算法不就没法继续了？</li>
-<li>有其他的方法，可以不去循环计算而是直接根据工具计算</li>
-</ol>
-
-
-<h2>梯度下降和一般化的线性回归</h2>
-
-<p>很多时候我们不仅仅满足2个参数，决定事情的因素很多，我们需要更一般化的公式。</p>
-
-<p><span class='caption-wrapper'><img class='caption' src='/images/ml/4.png' width='' height='' title='1-15'><span class='caption-text'>1-15</span></span></p>
-
-<p>算法</p>
-
-<p><span class='caption-wrapper'><img class='caption' src='/images/ml/19.png' width='' height='' title='1-16'><span class='caption-text'>1-16</span></span></p>
-
-<p>分别求偏导后</p>
-
-<p><span class='caption-wrapper'><img class='caption' src='/images/ml/17.png' width='' height='' title='1-17'><span class='caption-text'>1-17</span></span></p>
-
-<h1>梯度下降生产环境中的一些技巧</h1>
-
-<h2>Feature Scaling</h2>
-
-<p>思路: 希望所有的feature在相同或是类似的范围之内，这样梯度下降会更快收敛。</p>
-
-<p>下图是feature的范围不在一起的运算过程，可以看出来不是圆形，2个维度调整的步长不一样，导致很多反复</p>
-
-<p><span class='caption-wrapper'><img class='caption' src='/images/ml/21.png' width='' height='' title='1-18 红色箭头表示算法的一次迭代'><span class='caption-text'>1-18 红色箭头表示算法的一次迭代</span></span></p>
-
-<p>下图则是调整过的feature，好了很多</p>
-
-<p><span class='caption-wrapper'><img class='caption' src='/images/ml/23.png' width='' height='' title='1-19 红色箭头表示算法的一次迭代'><span class='caption-text'>1-19 红色箭头表示算法的一次迭代</span></span></p>
-
-<p>更一般的，Andrew 推荐每一个feature放在[-1, 1]区间范围内</p>
-
-<h2>Learning Rate</h2>
-
-<p>说到Learning Rate 就不能不提收敛(convergence)。一般应该定义多大的阀值来判断是否收敛呢？</p>
-
-<p><span class='caption-wrapper'><img class='caption' src='/images/ml/6.png' width='' height='' title='1-20 Andrew 并不推荐使用一个阀值来判断是否收敛'><span class='caption-text'>1-20 Andrew 并不推荐使用一个阀值来判断是否收敛</span></span></p>
-
-<p>Andrew 更推荐用图表的形式，因为这个不仅仅可以看到是否马上收敛，而且还能看到算法是否运行正常，是不是一些参数的问题，导致算法无法收敛。</p>
-
-<p><span class='caption-wrapper'><img class='caption' src='/images/ml/20.png' width='' height='' title='1-21'><span class='caption-text'>1-21</span></span></p>
-
-<p>下图是2个出了问题的J函数，通常来说是Learning Rate 过大。</p>
-
-<p><span class='caption-wrapper'><img class='caption' src='/images/ml/25.png' width='' height='' title='1-22 一些过大的Learning Rate 导致的图形'><span class='caption-text'>1-22 一些过大的Learning Rate 导致的图形</span></span></p>
-
-<p>最后Andrew 还提供了一些practice的Learning Rate 选取方法，比如一些0.001, 0.003, 0.01, 0.03, 0.1, &#8230;</p>
-
-<h2>参考</h2>
-
-<p><a href="https://class.coursera.org/ml-006">Coursera 《Machine Learning》 Stanford Andrew Ng</a></p>
 </div>
   
   

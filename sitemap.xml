@@ -242,7 +242,7 @@
     </url>
     <url>
         <loc>http://studentdeng.github.com/blog/2013/08/08/skip-list/</loc>
-        <lastmod>2014-05-18T12:37:59+08:00</lastmod>
+        <lastmod>2014-10-14T22:30:56+08:00</lastmod>
     </url>
     <url>
         <loc>http://studentdeng.github.com/blog/2013/08/08/box2d-05/</loc>
@@ -349,8 +349,12 @@
         <lastmod>2014-10-07T10:35:59+08:00</lastmod>
     </url>
     <url>
+        <loc>http://studentdeng.github.com/blog/2014/10/13/log-system/</loc>
+        <lastmod>2014-10-14T22:45:20+08:00</lastmod>
+    </url>
+    <url>
         <loc>http://studentdeng.github.com/blog/archives/</loc>
-        <lastmod>2014-10-07T10:35:59+08:00</lastmod>
+        <lastmod>2014-10-14T22:45:20+08:00</lastmod>
     </url>
     <url>
         <loc>http://studentdeng.github.com/favorite/</loc>
@@ -358,7 +362,7 @@
     </url>
     <url>
         <loc>http://studentdeng.github.com/</loc>
-        <lastmod>2014-10-07T10:35:59+08:00</lastmod>
+        <lastmod>2014-10-14T22:45:20+08:00</lastmod>
     </url>
     <url>
         <loc>http://studentdeng.github.com/robots.txt</loc>

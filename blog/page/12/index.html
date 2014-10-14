@@ -9,7 +9,7 @@
   <meta name="author" content="studentdeng">
 
   
-  <meta name="description" content="block 有什么意义，特点等等，这些东西，实在是太复杂了，这里只是简单的总结一下block的内存管理。而且也仅仅限于objective-C的部分 Block memory block 的内存管理，应该是最头疼的地方,就用这个来自WWDC的例子来解释一下吧。 当程序运行到这里时，stack &hellip;">
+  <meta name="description" content="Bochs + freedos安装配置 sudo apt-get install build-essential sudo apt-get install xorg-dev sudo apt-get install libgtk2.0-dev 下载 bochshttp://bochs. &hellip;">
   
 
   <!-- http://t.co/dKP3o1e -->
@@ -63,6 +63,116 @@
     <div id="content">
       <div class="blog-index">
   
+  
+  
+    <article>
+      
+  <header>
+    
+      <h1 class="entry-title"><a href="/blog/2012/02/14/bochs-configure/">Bochs-configure</a></h1>
+    
+    
+      <p class="meta">
+        
+
+
+
+
+
+
+
+
+  
+
+
+<time datetime="2012-02-14T23:55:00+08:00" pubdate data-updated="true">Feb 14<span>th</span>, 2012</time>
+        
+         | <a href="/blog/2012/02/14/bochs-configure/#disqus_thread">Comments</a>
+        
+      </p>
+    
+  </header>
+
+
+  <div class="entry-content"><h1>Bochs + freedos安装配置</h1>
+
+<pre><code>sudo apt-get install build-essential
+
+sudo apt-get install xorg-dev
+
+sudo apt-get install libgtk2.0-dev
+</code></pre>
+
+<p>下载</p>
+
+<pre><code>bochshttp://bochs.sourceforge.net/cgi-bin/topper.pl?name=See+All+Releases&amp;url=http://sourceforge.net/projects/bochs/files
+
+$ tar vxaf bochs-2.5.1.tar.gz
+
+$ cd bochs-2.5.1
+
+$ ./configure –enable-debugger-enable-disasm
+
+$ make
+
+$ sudo make install
+</code></pre>
+
+<p>下载freedoshttp://bochs.sourceforge.net/diskimages.html 复制到工作目录下</p>
+
+<h1>Bochs 配置 先通过dos引导，我们的软件复制在B盘下</h1>
+
+<pre><code>############################################################### 
+# Configuration file for Bochs 
+###############################################################
+
+# how much memory the emulated machine will have 
+megs: 32
+
+# filename of ROM images 
+romimage: file=/usr/share/bochs/BIOS-bochs-latest 
+vgaromimage: file=/usr/share/vgabios/vgabios.bin
+
+# what disk images will be used 
+floppya: 1_44=freedos.img, status=inserted 
+floppyb: 1_44=pm.img, status=inserted
+
+# choose the boot disk. 
+boot: a
+
+# where do we send log messages? 
+# log: bochsout.txt
+
+# disable the mouse 
+mouse: enabled=0
+
+# enable key mapping, using US layout as default. 
+keyboard_mapping: enabled=1, map=/usr/share/bochs/keymaps/x11-pc-us.map
+
+#enabled debug using xchg bx, bx
+
+magic_break:enabled=1
+
+可以通过下面方式来部署程序，当然，写成makefile最省事
+
+$ sudo mount –o loop pm.img /mnt/floppy
+
+$ sudo cp test.com /mnt/floppy
+
+$ sudo umount /mnt/floppy
+</code></pre>
+
+<h1>bochs 调试</h1>
+
+<p>调试方法很多，这里介绍最简单的方式之一。bochs 配置中增加 magic_break:enabled=1</p>
+
+<p>代码中增加xchg bx, bx，bochs会停在代码出。当然，前提是bochs需要支持debug</p>
+</div>
+  
+  
+
+
+    </article>
   
   
     <article>
@@ -522,127 +632,6 @@ struct __block_literal_5 _block_literal = {
 <p>从0开始学习一个新的语言，新的平台，到产品上线，呵呵，虽然在Appstore 很惨淡，但是，我们并没有放弃，不说了，来年新产品上线再说，不信这个邪了。</p>
 
 <p>总结之后，就要规划，虽然我实在是不想做这个规划，因为实在是不靠谱。1年的时间，说长不长，说短不短。不求别的，只求不浪费时间，全力学习，深入IOS 一点。</p>
-</div>
-  
-  
-
-
-    </article>
-  
-  
-    <article>
-      
-  <header>
-    
-      <h1 class="entry-title"><a href="/blog/2012/01/12/objcbase/">Objective-C 一些很基础的总结</a></h1>
-    
-    
-      <p class="meta">
-        
-
-
-
-
-
-
-
-
-  
-
-
-<time datetime="2012-01-12T23:39:00+08:00" pubdate data-updated="true">Jan 12<span>th</span>, 2012</time>
-        
-         | <a href="/blog/2012/01/12/objcbase/#disqus_thread">Comments</a>
-        
-      </p>
-    
-  </header>
-
-
-  <div class="entry-content"><p>学习 Objective-C大概4个月了，居然给一个还没毕业的家伙吹了吹，呼，希望不要误人子弟。这里总结一下，毕竟这是第一次完整的讲一个东西。</p>
-
-<p>附上PPT<a href="http://files.cnblogs.com/studentdeng/Objective-CPrimary.pptx">Objective-C Primary</a> 。资源99%来自WWDC 2010 session 113。</p>
-
-<h1>Common Concepts</h1>
-
-<p>Objective-C 相对其他更了解的C++语言来说，还是有些不同的。如下表</p>
-
-<p><img src="/images/objbase-1.png" alt="alt text" /></p>
-
-<p>这里面有几点比较重要</p>
-
-<ul>
-<li>Objective-C 中所有的类，其实是另一种“类”的对象，所以Objective-C 中的类方法，其实是另一种类的实例方法。 Objective-C Message</li>
-<li>Objective-C 中没有静态变量，都是用全局变量实现的。</li>
-</ul>
-
-
-<h1>Category</h1>
-
-<p>如何给一个类增加一个函数方法，在C++中是不可能的（或是很难）但是在Objective-C中确实很简单的事情，category 做的就是这件事情。</p>
-
-<p>当第一次看到category 时，我几乎肯定这是一个非常坑爹的设计，因为这个可以完美的覆盖原有类的方法，如果使用不当，绝对是灾难性的错误。但是，随着使用时间变长category 的好处也慢慢体会出来。</p>
-
-<ul>
-<li><p>给系统原有的类或是第三方的类增加函数，而不用使用一个新的类，这样使用会更加方便，特别是使用IB时，不需要将系统的类换成自己定义的类，这样减少了非常多的移植问题和同步工作。
-当然，如果使用不当，也会遇到问题</p></li>
-<li><p>函数覆盖问题，之前提到过</p></li>
-<li>增加大量的category 会降低系统性能，特别是如果大量的加到一些基础类上，如NSObject 等，因为，几乎整个系统都在使用这些类，而过多的category，不仅降低自己代码的效率，也会降低framework代码的效率，这里的效率，应该主要在类初始化上，和消息发送上面。</li>
-</ul>
-
-
-<h2>SEL</h2>
-
-<ul>
-<li>相关的内容在<a href="http://studentdeng.github.io/blog/2011/10/16/objcsel/">Objective C SEL</a></li>
-</ul>
-
-
-<h1>Memory Management</h1>
-
-<p>语言是离不开平台的，而内存管理，则是了解平台中最基础的部分。而cocoa touch 的内存设计也就是基于引用计数的设计，是针对很早以前的设备设计，显然不适合现在的硬件设备。但是，现在我们似乎没有其他的选择，在一开始学习时。</p>
-
-<p>基于引用计数的内存管理，设计的本质其实就是一个<a href="http://en.wikipedia.org/wiki/Directed_Acyclic_Graph">DAG</a>（有向无回图）</p>
-
-<p><img src="/images/objbase-2.png" alt="alt text" /></p>
-
-<p>对于引用计数的内存管理，这一点实在是不陌生，不管是什么语言，都会遇到一个问题，循环引用</p>
-
-<p><img src="/images/objbase-3.png" alt="alt text" /></p>
-
-<p>当形成回路时，循环引用发生，导致内存泄露。而对应的方法，不管是什么语言，都需要把引用分为强引用和弱引用</p>
-
-<p><img src="/images/objbase-4.png" alt="alt text" /></p>
-
-<p>解决引用循环的方法很多，但是实质上，都是通过抽象成父子关系来做，一个强引用，一个弱引用，图形下方的节点通过弱引用连接上面的节点，图形上方的节点，通过强引用连接下方节点。实例就是delegate，属性被声明为assign</p>
-
-<h1>Autorelease Pools</h1>
-
-<p>autorelease 应该是初学者最容易糊涂的地方，一开始我也非常害怕使用Autorelease 变量，因为，这些变量不仅会增大内存开销，而且使用不当，crash的位置就是main函数，调试器几乎没有任何帮助，但是仍然有非常多的framework是基于autorelease 变量的，所以还是需要屡屡。</p>
-
-<p>cocoa touch 是事件驱动的，我们通过接受一个个的event来跑我们的程序，那么简单的讲，就是一个while的死循环，不断地获取一个event，处理一个event。</p>
-
-<p><img src="/images/objbase-5.png" alt="alt text" /></p>
-
-<p>处理event的时候，framework 帮我们建立了一个autorelease pool。</p>
-
-<p><img src="/images/objbase-6.png" alt="alt text" /></p>
-
-<p>当我们处理或是叫响应一个event时，比如调用了[NSDate date] 函数，这个函数，返回了一个autorelease 变量d</p>
-
-<p>而这个变量，事实上是被autorelease pool 所引用。</p>
-
-<p><img src="/images/objbase-7.png" alt="alt text" /></p>
-
-<p>当一层层stack pop 之后，我们可以看到 autorelease 变量的生命周期</p>
-
-<p><img src="/images/objbase-8.png" alt="alt text" /></p>
-
-<p><img src="/images/objbase-9.png" alt="alt text" /></p>
-
-<p>当调用[pool drain]后，autorelease pool 随之消失，伴随着还有那个var d，回到原点，在下一个event cycle</p>
-
-<p><img src="/images/objbase-10.png" alt="alt text" /></p>
 </div>
   
   
