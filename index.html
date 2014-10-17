@@ -9,7 +9,7 @@
   <meta name="author" content="studentdeng">
 
   
-  <meta name="description" content="问题概述 在分布式系统中，宕机是需要考虑的重要组成部分。日志技术是宕机恢复的重要技术之一。日志技术应用广泛，早些更是广泛应用在数据库设计实现中。本文先介绍基本原理概念，最后通过redis介绍生产环境中的实现方法。 Redo Log 数据库设计中，需要满足ACID，尤其是在支持事务的系统中。 &hellip;">
+  <meta name="description" content="上一篇介绍了Redo Log，这篇介绍No Redo Log。 在分布式系统中，某些情况下我们依然需要实现原子操作，有很多方式，其中No Redo(Undo) Log 便是在工程中运用最广泛的思想之一。他的过程非常简单。 下面是一个简单系统的状态。 为了实现原子的修改 A，B，C的值。我们把A，B &hellip;">
   
 
   <!-- http://t.co/dKP3o1e -->
@@ -63,6 +63,66 @@
     <div id="content">
       <div class="blog-index">
   
+  
+  
+    <article>
+      
+  <header>
+    
+      <h1 class="entry-title"><a href="/blog/2014/10/17/log-system2/">分布式系统原理&#8211;日志技术No Redo Log</a></h1>
+    
+    
+      <p class="meta">
+        
+
+
+
+
+
+
+
+
+  
+
+
+<time datetime="2014-10-17T14:02:00+08:00" pubdate data-updated="true">Oct 17<span>th</span>, 2014</time>
+        
+         | <a href="/blog/2014/10/17/log-system2/#disqus_thread">Comments</a>
+        
+      </p>
+    
+  </header>
+
+
+  <div class="entry-content"><p>上一篇介绍了<a href="http://studentdeng.github.io/blog/2014/10/13/log-system/">Redo Log</a>，这篇介绍No Redo Log。</p>
+
+<p>在分布式系统中，某些情况下我们依然需要实现原子操作，有很多方式，其中No Redo(Undo) Log 便是在工程中运用最广泛的思想之一。他的过程非常简单。</p>
+
+<p>下面是一个简单系统的状态。</p>
+
+<p><img src="http://112.124.107.63/my_home/application/uploads/2014_10_17_14_23_51" alt="image" /></p>
+
+<p>为了实现原子的修改 A，B，C的值。我们把A，B，C 看成一个集合，或是一个“目录”。</p>
+
+<p>1.做一次copy</p>
+
+<p><img src="http://112.124.107.63/my_home/application/uploads/2014_10_17_14_22_53" alt="image" /></p>
+
+<p>2.对于每个更新的操作，创建一个新的item，然后在新的目录中保存修改后的新值。</p>
+
+<p><img src="http://i.gyazo.com/ab8aa93dc78c7e77d0d9029fc522b792.png" alt="image" /></p>
+
+<p>3.原子性的修改生效目录指针。</p>
+
+<p><img src="http://i.gyazo.com/c6bd87760807b3f24cc679ae814a9036.png" alt="image" /></p>
+
+<p>通过原子性的修改一个值，切换一个状态，完成一系列分布式操作原子性的修改。</p>
+</div>
+  
+  
+
+
+    </article>
   
   
     <article>
@@ -783,126 +843,6 @@ end
 <p><span class='caption-wrapper'><img class='caption' src='/images/ml2_6.png' width='' height='' title='cost function & theta 等高线'><span class='caption-text'>cost function &amp; theta 等高线</span></span></p>
 
 <p><span class='caption-wrapper'><img class='caption' src='/images/ml2_7.png' width='' height='' title='learning rate'><span class='caption-text'>learning rate</span></span></p>
-</div>
-  
-  
-
-
-    </article>
-  
-  
-    <article>
-      
-  <header>
-    
-      <h1 class="entry-title"><a href="/blog/2014/08/16/qinshihuang/">《中国古代历史与人物——秦始皇》笔记</a></h1>
-    
-    
-      <p class="meta">
-        
-
-
-
-
-
-
-
-
-  
-
-
-<time datetime="2014-08-16T10:17:00+08:00" pubdate data-updated="true">Aug 16<span>th</span>, 2014</time>
-        
-         | <a href="/blog/2014/08/16/qinshihuang/#disqus_thread">Comments</a>
-        
-      </p>
-    
-  </header>
-
-
-  <div class="entry-content"><p>最近在coursera学完了台湾国立大学的公开课——<a href="https://class.coursera.org/chinesehistory-002">《中国古代历史与人物——秦始皇》</a>。虽然自己看过不少课程，看过不少历史书，但是这门课程对我的影响超过了任何一本文史书。我自己完整的看过3遍，并做了作业(可惜没有认真做好)。这门课从某种角度来看，彻底改变了我对文史课程的认知，对自己之前的无知和误解感到深深的愧疚，并再次讥讽一下国内的文史课程。下面是自己整理的东东，方便自己日后review。</p>
-
-<ul>
-<li> 读历史需要思辨</li>
-<li> 每一个决定的结果是否成功是通过时间衡量的，做决定的关键是在于是否得到了自己想要的结果。得到就要付出，除非有其他人替自己付出</li>
-<li> 社会就是需要和有用，说服别人是因为知道别人需要什么</li>
-<li> 人和人的差别不在于遇到的问题，而是面对问题时的态度</li>
-<li> 看书要学会“沙金”，从沙子里面掏出金子，而不是一味的埋怨，批判。任何事情都有值得自己学习的东西。放下自己的成见，很多事情没有自己想象的那么简单。</li>
-</ul>
-
-
-<h3>2-5</h3>
-
-<p>秦国百战百胜，不在于它真能变法，而在于列国不能真正变法
-历史说明了一个道理，不能适应时代的，只有被淘汰消失</p>
-
-<h3>2-6</h3>
-
-<p>历史上的所谓的成功和失败，就看你站在什么位置，用什么尺度来衡量。而判断成功和失败的标准，最后还是问自己</p>
-
-<h3>3-4</h3>
-
-<p>想要成功，就要懂得把理智放在感情之上。</p>
-
-<p>谋事在人这是真得有用，有人用很多的时间去提高效率，但是节约的时间，并没有被真正利用起来。那么这个办法也很一般。
-自己需要自己不断的努力，才能让之前的办法真正变成好办法。。。</p>
-
-<p>方法和人关系太大了</p>
-
-<p>这个社会不外乎需要和有用。</p>
-
-<p>你需要知道别人需要什么，你才能变得有用</p>
-
-<h3>5-3</h3>
-
-<p>富家子弟处逆境难
-穷家子弟处顺境难</p>
-
-<h3>6-1</h3>
-
-<p>人生总会有赌博的时候，对错往往是命运差别巨大。
-百折不挠的民族</p>
-
-<p>人生：运气 ，自我要求。好好准备，让自己成为那样的条件。等待机会。</p>
-
-<p>理想是，你知道你下一步应该做什么
-妄想是，你只有目标却不知道从何做起</p>
-
-<p>自强的第一步，不自欺</p>
-
-<h3>6-8</h3>
-
-<p>在中国文化中，最高的道德和最高的智慧必然是合一的</p>
-
-<h3>7-3</h3>
-
-<p>学会认错，改过。</p>
-
-<h3>8-1</h3>
-
-<p>改变环境，需要改变自己，让自己适应那个自己想要的环境的要求。
-如何改变，通过学习</p>
-
-<h3>9-1</h3>
-
-<p>做事之前，为虑胜，先虑败，方能考虑周全</p>
-
-<h3>9-9</h3>
-
-<p>历史启发智慧，所有的学问都能带来智慧</p>
-
-<p>审时度势：</p>
-
-<p>时：你所处的环境。
-势：环境变动的方向</p>
-
-<p>变的是时间和环境。
-不变的是人性和良知</p>
-
-<p>不仅仅是自己改变，需要改变周围的人。</p>
-
-<p>历史用真，去伪。。。
-改动人心</p>
 </div>
   
   

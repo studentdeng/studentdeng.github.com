@@ -9,7 +9,8 @@
   <meta name="author" content="studentdeng">
 
   
-  <meta name="description" content="我对设计模式一直都是一个若有若无的感觉，特别是在手机端开发，觉得用处不是很大，认为设计模式是为了大规模团队合作，分工才能体现出效果。设计模式可以通过分不同的“层”让大家协同开发，相互之间不产生影响。但是最近看法有点改变，觉得还是需要多少了解一些。 天天使用的framework确实是一个庞大的项目， &hellip;">
+  <meta name="description" content="示例代码 最近facebook开源了2个很有价值的project pop和Tweaks。
+facebook提供了一个非常赞的topic-Building Paper。 这篇文章来简单介绍一下pop的使用，最后使用Tweaks来微小调整动画参数来达到我们最希望的效果。 这是我们最后的效果: pop &hellip;">
   
 
   <!-- http://t.co/dKP3o1e -->
@@ -63,6 +64,240 @@
     <div id="content">
       <div class="blog-index">
   
+  
+  
+    <article>
+      
+  <header>
+    
+      <h1 class="entry-title"><a href="/blog/2014/05/09/pop-tweaks/">Facebook Pop & Tweaks Demo</a></h1>
+    
+    
+      <p class="meta">
+        
+
+
+
+
+
+
+
+
+  
+
+
+<time datetime="2014-05-09T19:39:00+08:00" pubdate data-updated="true">May 9<span>th</span>, 2014</time>
+        
+         | <a href="/blog/2014/05/09/pop-tweaks/#disqus_thread">Comments</a>
+        
+      </p>
+    
+  </header>
+
+
+  <div class="entry-content"><p><a href="https://github.com/studentdeng/PopDemo">示例代码</a></p>
+
+<p>最近facebook开源了2个很有价值的project <a href="https://github.com/facebook/pop">pop</a>和<a href="https://github.com/facebook/Tweaks">Tweaks</a>。
+facebook提供了一个非常赞的topic-<a href="http://www.youtube.com/playlist?list=PLb0IAmt7-GS2sh8saWW4z8x2vo7puwgnR">Building Paper</a>。</p>
+
+<p>这篇文章来简单介绍一下<a href="https://github.com/facebook/pop">pop</a>的使用，最后使用<a href="https://github.com/facebook/Tweaks">Tweaks</a>来微小调整动画参数来达到我们最希望的效果。</p>
+
+<p>这是我们最后的效果:</p>
+
+<div class="video-container">
+    <iframe height=498 width=510 src="http://player.youku.com/embed/XNzA5ODM1NTQ4" frameborder=0 allowfullscreen></iframe>
+</div>
+
+
+<h1>pop is powerful</h1>
+
+<p>这个动画效果很简单，有很多方式都可以做到，但是pop来实现它，只需要下面几行代码。</p>
+
+<figure class='code'> <div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+<span class='line-number'>2</span>
+<span class='line-number'>3</span>
+<span class='line-number'>4</span>
+<span class='line-number'>5</span>
+<span class='line-number'>6</span>
+<span class='line-number'>7</span>
+</pre></td><td class='code'><pre><code class='objc'><span class='line'>  <span class="n">POPBasicAnimation</span> <span class="o">*</span><span class="n">animation</span> <span class="o">=</span> <span class="p">[</span><span class="n">POPBasicAnimation</span> <span class="n">animation</span><span class="p">];</span>
+</span><span class='line'>  <span class="n">animation</span><span class="p">.</span><span class="n">property</span> <span class="o">=</span> <span class="p">[</span><span class="n">self</span> <span class="n">animationProperty</span><span class="p">];</span>
+</span><span class='line'>  <span class="n">animation</span><span class="p">.</span><span class="n">fromValue</span> <span class="o">=</span> <span class="err">@</span><span class="p">(</span><span class="mi">0</span><span class="p">);</span>
+</span><span class='line'>  <span class="n">animation</span><span class="p">.</span><span class="n">toValue</span> <span class="o">=</span> <span class="err">@</span><span class="p">(</span><span class="mi">8000</span><span class="p">);</span>
+</span><span class='line'>  <span class="n">animation</span><span class="p">.</span><span class="n">duration</span> <span class="o">=</span> <span class="mf">2.0f</span><span class="p">;</span>
+</span><span class='line'>
+</span><span class='line'>  <span class="p">[</span><span class="n">self</span><span class="p">.</span><span class="n">numberLabel</span> <span class="nl">pop_addAnimation:</span><span class="n">animation</span> <span class="nl">forKey:</span><span class="s">@&quot;numberLabelAnimation&quot;</span><span class="p">];</span>
+</span></code></pre></td></tr></table></div></figure>
+
+
+
+
+<figure class='code'> <div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+<span class='line-number'>2</span>
+<span class='line-number'>3</span>
+<span class='line-number'>4</span>
+<span class='line-number'>5</span>
+<span class='line-number'>6</span>
+<span class='line-number'>7</span>
+<span class='line-number'>8</span>
+<span class='line-number'>9</span>
+<span class='line-number'>10</span>
+<span class='line-number'>11</span>
+<span class='line-number'>12</span>
+</pre></td><td class='code'><pre><code class='objc'><span class='line'>  <span class="o">-</span> <span class="p">(</span><span class="n">POPMutableAnimatableProperty</span> <span class="o">*</span><span class="p">)</span><span class="n">animationProperty</span> <span class="p">{</span>
+</span><span class='line'>  <span class="k">return</span> <span class="p">[</span><span class="n">POPMutableAnimatableProperty</span>
+</span><span class='line'>      <span class="nl">propertyWithName:</span><span class="s">@&quot;com.curer.test&quot;</span>
+</span><span class='line'>           <span class="nl">initializer:</span><span class="o">^</span><span class="p">(</span><span class="n">POPMutableAnimatableProperty</span> <span class="o">*</span><span class="n">prop</span><span class="p">)</span> <span class="p">{</span>
+</span><span class='line'>               <span class="n">prop</span><span class="p">.</span><span class="n">writeBlock</span> <span class="o">=</span> <span class="o">^</span><span class="p">(</span><span class="kt">id</span> <span class="n">obj</span><span class="p">,</span> <span class="k">const</span> <span class="n">CGFloat</span> <span class="n">values</span><span class="p">[])</span> <span class="p">{</span>
+</span><span class='line'>                 <span class="n">UILabel</span> <span class="o">*</span><span class="n">label</span> <span class="o">=</span> <span class="p">(</span><span class="n">UILabel</span> <span class="o">*</span><span class="p">)</span><span class="n">obj</span><span class="p">;</span>
+</span><span class='line'>                 <span class="n">NSNumber</span> <span class="o">*</span><span class="n">number</span> <span class="o">=</span> <span class="err">@</span><span class="p">(</span><span class="n">values</span><span class="p">[</span><span class="mi">0</span><span class="p">]);</span>
+</span><span class='line'>                 <span class="kt">int</span> <span class="n">num</span> <span class="o">=</span> <span class="p">[</span><span class="n">number</span> <span class="n">intValue</span><span class="p">];</span>
+</span><span class='line'>                 <span class="n">label</span><span class="p">.</span><span class="n">text</span> <span class="o">=</span> <span class="p">[</span><span class="err">@</span><span class="p">(</span><span class="n">num</span><span class="p">)</span> <span class="n">stringValue</span><span class="p">];</span>
+</span><span class='line'>               <span class="p">};</span>
+</span><span class='line'>           <span class="p">}];</span>
+</span><span class='line'><span class="p">}</span>
+</span></code></pre></td></tr></table></div></figure>
+
+
+<p>哈哈，搞定了。pop太强大了。但是细心的同学会发现动画似乎不是我们想要的，我们希望做到那种一开始很快速很激动，最后却有一点慢慢的“欲求不能”的感觉。</p>
+
+<p>很直观的，我们使用了万能的EaseOut动画</p>
+
+<figure class='code'> <div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+<span class='line-number'>2</span>
+<span class='line-number'>3</span>
+<span class='line-number'>4</span>
+<span class='line-number'>5</span>
+<span class='line-number'>6</span>
+<span class='line-number'>7</span>
+</pre></td><td class='code'><pre><code class='objc'><span class='line'>  <span class="n">POPBasicAnimation</span> <span class="o">*</span><span class="n">animation</span> <span class="o">=</span> <span class="p">[</span><span class="n">POPBasicAnimation</span> <span class="n">animation</span><span class="p">];</span>
+</span><span class='line'>  <span class="n">animation</span><span class="p">.</span><span class="n">property</span> <span class="o">=</span> <span class="p">[</span><span class="n">self</span> <span class="n">animationProperty</span><span class="p">];</span>
+</span><span class='line'>  <span class="n">animation</span><span class="p">.</span><span class="n">fromValue</span> <span class="o">=</span> <span class="err">@</span><span class="p">(</span><span class="mi">0</span><span class="p">);</span>
+</span><span class='line'>  <span class="n">animation</span><span class="p">.</span><span class="n">toValue</span> <span class="o">=</span> <span class="err">@</span><span class="p">(</span><span class="mi">8000</span><span class="p">);</span>
+</span><span class='line'>  <span class="n">animation</span><span class="p">.</span><span class="n">duration</span> <span class="o">=</span> <span class="mf">2.0f</span><span class="p">;</span>
+</span><span class='line'>  <span class="c1">//增加animation 时间函数控制</span>
+</span><span class='line'>  <span class="n">animation</span><span class="p">.</span><span class="n">timingFunction</span> <span class="o">=</span> <span class="p">[</span><span class="n">CAMediaTimingFunction</span> <span class="nl">functionWithName:</span><span class="n">kCAMediaTimingFunctionEaseOut</span><span class="p">];</span>
+</span></code></pre></td></tr></table></div></figure>
+
+
+<p>增加了一行代码，但是发现这个动画变化的时间还是不能让我们满意，一开始变化的还是慢，后面变化的又有点快。</p>
+
+<h1>how can we better build animation</h1>
+
+<p>动画的实现其实很简单，抛开性能，就是一个个不断变化的图片，对于我们这个简单的动画，就是一个从0到8000的变化，如果x轴为时间，y轴为大小。我们第一个动画其实是这个样子</p>
+
+<p><span class='caption-wrapper'><img class='caption' src='/images/pop-demo-3.png' width='' height='' title=''><span class='caption-text'></span></span></p>
+
+<p>easeout好一点是这样子</p>
+
+<p><span class='caption-wrapper'><img class='caption' src='/images/pop-demo-1.png' width='' height='' title=''><span class='caption-text'></span></span></p>
+
+<p>我们其实希望是这个样子</p>
+
+<p><span class='caption-wrapper'><img class='caption' src='/images/pop-demo-2.png' width='' height='' title=''><span class='caption-text'></span></span></p>
+
+<p>CAMediaTimingFunction 实际上还提供另一个方法，不是很常用，但是却非常适合我们现在的场景。</p>
+
+<figure class='code'> <div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+</pre></td><td class='code'><pre><code class='objc'><span class='line'><span class="k">+</span> <span class="p">(</span><span class="kt">id</span><span class="p">)</span><span class="nf">functionWithControlPoints:</span><span class="p">(</span><span class="kt">float</span><span class="p">)</span><span class="nv">c1x</span> <span class="o">:</span><span class="p">(</span><span class="kt">float</span><span class="p">)</span><span class="n">c1y</span> <span class="o">:</span><span class="p">(</span><span class="kt">float</span><span class="p">)</span><span class="n">c2x</span> <span class="o">:</span><span class="p">(</span><span class="kt">float</span><span class="p">)</span><span class="n">c2y</span><span class="p">;</span>
+</span></code></pre></td></tr></table></div></figure>
+
+
+<p>这里我们描述的“时间函数”其实就是<a href="http://en.wikipedia.org/wiki/B%C3%A9zier_curve">贝塞尔曲线</a>。</p>
+
+<p>这里推荐一个<a href="http://cubic-bezier.com/">网站</a>可以很直观的生成贝塞尔曲线。
+这里我们得到了参数（.12,1,.11,.94）。</p>
+
+<figure class='code'> <div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+<span class='line-number'>2</span>
+<span class='line-number'>3</span>
+<span class='line-number'>4</span>
+<span class='line-number'>5</span>
+<span class='line-number'>6</span>
+<span class='line-number'>7</span>
+</pre></td><td class='code'><pre><code class='objc'><span class='line'>  <span class="n">POPBasicAnimation</span> <span class="o">*</span><span class="n">animation</span> <span class="o">=</span> <span class="p">[</span><span class="n">POPBasicAnimation</span> <span class="n">animation</span><span class="p">];</span>
+</span><span class='line'>  <span class="n">animation</span><span class="p">.</span><span class="n">property</span> <span class="o">=</span> <span class="p">[</span><span class="n">self</span> <span class="n">animationProperty</span><span class="p">];</span>
+</span><span class='line'>  <span class="n">animation</span><span class="p">.</span><span class="n">fromValue</span> <span class="o">=</span> <span class="err">@</span><span class="p">(</span><span class="mi">0</span><span class="p">);</span>
+</span><span class='line'>  <span class="n">animation</span><span class="p">.</span><span class="n">toValue</span> <span class="o">=</span> <span class="err">@</span><span class="p">(</span><span class="mi">8000</span><span class="p">);</span>
+</span><span class='line'>  <span class="n">animation</span><span class="p">.</span><span class="n">duration</span> <span class="o">=</span> <span class="mf">2.0f</span><span class="p">;</span>
+</span><span class='line'>  <span class="c1">//修改animation 时间函数</span>
+</span><span class='line'>  <span class="n">animation</span><span class="p">.</span><span class="n">timingFunction</span> <span class="o">=</span> <span class="p">[</span><span class="n">CAMediaTimingFunction</span> <span class="nl">functionWithControlPoints:</span><span class="mf">0.12</span> <span class="o">:</span><span class="mi">1</span><span class="o">:</span> <span class="mf">0.11</span><span class="o">:</span><span class="mf">0.94</span><span class="p">];</span>
+</span></code></pre></td></tr></table></div></figure>
+
+
+<p>这里我们已经得到我们想要的动画效果了。而且看上去相当不错。</p>
+
+<h1>how can we better build animation</h1>
+
+<p>如何才能有更好的效果呢？动画的速度，时间，等等参数都会影响到动画的效果是不是会完美。如何判断动画效果是否足够好。的确是个很难的问题。而解决这个问题的关键，不在于工程师自己折腾，应该找专业的人来做。而这时<a href="https://github.com/facebook/Tweaks">Tweaks</a>就闪亮登场了。</p>
+
+<p>初始化的时候创建2个tweak用来动态调整时间和目标数值。并修改一下默认的UIWindow为<code>FBTweakShakeWindow</code></p>
+
+<figure class='code'> <div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+<span class='line-number'>2</span>
+<span class='line-number'>3</span>
+<span class='line-number'>4</span>
+<span class='line-number'>5</span>
+<span class='line-number'>6</span>
+<span class='line-number'>7</span>
+<span class='line-number'>8</span>
+<span class='line-number'>9</span>
+<span class='line-number'>10</span>
+<span class='line-number'>11</span>
+<span class='line-number'>12</span>
+</pre></td><td class='code'><pre><code class='objc'><span class='line'>  <span class="c1">//reset window</span>
+</span><span class='line'>  <span class="n">self</span><span class="p">.</span><span class="n">window</span> <span class="o">=</span> <span class="p">[[</span><span class="n">FBTweakShakeWindow</span> <span class="n">alloc</span><span class="p">]</span> <span class="nl">initWithFrame:</span><span class="p">[[</span><span class="n">UIScreen</span> <span class="n">mainScreen</span><span class="p">]</span> <span class="n">bounds</span><span class="p">]];</span>
+</span><span class='line'>
+</span><span class='line'>  <span class="n">FBTweak</span> <span class="o">*</span><span class="n">animationDurationTweak</span> <span class="o">=</span>
+</span><span class='line'>      <span class="n">FBTweakInline</span><span class="p">(</span><span class="s">@&quot;Content&quot;</span><span class="p">,</span> <span class="s">@&quot;Animation&quot;</span><span class="p">,</span> <span class="s">@&quot;Duration&quot;</span><span class="p">,</span> <span class="mf">2.0</span><span class="p">,</span> <span class="mf">1.0</span><span class="p">,</span> <span class="mf">3.0</span><span class="p">);</span>
+</span><span class='line'>  <span class="n">animationDurationTweak</span><span class="p">.</span><span class="n">stepValue</span> <span class="o">=</span> <span class="p">[</span><span class="n">NSNumber</span> <span class="nl">numberWithFloat:</span><span class="mf">0.1f</span><span class="p">];</span>
+</span><span class='line'>  <span class="n">animationDurationTweak</span><span class="p">.</span><span class="n">precisionValue</span> <span class="o">=</span> <span class="p">[</span><span class="n">NSNumber</span> <span class="nl">numberWithFloat:</span><span class="mf">3.0f</span><span class="p">];</span>
+</span><span class='line'>
+</span><span class='line'>  <span class="n">FBTweak</span> <span class="o">*</span><span class="n">animationToValueTweak</span> <span class="o">=</span>
+</span><span class='line'>      <span class="n">FBTweakInline</span><span class="p">(</span><span class="s">@&quot;Content&quot;</span><span class="p">,</span> <span class="s">@&quot;Animation&quot;</span><span class="p">,</span> <span class="s">@&quot;ToValue&quot;</span><span class="p">,</span> <span class="mi">8000</span><span class="p">,</span> <span class="mi">1000</span><span class="p">,</span> <span class="mi">10000</span><span class="p">);</span>
+</span><span class='line'>  <span class="n">animationToValueTweak</span><span class="p">.</span><span class="n">stepValue</span> <span class="o">=</span> <span class="err">@</span><span class="p">(</span><span class="mi">1000</span><span class="p">);</span>
+</span><span class='line'>  <span class="n">animationDurationTweak</span><span class="p">.</span><span class="n">precisionValue</span> <span class="o">=</span> <span class="p">[</span><span class="n">NSNumber</span> <span class="nl">numberWithFloat:</span><span class="mf">1.0f</span><span class="p">];</span>
+</span></code></pre></td></tr></table></div></figure>
+
+
+<p>再把原来创建动画的代码稍微修正一下</p>
+
+<figure class='code'> <div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+<span class='line-number'>2</span>
+<span class='line-number'>3</span>
+<span class='line-number'>4</span>
+<span class='line-number'>5</span>
+<span class='line-number'>6</span>
+<span class='line-number'>7</span>
+<span class='line-number'>8</span>
+<span class='line-number'>9</span>
+<span class='line-number'>10</span>
+<span class='line-number'>11</span>
+<span class='line-number'>12</span>
+</pre></td><td class='code'><pre><code class='objc'><span class='line'>  <span class="n">POPBasicAnimation</span> <span class="o">*</span><span class="n">animation</span> <span class="o">=</span> <span class="p">[</span><span class="n">POPBasicAnimation</span> <span class="n">animation</span><span class="p">];</span>
+</span><span class='line'>  <span class="n">animation</span><span class="p">.</span><span class="n">property</span> <span class="o">=</span> <span class="p">[</span><span class="n">self</span> <span class="n">animationProperty</span><span class="p">];</span>
+</span><span class='line'>  <span class="n">animation</span><span class="p">.</span><span class="n">timingFunction</span> <span class="o">=</span> <span class="p">[</span><span class="n">CAMediaTimingFunction</span> <span class="nl">functionWithControlPoints:</span><span class="mf">0.12</span> <span class="o">:</span><span class="mi">1</span><span class="o">:</span> <span class="mf">0.11</span><span class="o">:</span><span class="mf">0.94</span><span class="p">];</span>
+</span><span class='line'>  <span class="n">animation</span><span class="p">.</span><span class="n">fromValue</span> <span class="o">=</span> <span class="err">@</span><span class="p">(</span><span class="mi">0</span><span class="p">);</span>
+</span><span class='line'>
+</span><span class='line'>  <span class="kt">double</span> <span class="n">animationDuration</span> <span class="o">=</span>
+</span><span class='line'>      <span class="n">FBTweakValue</span><span class="p">(</span><span class="s">@&quot;Content&quot;</span><span class="p">,</span> <span class="s">@&quot;Animation&quot;</span><span class="p">,</span> <span class="s">@&quot;Duration&quot;</span><span class="p">,</span> <span class="mf">2.0</span><span class="p">);</span>
+</span><span class='line'>  <span class="n">animation</span><span class="p">.</span><span class="n">toValue</span> <span class="o">=</span>
+</span><span class='line'>      <span class="err">@</span><span class="p">(</span><span class="n">FBTweakValue</span><span class="p">(</span><span class="s">@&quot;Content&quot;</span><span class="p">,</span> <span class="s">@&quot;Animation&quot;</span><span class="p">,</span> <span class="s">@&quot;ToValue&quot;</span><span class="p">,</span> <span class="mi">8000</span><span class="p">));</span>
+</span><span class='line'>  <span class="n">animation</span><span class="p">.</span><span class="n">duration</span> <span class="o">=</span> <span class="n">animationDuration</span><span class="p">;</span>
+</span><span class='line'>
+</span><span class='line'>  <span class="p">[</span><span class="n">self</span><span class="p">.</span><span class="n">numberLabel</span> <span class="nl">pop_addAnimation:</span><span class="n">animation</span> <span class="nl">forKey:</span><span class="s">@&quot;numberLabelAnimation&quot;</span><span class="p">];</span>
+</span></code></pre></td></tr></table></div></figure>
+
+
+<p>这样当摇晃手机的时候就可以动态调整动画参数了，最后数据会保存在plist ：）。</p>
+
+<p>越简单的越强大~</p>
+</div>
+  
+  
+
+
+    </article>
   
   
     <article>
@@ -639,137 +874,6 @@ AttributeIDS：查找ID列表</p>
 <h1>参考内容</h1>
 
 <p><a href="https://developer.apple.com/library/ios/documentation/CoreBluetooth/Reference/AppleNotificationCenterServiceSpecification/Introduction/Introduction.html">Apple Notification Center Service (ANCS) Specification</a></p>
-</div>
-  
-  
-
-
-    </article>
-  
-  
-    <article>
-      
-  <header>
-    
-      <h1 class="entry-title"><a href="/blog/2014/02/21/xcode-plugin-fun/">Xcode5 Plugins 开发简介</a></h1>
-    
-    
-      <p class="meta">
-        
-
-
-
-
-
-
-
-
-  
-
-
-<time datetime="2014-02-21T13:13:00+08:00" pubdate data-updated="true">Feb 21<span>st</span>, 2014</time>
-        
-         | <a href="/blog/2014/02/21/xcode-plugin-fun/#disqus_thread">Comments</a>
-        
-      </p>
-    
-  </header>
-
-
-  <div class="entry-content"><p>这篇文章介绍如何给Xcode5开发插件。如果之前了解iPhone &amp; iPad 开发，那么下面的内容对您非常熟悉。最后我们会开发一个简单的插件，记录Xcode开发中Building的时间。</p>
-
-<h1>准备工作</h1>
-
-<p>首先编写一个Plugin还是需要不少额外的配置，这里推荐<a href="https://github.com/kattrali/Xcode5-Plugin-Template">Xcode Plugin Template</a>。用这个templage来帮助我们开发Plugin。</p>
-
-<p>另外，编写插件和之前的iPhone or Mac上的APP不太一样。从某种意义上来说就是用Xcode调试Xcode。所以这里需要额外配置一点东西。</p>
-
-<ul>
-<li>修改Scheme</li>
-</ul>
-
-
-<p><img src="http://studentdeng.github.io/images/xcode_plugin1.png" alt="image" /></p>
-
-<ul>
-<li>Executable 选择Xcode.app</li>
-</ul>
-
-
-<p><img src="http://studentdeng.github.io/images/xcode_plugin2.png" alt="image" /></p>
-
-<p>当我们Build &amp; Run Project的时候就可以看到启动了一个新的Xcode进程，当然除了Xcode， Mail或是其他程序我们都可以调试。</p>
-
-<h1>如何编写插件</h1>
-
-<p>因为Apple至今并没有公开Xcode Plugin的文档，所以我们需要通过一些其他方法寻找思路。</p>
-
-<figure class='code'> <div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
-<span class='line-number'>2</span>
-<span class='line-number'>3</span>
-<span class='line-number'>4</span>
-<span class='line-number'>5</span>
-<span class='line-number'>6</span>
-<span class='line-number'>7</span>
-</pre></td><td class='code'><pre><code class='objc'><span class='line'> <span class="p">[[</span><span class="n">NSNotificationCenter</span> <span class="n">defaultCenter</span><span class="p">]</span> <span class="nl">addObserver:</span><span class="n">self</span> <span class="nl">selector:</span><span class="k">@selector</span><span class="p">(</span><span class="nl">notificationLog:</span><span class="p">)</span> <span class="nl">name:</span><span class="nb">nil</span> <span class="nl">object:</span><span class="nb">nil</span><span class="p">];</span>
-</span><span class='line'>  
-</span><span class='line'>  <span class="o">-</span> <span class="p">(</span><span class="kt">void</span><span class="p">)</span><span class="nl">notificationLog:</span><span class="p">(</span><span class="n">NSNotification</span> <span class="o">*</span><span class="p">)</span><span class="n">notify</span>
-</span><span class='line'>  <span class="p">{</span>
-</span><span class='line'>      <span class="n">NSLog</span><span class="p">(</span><span class="s">@&quot;%@&quot;</span><span class="p">,</span> <span class="n">notify</span><span class="p">.</span><span class="n">name</span><span class="p">);</span>
-</span><span class='line'>  <span class="p">}</span>
-</span><span class='line'>  
-</span></code></pre></td></tr></table></div></figure>
-
-
-<p>这里稍微有一点特殊，参数notificationName 设为nil，下面是Apple的文档，不是很清楚。</p>
-
-<pre><code>notificationName If you pass nil, the notification center doesn’t use a notification’s name to decide whether to deliver it to the observer.
-</code></pre>
-
-<p>但是目前来看，似乎可以看到所有的通知。当然绝大部分是重复的，对我们没有意义。很幸运最后我们找到了2个通知是我们需要的，下面的代码，已经做了过滤。</p>
-
-<figure class='code'> <div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
-<span class='line-number'>2</span>
-<span class='line-number'>3</span>
-<span class='line-number'>4</span>
-<span class='line-number'>5</span>
-<span class='line-number'>6</span>
-<span class='line-number'>7</span>
-<span class='line-number'>8</span>
-<span class='line-number'>9</span>
-</pre></td><td class='code'><pre><code class='objc'><span class='line'> <span class="o">-</span> <span class="p">(</span><span class="kt">void</span><span class="p">)</span><span class="nl">notificationLog:</span><span class="p">(</span><span class="n">NSNotification</span> <span class="o">*</span><span class="p">)</span><span class="n">notify</span>
-</span><span class='line'>  <span class="p">{</span>
-</span><span class='line'>      <span class="k">if</span> <span class="p">(</span><span class="o">!</span><span class="p">[</span><span class="n">notify</span><span class="p">.</span><span class="n">name</span> <span class="nl">hasPrefix:</span><span class="s">@&quot;IDEBuildOperation&quot;</span><span class="p">])</span> <span class="p">{</span>
-</span><span class='line'>          <span class="k">return</span><span class="p">;</span>
-</span><span class='line'>      <span class="p">}</span>
-</span><span class='line'>
-</span><span class='line'>      <span class="n">NSLog</span><span class="p">(</span><span class="s">@&quot;%@&quot;</span><span class="p">,</span> <span class="n">notify</span><span class="p">.</span><span class="n">name</span><span class="p">);</span>
-</span><span class='line'>  <span class="p">}</span>
-</span><span class='line'>  
-</span></code></pre></td></tr></table></div></figure>
-
-
-<p>这2个通知分别是</p>
-
-<ul>
-<li>IDEBuildOperationWillStartNotification</li>
-<li>IDEBuildOperationDidStopNotification</li>
-</ul>
-
-
-<p>这个我们不得不赞一下cocoa的命名方式，大家都可以猜出这2个通知的含义。剩下的事情就很简单了。统计build时间。</p>
-
-<h1>最后</h1>
-
-<p>这是<a href="https://github.com/studentdeng/Buddy">项目源代码</a>。有兴趣的同学可以玩玩，看一下自己的编译时间有多长。另外最终的代码中还增加了2个小的features。</p>
-
-<ul>
-<li>查看当前打开Xcode的人数</li>
-<li>查看自己打开Xcode专注的时间有多长，这个时间是当Xcode被focus的时候才统计，另外不足1分钟不计算在内。</li>
-</ul>
-
-
-<p>Have fun！</p>
 </div>
   
   

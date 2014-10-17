@@ -1,0 +1,217 @@
+
+<!DOCTYPE html>
+<!--[if IEMobile 7 ]><html class="no-js iem7"><![endif]-->
+<!--[if lt IE 9]><html class="no-js lte-ie8"><![endif]-->
+<!--[if (gt IE 8)|(gt IEMobile 7)|!(IEMobile)|!(IE)]><!--><html class="no-js" lang="en"><!--<![endif]-->
+<head>
+  <meta charset="utf-8">
+  <title>分布式系统原理--日志技术No Redo Log - 不会开机的男孩</title>
+  <meta name="author" content="studentdeng">
+
+  
+  <meta name="description" content="上一篇介绍了Redo Log，这篇介绍No Redo Log。 在分布式系统中，某些情况下我们依然需要实现原子操作，有很多方式，其中No Redo(Undo) Log 便是在工程中运用最广泛的思想之一。他的过程非常简单。 下面是一个简单系统的状态。 为了实现原子的修改 A，B，C的值。我们把A，B &hellip;">
+  
+
+  <!-- http://t.co/dKP3o1e -->
+  <meta name="HandheldFriendly" content="True">
+  <meta name="MobileOptimized" content="320">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+
+  
+  <link rel="canonical" href="http://studentdeng.github.com/blog/2014/10/17/log-system2">
+  <link href="/favicon.png" rel="icon">
+  <link href="/stylesheets/screen.css" media="screen, projection" rel="stylesheet" type="text/css">
+  <link href="/atom.xml" rel="alternate" title="不会开机的男孩" type="application/atom+xml">
+  <script src="/javascripts/modernizr-2.0.js"></script>
+  <script src="/javascripts/jquery.min1.9.1.js"></script>
+  <script>!window.jQuery && document.write(unescape('%3Cscript src="./javascripts/lib/jquery.min.js"%3E%3C/script%3E'))</script>
+  <script src="/javascripts/octopress.js" type="text/javascript"></script>
+  <!--Fonts from Google"s Web font directory at http://google.com/webfonts -->
+  
+
+</head>
+
+<body   class="collapse-sidebar sidebar-footer" >
+  <header role="banner"><hgroup>
+  <h1><a href="/">不会开机的男孩</a></h1>
+  
+</hgroup>
+
+</header>
+  <nav role="navigation"><ul class="subscription" data-subscription="rss">
+  <li><a href="/atom.xml" rel="subscribe-rss" title="subscribe via RSS">RSS</a></li>
+  
+</ul>
+  
+<form action="http://google.com/search" method="get">
+  <fieldset role="search">
+    <input type="hidden" name="q" value="site:studentdeng.github.com" />
+    <input class="search" type="text" name="q" results="0" placeholder="Search"/>
+  </fieldset>
+</form>
+  
+<ul class="main-navigation">
+  	<li><a href="/">Blog</a></li>
+  	<li><a href="/blog/archives">Archives</a></li>
+	 <li><a href="/tags/index.html">Tags</a></li>
+	<li><a href="/favorite/index.html">Favorite</a></li>
+	<li><a href="/about/index.html">About</a></li>
+</ul>
+
+</nav>
+  <div id="main">
+    <div id="content">
+      <div>
+<article class="hentry" role="article">
+  
+  <header>
+    
+      <h1 class="entry-title">分布式系统原理--日志技术No Redo Log</h1>
+    
+    
+      <p class="meta">
+        
+
+
+
+
+
+
+
+
+  
+
+
+<time datetime="2014-10-17T14:02:00+08:00" pubdate data-updated="true">Oct 17<span>th</span>, 2014</time>
+        
+         | <a href="#disqus_thread">Comments</a>
+        
+      </p>
+    
+  </header>
+
+
+<div class="entry-content"><p>上一篇介绍了<a href="http://studentdeng.github.io/blog/2014/10/13/log-system/">Redo Log</a>，这篇介绍No Redo Log。</p>
+
+<p>在分布式系统中，某些情况下我们依然需要实现原子操作，有很多方式，其中No Redo(Undo) Log 便是在工程中运用最广泛的思想之一。他的过程非常简单。</p>
+
+<p>下面是一个简单系统的状态。</p>
+
+<p><img src="http://112.124.107.63/my_home/application/uploads/2014_10_17_14_23_51" alt="image" /></p>
+
+<p>为了实现原子的修改 A，B，C的值。我们把A，B，C 看成一个集合，或是一个“目录”。</p>
+
+<p>1.做一次copy</p>
+
+<p><img src="http://112.124.107.63/my_home/application/uploads/2014_10_17_14_22_53" alt="image" /></p>
+
+<p>2.对于每个更新的操作，创建一个新的item，然后在新的目录中保存修改后的新值。</p>
+
+<p><img src="http://i.gyazo.com/ab8aa93dc78c7e77d0d9029fc522b792.png" alt="image" /></p>
+
+<p>3.原子性的修改生效目录指针。</p>
+
+<p><img src="http://i.gyazo.com/c6bd87760807b3f24cc679ae814a9036.png" alt="image" /></p>
+
+<p>通过原子性的修改一个值，切换一个状态，完成一系列分布式操作原子性的修改。</p>
+</div>
+
+
+  <footer>
+    <p class="meta">
+      
+  
+
+<span class="byline author vcard">Posted by <span class="fn">studentdeng</span></span>
+
+      
+
+
+
+
+
+
+
+
+  
+
+
+<time datetime="2014-10-17T14:02:00+08:00" pubdate data-updated="true">Oct 17<span>th</span>, 2014</time>
+      
+
+<span class="categories">
+  
+    <a class='category' href='/blog/categories/distribution/'>distribution</a>
+  
+</span>
+
+
+    </p>
+    
+      <div class="sharing">
+  
+  
+  
+</div>
+
+    
+    <p class="meta">
+      
+        <a class="basic-alignment left" href="/blog/2014/10/13/log-system/" title="Previous Post: 分布式系统原理--日志技术Redo Log">&laquo; 分布式系统原理--日志技术Redo Log</a>
+      
+      
+    </p>
+  </footer>
+</article>
+
+  <section>
+    <h1>Comments</h1>
+    <div id="disqus_thread" aria-live="polite"><noscript>Please enable JavaScript to view the <a href="http://disqus.com/?ref_noscript">comments powered by Disqus.</a></noscript>
+</div>
+  </section>
+
+
+</div>
+
+<aside class="sidebar">
+  
+    
+  
+</aside>
+
+
+    </div>
+  </div>
+  <footer role="contentinfo"><p>
+  Copyright &copy; 2014 - studentdeng -
+  <span class="credit">Powered by <a href="http://octopress.org">Octopress</a> | Themed with <a href="https://github.com/lucaslew/whitespace">Whitespace</a></span>
+</p>
+
+</footer>
+  
+
+<script type="text/javascript">
+      var disqus_shortname = 'studentdeng';
+      
+        
+        // var disqus_developer = 1;
+        var disqus_identifier = 'http://studentdeng.github.com/blog/2014/10/17/log-system2/';
+        var disqus_url = 'http://studentdeng.github.com/blog/2014/10/17/log-system2/';
+        var disqus_script = 'embed.js';
+      
+    (function () {
+      var dsq = document.createElement('script'); dsq.type = 'text/javascript'; dsq.async = true;
+      dsq.src = 'http://' + disqus_shortname + '.disqus.com/' + disqus_script;
+      (document.getElementsByTagName('head')[0] || document.getElementsByTagName('body')[0]).appendChild(dsq);
+    }());
+</script>
+
+
+
+
+
+
+
+
+</body>
+</html>
