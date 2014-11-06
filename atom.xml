@@ -4,7 +4,7 @@
   <title><![CDATA[不会开机的男孩]]></title>
   <link href="http://studentdeng.github.com/atom.xml" rel="self"/>
   <link href="http://studentdeng.github.com/"/>
-  <updated>2014-10-17T14:43:10+08:00</updated>
+  <updated>2014-11-06T17:14:53+08:00</updated>
   <id>http://studentdeng.github.com/</id>
   <author>
     <name><![CDATA[studentdeng]]></name>
@@ -12,6 +12,385 @@
   </author>
   <generator uri="http://octopress.org/">Octopress</generator>
 
+  
+  <entry>
+    <title type="html"><![CDATA[iOS APP 架构漫谈二]]></title>
+    <link href="http://studentdeng.github.com/blog/2014/11/05/ios-architecture2/"/>
+    <updated>2014-11-05T16:47:00+08:00</updated>
+    <id>http://studentdeng.github.com/blog/2014/11/05/ios-architecture2</id>
+    <content type="html"><![CDATA[<p><a href="http://studentdeng.github.io/blog/2014/08/29/ios-architecture/">上一篇《iOS APP 架构漫谈》</a>简单介绍了<code>information flow</code>的概念。这篇文章简单介绍另一个在编程中非常重要的思想或工具——<code>状态机（State machine）</code>。对大多数计算机专业的家伙们来说，这应该是一门比较难学的课程，里面包含一大堆揪心的名字比如DFA，NFA，还有一大堆各种各样的数学符号,又是编译原理的基础。不过很遗憾，似乎在做完编译原理课程作业之后，很多人再也没有实现过或是用过状态机了。本文通过一个游戏demo来简单描述一下状态机在实践中的应用。<a href="https://github.com/studentdeng/ActivityGame">demo code</a></p>
+
+<h1>背景</h1>
+
+<p>首先看下我们的使用场景，假如我们需要设计一套联网对战的小游戏。第一个难题可能是如何建立一个通道，让2个手机相互发送消息。这里我并不打算引入server端开发，希望只是通过客户端来实现这个逻辑，这里使用<a href="https://cn.avoscloud.com/">LeanCloud API</a>来简化这个过程。这样我们可以暂时不考虑技术细节，直接站在业务角度去思考如何建立这个游戏。</p>
+
+<h2>业务场景&#8211;邀请</h2>
+
+<p>正式开始游戏之前，总会有一个邀请的环节。假如我们有2个用户，分别是Host，Guest。Host创建游戏，Guest加入游戏。游戏的整个流程和我们平时玩的对战游戏流程并没有多大不同。</p>
+
+<p><img src="http://112.124.107.63/my_home/application/uploads/2014_11_06_15_44_54.png" alt="image" /></p>
+
+<ol>
+<li>Host创建游戏，他就相当于进入一个等待队列里面。</li>
+<li>Guest加入游戏，他从等待队列中找到一个匹配，比如Host。然后对Host发送<code>join message</code></li>
+<li>Host会收到很多<code>join message</code>。由于我们只是选择1vs1。这里假定Host同意Guest加入游戏。Host向Guest发送<code>join confirm message</code></li>
+<li>Guest收到<code>join confirm message</code>, 向Host发送<code>Go</code>消息，表示Guest已经进入游戏</li>
+<li>Host收到<code>Go</code>消息。也进入游戏。</li>
+</ol>
+
+
+<h2>具体实现业务逻辑</h2>
+
+<p>现在的构想的逻辑只有5步，但其实还会包含很多逻辑，比如超时机制，重发机制。由于中间状态很多，还可能有我们没有想到过的问题。在面对这种复杂逻辑时，会通过状态机来帮助我们理顺逻辑。这时，我们脑中思考的业务其实是一个状态到一个状态的图。
+如下</p>
+
+<p><img src="http://112.124.107.63/my_home/application/uploads/2014_11_06_10_30_32.png" alt="image" /></p>
+
+<p>上半部分是游戏的创建者，下半部分是游戏的加入者。</p>
+
+<p>一开始，尽量简化模型，这里红色剪头表示我们的正确主流路线，黑色表现出错路线。也就是说，一旦错误，就回到原始<code>Idle</code>状态。</p>
+
+<h2>开始写代码</h2>
+
+<p>在想清楚所有逻辑，并考虑清楚正常路线和错误路线之后，就可以开始写代码了。为了方便，这里直接使用第三方的状态机框架<a href="https://github.com/blakewatters/TransitionKit">TransitionKit</a>。</p>
+
+<h3>定义State（HOST）</h3>
+
+<figure class='code'> <div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+<span class='line-number'>2</span>
+<span class='line-number'>3</span>
+<span class='line-number'>4</span>
+<span class='line-number'>5</span>
+<span class='line-number'>6</span>
+<span class='line-number'>7</span>
+<span class='line-number'>8</span>
+<span class='line-number'>9</span>
+<span class='line-number'>10</span>
+<span class='line-number'>11</span>
+<span class='line-number'>12</span>
+<span class='line-number'>13</span>
+<span class='line-number'>14</span>
+</pre></td><td class='code'><pre><code class='objc'><span class='line'> <span class="n">TKState</span> <span class="o">*</span><span class="n">idleState</span> <span class="o">=</span> <span class="p">[</span><span class="n">TKState</span> <span class="nl">stateWithName:</span><span class="s">@&quot;idle&quot;</span><span class="p">];</span>
+</span><span class='line'>  <span class="n">TKState</span> <span class="o">*</span><span class="n">waitingJoinState</span> <span class="o">=</span> <span class="p">[</span><span class="n">TKState</span> <span class="nl">stateWithName:</span><span class="s">@&quot;waitingJoin&quot;</span><span class="p">];</span>
+</span><span class='line'>  <span class="n">TKState</span> <span class="o">*</span><span class="n">waitingConfirmState</span> <span class="o">=</span> <span class="p">[</span><span class="n">TKState</span> <span class="nl">stateWithName:</span><span class="s">@&quot;waitingConfirm&quot;</span><span class="p">];</span>
+</span><span class='line'>  <span class="n">TKState</span> <span class="o">*</span><span class="n">goState</span> <span class="o">=</span> <span class="p">[</span><span class="n">TKState</span> <span class="nl">stateWithName:</span><span class="s">@&quot;go&quot;</span><span class="p">];</span>
+</span><span class='line'>
+</span><span class='line'>  <span class="p">[</span><span class="n">waitingConfirmState</span> <span class="nl">setDidEnterStateBlock:</span><span class="o">^</span><span class="p">(</span><span class="n">TKState</span> <span class="o">*</span><span class="n">state</span><span class="p">,</span> <span class="n">TKTransition</span> <span class="o">*</span><span class="n">transition</span><span class="p">)</span> <span class="p">{</span>
+</span><span class='line'>      <span class="p">[</span><span class="n">selfWeak</span> <span class="n">sendJoinConfirm</span><span class="p">];</span>
+</span><span class='line'>  <span class="p">}];</span>
+</span><span class='line'>
+</span><span class='line'>  <span class="p">[</span><span class="n">goState</span> <span class="nl">setDidEnterStateBlock:</span><span class="o">^</span><span class="p">(</span><span class="n">TKState</span> <span class="o">*</span><span class="n">state</span><span class="p">,</span> <span class="n">TKTransition</span> <span class="o">*</span><span class="n">transition</span><span class="p">)</span> <span class="p">{</span>
+</span><span class='line'>      <span class="n">NSLog</span><span class="p">(</span><span class="s">@&quot;happy ending&quot;</span><span class="p">);</span>
+</span><span class='line'>
+</span><span class='line'>      <span class="p">[</span><span class="n">SVProgressHUD</span> <span class="nl">showSuccessWithStatus:</span><span class="s">@&quot;ok&quot;</span><span class="p">];</span>
+</span><span class='line'>  <span class="p">}];</span>
+</span></code></pre></td></tr></table></div></figure>
+
+
+<h3>定义Event（HOST）</h3>
+
+<p>Event 是建立State到State的路径</p>
+
+<figure class='code'> <div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+<span class='line-number'>2</span>
+<span class='line-number'>3</span>
+<span class='line-number'>4</span>
+<span class='line-number'>5</span>
+<span class='line-number'>6</span>
+<span class='line-number'>7</span>
+<span class='line-number'>8</span>
+<span class='line-number'>9</span>
+<span class='line-number'>10</span>
+<span class='line-number'>11</span>
+<span class='line-number'>12</span>
+<span class='line-number'>13</span>
+<span class='line-number'>14</span>
+<span class='line-number'>15</span>
+</pre></td><td class='code'><pre><code class='objc'><span class='line'> <span class="n">TKEvent</span> <span class="o">*</span><span class="n">waitingJoinEvent</span> <span class="o">=</span> <span class="p">[</span><span class="n">TKEvent</span> <span class="nl">eventWithName:</span><span class="n">CUHostGameManagerWaitingJoinEvent</span>
+</span><span class='line'>                           <span class="nl">transitioningFromStates:</span><span class="err">@</span><span class="p">[</span><span class="n">idleState</span><span class="p">]</span>
+</span><span class='line'>                                           <span class="nl">toState:</span><span class="n">waitingJoinState</span><span class="p">];</span>
+</span><span class='line'>
+</span><span class='line'>  <span class="n">TKEvent</span> <span class="o">*</span><span class="n">receiveInviteEvent</span> <span class="o">=</span> <span class="p">[</span><span class="n">TKEvent</span> <span class="nl">eventWithName:</span><span class="n">CUHostGameManagerReceiveInviteEvent</span>
+</span><span class='line'>                               <span class="nl">transitioningFromStates:</span><span class="err">@</span><span class="p">[</span><span class="n">waitingJoinState</span><span class="p">]</span>
+</span><span class='line'>                                               <span class="nl">toState:</span><span class="n">waitingConfirmState</span><span class="p">];</span>
+</span><span class='line'>
+</span><span class='line'>  <span class="n">TKEvent</span> <span class="o">*</span><span class="n">receiveConfirmEvent</span> <span class="o">=</span> <span class="p">[</span><span class="n">TKEvent</span> <span class="nl">eventWithName:</span><span class="n">CUHostGameManagerReceiveConfirmEvent</span>
+</span><span class='line'>                                <span class="nl">transitioningFromStates:</span><span class="err">@</span><span class="p">[</span><span class="n">waitingConfirmState</span><span class="p">]</span>
+</span><span class='line'>                                                <span class="nl">toState:</span><span class="n">goState</span><span class="p">];</span>
+</span><span class='line'>
+</span><span class='line'>  <span class="n">TKEvent</span> <span class="o">*</span><span class="n">disconnectedEvent</span> <span class="o">=</span> <span class="p">[</span><span class="n">TKEvent</span> <span class="nl">eventWithName:</span><span class="n">CUHostGameManagerDisconnectedEvent</span>
+</span><span class='line'>                               <span class="nl">transitioningFromStates:</span><span class="nb">nil</span>
+</span><span class='line'>                                              <span class="nl">toState:</span><span class="n">idleState</span><span class="p">];</span>
+</span></code></pre></td></tr></table></div></figure>
+
+
+<h3>定义过程（HOST）</h3>
+
+<figure class='code'> <div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+<span class='line-number'>2</span>
+<span class='line-number'>3</span>
+<span class='line-number'>4</span>
+<span class='line-number'>5</span>
+<span class='line-number'>6</span>
+<span class='line-number'>7</span>
+<span class='line-number'>8</span>
+<span class='line-number'>9</span>
+<span class='line-number'>10</span>
+<span class='line-number'>11</span>
+<span class='line-number'>12</span>
+<span class='line-number'>13</span>
+<span class='line-number'>14</span>
+<span class='line-number'>15</span>
+<span class='line-number'>16</span>
+<span class='line-number'>17</span>
+<span class='line-number'>18</span>
+<span class='line-number'>19</span>
+<span class='line-number'>20</span>
+<span class='line-number'>21</span>
+<span class='line-number'>22</span>
+<span class='line-number'>23</span>
+<span class='line-number'>24</span>
+<span class='line-number'>25</span>
+<span class='line-number'>26</span>
+<span class='line-number'>27</span>
+<span class='line-number'>28</span>
+<span class='line-number'>29</span>
+<span class='line-number'>30</span>
+<span class='line-number'>31</span>
+<span class='line-number'>32</span>
+<span class='line-number'>33</span>
+<span class='line-number'>34</span>
+<span class='line-number'>35</span>
+<span class='line-number'>36</span>
+<span class='line-number'>37</span>
+<span class='line-number'>38</span>
+<span class='line-number'>39</span>
+<span class='line-number'>40</span>
+<span class='line-number'>41</span>
+<span class='line-number'>42</span>
+<span class='line-number'>43</span>
+<span class='line-number'>44</span>
+<span class='line-number'>45</span>
+<span class='line-number'>46</span>
+<span class='line-number'>47</span>
+<span class='line-number'>48</span>
+<span class='line-number'>49</span>
+</pre></td><td class='code'><pre><code class='objc'><span class='line'> <span class="o">-</span> <span class="p">(</span><span class="kt">void</span><span class="p">)</span><span class="n">startGame</span> <span class="p">{</span>
+</span><span class='line'>
+</span><span class='line'>      <span class="n">NSAssert</span><span class="p">(</span><span class="n">self</span><span class="p">.</span><span class="n">session</span><span class="p">.</span><span class="n">peerId</span> <span class="o">!=</span> <span class="nb">nil</span><span class="p">,</span> <span class="s">@&quot;&quot;</span><span class="p">);</span>
+</span><span class='line'>
+</span><span class='line'>      <span class="c1">//这里，如果不是idle，我们切换状态机到idle</span>
+</span><span class='line'>      <span class="k">if</span> <span class="p">(</span><span class="o">!</span><span class="p">[</span><span class="n">self</span><span class="p">.</span><span class="n">stateMachine</span><span class="p">.</span><span class="n">currentState</span><span class="p">.</span><span class="n">name</span> <span class="nl">isEqual:</span><span class="s">@&quot;idle&quot;</span><span class="p">])</span> <span class="p">{</span>
+</span><span class='line'>          <span class="p">[</span><span class="n">self</span> <span class="nl">fireEvent:</span><span class="n">CUHostGameManagerDisconnectedEvent</span> <span class="nl">userInfo:</span><span class="nb">nil</span><span class="p">];</span>
+</span><span class='line'>      <span class="p">}</span>
+</span><span class='line'>
+</span><span class='line'>      <span class="c1">//这里调用LeanCloud 入队</span>
+</span><span class='line'>      <span class="n">AVObject</span> <span class="o">*</span><span class="n">waitingId</span> <span class="o">=</span> <span class="p">[</span><span class="n">AVObject</span> <span class="nl">objectWithClassName:</span><span class="s">@&quot;waiting_join_Ids&quot;</span><span class="p">];</span>
+</span><span class='line'>      <span class="p">[</span><span class="n">waitingId</span> <span class="nl">setObject:</span><span class="n">self</span><span class="p">.</span><span class="n">session</span><span class="p">.</span><span class="n">peerId</span> <span class="nl">forKey:</span><span class="s">@&quot;peerId&quot;</span><span class="p">];</span>
+</span><span class='line'>      <span class="p">[</span><span class="n">waitingId</span> <span class="nl">saveInBackgroundWithBlock:</span><span class="o">^</span><span class="p">(</span><span class="kt">BOOL</span> <span class="n">succeeded</span><span class="p">,</span> <span class="n">NSError</span> <span class="o">*</span><span class="n">error</span><span class="p">)</span> <span class="p">{</span>
+</span><span class='line'>          <span class="c1">//enqueue 之后，进入waitingJoin状态</span>
+</span><span class='line'>          <span class="p">[</span><span class="n">self</span> <span class="nl">fireEvent:</span><span class="n">CUHostGameManagerWaitingJoinEvent</span> <span class="nl">userInfo:</span><span class="nb">nil</span><span class="p">];</span>
+</span><span class='line'>      <span class="p">}];</span>
+</span><span class='line'>  <span class="p">}</span>
+</span><span class='line'>
+</span><span class='line'>  <span class="o">-</span> <span class="p">(</span><span class="kt">void</span><span class="p">)</span><span class="n">sendJoinConfirm</span> <span class="p">{</span>
+</span><span class='line'>      <span class="c1">//发送加入确认消息给Guest</span>
+</span><span class='line'>      <span class="n">AVMessage</span> <span class="o">*</span><span class="n">message</span> <span class="o">=</span> <span class="p">[</span><span class="n">AVMessage</span> <span class="nl">messageForPeerWithSession:</span><span class="n">self</span><span class="p">.</span><span class="n">session</span>
+</span><span class='line'>                                                   <span class="nl">toPeerId:</span><span class="n">self</span><span class="p">.</span><span class="n">peerId</span>
+</span><span class='line'>                                                    <span class="nl">payload:</span><span class="s">@&quot;join_confirm&quot;</span><span class="p">];</span>
+</span><span class='line'>      <span class="p">[</span><span class="n">self</span><span class="p">.</span><span class="n">session</span> <span class="nl">sendMessage:</span><span class="n">message</span> <span class="nl">transient:</span><span class="n">YES</span><span class="p">];</span>
+</span><span class='line'>  <span class="p">}</span>
+</span><span class='line'>
+</span><span class='line'>  <span class="o">-</span> <span class="p">(</span><span class="kt">void</span><span class="p">)</span><span class="nl">session:</span><span class="p">(</span><span class="n">AVSession</span> <span class="o">*</span><span class="p">)</span><span class="n">session</span> <span class="nl">didReceiveMessage:</span><span class="p">(</span><span class="n">AVMessage</span> <span class="o">*</span><span class="p">)</span><span class="n">message</span>
+</span><span class='line'>  <span class="p">{</span>
+</span><span class='line'>      <span class="k">if</span> <span class="p">([</span><span class="n">message</span><span class="p">.</span><span class="n">payload</span> <span class="nl">isEqualToString:</span><span class="s">@&quot;join&quot;</span><span class="p">])</span> <span class="p">{</span>
+</span><span class='line'>          <span class="c1">//收到Join（邀请）之后，发送确认消息</span>
+</span><span class='line'>          <span class="n">self</span><span class="p">.</span><span class="n">peerId</span> <span class="o">=</span> <span class="n">message</span><span class="p">.</span><span class="n">fromPeerId</span><span class="p">;</span>
+</span><span class='line'>
+</span><span class='line'>          <span class="c1">//因为LeanCloud的API比较挫，watch 之后才能发送消息，但是我们不知道什么时候才watch成功。。。。</span>
+</span><span class='line'>          <span class="c1">//好在只是demo，我们只好用这种方式work around，延迟2s发送消息</span>
+</span><span class='line'>          <span class="p">[</span><span class="n">NSObject</span> <span class="nl">cancelPreviousPerformRequestsWithTarget:</span><span class="n">self</span> <span class="nl">selector:</span><span class="k">@selector</span><span class="p">(</span><span class="nl">sendInviteConfirmRequest:</span><span class="p">)</span> <span class="nl">object:</span><span class="nb">nil</span><span class="p">];</span>
+</span><span class='line'>          <span class="p">[</span><span class="n">self</span> <span class="nl">performSelector:</span><span class="k">@selector</span><span class="p">(</span><span class="nl">sendInviteConfirmRequest:</span><span class="p">)</span>
+</span><span class='line'>                      <span class="nl">withObject:</span><span class="err">@</span><span class="p">[</span><span class="n">message</span><span class="p">.</span><span class="n">fromPeerId</span><span class="p">]</span>
+</span><span class='line'>                      <span class="nl">afterDelay:</span><span class="mf">2.0f</span><span class="p">];</span>
+</span><span class='line'>      <span class="p">}</span>
+</span><span class='line'>      <span class="k">else</span> <span class="k">if</span> <span class="p">([</span><span class="n">message</span><span class="p">.</span><span class="n">payload</span> <span class="nl">isEqualToString:</span><span class="s">@&quot;go&quot;</span><span class="p">])</span> <span class="p">{</span>
+</span><span class='line'>          <span class="c1">//收到go消息，流程结束</span>
+</span><span class='line'>          <span class="p">[</span><span class="n">self</span> <span class="nl">fireEvent:</span><span class="n">CUHostGameManagerReceiveConfirmEvent</span> <span class="nl">userInfo:</span><span class="nb">nil</span><span class="p">];</span>
+</span><span class='line'>      <span class="p">}</span>
+</span><span class='line'>  <span class="p">}</span>
+</span><span class='line'>
+</span><span class='line'>  <span class="o">-</span> <span class="p">(</span><span class="kt">void</span><span class="p">)</span><span class="nl">sendInviteConfirmRequest:</span><span class="p">(</span><span class="n">NSArray</span> <span class="o">*</span><span class="p">)</span><span class="n">watchPeerIds</span> <span class="p">{</span>
+</span><span class='line'>      <span class="p">[</span><span class="n">self</span><span class="p">.</span><span class="n">session</span> <span class="nl">watchPeerIds:</span><span class="n">watchPeerIds</span><span class="p">];</span>
+</span><span class='line'>      <span class="p">[</span><span class="n">self</span> <span class="nl">fireEvent:</span><span class="n">CUHostGameManagerReceiveInviteEvent</span> <span class="nl">userInfo:</span><span class="nb">nil</span><span class="p">];</span>
+</span><span class='line'>  <span class="p">}</span>
+</span></code></pre></td></tr></table></div></figure>
+
+
+<h3>定义State（Guest）</h3>
+
+<figure class='code'> <div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+<span class='line-number'>2</span>
+<span class='line-number'>3</span>
+<span class='line-number'>4</span>
+<span class='line-number'>5</span>
+<span class='line-number'>6</span>
+<span class='line-number'>7</span>
+<span class='line-number'>8</span>
+<span class='line-number'>9</span>
+<span class='line-number'>10</span>
+<span class='line-number'>11</span>
+<span class='line-number'>12</span>
+<span class='line-number'>13</span>
+</pre></td><td class='code'><pre><code class='objc'><span class='line'> <span class="n">TKState</span> <span class="o">*</span><span class="n">idleState</span> <span class="o">=</span> <span class="p">[</span><span class="n">TKState</span> <span class="nl">stateWithName:</span><span class="s">@&quot;idle&quot;</span><span class="p">];</span>
+</span><span class='line'>  <span class="n">TKState</span> <span class="o">*</span><span class="n">waitingReplyState</span> <span class="o">=</span> <span class="p">[</span><span class="n">TKState</span> <span class="nl">stateWithName:</span><span class="s">@&quot;waitingReply&quot;</span><span class="p">];</span>
+</span><span class='line'>  <span class="n">TKState</span> <span class="o">*</span><span class="n">goState</span> <span class="o">=</span> <span class="p">[</span><span class="n">TKState</span> <span class="nl">stateWithName:</span><span class="s">@&quot;go&quot;</span><span class="p">];</span>
+</span><span class='line'>
+</span><span class='line'>  <span class="p">[</span><span class="n">waitingReplyState</span> <span class="nl">setWillEnterStateBlock:</span><span class="o">^</span><span class="p">(</span><span class="n">TKState</span> <span class="o">*</span><span class="n">state</span><span class="p">,</span> <span class="n">TKTransition</span> <span class="o">*</span><span class="n">transition</span><span class="p">)</span> <span class="p">{</span>
+</span><span class='line'>      <span class="p">[</span><span class="n">selfWeak</span> <span class="n">searchingGames</span><span class="p">];</span>
+</span><span class='line'>  <span class="p">}];</span>
+</span><span class='line'>
+</span><span class='line'>  <span class="p">[</span><span class="n">goState</span> <span class="nl">setDidEnterStateBlock:</span><span class="o">^</span><span class="p">(</span><span class="n">TKState</span> <span class="o">*</span><span class="n">state</span><span class="p">,</span> <span class="n">TKTransition</span> <span class="o">*</span><span class="n">transition</span><span class="p">)</span> <span class="p">{</span>
+</span><span class='line'>      <span class="p">[</span><span class="n">selfWeak</span> <span class="n">sendGo</span><span class="p">];</span>
+</span><span class='line'>      <span class="n">NSLog</span><span class="p">(</span><span class="s">@&quot;happy ending&quot;</span><span class="p">);</span>
+</span><span class='line'>      <span class="p">[</span><span class="n">SVProgressHUD</span> <span class="nl">showSuccessWithStatus:</span><span class="s">@&quot;ok&quot;</span><span class="p">];</span>
+</span><span class='line'>  <span class="p">}];</span>
+</span></code></pre></td></tr></table></div></figure>
+
+
+<h3>定义Event（Guest）</h3>
+
+<figure class='code'> <div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+<span class='line-number'>2</span>
+<span class='line-number'>3</span>
+<span class='line-number'>4</span>
+<span class='line-number'>5</span>
+<span class='line-number'>6</span>
+<span class='line-number'>7</span>
+<span class='line-number'>8</span>
+<span class='line-number'>9</span>
+<span class='line-number'>10</span>
+<span class='line-number'>11</span>
+</pre></td><td class='code'><pre><code class='objc'><span class='line'> <span class="n">TKEvent</span> <span class="o">*</span><span class="n">searchingEvent</span> <span class="o">=</span> <span class="p">[</span><span class="n">TKEvent</span> <span class="nl">eventWithName:</span><span class="n">CUGestGameManagerSearchingEvent</span>
+</span><span class='line'>                           <span class="nl">transitioningFromStates:</span><span class="err">@</span><span class="p">[</span><span class="n">idleState</span><span class="p">]</span>
+</span><span class='line'>                                           <span class="nl">toState:</span><span class="n">waitingReplyState</span><span class="p">];</span>
+</span><span class='line'>
+</span><span class='line'>  <span class="n">TKEvent</span> <span class="o">*</span><span class="n">receiveConfirmEvent</span> <span class="o">=</span> <span class="p">[</span><span class="n">TKEvent</span> <span class="nl">eventWithName:</span><span class="n">CUGestGameManagerReceiveConfirmEvent</span>
+</span><span class='line'>                                <span class="nl">transitioningFromStates:</span><span class="err">@</span><span class="p">[</span><span class="n">waitingReplyState</span><span class="p">]</span>
+</span><span class='line'>                                                <span class="nl">toState:</span><span class="n">goState</span><span class="p">];</span>
+</span><span class='line'>
+</span><span class='line'>  <span class="n">TKEvent</span> <span class="o">*</span><span class="n">disconnectedEvent</span> <span class="o">=</span> <span class="p">[</span><span class="n">TKEvent</span> <span class="nl">eventWithName:</span><span class="n">CUGestGameManagerDisconnectedEvent</span>
+</span><span class='line'>                              <span class="nl">transitioningFromStates:</span><span class="nb">nil</span>
+</span><span class='line'>                                              <span class="nl">toState:</span><span class="n">idleState</span><span class="p">];</span>
+</span></code></pre></td></tr></table></div></figure>
+
+
+<h3>定义过程（Guest）</h3>
+
+<figure class='code'> <div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+<span class='line-number'>2</span>
+<span class='line-number'>3</span>
+<span class='line-number'>4</span>
+<span class='line-number'>5</span>
+<span class='line-number'>6</span>
+<span class='line-number'>7</span>
+<span class='line-number'>8</span>
+<span class='line-number'>9</span>
+<span class='line-number'>10</span>
+<span class='line-number'>11</span>
+<span class='line-number'>12</span>
+<span class='line-number'>13</span>
+<span class='line-number'>14</span>
+<span class='line-number'>15</span>
+<span class='line-number'>16</span>
+<span class='line-number'>17</span>
+<span class='line-number'>18</span>
+<span class='line-number'>19</span>
+<span class='line-number'>20</span>
+<span class='line-number'>21</span>
+<span class='line-number'>22</span>
+<span class='line-number'>23</span>
+<span class='line-number'>24</span>
+<span class='line-number'>25</span>
+<span class='line-number'>26</span>
+<span class='line-number'>27</span>
+<span class='line-number'>28</span>
+<span class='line-number'>29</span>
+<span class='line-number'>30</span>
+<span class='line-number'>31</span>
+<span class='line-number'>32</span>
+<span class='line-number'>33</span>
+<span class='line-number'>34</span>
+<span class='line-number'>35</span>
+<span class='line-number'>36</span>
+<span class='line-number'>37</span>
+<span class='line-number'>38</span>
+<span class='line-number'>39</span>
+<span class='line-number'>40</span>
+<span class='line-number'>41</span>
+<span class='line-number'>42</span>
+<span class='line-number'>43</span>
+<span class='line-number'>44</span>
+<span class='line-number'>45</span>
+<span class='line-number'>46</span>
+<span class='line-number'>47</span>
+</pre></td><td class='code'><pre><code class='objc'><span class='line'><span class="k">-</span> <span class="p">(</span><span class="kt">void</span><span class="p">)</span><span class="nf">joinGame</span> <span class="p">{</span>
+</span><span class='line'>
+</span><span class='line'>  <span class="k">if</span> <span class="p">(</span><span class="o">!</span><span class="p">[</span><span class="n">self</span><span class="p">.</span><span class="n">stateMachine</span><span class="p">.</span><span class="n">currentState</span><span class="p">.</span><span class="n">name</span> <span class="nl">isEqual:</span><span class="s">@&quot;idle&quot;</span><span class="p">])</span> <span class="p">{</span>
+</span><span class='line'>    <span class="p">[</span><span class="n">self</span> <span class="nl">fireEvent:</span><span class="n">CUGestGameManagerDisconnectedEvent</span> <span class="nl">userInfo:</span><span class="nb">nil</span><span class="p">];</span>
+</span><span class='line'>  <span class="p">}</span>
+</span><span class='line'>
+</span><span class='line'>  <span class="p">[</span><span class="n">self</span> <span class="nl">fireEvent:</span><span class="n">CUGestGameManagerSearchingEvent</span> <span class="nl">userInfo:</span><span class="nb">nil</span><span class="p">];</span>
+</span><span class='line'><span class="p">}</span>
+</span><span class='line'>
+</span><span class='line'><span class="k">-</span> <span class="p">(</span><span class="kt">void</span><span class="p">)</span><span class="nf">searchingGames</span> <span class="p">{</span>
+</span><span class='line'>  <span class="n">AVQuery</span> <span class="o">*</span><span class="n">query</span> <span class="o">=</span> <span class="p">[</span><span class="n">AVQuery</span> <span class="nl">queryWithClassName:</span><span class="s">@&quot;waiting_join_Ids&quot;</span><span class="p">];</span>
+</span><span class='line'>  <span class="p">[</span><span class="n">query</span> <span class="nl">orderByDescending:</span><span class="s">@&quot;updatedAt&quot;</span><span class="p">];</span>
+</span><span class='line'>  <span class="p">[</span><span class="n">query</span> <span class="nl">setLimit:</span><span class="mi">1</span><span class="p">];</span>
+</span><span class='line'>
+</span><span class='line'>  <span class="p">[</span><span class="n">query</span> <span class="nl">findObjectsInBackgroundWithBlock:</span><span class="o">^</span><span class="p">(</span><span class="n">NSArray</span> <span class="o">*</span><span class="n">objects</span><span class="p">,</span> <span class="n">NSError</span> <span class="o">*</span><span class="n">error</span><span class="p">)</span> <span class="p">{</span>
+</span><span class='line'>    <span class="n">NSMutableArray</span> <span class="o">*</span><span class="n">installationIds</span> <span class="o">=</span> <span class="p">[[</span><span class="n">NSMutableArray</span> <span class="n">alloc</span><span class="p">]</span> <span class="n">init</span><span class="p">];</span>
+</span><span class='line'>    <span class="k">for</span> <span class="p">(</span><span class="n">AVObject</span> <span class="o">*</span><span class="n">object</span> <span class="k">in</span> <span class="n">objects</span><span class="p">)</span> <span class="p">{</span>
+</span><span class='line'>      <span class="k">if</span> <span class="p">([</span><span class="n">object</span> <span class="nl">objectForKey:</span><span class="s">@&quot;peerId&quot;</span><span class="p">])</span> <span class="p">{</span>
+</span><span class='line'>        <span class="p">[</span><span class="n">installationIds</span> <span class="nl">addObject:</span><span class="p">[</span><span class="n">object</span> <span class="nl">objectForKey:</span><span class="s">@&quot;peerId&quot;</span><span class="p">]];</span>
+</span><span class='line'>      <span class="p">}</span>
+</span><span class='line'>    <span class="p">}</span>
+</span><span class='line'>
+</span><span class='line'>    <span class="p">[</span><span class="n">self</span><span class="p">.</span><span class="n">session</span> <span class="nl">watchPeerIds:</span><span class="n">installationIds</span><span class="p">];</span>
+</span><span class='line'>
+</span><span class='line'>    <span class="p">[</span><span class="n">NSObject</span> <span class="nl">cancelPreviousPerformRequestsWithTarget:</span><span class="n">self</span> <span class="nl">selector:</span><span class="k">@selector</span><span class="p">(</span><span class="n">sendJoinRequest</span><span class="p">)</span> <span class="nl">object:</span><span class="nb">nil</span><span class="p">];</span>
+</span><span class='line'>    <span class="p">[</span><span class="n">self</span> <span class="nl">performSelector:</span><span class="k">@selector</span><span class="p">(</span><span class="n">sendJoinRequest</span><span class="p">)</span>
+</span><span class='line'>               <span class="nl">withObject:</span><span class="nb">nil</span>
+</span><span class='line'>               <span class="nl">afterDelay:</span><span class="mf">2.0f</span><span class="p">];</span>
+</span><span class='line'>  <span class="p">}];</span>
+</span><span class='line'><span class="p">}</span>
+</span><span class='line'>
+</span><span class='line'><span class="k">-</span> <span class="p">(</span><span class="kt">void</span><span class="p">)</span><span class="nf">sendJoinRequest</span> <span class="p">{</span>
+</span><span class='line'>
+</span><span class='line'>  <span class="k">for</span> <span class="p">(</span><span class="n">NSString</span> <span class="o">*</span><span class="n">item</span> <span class="k">in</span> <span class="n">self</span><span class="p">.</span><span class="n">session</span><span class="p">.</span><span class="n">watchedPeerIds</span><span class="p">)</span> <span class="p">{</span>
+</span><span class='line'>    <span class="n">AVMessage</span> <span class="o">*</span><span class="n">message</span> <span class="o">=</span> <span class="p">[</span><span class="n">AVMessage</span> <span class="nl">messageForPeerWithSession:</span><span class="n">self</span><span class="p">.</span><span class="n">session</span>
+</span><span class='line'>                                                     <span class="nl">toPeerId:</span><span class="n">item</span>
+</span><span class='line'>                                                      <span class="nl">payload:</span><span class="s">@&quot;join&quot;</span><span class="p">];</span>
+</span><span class='line'>    <span class="p">[</span><span class="n">self</span><span class="p">.</span><span class="n">session</span> <span class="nl">sendMessage:</span><span class="n">message</span> <span class="nl">transient:</span><span class="n">YES</span><span class="p">];</span>
+</span><span class='line'>  <span class="p">}</span>
+</span><span class='line'><span class="p">}</span>
+</span><span class='line'>
+</span><span class='line'><span class="k">-</span> <span class="p">(</span><span class="kt">void</span><span class="p">)</span><span class="nf">sendGo</span><span class="p">{</span>
+</span><span class='line'>  <span class="n">AVMessage</span> <span class="o">*</span><span class="n">message</span> <span class="o">=</span> <span class="p">[</span><span class="n">AVMessage</span> <span class="nl">messageForPeerWithSession:</span><span class="n">self</span><span class="p">.</span><span class="n">session</span>
+</span><span class='line'>                                                   <span class="nl">toPeerId:</span><span class="n">self</span><span class="p">.</span><span class="n">otherPeerId</span>
+</span><span class='line'>                                                    <span class="nl">payload:</span><span class="s">@&quot;go&quot;</span><span class="p">];</span>
+</span><span class='line'>  <span class="p">[</span><span class="n">self</span><span class="p">.</span><span class="n">session</span> <span class="nl">sendMessage:</span><span class="n">message</span> <span class="nl">transient:</span><span class="n">YES</span><span class="p">];</span>
+</span><span class='line'><span class="p">}</span>
+</span></code></pre></td></tr></table></div></figure>
+
+
+<h1>最后</h1>
+
+<p>state machine 是一个蛮厉害的锤子，只要是一个工具，就肯定会被滥用。。。state machine最大的好处是在于，方便我们思考清楚所有细节，主线，和错误流程。避免因为考虑不周全而产生的bug。结合之前的<code>information flow</code>的思路，会让我们的软件设计更加清楚。</p>
+
+<p><a href="https://github.com/studentdeng/ActivityGame">demo code</a></p>
+]]></content>
+  </entry>
   
   <entry>
     <title type="html"><![CDATA[分布式系统原理--日志技术No Redo Log]]></title>
@@ -2346,55 +2725,6 @@ int main(int argc, const char * argv[])
 </code></pre>
 
 <p>NSThread是</p>
-]]></content>
-  </entry>
-  
-  <entry>
-    <title type="html"><![CDATA[2013年度总结]]></title>
-    <link href="http://studentdeng.github.com/blog/2013/12/14/25years/"/>
-    <updated>2013-12-14T22:24:00+08:00</updated>
-    <id>http://studentdeng.github.com/blog/2013/12/14/25years</id>
-    <content type="html"><![CDATA[<h1>过去的一年</h1>
-
-<p>人生的第25个年头就要过去了，现在是14号，离25岁的终点还有一个星期。这个意味着我马上就要26岁了。25岁的人生马上就要结束了。为什么这么害怕25岁。25岁到底意味着什么？身体开始衰老而且入行3年。身体衰老意味着如果希望有一个好身材，那么需要付出比之前大的多的时间和毅力，甚至保持都是一件越来越难的事情。入行3年意味着你完成1W小时体验，科学上意味着你应该是一个专家且小有成就了。你已经不是一个小孩子，那种看一篇文章，听一个演讲就马上行动起来的年轻人。你需要能够制定适合自己的计划，而且稳定靠谱的执行下去，没有为什么，因为这个就是这个时候应该做到的。你的试错的成本会变得越来越高，而且你不得不面对一些自己在年轻的时候不愿意面对的问题。那么看看这1年来我做的事情吧。</p>
-
-<p>我养成了2个好习惯，一个健身一个学英语。而且这2个方面都有了不少的进步，之前已经写得太多，这里不多说了。旅行过一次，一次接力马拉松，另外看了52本书。下面是具体的统计</p>
-
-<p><img src="http://studentdeng.github.io/images/25-1.png" alt="image" /></p>
-
-<p><img src="http://studentdeng.github.io/images/25-2.png" alt="image" /></p>
-
-<p>其中小说最多16篇，心理学6本，计算机5本。20篇读书笔记，5个书评。</p>
-
-<p>翻翻去年给自己定得目标，除了雅思没有搞定以外，其他的还算过去了。</p>
-
-<h1>我是谁</h1>
-
-<p>现在的社交工具越来越多，会有越来越多人的生活不经意之间闯进我们的生活里。你需要学会辨别他们。就拿一个跑马拉松来说，有人会说敢于参加就好了。但是实际上你不会知道她背后做了什么，各种准备，训练，以及比赛当天的赛程详细计划，多少米需要做什么，以及自己的目标，多少是基本目标，多少是超额的。我这么说并不说一些人会刻意隐瞒什么，而是这些一切的小事情上面所积累的习惯，造就了一个人的做事态度，价值观。</p>
-
-<p>1年前的这会，我写下了这样的一段话。</p>
-
-<p>“I would not be able to find the most difficult task in my life that is changing myself. 我将失去,或是更晚的意识到, 这个人生中最困难的任务,就是改变自己, 因为有太多的人, 别说改变自己, 面对自己都做不到, 因为自己可以骗得了任何人,但唯独骗不了自己。”</p>
-
-<p>今天和一个朋友聊天，也正好聊到了这个。人们最大的敌人是自己，真的真的只有极少数的人可以做到面对自己，可以自己揭开自己心中的伤疤。今天我清晰的感觉到了我心脏的跳动，那种砰砰砰跳动的感觉，我很害怕。非常害怕，害怕到想哭却哭不出来。因为很简单，这一年来不管我做过哪些改变以及努力，其实可以用8个字概况“看似忙碌，实则焦虑”——纤细的胳膊，蹩脚的英语，以及居无定所没有稳定收入来源的生活。</p>
-
-<p>不管是工作上面的总结，还是人际交往的总结，还是我做的一切一切的东西的源动力在于我过的生活和我想的不一样。胸围长5cm腰围小12cm绝对不会是“我希望我的身体强壮一点”一句话搞定的，同样那个钢筋铁骨的30多岁大姐姐也不是一句“我希望更漂亮健康”搞定的，有谁会理解从一个相夫教子的全职太太到孤身一人的心理落差呢？</p>
-
-<p>这就是现实的生活，生活中永远不缺努力的人，也不缺焦虑。虽然我现在要比1年前做得要好很多。我不会去抱怨。学会把用来抱怨的时间去做事情。人总会慢慢的发现自己似乎强壮起来了，就像温水煮青蛙，看上去不错，但实际上根本没有变化，我只是学得更会掩饰自己的内心，更会假装而已。</p>
-
-<p>越忙碌，学得越多，做的越多，只是在给自己掩饰自己的焦虑,暗示自己过的还好，但其实一点也不好。不得不承认自己处在一个下降的电梯，这就是我心中的“坑”。</p>
-
-<p>当然也有好消息。好消息就是不是我才有焦虑，这个几乎只要是一个有想法的年轻人都有的（好阴暗的感觉&#8230;）</p>
-
-<h1>要到那里去</h1>
-
-<p>当我们回头看自己走过来的路时，看到的似乎只是依稀莫辩的“或许”。我们所能明确认知的仅仅是现在这一瞬间，而这也只是与我们擦肩而过。看看自己，除了青春，什么都没有。青春就是时间，时间不像钱，可以存，可以攒，时间只能用于消费或是投资。不得不承认，过去的日子里面，我浪费了太多的时间，有太多的遗憾，小时候有太多的不懂事，让自己现在变成这个样子，但是我不后悔。我认定的事情我都全力去做，有部分做到了，有部分延期做到了，也有一部分最后失败了。</p>
-
-<p>2014年，把2013年的一些遗憾弥补上之后，给自己一个新的平台。到了找一个新电梯的时候了。多年以前做的决定，现在也是搏一把的时候了。</p>
-
-<h1>后记</h1>
-
-<p>这篇是在14号写的，实际上，在14号之前我已经想了1个多月了。如果一件事情还有遗憾，那么就还没有到放弃的时候。我从来没有这么长时间的思考过自己，也第一次帮别人思考自己。回头看自己思路的时候，发现还是有很多坑和不足，但我也看到了我在慢慢的变好。即将的26岁这一年，真的将是我非常重要的一年。鸡血又开始打上了。</p>
 ]]></content>
   </entry>
   

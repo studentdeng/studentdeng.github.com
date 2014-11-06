@@ -5,7 +5,7 @@
 <!--[if (gt IE 8)|(gt IEMobile 7)|!(IEMobile)|!(IE)]><!--><html class="no-js" lang="en"><!--<![endif]-->
 <head>
   <meta charset="utf-8">
-  <title>不会开机的男孩</title>
+  <title>iOS APP 架构漫谈二 - 不会开机的男孩</title>
   <meta name="author" content="studentdeng">
 
   
@@ -18,7 +18,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1">
 
   
-  <link rel="canonical" href="http://studentdeng.github.com">
+  <link rel="canonical" href="http://studentdeng.github.com/blog/2014/11/05/ios-architecture2">
   <link href="/favicon.png" rel="icon">
   <link href="/stylesheets/screen.css" media="screen, projection" rel="stylesheet" type="text/css">
   <link href="/atom.xml" rel="alternate" title="不会开机的男孩" type="application/atom+xml">
@@ -61,15 +61,12 @@
 </nav>
   <div id="main">
     <div id="content">
-      <div class="blog-index">
+      <div>
+<article class="hentry" role="article">
   
-  
-  
-    <article>
-      
   <header>
     
-      <h1 class="entry-title"><a href="/blog/2014/11/05/ios-architecture2/">iOS APP 架构漫谈二</a></h1>
+      <h1 class="entry-title">iOS APP 架构漫谈二</h1>
     
     
       <p class="meta">
@@ -87,14 +84,14 @@
 
 <time datetime="2014-11-05T16:47:00+08:00" pubdate data-updated="true">Nov 5<span>th</span>, 2014</time>
         
-         | <a href="/blog/2014/11/05/ios-architecture2/#disqus_thread">Comments</a>
+         | <a href="#disqus_thread">Comments</a>
         
       </p>
     
   </header>
 
 
-  <div class="entry-content"><p><a href="http://studentdeng.github.io/blog/2014/08/29/ios-architecture/">上一篇《iOS APP 架构漫谈》</a>简单介绍了<code>information flow</code>的概念。这篇文章简单介绍另一个在编程中非常重要的思想或工具——<code>状态机（State machine）</code>。对大多数计算机专业的家伙们来说，这应该是一门比较难学的课程，里面包含一大堆揪心的名字比如DFA，NFA，还有一大堆各种各样的数学符号,又是编译原理的基础。不过很遗憾，似乎在做完编译原理课程作业之后，很多人再也没有实现过或是用过状态机了。本文通过一个游戏demo来简单描述一下状态机在实践中的应用。<a href="https://github.com/studentdeng/ActivityGame">demo code</a></p>
+<div class="entry-content"><p><a href="http://studentdeng.github.io/blog/2014/08/29/ios-architecture/">上一篇《iOS APP 架构漫谈》</a>简单介绍了<code>information flow</code>的概念。这篇文章简单介绍另一个在编程中非常重要的思想或工具——<code>状态机（State machine）</code>。对大多数计算机专业的家伙们来说，这应该是一门比较难学的课程，里面包含一大堆揪心的名字比如DFA，NFA，还有一大堆各种各样的数学符号,又是编译原理的基础。不过很遗憾，似乎在做完编译原理课程作业之后，很多人再也没有实现过或是用过状态机了。本文通过一个游戏demo来简单描述一下状态机在实践中的应用。<a href="https://github.com/studentdeng/ActivityGame">demo code</a></p>
 
 <h1>背景</h1>
 
@@ -466,82 +463,16 @@
 
 <p><a href="https://github.com/studentdeng/ActivityGame">demo code</a></p>
 </div>
-  
-  
 
 
-    </article>
-  
-  
-    <article>
+  <footer>
+    <p class="meta">
       
-  <header>
-    
-      <h1 class="entry-title"><a href="/blog/2014/10/17/log-system2/">分布式系统原理&#8211;日志技术No Redo Log</a></h1>
-    
-    
-      <p class="meta">
-        
-
-
-
-
-
-
-
-
   
 
+<span class="byline author vcard">Posted by <span class="fn">studentdeng</span></span>
 
-<time datetime="2014-10-17T14:02:00+08:00" pubdate data-updated="true">Oct 17<span>th</span>, 2014</time>
-        
-         | <a href="/blog/2014/10/17/log-system2/#disqus_thread">Comments</a>
-        
-      </p>
-    
-  </header>
-
-
-  <div class="entry-content"><p>上一篇介绍了<a href="http://studentdeng.github.io/blog/2014/10/13/log-system/">Redo Log</a>，这篇介绍No Redo Log。</p>
-
-<p>在分布式系统中，某些情况下我们依然需要实现原子操作，有很多方式，其中No Redo(Undo) Log 便是在工程中运用最广泛的思想之一。他的过程非常简单。</p>
-
-<p>下面是一个简单系统的状态。</p>
-
-<p><img src="http://112.124.107.63/my_home/application/uploads/2014_10_17_14_23_51" alt="image" /></p>
-
-<p>为了实现原子的修改 A，B，C的值。我们把A，B，C 看成一个集合，或是一个“目录”。</p>
-
-<p>1.做一次copy</p>
-
-<p><img src="http://112.124.107.63/my_home/application/uploads/2014_10_17_14_22_53" alt="image" /></p>
-
-<p>2.对于每个更新的操作，创建一个新的item，然后在新的目录中保存修改后的新值。</p>
-
-<p><img src="http://i.gyazo.com/ab8aa93dc78c7e77d0d9029fc522b792.png" alt="image" /></p>
-
-<p>3.原子性的修改生效目录指针。</p>
-
-<p><img src="http://i.gyazo.com/c6bd87760807b3f24cc679ae814a9036.png" alt="image" /></p>
-
-<p>通过原子性的修改一个值，切换一个状态，完成一系列分布式操作原子性的修改。</p>
-</div>
-  
-  
-
-
-    </article>
-  
-  
-    <article>
       
-  <header>
-    
-      <h1 class="entry-title"><a href="/blog/2014/10/13/log-system/">分布式系统原理&#8211;日志技术Redo Log</a></h1>
-    
-    
-      <p class="meta">
-        
 
 
 
@@ -553,560 +484,49 @@
   
 
 
-<time datetime="2014-10-13T19:21:00+08:00" pubdate data-updated="true">Oct 13<span>th</span>, 2014</time>
-        
-         | <a href="/blog/2014/10/13/log-system/#disqus_thread">Comments</a>
-        
-      </p>
-    
-  </header>
-
-
-  <div class="entry-content"><h2>问题概述</h2>
-
-<p>在分布式系统中，宕机是需要考虑的重要组成部分。日志技术是宕机恢复的重要技术之一。日志技术应用广泛，早些更是广泛应用在数据库设计实现中。本文先介绍基本原理概念，最后通过redis介绍生产环境中的实现方法。</p>
-
-<h2>Redo Log</h2>
-
-<p>数据库设计中，需要满足ACID，尤其是在支持事务的系统中。当系统遇到未知错误时，可以恢复到一个稳定可靠的状态。有一个很简单的思路，就是记录所有对数据库的写操作日志。那么一旦发生故障，即使丢失掉内存中所有数据，当下一次启动时，通过复现已经记录的数据库写操作日志，依然可以回到故障之前的状态（如果在写操作作日志的时候发生故障，那么这次数据库操作失败）。</p>
-
-<p>操作流程简单如下（假设每次数据变化，都提交）：</p>
-
-<ol>
-<li>更新的操作方式依次记录到磁盘日志文件。</li>
-<li>更新内存中的数据。</li>
-<li>返回更新成功结果。</li>
-</ol>
-
-
-<p>恢复流程：</p>
-
-<ol>
-<li>读取日志文件，依次修改内存中的数据。</li>
-</ol>
-
-
-<p>优点：</p>
-
-<ol>
-<li>日志文件有序，可以通过append的方式写入磁盘，性能很高。</li>
-<li>简单可靠，应用广泛。可以把内存中的数据，做备份在磁盘中。</li>
-</ol>
-
-
-<p>缺点：</p>
-
-<ol>
-<li>使用时间一长，恢复宕机的时间很慢。</li>
-</ol>
-
-
-<h3>解决办法</h3>
-
-<p>先具体化下，如果我们内存中保留一个a的值，记录了写操作比如 <code>a = 4; a++; a--;</code> 当这些操作上千万、亿之后，恢复非常慢。甚至可能最后一条就是<code>a=0</code>，按照之前的算法，我们却跑了很长时间。</p>
-
-<p>那么根据这个场景，很容易想到一个解决方案。</p>
-
-<p>操作流程：</p>
-
-<ol>
-<li>日志文件记录<code>begin check point</code></li>
-<li>在某个时刻，把内存中的数值，直接snapshot或dump到磁盘上。（比如直接记录a=4）</li>
-<li>日志文件记录<code>end check point</code></li>
-</ol>
-
-
-<p>恢复流程：</p>
-
-<ol>
-<li>扫描日志文件，找到最后的<code>end check point</code>中配对的<code>begin check point</code>。</li>
-<li>读入dump文件。</li>
-<li>依次回放记录的日志操作。</li>
-</ol>
-
-
-<p>优点：</p>
-
-<ol>
-<li>应用广泛，包括 mysql，oracle。</li>
-</ol>
-
-
-<p>一些棘手的问题：</p>
-
-<ol>
-<li><p>在做snapshot的时候，往往不能停止数据库的服务，那么很可能记录了<code>begin check point</code>之后的日志。那么在重新load <code>begin check point</code>之后的日志时，最后恢复的数据很有可能不对。比如我们记录的是<code>a++</code>这样的日志, 那么重复一条日志，就会让a的值加1。反之如果我们记录是幂等的，比如一直是 <code>a=5</code> 这种操作，那么就对最后结果没有影响。很显然，设计幂等操作系统很麻烦。</p></li>
-<li><p>设计一个支持snapshot的内存数据结构，也比较麻烦。</p></li>
-</ol>
-
-
-<p>典型的是通过copy-on-write机制。和操作系统中的概念一样。当这个数据结构被修改，就创建一份真正的copy。老数据增加一份dirty flag。如果没有修改就继续使用之前的内存。这样在做snapshot的时候，保证我们的dump数据是<code>begin check point</code>这个时刻的数据。显然这个也比较麻烦。</p>
-
-<p>还有一种支持snapshot的思路是<code>begin check point</code>后，不动老的数据。内存中的数据在新的地方，日志也写在新的地方。最后在<code>end check point</code>做一次merge。这个实现起来简单，但是内存消耗不小。</p>
-
-<h2>Redis是如何解决日志问题的</h2>
-
-<p>Redis 是一个基于内存的database，不同于memcached，他支持持久化。另外由于redis处理client request 和 response 都是在一个thread里面，也没有抢占式的调度系统，核心业务都是按照event loop顺序执行，而磁盘写日志又开销很大，所以redis实现日志功能做了很多优化。并且提供2种持久化方案。我们需要在不同的场景下，采用不同的方式配置。</p>
-
-<h3>snapshotting</h3>
-
-<p>某个时刻，redis会把内存中的所有数据snapshot到磁盘文件。更通俗的说法是fork一个child process，把内存中的数据序列化到临时文件，然后在main event loop 中原子的更换文件名。redis，利用了操作系统VM的copy-on-write机制，在不阻塞主线程的情况下，利用子进程和父进程共享的data segment实现snapshot。具体是代码实现在<code>rdb.c</code>, function at <code>rdbSaveBackground</code></p>
-
-<p>优点：</p>
-
-<ol>
-<li>简单可靠，如果database 不大，执行的效果非常好。</li>
-</ol>
-
-
-<p>缺点：</p>
-
-<ol>
-<li>如果database size 很大，每一次snapshot时间非常长。不得不配置大的间隔，提高了宕机时数据丢失的风险。</li>
-</ol>
-
-
-<p>为了解决上面的问题，redis增加了AOF。</p>
-
-<h3>Append Only File（AOF）</h3>
-
-<p>在database术语中，也被叫做<a href="http://en.wikipedia.org/wiki/Write-ahead_logging">WAL</a>。如果开启的AOF的配置，redis会记录所有写操作到日志文件中。那么redis同样会遇到之前我们提到过的问题。</p>
-
-<ol>
-<li>即便是追加写，磁盘的操作依然比内存慢好几个数量级，频繁的操作容易产生瓶颈。</li>
-<li>如果数据量操作频繁，会产生大量的重复日志数据，导致恢复时间太长。比如记录一条微博的浏览量，会记录大量重复的<code>+1</code>日志。</li>
-</ol>
-
-
-<p>那么redis是如何解决的呢？</p>
-
-<ol>
-<li>文件写操作消耗的时间很长，redis会先把记录日志写在内存buffer中，在每一次event loop 结束之后，根据配置判断是否做写操作。每个buffer的大小有限制，这样每次写操作时间不会太长。</li>
-<li>即便是调用write操作，OS并没有立即写入磁盘，redis 同样提供了一些方案决定刷新OS IO buffer的时机（1秒、从不、每次）。</li>
-<li>redis 提供一种AOF重写的方式<code>rewriteAppendOnlyFile</code>来处理AOF文件过大情况。</li>
-</ol>
-
-
-<p>前面我们知道了，这种<code>check point</code>的机制还是比较麻烦的。那么redis是这么设计的。</p>
-
-<p><img src="http://i.gyazo.com/314a668a8443b0de126685cfb4197fbc.png" alt="image" /></p>
-
-<ol>
-<li>为了避免加锁，redis 依然创建了一个child process，利用VM的copy-on-write，共享数据。同时保证主线程依然可以处理client请求。</li>
-<li>根据KV的类型，先从内存读取数据，然后再写数据到磁盘，和之前的AOF文件无关。</li>
-<li>那么当子进程rewrite AOF的过程中，main thread依然可以处理新的client request。新增的数据会被放在rewrite buffer中，而且写到原有的AOF文件中。</li>
-<li>child process完成后会通知主线程。主线程有一个定时任务，也就是会不断轮询child process是否已经完成（通过信号量）。</li>
-<li>主线程会merge 变化的数据到temp file。</li>
-<li>主线程原子的rename到一个新的AOF文件，之前的AOF就不起作用了。</li>
-</ol>
-
-
-<p>优点：</p>
-
-<ol>
-<li>除了merge 和 rename需要阻塞主线程，rewrite不会阻塞主线程。（前提是使用bgrewrite command）。</li>
-</ol>
-
-
-<h3>最后</h3>
-
-<p>这些都是性能和稳定性之间做的权衡，根据不同场景需要调整。</p>
-
-<h2>参考</h2>
-
-<ul>
-<li><a href="http://redis.io/topics/latency">Redis latency problems troubleshooting</a></li>
-<li><a href="http://wenku.baidu.com/view/53b7505777232f60ddcca1e0.html">分布式系统原理介绍</a></li>
-<li><a href="http://blog.kennejima.com/post/1226487020/thoughts-on-redis#">Thoughts on Redis</a></li>
-</ul>
-
-</div>
-  
-  
-
-
-    </article>
-  
-  
-    <article>
+<time datetime="2014-11-05T16:47:00+08:00" pubdate data-updated="true">Nov 5<span>th</span>, 2014</time>
       
-  <header>
-    
-      <h1 class="entry-title"><a href="/blog/2014/10/07/xinyuan/">缚心猿，锁六耗</a></h1>
-    
-    
-      <p class="meta">
-        
 
-
-
-
-
-
-
-
+<span class="categories">
   
+    <a class='category' href='/blog/categories/design-patterns/'>design_patterns</a>, <a class='category' href='/blog/categories/ios/'>iOS</a>
+  
+</span>
 
 
-<time datetime="2014-10-07T10:31:00+08:00" pubdate data-updated="true">Oct 7<span>th</span>, 2014</time>
-        
-         | <a href="/blog/2014/10/07/xinyuan/#disqus_thread">Comments</a>
-        
-      </p>
+    </p>
     
-  </header>
-
-
-  <div class="entry-content"><p>转载自<a href="https://class.coursera.org/professionalism-001/forum/thread?thread_id=363">Coursera 公开课 professionalism forums thread</a></p>
-
-<p>【作者徐冰，1994年从中国成都到新加坡。目前修读中医学士学位，兼职电台主持】</p>
-
-<p>无论是谁，有怎样的社会地位，在光鲜亮丽或毫不起眼的外表下，谁没有自己的故事？谁不是一路走来跌跌撞撞留了或深或浅的伤？在独自一人的时候，有多少人可以真正自在地和自己相处？</p>
-
-<p>一次在“医学心理学”课上，老师暂停上课，将课室灯光调暗，让我们做个冥想的练习。</p>
-
-<p>她让我们沉淀思绪，在尽可能放松的状态下，回溯过往。</p>
-
-<p>我们一页页翻过我们各自的故事，重回生命中的重要时刻，走过一级级或快乐，或悲伤，或怨恨，或遗憾的台阶，回到原点。</p>
-
-<p>想象，我们经由时光隧道回访旧时的家。走过熟悉的街道，看到家的门牌，走进去。家居陈设是否和过去一样？家里都有谁？他们的样子如何？他们之间的互动如何？然后，我们看到童年的自己。</p>
-
-<p>这时，容许自己好好看看童年的自己。他是什么样子？他是什么表情？看进他的眼睛，他是否快乐？感受他的各种情绪，盼望和恐惧，愤怒和无助，自责和愧疚。容许自己，陪伴童年的自己片刻，听听他有什么话想说。</p>
-
-<p>把他抱上膝头，轻轻地，拥抱他。</p>
-
-<p>如果他哭，就让他哭。</p>
-
-<p>容许自己，给童年的自己深深的理解和安慰，告诉他，他现在十分安全，没有任何人任何事可以再令他受伤害；告诉他，他只是一个孩子，没有做错什么，在能力许可内，他已经做得够好。跟童年的自己道歉，抱歉忽略和冷落他太久，然后，承诺你再也不会苛责他，嫌弃他，在任何时候，你只会爱他……</p>
-
-<p>我不是第一次接触这样的练习。之前在台湾参加“萨提尔模式”课程时，老师也带着我们做过治疗性的冥想，我已经走过整个过程而且得到了很好的疗愈，因此对我来说，不再有强烈的心理冲击，但我仍感受到明显的情绪涌动。</p>
-
-<p>而许多同学，包括四五十岁的大男人，在那一刻，都不能自已，泣不成声。</p>
-
-<p>多数人，可能从未想到自己会有这样激烈的反应，从未意识到在内心深处，有这样深和痛的创伤。</p>
-
-<p>我们每个人的心里，都有一个内在的小孩。他是长久以来被我们努力压抑的各种情绪，被刻意忽略的伤痛的累积。无论是谁，有怎样的社会地位，在光鲜亮丽或毫不起眼的外表下，谁没有自己的故事？谁不是一路走来跌跌撞撞留了或深或浅的伤？在独自一人的时候，有多少人可以真正自在地和自己相处？</p>
-
-<p>在亲密关系中，又有多少人却感受到难以言说的寂寞？有多少人一直被困在过去走不出来？又有多少人把痛苦转嫁他人造成新的伤害？</p>
-
-<p>那内在的小孩，一直在那里，以各种方式，也许是身体的不适，病痛，或精神上的失调，或人际关系的危机，来呼求我们的关注。我们却从未去理会和照顾他，更不知道那就是我们所有痛苦和不幸的根源。</p>
-
-<p>让我们回到源头，与自己和解。</p>
-
-<p>不要觉得这很荒谬，下次当你一个人的时候，让自己独处在一个不被打扰的环境里，让心静下来，走过岁月的小径，去探望幼年的你。跟他一起玩耍，陪他，注视他，抚摸他，温柔地待他。好像你是他的父母一般，无论他说什么做什么，你都不加评判地接纳。他跟任何一个你爱的人一样，值得你去爱。尤其是，如果那小小的人儿从未得到过足够的爱的话，你，只有你，能带给他补偿，改变他的命运。改变了他的命运，你就改变了自己的命运。</p>
+      <div class="sharing">
+  
+  
+  
 </div>
-  
-  
 
-
-    </article>
-  
-  
-    <article>
+    
+    <p class="meta">
       
-  <header>
-    
-      <h1 class="entry-title"><a href="/blog/2014/08/29/ios-architecture/">iOS APP 架构漫谈</a></h1>
-    
-    
-      <p class="meta">
-        
-
-
-
-
-
-
-
-
-  
-
-
-<time datetime="2014-08-29T15:48:00+08:00" pubdate data-updated="true">Aug 29<span>th</span>, 2014</time>
-        
-         | <a href="/blog/2014/08/29/ios-architecture/#disqus_thread">Comments</a>
-        
-      </p>
-    
-  </header>
-
-
-  <div class="entry-content"><p>最近看了一些有关server的东西，一些很简单的东西，不外乎是一些文档规范，另外结合最近看的wwdc的一些video，觉得对软件架构（software architecture）认识又清楚了一些，这里记录下来。</p>
-
-<p>software architecture 听上去是一个很大的概念，实际上也包括很多东西，里面的争议也很多。在我看来软件架构最好放在小的场景中理解。</p>
-
-<h2>问题1</h2>
-
-<p>我们有2个页面。</p>
-
-<p><span class='caption-wrapper'><img class='caption' src='/images/architecture0.gif' width='' height='' title=''><span class='caption-text'></span></span></p>
-
-<ul>
-<li>页面A：主页面</li>
-<li>页面B：详情页面</li>
-</ul>
-
-
-<p><a href="https://github.com/studentdeng/CUArchitectureDemo/tree/1.0.0">demo code 1.0.0</a></p>
-
-<p>2个页面分别显示一个数字，这个数字应该相同。详情会修改这个数字，这里我们发现，详情页面和主页面数字不一样。</p>
-
-<p><span class='caption-wrapper'><img class='caption' src='/images/architecture1.gif' width='' height='' title='数据不一致'><span class='caption-text'>数据不一致</span></span></p>
-
-<h2>问题1 解决方法A</h2>
-
-<p>这里首先的感觉就是，详情页面返回，主页面数据没有刷新，导致数据不一致。
-那么Fix这个Bug的方法，就是在主页面出现的时候刷新界面</p>
-
-<pre><code>- (void)viewWillAppear:(BOOL)animated {
-    [super viewWillAppear:animated];
-
-    self.displayLabel.text = [[CUDataDAO selectData].data stringValue];
-}
-</code></pre>
-
-<p>现在来看，还不错。但是，我们调用selectData的次数则变得非常非常多。数据不是经常变化的。</p>
-
-<p><a href="https://github.com/studentdeng/CUArchitectureDemo/tree/1.0.1">demo code 1.0.1</a></p>
-
-<h2>问题1 解决方法B</h2>
-
-<p>我们发现既然数据的改变是在页面B进行的，那么页面B修改这个数据的时候，应该把数据变化&#8221;通知&#8221;给页面A，那么我们写了一个Delegate</p>
-
-<pre><code>@protocol CUDetailViewControllerDelegate &lt;NSObject&gt;
-
-- (void)detailVC:(CUDetailViewController *)vc dataChanged:(NSNumber *)data;
-
-@end
-</code></pre>
-
-<p>在页面B修改数据之后，通过delegate 通知给页面A。</p>
-
-<pre><code>- (IBAction)changeButtonClicked:(id)sender {
-    int value = arc4random() % 100;
-    [CUDataDAO setData:value];
-
-    self.displayLabel.text = [@(value) stringValue];
-
-    if ([self.delegate respondsToSelector:@selector(detailVC:dataChanged:)]) {
-        [self.delegate detailVC:self dataChanged:@(value)];
-    }
-}
-</code></pre>
-
-<p>到此场景1得到了不错的解决。</p>
-
-<p><a href="https://github.com/studentdeng/CUArchitectureDemo/tree/1.0.2">demo code 1.0.2</a></p>
-
-<h2>问题2</h2>
-
-<p>这时我们增加了另一个页面C。这个场景会稍微抽象一点，我们定义了3个数据</p>
-
-<ul>
-<li>页面A的数据dataA</li>
-<li>页面B的数据dataB</li>
-<li>页面C的数据dataC</li>
-</ul>
-
-
-<p>问题1中 dataA = dataB。在问题2中dataA = dataB + dataC;</p>
-
-<h2>问题2 解决方法C</h2>
-
-<p>也就是说页面C的修改，也会影响页面A的数据，那么我们是不是也要写一个XXXXDelegate呢？</p>
-
-<p>这时我们的大脑嗅出了一些不好的味道，如果再来个什么dataD，dataE，我们要写这么多的Delegate么？对于多对一&#8221;通知&#8221;这种味道，很自然的想到了不用Delegate，而是用<code>NSNotification</code>来做。让我们未雨绸缪一下，定义一个Notificaiton</p>
-
-<pre><code>NSString *const kCUDataChangedNotification = @"CUDataChangedNotification";
-
-[[NSNotificationCenter defaultCenter] postNotificationName:kCUDataChangedNotification
-                                                  object:nil
-                                                userInfo:nil];
-</code></pre>
-
-<p>那这个变化broadcast到listener，看上去是一个很赞的idea。</p>
-
-<p><a href="https://github.com/studentdeng/CUArchitectureDemo/tree/1.0.3">demo code 1.0.3</a></p>
-
-<h2>问题3</h2>
-
-<p>过了一段时间，我们发现问题2的方法有一个Bug，当界面停在页面B的时候，切换到页面C，修改数据，B中再返回时，数据和页面A的数据不一致。</p>
-
-<p><span class='caption-wrapper'><img class='caption' src='/images/architecture2.gif' width='' height='' title='数据不一致'><span class='caption-text'>数据不一致</span></span></p>
-
-<p>那也可以类比解决方法B，得到了下面的方法</p>
-
-<h2>解决方法D</h2>
-
-<p>既然A和B的数据不一致，而A的数据比B的新，那么保留一个B的指针，然后A变化的时候，更新B就好了。</p>
-
-<pre><code>- (void)handleDataChangedNotification {
-    [self updateLabel];
-    [self.vc updateLabel];
-}
-
-// In a storyboard-based application, you will often want to do a little preparation before navigation
-- (void)prepareForSegue:(UIStoryboardSegue *)segue sender:(id)sender
-{
-    if ([segue.identifier isEqualToString:@"push"]) {
-        CUDetailViewController *vc = [segue destinationViewController];
-        if ([vc isKindOfClass:[CUDetailViewController class]]) {
-            self.vc = vc;
-        }
-    }
-}
-</code></pre>
-
-<p><a href="https://github.com/studentdeng/CUArchitectureDemo/tree/1.0.4">demo code 1.0.4</a></p>
-
-<h2>问题4</h2>
-
-<p>页面C实在是太简单了，这次我们希望在页面C中显示页面A的数据。因为上次我们就产生了一个数据不一致的问题，这次我们注意到了，那么怎么修改呢？</p>
-
-<h2>解决方法E</h2>
-
-<p>在看了看整个APP各种通知之后，觉得挺麻烦，准备用一个取巧的方法。可以类比解决方法A。在页面C出现的时候，刷新数据，至于什么性能问题，不管了，先fix bug。</p>
-
-<pre><code>- (void)viewWillAppear:(BOOL)animated {
-    [self updateLabel];
-}
-
-- (void)updateLabel {
-    int dataB = [[CUDataDAO selectData].data intValue];
-    int dataC = [[CUDataDAO selectOtherData].data intValue];
-
-    self.dataLabel.text = [@(dataB + dataC) stringValue];
-}
-</code></pre>
-
-<p><a href="https://github.com/studentdeng/CUArchitectureDemo/tree/1.0.5">demo code 1.0.5</a></p>
-
-<h2>问题5</h2>
-
-<p>这时的数据需要不断的变化，我们在<code>CUDataDAO</code>加了一个timer 模拟数据变化，数据变化的原因可能是server push 一些数据。client 本地数据库更新了数据，需要在页面A、B、C中显示。</p>
-
-<p>页面C的数据又不一致了。。。。</p>
-
-<h1>问题到底在哪里呢</h1>
-
-<p>走到这里，我们需要重新思考为什么这个问题会不断的重复出现呢？<code>software architecture</code>就是来解决这个问题的。但是在提出一个合理的方案之前，先思考一个概念。</p>
-
-<p>我们把数据库中的数据，显示到屏幕上，或是传递给View时，这个过程其实是对data 做了一次copy。而且只要不是通过引用或是指针这些方式，通过值传递的方式都是对data做了一次copy。而这个copy的过程，非常类似<strong>Cache</strong>。</p>
-
-<p><span class='caption-wrapper'><img class='caption' src='/images/ios-architecture0.png' width='' height='' title=''><span class='caption-text'></span></span></p>
-
-<p>通常建立一个Cache会遇到2种问题。</p>
-
-<ul>
-<li>Cache情况A: 与original Data 数据不一致，没有及时更新</li>
-<li>Cache情况B: 重复建立Cache</li>
-</ul>
-
-
-<p>让我们用这个思路来看我们的解决方案</p>
-
-<h2>解决方法A</h2>
-
-<p>这是一个非常典型的<code>Cache情况B</code>。数据库的数据并没有变化，但我们却多次重复计算cache</p>
-
-<h2>解决方法B</h2>
-
-<p>页面之间的关系可以用下面来描述</p>
-
-<p><span class='caption-wrapper'><img class='caption' src='/images/ios-architecture1.png' width='' height='' title=''><span class='caption-text'></span></span></p>
-
-<p>这里我们隐隐能够感觉到问题，A的数据变化依赖于2个地方。不急，再往后看</p>
-
-<h2>解决方法C</h2>
-
-<p><span class='caption-wrapper'><img class='caption' src='/images/ios-architecture2.png' width='' height='' title=''><span class='caption-text'></span></span></p>
-
-<h2>解决方法D</h2>
-
-<p><span class='caption-wrapper'><img class='caption' src='/images/ios-architecture3.png' width='' height='' title=''><span class='caption-text'></span></span></p>
-
-<p>事情变得更糟了</p>
-
-<h2>解决方法E</h2>
-
-<p>和解决方法A类似，同样的重复计算Cache问题。</p>
-
-<h2>实际上问题还会更糟</h2>
-
-<p>现在还是一个简单的Model，如果project变得很大，那么就会变成这个样子</p>
-
-<p><span class='caption-wrapper'><img class='caption' src='/images/ios-architecture4.png' width='' height='' title=''><span class='caption-text'></span></span></p>
-
-<p>每一个<code>X</code>都可能是一个Bug。</p>
-
-<h1>我们似乎已经找到问题了</h1>
-
-<p><a href="https://developer.apple.com/videos/wwdc/2014/?id=229">《Advanced iOS Application Architecture and Patterns》</a> 中，把这个图叫做information flow。我们的直觉会告诉我们，这个信息的传递，应该是自上而下的树或是森林，而且最好是一个层次平衡结构，要清晰，每一个位置都有相对于的职责。那我们就需要制定一个规则。</p>
-
-<p>在想这个规则之前，如果把上面的图背后的数据忘记，我们感觉这很类似内存模型。当然内存模型会比较复杂。但是我们可以借鉴很多&#8221;内存管理中的规则&#8221;，比如<strong>谁创建，谁销毁</strong>。同样，在我们的information flow中，我们希望<strong>谁创建Cache，谁更新Cache变化</strong></p>
-
-<p>DAO的数据库似乎很难做这件事情，我们引入了一个新的元素<code>dataSource</code>（当然他本身又是DAO的一个Cache)。其中A、B、C3个都会显示数据，那么他们应该在一个层级，其中B、C会修改数据，他们会把这个数据返回给<code>dataSource</code>，而通过<code>dataSource</code>来把这个变化通知到A、B、C。</p>
-
-<p><span class='caption-wrapper'><img class='caption' src='/images/ios-architecture5.png' width='' height='' title=''><span class='caption-text'></span></span></p>
-
-<p>这样带来的好处很明显，我们再添加一个D，也不会对其他地方的数据产生任何影响，我们的Unit Test、Mock也更加好写。</p>
-
-<h1>我们之前的思路错在哪里呢？</h1>
-
-<p>从局部来看，我们之前的思路都没有任何问题，但是整体来看却把问题隐藏化。关键的问题是在于没有找到<code>Truth</code>，找到问题真正的地方。而找到真正的地方，需要我们在大脑中有一个清晰的<code>information flow</code>或是<code>data flow</code>。了解之间元素的相互关系，才能建立一个个的层。才能坐到真正的<strong>解耦</strong>,<strong>解耦并不是仅仅一个个的<code>Manager</code>，更重要的是建立一套清晰的flow机制，或是消息机制，如果没有一套flow，中间引入的各种各样的方法，即便使用了各种设计模式，整个software 依然是深度耦合</strong>。</p>
-
-<h1>疑问</h1>
-
-<h2>这个APP看上去交互非常复杂</h2>
-
-<p>上面的model，有些同学还可能觉得这是交互上面的问题，这个交互看上去非常的复杂，不是一个好设计。</p>
-
-<p>我这里列举一个实际的例子：</p>
-
-<p>A页面要创建动画，动画背后包括很多数据，这些数据会在B，C甚至更多的页面，或是后台被修改。动画本身实际上体现在View，而这些view可能不仅仅在A中有，B，C可能也会有部分的View。</p>
-
-<h2>单例怎么样</h2>
-
-<p>当然我们可以用单例的法子。单例是个魔鬼，被很多滥用，这个场景用单例，其实仅仅是把全局变量合理的封装在了单例下，因为这份数据，并没有任何理由要一定是一份copy。</p>
-
-<h1>recap</h1>
-
-<p>在了解这个概念后，再看一些server的架构，规则时，也会更容易理解这些层之间的关系。包括</p>
-
-<ul>
-<li>为什么要规定那些层之间，不能相互调用，不能有静态方法。</li>
-<li>一个层之间的model，不能有重叠功能，不能连表查询。</li>
-<li>在哪个层才能调用另一个服务，而调用这个服务还必须要通过统一的接口</li>
-</ul>
-
-
-<p>software architecture 涵盖的东西非常多。这篇只是一个引子，介绍了设计之前的准备工作。但是在实际过程中，我们的模型可能要比我这里写的还要复杂很多。下一篇会介绍一种策略用来处理更加复杂模型的情况。</p>
-
-<p>最后附上一个完整功能的 <a href="https://github.com/studentdeng/CUArchitectureDemo/tree/1.0.6">demo code</a></p>
-
-<h1>参考</h1>
-
-<p><a href="https://developer.apple.com/videos/wwdc/2014/?id=229">《Advanced iOS Application Architecture and Patterns》</a></p>
+        <a class="basic-alignment left" href="/blog/2014/10/17/log-system2/" title="Previous Post: 分布式系统原理--日志技术No Redo Log">&laquo; 分布式系统原理--日志技术No Redo Log</a>
+      
+      
+    </p>
+  </footer>
+</article>
+
+  <section>
+    <h1>Comments</h1>
+    <div id="disqus_thread" aria-live="polite"><noscript>Please enable JavaScript to view the <a href="http://disqus.com/?ref_noscript">comments powered by Disqus.</a></noscript>
 </div>
-  
-  
+  </section>
 
 
-    </article>
-  
-  <div class="pagination">
-    
-      <a class="prev" href="/blog/page/2/">&larr; Older</a>
-    
-    <a href="/blog/archives">Blog Archives</a>
-    
-  </div>
 </div>
+
 <aside class="sidebar">
   
     
   
 </aside>
+
 
     </div>
   </div>
@@ -1122,7 +542,10 @@
       var disqus_shortname = 'studentdeng';
       
         
-        var disqus_script = 'count.js';
+        // var disqus_developer = 1;
+        var disqus_identifier = 'http://studentdeng.github.com/blog/2014/11/05/ios-architecture2/';
+        var disqus_url = 'http://studentdeng.github.com/blog/2014/11/05/ios-architecture2/';
+        var disqus_script = 'embed.js';
       
     (function () {
       var dsq = document.createElement('script'); dsq.type = 'text/javascript'; dsq.async = true;
