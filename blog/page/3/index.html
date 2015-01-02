@@ -9,7 +9,9 @@
   <meta name="author" content="studentdeng">
 
   
-  <meta name="description" content="最近又洗刷了我的一个人生信条。当然其实很早很早，大概2年前就已经动摇了，只是最近彻底想明白了，很开心，记录下来。 很多人认为自己的独一无二的，包括我自己。这个独一无二的理解主要部分是认识到了人与人之间的不同。这种心理在面对选择的时候可以更好的follow your heart，虽然自己的认识很浅薄 &hellip;">
+  <meta name="description" content="前言 最近Apple的动作还是蛮多的，其中有3条很有意思。 iOS8中设备旋转，布局的变化
+可能的iPhone6屏幕的变化，iPhone和iPad Mac开发越来越趋于统一
+Xcode6中Interface Builder的变化（IB中显示自定义View） cocoa touch &hellip;">
   
 
   <!-- http://t.co/dKP3o1e -->
@@ -63,6 +65,180 @@
     <div id="content">
       <div class="blog-index">
   
+  
+  
+    <article>
+      
+  <header>
+    
+      <h1 class="entry-title"><a href="/blog/2014/06/13/auto-layout/">AutoLayout 相关概念介绍和动画demo</a></h1>
+    
+    
+      <p class="meta">
+        
+
+
+
+
+
+
+
+
+  
+
+
+<time datetime="2014-06-13T18:28:00+08:00" pubdate data-updated="true">Jun 13<span>th</span>, 2014</time>
+        
+         | <a href="/blog/2014/06/13/auto-layout/#disqus_thread">Comments</a>
+        
+      </p>
+    
+  </header>
+
+
+  <div class="entry-content"><h1>前言</h1>
+
+<p>最近Apple的动作还是蛮多的，其中有3条很有意思。</p>
+
+<ul>
+<li>iOS8中设备旋转，布局的变化</li>
+<li>可能的iPhone6屏幕的变化，iPhone和iPad Mac开发越来越趋于统一</li>
+<li>Xcode6中Interface Builder的变化（IB中显示自定义View）</li>
+</ul>
+
+
+<p>cocoa touch 开发中适配各种屏幕尺寸已经是能够预测的了，那么跟进AutoLayout 也就是必备技能了。</p>
+
+<h1>传统的布局是如何做的</h1>
+
+<p>一开始接触iOS的时候，我还是蛮喜欢他的布局系统。简单来说，一个图像，我们通过中心点坐标，旋转角度和轮廓大小来定义他在窗口中的位置</p>
+
+<p>这里的坐标和笛卡尔坐标系不同的是Y的方向</p>
+
+<p><span class='caption-wrapper'><img class='caption' src='/images/autolayout-1.png' width='' height='' title='1-1 The default layer geometries for iOS'><span class='caption-text'>1-1 The default layer geometries for iOS</span></span></p>
+
+<p>这里表示了anchorPoint含义，用于表示position相对bounds的位置，比如（0.5, 0.5）表示中心，（0,0）表示左上角</p>
+
+<p><span class='caption-wrapper'><img class='caption' src='/images/autolayout-2.png' width='' height='' title='1-2 The default unit coordinate systems for iOS'><span class='caption-text'>1-2 The default unit coordinate systems for iOS</span></span></p>
+
+<p>下面表示了frame bounds position anchorPoint之间的关系，你可能觉得这个anchorPoint似乎没有什么用</p>
+
+<p><span class='caption-wrapper'><img class='caption' src='/images/autolayout-3.png' width='' height='' title='1-3, 1-4  How the anchor point affects the layer’s position property'><span class='caption-text'>1-3, 1-4  How the anchor point affects the layer’s position property</span></span>
+<span class='caption-wrapper'><img class='caption' src='/images/autolayout-7.png' width='' height='' title=''><span class='caption-text'></span></span></p>
+
+<p>但是当我们旋转一个View的时候，好处就来了</p>
+
+<p><span class='caption-wrapper'><img class='caption' src='/images/autolayout-4.png' width='' height='' title='1-5 , 1-6 How the anchor point affects the layer’s position property'><span class='caption-text'>1-5 , 1-6 How the anchor point affects the layer’s position property</span></span>
+<span class='caption-wrapper'><img class='caption' src='/images/autolayout-5.png' width='' height='' title=''><span class='caption-text'></span></span></p>
+
+<h1>传统布局的问题</h1>
+
+<p>传统布局是非常高效的，组合各种变化，可以轻易得实现任意的2D动画，当然也可以轻易的解决静态的布局问题。但是在面对多个屏幕，屏幕旋转时，或是需要在2个View 中间动态增加一个View的时候显得非常繁琐。需要不断的写一些计算距离，位置的代码（甚至还有一些magic number）。网上有很多例子，比如<a href="http://www.raywenderlich.com/20881/beginning-auto-layout-part-1-of-2">beginning-auto-layout-part-1-of-2</a>，或是大家在平时工作中遇到的3.5inch和4inch屏幕之间的适配。</p>
+
+<h1>AutoLayout</h1>
+
+<p>AutoLayout使用非常简单，Xcode的支持也非常直观。但是因为和之前的方式有很大的不同，新手一开始很容易遇到一大堆的异常，crash在main函数里面，让人非常沮丧。但是在了解AutoLayout之后，就会发现这是一个非常非常elegant的布局解决方案，也很容易理解为什么crash，以及应该如何debug。</p>
+
+<h2>constraints 约束</h2>
+
+<p>AutoLayout 是一个描述各种约束的行为，比如，一个View 距离父View上边距多少，相邻之间的间隔，各个View之间的宽高关系等等。这一系列的条件就是为了最终确定之前提到的传统布局中需要的东西，这个View的大小，位置。所以，当我们设置的条件不足，或是条件冲突时，就会产生异常。</p>
+
+<h2>Intrinsic Content Size 固有大小</h2>
+
+<p>在使用AutoLayout的时候，UILabel 我们只需要设定他的position，不需要设置宽高，而一个自定义的UIView，我们不仅仅需要位置，还需要设定宽高，这是为什么呢？</p>
+
+<p>每一个View 都有一个特别的属性叫做Intrinsic Content Size，这个可以理解成是一个View的最合适而且最小的宽度和高度。对于UILabe来说，就是至少得把我设定的文字都显示完整吧，所以系统只需要知道UILabel的位置。而UIView的Intrinsic Content是（0，0）所以需要设置UIView的宽高（或是设定周围的边距等等其他关系可以让系统知道这个View应该多宽，多高）。而Intrinsic Content Size，也是未来自定义View显示到Xcode中必须设置的属性之一。</p>
+
+<h2>Phases of Display</h2>
+
+<p>使用AutoLayout之后，把view显示到屏幕上面大体分成3步。</p>
+
+<ul>
+<li>Update constraints</li>
+<li>Layout views</li>
+<li>Display</li>
+</ul>
+
+
+<p>一般来说<code>layoutSubviews</code>负责布局，比如调整View之间的距离，大小，<code>drawRect</code>负责绘制，比如使用什么颜色。而AutoLayout则是在layout之前增加了一个设定约束的过程,也就是上面提到了<code>update constraints</code>。</p>
+
+<p><span class='caption-wrapper'><img class='caption' src='/images/autolayout-8.png' width='' height='' title='1-7'><span class='caption-text'>1-7</span></span></p>
+
+<p>在view的<code>layoutSubView</code>中，如果我们调用了<code>[super layoutSubView]</code> 系统就把设定的这些约束计算成每个view的bounds，center属性。当然我们也可以基于AutoLayout的结果,再做布局的调整。</p>
+
+<p><span class='caption-wrapper'><img class='caption' src='/images/autolayout-9.png' width='' height='' title='1-8'><span class='caption-text'>1-8</span></span></p>
+
+<p><strong>Display 不是这篇文章的重点，这里略过</strong></p>
+
+<h2>Alignment Rect</h2>
+
+<p>仔细阅读文档的同学会发现在Apple AutoLayout document中可以看到Alignment Rect 这个家伙。
+AutoLayout中的Left，Right等约束，并不是针对View的frame。而是根据Alignment Rect。在绝大多数情况下Alignment = Frame。但是如果对某些需要交互的元素，而图片素材很小的时候，就可以利用Alignment把交互区域变大。可以参考UIImage 中的 <code>imageWithAlignmentRectInsets</code>。</p>
+
+<p><span class='caption-wrapper'><img class='caption' src='/images/autolayout-10.png' width='' height='' title='1-9'><span class='caption-text'>1-9</span></span></p>
+
+<h2>Animation</h2>
+
+<p>AutoLayout也可以配合传统的animation方法，整体代码结构如下。</p>
+
+<figure class='code'> <div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+<span class='line-number'>2</span>
+<span class='line-number'>3</span>
+<span class='line-number'>4</span>
+<span class='line-number'>5</span>
+<span class='line-number'>6</span>
+<span class='line-number'>7</span>
+<span class='line-number'>8</span>
+</pre></td><td class='code'><pre><code class='objc'><span class='line'>  <span class="p">[</span><span class="n">self</span><span class="p">.</span><span class="n">view</span> <span class="n">layoutIfNeeded</span><span class="p">];</span>
+</span><span class='line'>  <span class="p">[</span><span class="n">UIView</span> <span class="nl">animateWithDuration:</span><span class="mf">0.3f</span>
+</span><span class='line'>                   <span class="nl">animations:</span><span class="o">^</span><span class="p">{</span>
+</span><span class='line'>
+</span><span class='line'>                     <span class="c1">//... update constraints  </span>
+</span><span class='line'>
+</span><span class='line'>                     <span class="p">[</span><span class="n">self</span><span class="p">.</span><span class="n">view</span> <span class="n">layoutIfNeeded</span><span class="p">];</span>
+</span><span class='line'>                   <span class="p">}];</span>
+</span></code></pre></td></tr></table></div></figure>
+
+
+<p>使用AutoLayout也可以轻易的实现之前的设置frame很难实现的动画效果。比如下面的例子(很奇怪，优酷吃掉了后面几秒的动画&#8230;)</p>
+
+<p><embed src="http://player.youku.com/player.php/sid/XNzI3NTQxOTI0/v.swf" allowFullScreen="true" quality="high" width="480" height="400" align="middle" allowScriptAccess="always" type="application/x-shockwave-flash"></embed></p>
+
+<p>使用之前传统的动画，实现这个过程，需要计算所有subView之间的距离，位置。而且在修改一个view的frame时，很难做到和其他View的移动速度同步。除非是custom <code>layoutsubview</code>。做起来相当麻烦。但是用AutoLayout则非常简洁直观，只需要设置第一个View的position，然后其他view约定好高度和间隔依次排列就好了。</p>
+
+<p><a href="https://github.com/studentdeng/AutoLayoutAnimation">demo code</a></p>
+
+<p>当然AutoLayout做动画的时候有的地方也很麻烦，比如希望旋转view A 的时候，或是使用transform时，很容易产生奇怪的结果。一般来说会设置一个host View通过AutoLayout设定位置，然后在旋转view A。一句话就是混合起来，各取优点。</p>
+
+<h2>其他</h2>
+
+<ul>
+<li>Compression Resistance</li>
+<li>Content Hugging</li>
+<li>优先级</li>
+</ul>
+
+
+<p>简单的来说Compression Resistance 设置view有多大意愿（优先级），愿意压缩里面的内容。Content Hugging设置view 有多大愿意（优先级），愿意显示里面内容之外的部分。</p>
+
+<p>stackoverflow上面有一个很清晰的通过UIButton解释的<a href="http://stackoverflow.com/questions/15850417/cocoa-autolayout-content-hugging-vs-content-compression-resistance-priority">[例子]</a>，可以很容易理解这2个属性。</p>
+
+<h1>参考</h1>
+
+<ul>
+<li><a href="https://developer.apple.com/library/ios/documentation/cocoa/conceptual/coreanimation_guide/CoreAnimationBasics/CoreAnimationBasics.html#//apple_ref/doc/uid/TP40004514-CH2-SW3">Core Animation Programming Guide:Core Animation Basics</a></li>
+<li><a href="http://www.objc.io/issue-3/advanced-auto-layout-toolbox.html">Advanced Auto Layout Toolbox-objc.io</a></li>
+<li><a href="https://developer.apple.com/videos/wwdc/2012/?id=202">WWDC2012 session 202 – Introduction to Auto Layout for iOS and OS X</a></li>
+<li><a href="https://developer.apple.com/videos/wwdc/2012/?id=228">WWDC2012 session 228 – Best Practices for Mastering Auto Layout</a></li>
+<li><a href="https://developer.apple.com/videos/wwdc/2012/?id=232">WWDC2012 session 232 – Auto Layout by Example</a></li>
+</ul>
+
+</div>
+  
+  
+
+
+    </article>
   
   
     <article>
@@ -642,86 +818,6 @@ the text to note
 
     </article>
   
-  
-    <article>
-      
-  <header>
-    
-      <h1 class="entry-title"><a href="/blog/2014/03/22/corebluetooth/">Core Bluetooth Concept</a></h1>
-    
-    
-      <p class="meta">
-        
-
-
-
-
-
-
-
-
-  
-
-
-<time datetime="2014-03-22T20:41:00+08:00" pubdate data-updated="true">Mar 22<span>nd</span>, 2014</time>
-        
-         | <a href="/blog/2014/03/22/corebluetooth/#disqus_thread">Comments</a>
-        
-      </p>
-    
-  </header>
-
-
-  <div class="entry-content"><p>Core Bluetooth 里面的名词还是挺多的，这里简单记录一下，一上来的时候，还是很容易混淆的，这里记录一下。</p>
-
-<h1>Basic Concept</h1>
-
-<p>Bluetooth low energy (<a href="http://en.wikipedia.org/wiki/Bluetooth_low_energy#Radio_interface">BLE</a>，还有地方叫做BTLE，最恨各种简写了) 简单说是一种低功耗的短距离无线传输技术，主要用于低功耗设备传输，比如心率、记步器、智能家居方向,还有连接其他iOS设备。</p>
-
-<p>Core Bluetooth API 支持BLE4.0，做了协议封装，让开发者不需要完整了解BLE协议就可以快速开发APP。</p>
-
-<h2>Central and Peripheral</h2>
-
-<p>BLE中有2个非常重要的概念就是Central和Peripheral，有一点类似Client Server。</p>
-
-<ul>
-<li>Peripheral是数据的发送方（比如运动手环需要把位置，步数等数据传递给其他设备）。</li>
-<li>Central是数据的接收方（比如手机接收手环传递来的步数）</li>
-</ul>
-
-
-<p><img src="http://studentdeng.github.io/images/coreblue1.png" alt="1-1 Central 和 Peripheral 心率设备和Apple product" /></p>
-
-<h2>Centrals Discover and Connect to Peripherals That Are Advertising</h2>
-
-<ul>
-<li><p>Peripheral把advertising packets广播出去，advertising packet 包括会包含一些重要的信息，比如设备名字，所提供的服务。</p></li>
-<li><p>Central 则是扫描自己感兴趣的advertising packet，比如一个APP需要查找当前家里的室温，会通过参数设定，只是检索温度设备发来的packet。</p></li>
-</ul>
-
-
-<p><img src="http://studentdeng.github.io/images/coreblue2.png" alt="1-2 一个简单的advertising模型" /></p>
-
-<h2>Data structure</h2>
-
-<ul>
-<li>Peripheral 是最上层的一种服务抽象，比如iOS 系统内置的<a href="http://studentdeng.github.io/blog/2014/03/22/ancs/">ANCS</a>服务,另外我们自己也可以创建自己的服务。</li>
-<li>characteristic 则是用来描述服务中的具体内容（比如手环有传递行走路程的接口，还有行走位置的接口），一个服务可以包含多个characteristics。</li>
-</ul>
-
-
-<p><img src="http://studentdeng.github.io/images/coreblue3.png" alt="1-3 心率检测仪包含1个服务，1个服务中包含2个characteristics,一个用来传递心率，一个用来传递位置" /></p>
-
-<h1>How to</h1>
-
-<p><a href="https://github.com/kickingvegas/YmsCoreBluetooth">YmsCoreBluetooth</a> 是个不错的框架，有很详细的<a href="http://kickingvegas.github.io/YmsCoreBluetooth/appledoc/docs/tutorial/Tutorial.html">介绍</a>，这里就不赘述了。</p>
-</div>
-  
-  
-
-
-    </article>
-  
   <div class="pagination">
     
       <a class="prev" href="/blog/page/4/">&larr; Older</a>
@@ -741,7 +837,7 @@ the text to note
     </div>
   </div>
   <footer role="contentinfo"><p>
-  Copyright &copy; 2014 - studentdeng -
+  Copyright &copy; 2015 - studentdeng -
   <span class="credit">Powered by <a href="http://octopress.org">Octopress</a> | Themed with <a href="https://github.com/lucaslew/whitespace">Whitespace</a></span>
 </p>
 

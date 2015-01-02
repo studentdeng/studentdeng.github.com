@@ -9,7 +9,7 @@
   <meta name="author" content="studentdeng">
 
   
-  <meta name="description" content="强连通图的应用场景我就不在这里赘述了。其中Kosaraju是最常见的一种。 这个也是Stanford 算法课弟四周的作业，现在看来是最难的一道题。那么这里我就给一个我自己的实现了。 这个作业的难度就在于他的输入是一个相当大的数据，处理不好，很容易溢出。那份大数据，我没有留在这里， &hellip;">
+  <meta name="description" content="最近在学习redis，这时才知道了skip list，结合Mit 算法导论 lecture 12，在奋斗了2个早上的时间后有了下面的东东。 对于我们熟悉的binary search来说，我们需要能够做到random access才行。但是在普通的link这种数据结构中却不能做到。 &hellip;">
   
 
   <!-- http://t.co/dKP3o1e -->
@@ -63,6 +63,94 @@
     <div id="content">
       <div class="blog-index">
   
+  
+  
+    <article>
+      
+  <header>
+    
+      <h1 class="entry-title"><a href="/blog/2013/08/08/skip-list/">跳跃表 Skip List</a></h1>
+    
+    
+      <p class="meta">
+        
+
+
+
+
+
+
+
+
+  
+
+
+<time datetime="2013-08-08T09:51:00+08:00" pubdate data-updated="true">Aug 8<span>th</span>, 2013</time>
+        
+         | <a href="/blog/2013/08/08/skip-list/#disqus_thread">Comments</a>
+        
+      </p>
+    
+  </header>
+
+
+  <div class="entry-content"><p>最近在学习<a href="http://redis.cn">redis</a>，这时才知道了<a href="http://en.wikipedia.org/wiki/Skip_list">skip list</a>，结合<a href="http://v.163.com/movie/2010/12/7/S/M6UTT5U0I_M6V2TTJ7S.html">Mit 算法导论 lecture 12</a>，在奋斗了2个早上的时间后有了下面的东东。</p>
+
+<p>对于我们熟悉的binary search来说，我们需要能够做到random access才行。但是在普通的link这种数据结构中却不能做到。而这种情况下我们有很多类似的工具比如heap，tree，b tree，red－black tree。等等类似的都是来自AVL的变种。但是说实话，这些东东，的确是挺难实现的，需要做各种的旋转啊，调整啊，来保持平衡。特别是red－black tree。而这时的skip list 就为我们提供了一个很好的思路。</p>
+
+<h1>introduction</h1>
+
+<p>让我们先从简单的开始</p>
+
+<p><img src="http://studentdeng.github.io/images/skip_list1.png" alt="image" /></p>
+
+<p>如果最下面的数字是已经排序好的数列，我们想要快速查找其中一项，而不是简单的便利。我们可以增加一个link，也就是上面的一条，来让我们能够“跳过”一些元素，也就是减少一些不必要的比较。</p>
+
+<p>那么在2条时，我们的访问程度是多少呢？L2 + L1 / L2, 也就是第二条link的个数+ 每一个小端个数，这个是最差情况。显然，让这个不等式和最小，需要 L2 = L1 / L2。 显然L1是一个定值。这里设为N,那么，2条link下，我们的查找复杂度是 2 * √n</p>
+
+<p>如何再优化呢？这个思路很简单，就是在L2上面再构建一个link L3. 整个时间也就是 L3 ＋ L2 ／ L3 ＋ L1 ／ L2 ，根据不等式性质，他们的和最小时，也就是 L3 ＝ L2 ／ L3 ＝ L1 ／ L2。当L1 ＝ N时，他们的和时 3 * 立方根（N）</p>
+
+<p><img src="http://studentdeng.github.io/images/skip_list_l3.png" alt="image" /></p>
+
+<p>当第k层时， 我们的时间则是 k * k次方跟（N）</p>
+
+<p>当k = lgN 时，我们的时间为 lgN * lg 次方跟（N），根据对数的换底公式，我们可以得出 时间是 2lgN. 哈，我们现在已经降到O(lgN).我们满足了。</p>
+
+<p>这时我们可以想象一下，这个skip list的结构，其实就是一个binary tree。我们通过最上面的一层访问类似跟节点的情况，然后一层层link 相当于tree的孩子节点，整个比较过程和binary search 非常的相似。</p>
+
+<h1>insert</h1>
+
+<p>对于这些结构来说，搞定search不是难点，插入和删除则是最麻烦的东西。这里我们可以自己思考一下，为了保证我们的link的结构足够完美，可能需要记录没一段的个数，然后我们可能有一些节点要上几层或是下几层。但是这个其实，本质上和那些avl树又一样了。skip list则是基于一种随机的策略来决定这些节点。其实我们可以思考一下，最完美的分法就是和binary tree一样的，所以这种2倍数的关系就可以用抛硬币的方式来决定。</p>
+
+<p>这里为了程序时间方便，我们创建一个无穷小的节点作为我们的其实节点，这样，我们所有的开始都是从最左边。</p>
+
+<p><img src="http://studentdeng.github.io/images/skip_list_01.png" alt="image" /></p>
+
+<p>我们插入一个元素30，这时我们可以判断一下这个新的元素是否需要“升级”，这里我扔了一下，反面，不用升级了。</p>
+
+<p><img src="http://studentdeng.github.io/images/skip_list_02.png" alt="image" /></p>
+
+<p>这里我们插入一个15，我扔了一下，反面。不用升级</p>
+
+<p><img src="http://studentdeng.github.io/images/skip_list_03.png" alt="image" /></p>
+
+<p>这里我们插入一个20，我扔了一个正面，又扔了一个正面，额，好吧第三次终于是反面了。</p>
+
+<p><img src="http://studentdeng.github.io/images/skip_list_04.png" alt="image" /></p>
+
+<p>这里涉及到了一点点的随机算法的证明，这些东西实在是让人烦躁。主要还是大学时候的概率学得就不咋地，现在也都忘了。从最直观的来看，就是一层层升级的概率会越来越低，在随机算法足够独立和大量的数目上来看，不难形成这样子的一个类似tree的结构。</p>
+
+<h1>delete</h1>
+
+<p>删除这里的操作简直就是blazingly simple,因为我们整个list layer 都是建立在随机上的，删除则是直接删除就好了</p>
+
+<p>我在看到这里，基本已经受不了要吐槽了。实现这个也太简单了，相对red-black tree这种东西。</p>
+</div>
+  
+  
+
+
+    </article>
   
   
     <article>
@@ -416,87 +504,6 @@ $ git push prod +master:refs/heads/master
 
     </article>
   
-  
-    <article>
-      
-  <header>
-    
-      <h1 class="entry-title"><a href="/blog/2013/07/22/box2d-04/">Box2d 04 多边形刚体和鼠标连接器</a></h1>
-    
-    
-      <p class="meta">
-        
-
-
-
-
-
-
-
-
-  
-
-
-<time datetime="2013-07-22T13:34:00+08:00" pubdate data-updated="true">Jul 22<span>nd</span>, 2013</time>
-        
-         | <a href="/blog/2013/07/22/box2d-04/#disqus_thread">Comments</a>
-        
-      </p>
-    
-  </header>
-
-
-  <div class="entry-content"><p>我们在真正做一些物体的时候，有一些情况不是标准的圆形，矩形。这时我们需要创建多边形的刚体。这里推荐一个工具<a href="https://github.com/jfahrenkrug/VertexHelper">VertexHelper</a>来帮我们生成刚体的定义。</p>
-
-<p>今天的东西似乎有一点太少了，再瞅瞅另一种连接器，b2MouseJoint——鼠标连接器。
-在使用鼠标连接器之前，我们需要找到我们选择的是那一个物体。</p>
-
-<ul>
-<li>获取手势的位置，也就是坐标向量</li>
-<li>创建一个小的物体，小到只是一个点，然后通过这个物体在物理世界中查找包含这个物体的刚体</li>
-</ul>
-
-
-<p>鼠标连接器的使用步骤
-当检测到碰撞时，创建连接器</p>
-
-<pre><code>b2MouseJointDef mouseJointDef;
-mouseJointDef.bodyA = groundBody; //通常连接地面
-mouseJointDef.bodyB = body;       //需要移动的刚体
-mouseJointDef.target = locationWorld; //当前位置
-mouseJointDef.maxForce = 1000 * body-&gt;GetMass(); //移动的最大力，这个决定移动的灵敏度
-//mouseJointDef.collideConnected = true; //这个场景不需要
-
-self.mouseJoint = (b2MouseJoint *) world-&gt;CreateJoint(&amp;mouseJointDef);
-//body-&gt;SetAwake(true);         //很多地方指定了这个，但是我实际测试，这个场景也不需要
-</code></pre>
-
-<p>在手势移动的时候重新设置</p>
-
-<pre><code>world-&gt;DestroyJoint(self.mouseJoint);
-self.mouseJoint = NULL;
-</code></pre>
-
-<p>在手势取消和结束时销毁</p>
-
-<pre><code>world-&gt;DestroyJoint(_mouseJoint);
-</code></pre>
-
-<p><a href="https://github.com/studentdeng/box2d-tutorials/tree/master/04">demo</a></p>
-
-<div class="video-container">
-    <iframe height=498 width=510 src="http://player.youku.com/embed/XNTg2NDQxNzAw" frameborder=0 allowfullscreen></iframe>
-</div>
-
-
-
-</div>
-  
-  
-
-
-    </article>
-  
   <div class="pagination">
     
       <a class="prev" href="/blog/page/8/">&larr; Older</a>
@@ -516,7 +523,7 @@ self.mouseJoint = NULL;
     </div>
   </div>
   <footer role="contentinfo"><p>
-  Copyright &copy; 2014 - studentdeng -
+  Copyright &copy; 2015 - studentdeng -
   <span class="credit">Powered by <a href="http://octopress.org">Octopress</a> | Themed with <a href="https://github.com/lucaslew/whitespace">Whitespace</a></span>
 </p>
 

@@ -9,7 +9,7 @@
   <meta name="author" content="studentdeng">
 
   
-  <meta name="description" content="过去的一年 人生的第25个年头就要过去了，现在是14号，离25岁的终点还有一个星期。这个意味着我马上就要26岁了。25岁的人生马上就要结束了。为什么这么害怕25岁。25岁到底意味着什么？身体开始衰老而且入行3年。身体衰老意味着如果希望有一个好身材，那么需要付出比之前大的多的时间和毅力， &hellip;">
+  <meta name="description" content="并发（Concurrency）描述了一个同时运行多个任务的概念。他可以在单核设备上通过分时的方式实现，或者如果多个CPU则会真正的并行。 OSX和iOS提供了多种不同的API来实现并发编程。每一个API都有不同的功能和局限，适用于不同的任务。他们有不同的抽象层次。我们可以操作底层API， &hellip;">
   
 
   <!-- http://t.co/dKP3o1e -->
@@ -63,6 +63,140 @@
     <div id="content">
       <div class="blog-index">
   
+  
+  
+    <article>
+      
+  <header>
+    
+      <h1 class="entry-title"><a href="/blog/2014/01/15/concurrent-api/">翻译 并发编程：API 和 挑战</a></h1>
+    
+    
+      <p class="meta">
+        
+
+
+
+
+
+
+
+
+  
+
+
+<time datetime="2014-01-15T20:21:00+08:00" pubdate data-updated="true">Jan 15<span>th</span>, 2014</time>
+        
+         | <a href="/blog/2014/01/15/concurrent-api/#disqus_thread">Comments</a>
+        
+      </p>
+    
+  </header>
+
+
+  <div class="entry-content"><p>并发（<a href="http://en.wikipedia.org/wiki/Concurrency_%28computer_science%29">Concurrency</a>）描述了一个同时运行多个任务的概念。他可以在单核设备上通过分时的方式实现，或者如果多个CPU则会真正的并行。</p>
+
+<p>OSX和iOS提供了多种不同的API来实现并发编程。每一个API都有不同的功能和局限，适用于不同的任务。他们有不同的抽象层次。我们可以操作底层API，但是这也意味着我们需要做很多事情来保证正确。</p>
+
+<p>并发编程是非常困难的，里面有很多陷阱。而且很容易被忘记，特别是我们使用API，比如 GCD 或者 NSOperationQueue。这篇文章来会总体介绍在iOS和OSX上面的不同的并发API，然后深入一点并发编程里面的固有的，每个API所独有的挑战。</p>
+
+<h1>OSX和iOS上面的并发API</h1>
+
+<p>Apple为移动和桌面操作系统提供了相同的并发编程API。这里我们会看一下pthread和NSThread。Grand Central Dispatch, NSOperationQueue 和 NSRunLoop。技术上来说，run loops 有一点奇怪。因为他们并不是真正的并发。但是他和这篇文章的主旨很接近，所以还是值得深入了解的。</p>
+
+<p>我们从底层API开始，然后到上层API。我们这样做，因为上层的API是通过底层的API实现的。当然，在实际中，我们需要反过来考虑：用最上面的一层抽象搞定事情会简单很多。</p>
+
+<p>你可能想知道为什么我们这个坚持推荐使用高抽象层会让并发编程代码简单。你可以阅读这篇文章的第二部分。也可以看 Peter Steinberger 的 <a href="http://www.objc.io/issue-2/thread-safe-class-design.html">线程安全</a>文章。</p>
+
+<h1>线程</h1>
+
+<p><a href="http://en.wikipedia.org/wiki/Thread_%28computing%29">线程</a>是进程的子单元，被操作系统独立调度执行。事实上，所有的并发API都基于线程。背后实际上的确是真的，不管是GCD还是operation queues。</p>
+
+<p>多线程可以在同一个时间执行，即时在单核的CPU上。（或是至少看上去是在同时）。操作系统赋予每个线程一个时间片，用户看上去多个任务就像是在同时执行一样。如果CPU是多核的，那么多个线程就可以真正的并发执行，因此总的执行时间就会减少。</p>
+
+<p>你可以使用<a href="https://developer.apple.com/library/mac/documentation/DeveloperTools/Conceptual/InstrumentsUserGuide/AnalysingCPUUsageinYourOSXApp/AnalysingCPUUsageinYourOSXApp.html">CPU strategy view</a>Instruments中的几个工具来深入了解一下你的代码或者是framework代码在多核下是如何调用和执行的。</p>
+
+<p>这里面有一个非常重要的需要记住的是你对什么时候执行代码，执行那段代码无能为力，执行多长时间，什么时候会被暂停去执行别的任务，也是不知道的。这个线程调度的技术非常强大。然而，也带来了非常大的复杂性，后面会提到。</p>
+
+<p>让我们把这个复杂的情况暂时放在一边。你可以使用pthread API，或是其他的Objective-C封装的代码，NSThread去创建自己的线程。这里有一个简单的代码，查找100W和数中的最小和最大的数。使用了4个线程并发执行。这就是一个非常好的例子，告你你最好不要直接使用pThread。</p>
+
+<pre><code>struct threadInfo {
+    uint32_t * inputValues;
+    size_t count;
+};
+
+struct threadResult {
+    uint32_t min;
+    uint32_t max;
+};
+
+void * findMinAndMax(void *arg)
+{
+    struct threadInfo const * const info = (struct threadInfo *) arg;
+    uint32_t min = UINT32_MAX;
+    uint32_t max = 0;
+    for (size_t i = 0; i &lt; info-&gt;count; ++i) {
+        uint32_t v = info-&gt;inputValues[i];
+        min = MIN(min, v);
+        max = MAX(max, v);
+    }
+    free(arg);
+    struct threadResult * const result = (struct threadResult *) malloc(sizeof(*result));
+    result-&gt;min = min;
+    result-&gt;max = max;
+    return result;
+}
+
+int main(int argc, const char * argv[])
+{
+    size_t const count = 1000000;
+    uint32_t inputValues[count];
+
+    // Fill input values with random numbers:
+    for (size_t i = 0; i &lt; count; ++i) {
+        inputValues[i] = arc4random();
+    }
+
+    // Spawn 4 threads to find the minimum and maximum:
+    size_t const threadCount = 4;
+    pthread_t tid[threadCount];
+    for (size_t i = 0; i &lt; threadCount; ++i) {
+        struct threadInfo * const info = (struct threadInfo *) malloc(sizeof(*info));
+        size_t offset = (count / threadCount) * i;
+        info-&gt;inputValues = inputValues + offset;
+        info-&gt;count = MIN(count - offset, count / threadCount);
+        int err = pthread_create(tid + i, NULL, &amp;findMinAndMax, info);
+        NSCAssert(err == 0, @"pthread_create() failed: %d", err);
+    }
+    // Wait for the threads to exit:
+    struct threadResult * results[threadCount];
+    for (size_t i = 0; i &lt; threadCount; ++i) {
+        int err = pthread_join(tid[i], (void **) &amp;(results[i]));
+        NSCAssert(err == 0, @"pthread_join() failed: %d", err);
+    }
+    // Find the min and max:
+    uint32_t min = UINT32_MAX;
+    uint32_t max = 0;
+    for (size_t i = 0; i &lt; threadCount; ++i) {
+        min = MIN(min, results[i]-&gt;min);
+        max = MAX(max, results[i]-&gt;max);
+        free(results[i]);
+        results[i] = NULL;
+    }
+
+    NSLog(@"min = %u", min);
+    NSLog(@"max = %u", max);
+    return 0;
+}
+</code></pre>
+
+<p>NSThread是</p>
+</div>
+  
+  
+
+
+    </article>
   
   
     <article>
@@ -966,101 +1100,6 @@ CGSize size = view.bounds.size;
 
     </article>
   
-  
-    <article>
-      
-  <header>
-    
-      <h1 class="entry-title"><a href="/blog/2013/09/16/algo-class-02-scheduling/">Stanford 算法课 Part 2 Scheduling</a></h1>
-    
-    
-      <p class="meta">
-        
-
-
-
-
-
-
-
-
-  
-
-
-<time datetime="2013-09-16T20:46:00+08:00" pubdate data-updated="true">Sep 16<span>th</span>, 2013</time>
-        
-         | <a href="/blog/2013/09/16/algo-class-02-scheduling/#disqus_thread">Comments</a>
-        
-      </p>
-    
-  </header>
-
-
-  <div class="entry-content"><p>当一个人每天都有做不完的事情时，不知道大家又没有这种感觉。各种各样的事情，各种deadline，甚至是一些无关紧要的琐碎事情也会不断的在大脑中被回想，而且还是反复的，没有任何理由的会冒出来。对像我这样非常懒惰的人来说，这就是一个非常致命的打击，因为我需要中断当前的事情，这会让我多消耗不少脑力。。。</p>
-
-<p>这应该算是时间管理中的一部分，如何给自己安排任务。人的大脑和电脑的工作模式还是有一些类似的，比如如果一直不断的记录一大堆事情而不是执行，那么就会影响到他们的工作效率。同样，如果重要的事情不作，最后也会不断的在大脑里面被回想，而造成效率降低。</p>
-
-<p>在我看来，解决这些回想问题最关键的事情就是把这些东西搞定，这样才能把大脑清空，然后去做那些更加有意义的事情。</p>
-
-<p>最近再跟algorithm part2里面正好有一个scheduling application的东西，挺有意思的。这里记录一下。</p>
-
-<h1>问题描述</h1>
-
-<h2>Setup</h2>
-
-<p>scheduling 的基本模型是有一个shared resource，比如CPU。但是有许多jobs，比如很多线程，需要使用CPU才能运行。</p>
-
-<h2>Question</h2>
-
-<p>我们应该如何调度这个jobs的顺序，哪一个job优先于其他job执行，从而让整个计划执行时间最少。</p>
-
-<h2>Assume</h2>
-
-<p>为了更清楚的定义数学模型，每一个job有2个维度。</p>
-
-<ul>
-<li>weight 重要性</li>
-<li>length 时间</li>
-</ul>
-
-
-<h2>Defintion</h2>
-
-<p>Completion time。 第J个任务的完成时间（Completion time）Cj 是 （任务J之前的等待时间 + 任务J的length）* 任务J的weight</p>
-
-<h1>思路</h1>
-
-<p>这里根据直觉可以很明显的知道 我们需要把重要的事情放在前面，把时间短的事情放置在前面，这样可以很快的打一个勾勾，清空大脑中的这个任务。也就是说Cj 和 Wj 正相关，和 Lj负相关。但是总是有一些事情让人欲罢不能，就是那些很重要，而且做起来还比较费劲，时间花费长的事情，和那些不重要但是时间花费短的事情。真实世界的事情太复杂，还是回到我们这个简单的模型中。</p>
-
-<p>一种常见的思维是设法将问题转换成之前我们已经解决了的思路之中，所以很容易想到我们需要找到单位长度中最重要的事情先做。因为我们的这个模型的任务调度不是抢占式的么。</p>
-
-<p>将上面的单位时间的含义翻译过来就是 wj / lj。 也就是我们的调度程序将按照w / l的值，从大到小排列
-<img src="https://raw.github.com/studentdeng/studentdeng.github.com/master/images/algo_schema_01.png" alt="scheduling 1" /></p>
-
-<p>这里我们假定任务i > j。这个图则表示这2个任务相连在一起，stuff表示之前的任务，more stuff表示之后的任务。</p>
-
-<p><img src="https://raw.github.com/studentdeng/studentdeng.github.com/master/images/algo_schema_02.png" alt="scheduling 2" /></p>
-
-<p>而这里，我们做一次任务i、j的交换，就像这样</p>
-
-<p><img src="https://raw.github.com/studentdeng/studentdeng.github.com/master/images/algo_schema_03.png" alt="image" /></p>
-
-<p>那个这2个scheduling中，i,j之前的任务的完成时间不会变，之后的任务完成时间也不会变。那么受到影响的只是任务i，j。</p>
-
-<p><img src="https://raw.github.com/studentdeng/studentdeng.github.com/master/images/algo_schema_04.png" alt="image" /></p>
-
-<p>那么这里显然scheduling 2 也就是后面的那张图的顺序比第一个要小。</p>
-
-<p>然后我们可以想象最后的任务流程，就如果冒泡排序一样，一次次的比较把相对重要的数据一次次的放置到前面。</p>
-
-<p>而当所有相邻的任务都按照这样的规则排列完毕后，得到的就是一个 wj / lj 的从大到小的序列。</p>
-</div>
-  
-  
-
-
-    </article>
-  
   <div class="pagination">
     
       <a class="prev" href="/blog/page/6/">&larr; Older</a>
@@ -1080,7 +1119,7 @@ CGSize size = view.bounds.size;
     </div>
   </div>
   <footer role="contentinfo"><p>
-  Copyright &copy; 2014 - studentdeng -
+  Copyright &copy; 2015 - studentdeng -
   <span class="credit">Powered by <a href="http://octopress.org">Octopress</a> | Themed with <a href="https://github.com/lucaslew/whitespace">Whitespace</a></span>
 </p>
 
