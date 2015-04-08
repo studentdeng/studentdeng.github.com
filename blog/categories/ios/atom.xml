@@ -4,7 +4,7 @@
   <title><![CDATA[Category: iOS | 不会开机的男孩]]></title>
   <link href="http://studentdeng.github.com/blog/categories/ios/atom.xml" rel="self"/>
   <link href="http://studentdeng.github.com/"/>
-  <updated>2015-01-02T21:46:46+08:00</updated>
+  <updated>2015-04-08T22:16:34+08:00</updated>
   <id>http://studentdeng.github.com/</id>
   <author>
     <name><![CDATA[studentdeng]]></name>
@@ -28,7 +28,7 @@
 
 <p>正式开始游戏之前，总会有一个邀请的环节。假如我们有2个用户，分别是Host，Guest。Host创建游戏，Guest加入游戏。游戏的整个流程和我们平时玩的对战游戏流程并没有多大不同。</p>
 
-<p><img src="http://112.124.107.63/my_home/application/uploads/2014_11_06_15_44_54.png" alt="image" /></p>
+<p>{% imgcap /images/annual-summary-2014_1.png 1-1%}</p>
 
 <ol>
 <li>Host创建游戏，他就相当于进入一个等待队列里面。</li>
@@ -44,7 +44,7 @@
 <p>现在的构想的逻辑只有5步，但其实还会包含很多逻辑，比如超时机制，重发机制。由于中间状态很多，还可能有我们没有想到过的问题。在面对这种复杂逻辑时，会通过状态机来帮助我们理顺逻辑。这时，我们脑中思考的业务其实是一个状态到一个状态的图。
 如下</p>
 
-<p><img src="http://112.124.107.63/my_home/application/uploads/2014_11_06_10_30_32.png" alt="image" /></p>
+<p>{% imgcap /images/annual-summary-2014_2.png 1-1%}</p>
 
 <p>上半部分是游戏的创建者，下半部分是游戏的加入者。</p>
 
@@ -56,409 +56,213 @@
 
 <h3>定义State（HOST）</h3>
 
-<p><div class='bogus-wrapper'><notextile><figure class='code'> <div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
-<span class='line-number'>2</span>
-<span class='line-number'>3</span>
-<span class='line-number'>4</span>
-<span class='line-number'>5</span>
-<span class='line-number'>6</span>
-<span class='line-number'>7</span>
-<span class='line-number'>8</span>
-<span class='line-number'>9</span>
-<span class='line-number'>10</span>
-<span class='line-number'>11</span>
-<span class='line-number'>12</span>
-<span class='line-number'>13</span>
-<span class='line-number'>14</span>
-<span class='line-number'>15</span>
-<span class='line-number'>16</span>
-<span class='line-number'>17</span>
-<span class='line-number'>18</span>
-<span class='line-number'>19</span>
-</pre></td><td class='code'><pre><code class='objc'><span class='line'><span class="o">&lt;/</span><span class="n">p</span><span class="o">&gt;</span>
-</span><span class='line'>
-</span><span class='line'><span class="o">&lt;</span><span class="n">pre</span><span class="o">&gt;&lt;</span><span class="n">code</span><span class="o">&gt;</span><span class="n">TKState</span> <span class="o">*</span><span class="n">idleState</span> <span class="o">=</span> <span class="p">[</span><span class="n">TKState</span> <span class="nl">stateWithName:</span><span class="s">@&quot;idle&quot;</span><span class="p">];</span>
-</span><span class='line'><span class="n">TKState</span> <span class="o">*</span><span class="n">waitingJoinState</span> <span class="o">=</span> <span class="p">[</span><span class="n">TKState</span> <span class="nl">stateWithName:</span><span class="s">@&quot;waitingJoin&quot;</span><span class="p">];</span>
-</span><span class='line'><span class="n">TKState</span> <span class="o">*</span><span class="n">waitingConfirmState</span> <span class="o">=</span> <span class="p">[</span><span class="n">TKState</span> <span class="nl">stateWithName:</span><span class="s">@&quot;waitingConfirm&quot;</span><span class="p">];</span>
-</span><span class='line'><span class="n">TKState</span> <span class="o">*</span><span class="n">goState</span> <span class="o">=</span> <span class="p">[</span><span class="n">TKState</span> <span class="nl">stateWithName:</span><span class="s">@&quot;go&quot;</span><span class="p">];</span>
-</span><span class='line'>
-</span><span class='line'><span class="p">[</span><span class="n">waitingConfirmState</span> <span class="nl">setDidEnterStateBlock:</span><span class="o">^</span><span class="p">(</span><span class="n">TKState</span> <span class="o">*</span><span class="n">state</span><span class="p">,</span> <span class="n">TKTransition</span> <span class="o">*</span><span class="n">transition</span><span class="p">)</span> <span class="p">{</span>
-</span><span class='line'>    <span class="p">[</span><span class="n">selfWeak</span> <span class="n">sendJoinConfirm</span><span class="p">];</span>
-</span><span class='line'><span class="p">}];</span>
-</span><span class='line'>
-</span><span class='line'><span class="p">[</span><span class="n">goState</span> <span class="nl">setDidEnterStateBlock:</span><span class="o">^</span><span class="p">(</span><span class="n">TKState</span> <span class="o">*</span><span class="n">state</span><span class="p">,</span> <span class="n">TKTransition</span> <span class="o">*</span><span class="n">transition</span><span class="p">)</span> <span class="p">{</span>
-</span><span class='line'>    <span class="n">NSLog</span><span class="p">(</span><span class="s">@&quot;happy ending&quot;</span><span class="p">);</span>
-</span><span class='line'>
-</span><span class='line'>    <span class="p">[</span><span class="n">SVProgressHUD</span> <span class="nl">showSuccessWithStatus:</span><span class="s">@&quot;ok&quot;</span><span class="p">];</span>
-</span><span class='line'><span class="p">}];</span>
-</span><span class='line'><span class="o">&lt;/</span><span class="n">code</span><span class="o">&gt;&lt;/</span><span class="n">pre</span><span class="o">&gt;</span>
-</span><span class='line'>
-</span><span class='line'><span class="o">&lt;</span><span class="n">p</span><span class="o">&gt;</span>
-</span></code></pre></td></tr></table></div></figure></notextile></div></p>
+<p>{% codeblock lang:objc %}</p>
+
+<pre><code>TKState *idleState = [TKState stateWithName:@"idle"];
+TKState *waitingJoinState = [TKState stateWithName:@"waitingJoin"];
+TKState *waitingConfirmState = [TKState stateWithName:@"waitingConfirm"];
+TKState *goState = [TKState stateWithName:@"go"];
+
+[waitingConfirmState setDidEnterStateBlock:^(TKState *state, TKTransition *transition) {
+    [selfWeak sendJoinConfirm];
+}];
+
+[goState setDidEnterStateBlock:^(TKState *state, TKTransition *transition) {
+    NSLog(@"happy ending");
+
+    [SVProgressHUD showSuccessWithStatus:@"ok"];
+}];
+</code></pre>
+
+<p>{% endcodeblock %}</p>
 
 <h3>定义Event（HOST）</h3>
 
 <p>Event 是建立State到State的路径</p>
 
-<p><div class='bogus-wrapper'><notextile><figure class='code'> <div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
-<span class='line-number'>2</span>
-<span class='line-number'>3</span>
-<span class='line-number'>4</span>
-<span class='line-number'>5</span>
-<span class='line-number'>6</span>
-<span class='line-number'>7</span>
-<span class='line-number'>8</span>
-<span class='line-number'>9</span>
-<span class='line-number'>10</span>
-<span class='line-number'>11</span>
-<span class='line-number'>12</span>
-<span class='line-number'>13</span>
-<span class='line-number'>14</span>
-<span class='line-number'>15</span>
-<span class='line-number'>16</span>
-<span class='line-number'>17</span>
-<span class='line-number'>18</span>
-<span class='line-number'>19</span>
-<span class='line-number'>20</span>
-</pre></td><td class='code'><pre><code class='objc'><span class='line'><span class="o">&lt;/</span><span class="n">p</span><span class="o">&gt;</span>
-</span><span class='line'>
-</span><span class='line'><span class="o">&lt;</span><span class="n">pre</span><span class="o">&gt;&lt;</span><span class="n">code</span><span class="o">&gt;</span><span class="n">TKEvent</span> <span class="o">*</span><span class="n">waitingJoinEvent</span> <span class="o">=</span> <span class="p">[</span><span class="n">TKEvent</span> <span class="nl">eventWithName:</span><span class="n">CUHostGameManagerWaitingJoinEvent</span>
-</span><span class='line'>                       <span class="nl">transitioningFromStates:</span><span class="err">@</span><span class="p">[</span><span class="n">idleState</span><span class="p">]</span>
-</span><span class='line'>                                       <span class="nl">toState:</span><span class="n">waitingJoinState</span><span class="p">];</span>
-</span><span class='line'>
-</span><span class='line'><span class="n">TKEvent</span> <span class="o">*</span><span class="n">receiveInviteEvent</span> <span class="o">=</span> <span class="p">[</span><span class="n">TKEvent</span> <span class="nl">eventWithName:</span><span class="n">CUHostGameManagerReceiveInviteEvent</span>
-</span><span class='line'>                           <span class="nl">transitioningFromStates:</span><span class="err">@</span><span class="p">[</span><span class="n">waitingJoinState</span><span class="p">]</span>
-</span><span class='line'>                                           <span class="nl">toState:</span><span class="n">waitingConfirmState</span><span class="p">];</span>
-</span><span class='line'>
-</span><span class='line'><span class="n">TKEvent</span> <span class="o">*</span><span class="n">receiveConfirmEvent</span> <span class="o">=</span> <span class="p">[</span><span class="n">TKEvent</span> <span class="nl">eventWithName:</span><span class="n">CUHostGameManagerReceiveConfirmEvent</span>
-</span><span class='line'>                            <span class="nl">transitioningFromStates:</span><span class="err">@</span><span class="p">[</span><span class="n">waitingConfirmState</span><span class="p">]</span>
-</span><span class='line'>                                            <span class="nl">toState:</span><span class="n">goState</span><span class="p">];</span>
-</span><span class='line'>
-</span><span class='line'><span class="n">TKEvent</span> <span class="o">*</span><span class="n">disconnectedEvent</span> <span class="o">=</span> <span class="p">[</span><span class="n">TKEvent</span> <span class="nl">eventWithName:</span><span class="n">CUHostGameManagerDisconnectedEvent</span>
-</span><span class='line'>                           <span class="nl">transitioningFromStates:</span><span class="nb">nil</span>
-</span><span class='line'>                                          <span class="nl">toState:</span><span class="n">idleState</span><span class="p">];</span>
-</span><span class='line'><span class="o">&lt;/</span><span class="n">code</span><span class="o">&gt;&lt;/</span><span class="n">pre</span><span class="o">&gt;</span>
-</span><span class='line'>
-</span><span class='line'><span class="o">&lt;</span><span class="n">p</span><span class="o">&gt;</span>
-</span></code></pre></td></tr></table></div></figure></notextile></div></p>
+<p>{% codeblock lang:objc %}</p>
+
+<pre><code>TKEvent *waitingJoinEvent = [TKEvent eventWithName:CUHostGameManagerWaitingJoinEvent
+                       transitioningFromStates:@[idleState]
+                                       toState:waitingJoinState];
+
+TKEvent *receiveInviteEvent = [TKEvent eventWithName:CUHostGameManagerReceiveInviteEvent
+                           transitioningFromStates:@[waitingJoinState]
+                                           toState:waitingConfirmState];
+
+TKEvent *receiveConfirmEvent = [TKEvent eventWithName:CUHostGameManagerReceiveConfirmEvent
+                            transitioningFromStates:@[waitingConfirmState]
+                                            toState:goState];
+
+TKEvent *disconnectedEvent = [TKEvent eventWithName:CUHostGameManagerDisconnectedEvent
+                           transitioningFromStates:nil
+                                          toState:idleState];
+</code></pre>
+
+<p>{% endcodeblock %}</p>
 
 <h3>定义过程（HOST）</h3>
 
-<p><div class='bogus-wrapper'><notextile><figure class='code'> <div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
-<span class='line-number'>2</span>
-<span class='line-number'>3</span>
-<span class='line-number'>4</span>
-<span class='line-number'>5</span>
-<span class='line-number'>6</span>
-<span class='line-number'>7</span>
-<span class='line-number'>8</span>
-<span class='line-number'>9</span>
-<span class='line-number'>10</span>
-<span class='line-number'>11</span>
-<span class='line-number'>12</span>
-<span class='line-number'>13</span>
-<span class='line-number'>14</span>
-<span class='line-number'>15</span>
-<span class='line-number'>16</span>
-<span class='line-number'>17</span>
-<span class='line-number'>18</span>
-<span class='line-number'>19</span>
-<span class='line-number'>20</span>
-<span class='line-number'>21</span>
-<span class='line-number'>22</span>
-<span class='line-number'>23</span>
-<span class='line-number'>24</span>
-<span class='line-number'>25</span>
-<span class='line-number'>26</span>
-<span class='line-number'>27</span>
-<span class='line-number'>28</span>
-<span class='line-number'>29</span>
-<span class='line-number'>30</span>
-<span class='line-number'>31</span>
-<span class='line-number'>32</span>
-<span class='line-number'>33</span>
-<span class='line-number'>34</span>
-<span class='line-number'>35</span>
-<span class='line-number'>36</span>
-<span class='line-number'>37</span>
-<span class='line-number'>38</span>
-<span class='line-number'>39</span>
-<span class='line-number'>40</span>
-<span class='line-number'>41</span>
-<span class='line-number'>42</span>
-<span class='line-number'>43</span>
-<span class='line-number'>44</span>
-<span class='line-number'>45</span>
-<span class='line-number'>46</span>
-<span class='line-number'>47</span>
-<span class='line-number'>48</span>
-<span class='line-number'>49</span>
-<span class='line-number'>50</span>
-<span class='line-number'>51</span>
-<span class='line-number'>52</span>
-<span class='line-number'>53</span>
-<span class='line-number'>54</span>
-</pre></td><td class='code'><pre><code class='objc'><span class='line'><span class="o">&lt;/</span><span class="n">p</span><span class="o">&gt;</span>
-</span><span class='line'>
-</span><span class='line'><span class="o">&lt;</span><span class="n">pre</span><span class="o">&gt;&lt;</span><span class="n">code</span><span class="o">&gt;-</span> <span class="p">(</span><span class="kt">void</span><span class="p">)</span><span class="n">startGame</span> <span class="p">{</span>
-</span><span class='line'>
-</span><span class='line'>    <span class="n">NSAssert</span><span class="p">(</span><span class="n">self</span><span class="p">.</span><span class="n">session</span><span class="p">.</span><span class="n">peerId</span> <span class="o">!=</span> <span class="nb">nil</span><span class="p">,</span> <span class="s">@&quot;&quot;</span><span class="p">);</span>
-</span><span class='line'>
-</span><span class='line'>    <span class="c1">//这里，如果不是idle，我们切换状态机到idle</span>
-</span><span class='line'>    <span class="k">if</span> <span class="p">(</span><span class="o">!</span><span class="p">[</span><span class="n">self</span><span class="p">.</span><span class="n">stateMachine</span><span class="p">.</span><span class="n">currentState</span><span class="p">.</span><span class="n">name</span> <span class="nl">isEqual:</span><span class="s">@&quot;idle&quot;</span><span class="p">])</span> <span class="p">{</span>
-</span><span class='line'>        <span class="p">[</span><span class="n">self</span> <span class="nl">fireEvent:</span><span class="n">CUHostGameManagerDisconnectedEvent</span> <span class="nl">userInfo:</span><span class="nb">nil</span><span class="p">];</span>
-</span><span class='line'>    <span class="p">}</span>
-</span><span class='line'>
-</span><span class='line'>    <span class="c1">//这里调用LeanCloud 入队</span>
-</span><span class='line'>    <span class="n">AVObject</span> <span class="o">*</span><span class="n">waitingId</span> <span class="o">=</span> <span class="p">[</span><span class="n">AVObject</span> <span class="nl">objectWithClassName:</span><span class="s">@&quot;waiting_join_Ids&quot;</span><span class="p">];</span>
-</span><span class='line'>    <span class="p">[</span><span class="n">waitingId</span> <span class="nl">setObject:</span><span class="n">self</span><span class="p">.</span><span class="n">session</span><span class="p">.</span><span class="n">peerId</span> <span class="nl">forKey:</span><span class="s">@&quot;peerId&quot;</span><span class="p">];</span>
-</span><span class='line'>    <span class="p">[</span><span class="n">waitingId</span> <span class="nl">saveInBackgroundWithBlock:</span><span class="o">^</span><span class="p">(</span><span class="kt">BOOL</span> <span class="n">succeeded</span><span class="p">,</span> <span class="n">NSError</span> <span class="o">*</span><span class="n">error</span><span class="p">)</span> <span class="p">{</span>
-</span><span class='line'>        <span class="c1">//enqueue 之后，进入waitingJoin状态</span>
-</span><span class='line'>        <span class="p">[</span><span class="n">self</span> <span class="nl">fireEvent:</span><span class="n">CUHostGameManagerWaitingJoinEvent</span> <span class="nl">userInfo:</span><span class="nb">nil</span><span class="p">];</span>
-</span><span class='line'>    <span class="p">}];</span>
-</span><span class='line'><span class="p">}</span>
-</span><span class='line'>
-</span><span class='line'><span class="o">-</span> <span class="p">(</span><span class="kt">void</span><span class="p">)</span><span class="n">sendJoinConfirm</span> <span class="p">{</span>
-</span><span class='line'>    <span class="c1">//发送加入确认消息给Guest</span>
-</span><span class='line'>    <span class="n">AVMessage</span> <span class="o">*</span><span class="n">message</span> <span class="o">=</span> <span class="p">[</span><span class="n">AVMessage</span> <span class="nl">messageForPeerWithSession:</span><span class="n">self</span><span class="p">.</span><span class="n">session</span>
-</span><span class='line'>                                               <span class="nl">toPeerId:</span><span class="n">self</span><span class="p">.</span><span class="n">peerId</span>
-</span><span class='line'>                                                <span class="nl">payload:</span><span class="s">@&quot;join_confirm&quot;</span><span class="p">];</span>
-</span><span class='line'>    <span class="p">[</span><span class="n">self</span><span class="p">.</span><span class="n">session</span> <span class="nl">sendMessage:</span><span class="n">message</span> <span class="nl">transient:</span><span class="n">YES</span><span class="p">];</span>
-</span><span class='line'><span class="p">}</span>
-</span><span class='line'>
-</span><span class='line'><span class="o">-</span> <span class="p">(</span><span class="kt">void</span><span class="p">)</span><span class="nl">session:</span><span class="p">(</span><span class="n">AVSession</span> <span class="o">*</span><span class="p">)</span><span class="n">session</span> <span class="nl">didReceiveMessage:</span><span class="p">(</span><span class="n">AVMessage</span> <span class="o">*</span><span class="p">)</span><span class="n">message</span>
-</span><span class='line'><span class="p">{</span>
-</span><span class='line'>    <span class="k">if</span> <span class="p">([</span><span class="n">message</span><span class="p">.</span><span class="n">payload</span> <span class="nl">isEqualToString:</span><span class="s">@&quot;join&quot;</span><span class="p">])</span> <span class="p">{</span>
-</span><span class='line'>        <span class="c1">//收到Join（邀请）之后，发送确认消息</span>
-</span><span class='line'>        <span class="n">self</span><span class="p">.</span><span class="n">peerId</span> <span class="o">=</span> <span class="n">message</span><span class="p">.</span><span class="n">fromPeerId</span><span class="p">;</span>
-</span><span class='line'>
-</span><span class='line'>        <span class="c1">//因为LeanCloud的API比较挫，watch 之后才能发送消息，但是我们不知道什么时候才watch成功。。。。</span>
-</span><span class='line'>        <span class="c1">//好在只是demo，我们只好用这种方式work around，延迟2s发送消息</span>
-</span><span class='line'>        <span class="p">[</span><span class="n">NSObject</span> <span class="nl">cancelPreviousPerformRequestsWithTarget:</span><span class="n">self</span> <span class="nl">selector:</span><span class="k">@selector</span><span class="p">(</span><span class="nl">sendInviteConfirmRequest:</span><span class="p">)</span> <span class="nl">object:</span><span class="nb">nil</span><span class="p">];</span>
-</span><span class='line'>        <span class="p">[</span><span class="n">self</span> <span class="nl">performSelector:</span><span class="k">@selector</span><span class="p">(</span><span class="nl">sendInviteConfirmRequest:</span><span class="p">)</span>
-</span><span class='line'>                <span class="nl">withObject:</span><span class="err">@</span><span class="p">[</span><span class="n">message</span><span class="p">.</span><span class="n">fromPeerId</span><span class="p">]</span>
-</span><span class='line'>                <span class="nl">afterDelay:</span><span class="mf">2.0f</span><span class="p">];</span>
-</span><span class='line'>    <span class="p">}</span>
-</span><span class='line'>    <span class="k">else</span> <span class="k">if</span> <span class="p">([</span><span class="n">message</span><span class="p">.</span><span class="n">payload</span> <span class="nl">isEqualToString:</span><span class="s">@&quot;go&quot;</span><span class="p">])</span> <span class="p">{</span>
-</span><span class='line'>        <span class="c1">//收到go消息，流程结束</span>
-</span><span class='line'>        <span class="p">[</span><span class="n">self</span> <span class="nl">fireEvent:</span><span class="n">CUHostGameManagerReceiveConfirmEvent</span> <span class="nl">userInfo:</span><span class="nb">nil</span><span class="p">];</span>
-</span><span class='line'>    <span class="p">}</span>
-</span><span class='line'><span class="p">}</span>
-</span><span class='line'>
-</span><span class='line'><span class="o">-</span> <span class="p">(</span><span class="kt">void</span><span class="p">)</span><span class="nl">sendInviteConfirmRequest:</span><span class="p">(</span><span class="n">NSArray</span> <span class="o">*</span><span class="p">)</span><span class="n">watchPeerIds</span> <span class="p">{</span>
-</span><span class='line'>    <span class="p">[</span><span class="n">self</span><span class="p">.</span><span class="n">session</span> <span class="nl">watchPeerIds:</span><span class="n">watchPeerIds</span><span class="p">];</span>
-</span><span class='line'>    <span class="p">[</span><span class="n">self</span> <span class="nl">fireEvent:</span><span class="n">CUHostGameManagerReceiveInviteEvent</span> <span class="nl">userInfo:</span><span class="nb">nil</span><span class="p">];</span>
-</span><span class='line'><span class="p">}</span>
-</span><span class='line'><span class="o">&lt;/</span><span class="n">code</span><span class="o">&gt;&lt;/</span><span class="n">pre</span><span class="o">&gt;</span>
-</span><span class='line'>
-</span><span class='line'><span class="o">&lt;</span><span class="n">p</span><span class="o">&gt;</span>
-</span></code></pre></td></tr></table></div></figure></notextile></div></p>
+<p>{% codeblock lang:objc %}</p>
+
+<pre><code>- (void)startGame {
+
+    NSAssert(self.session.peerId != nil, @"");
+
+    //这里，如果不是idle，我们切换状态机到idle
+    if (![self.stateMachine.currentState.name isEqual:@"idle"]) {
+        [self fireEvent:CUHostGameManagerDisconnectedEvent userInfo:nil];
+    }
+
+    //这里调用LeanCloud 入队
+    AVObject *waitingId = [AVObject objectWithClassName:@"waiting_join_Ids"];
+    [waitingId setObject:self.session.peerId forKey:@"peerId"];
+    [waitingId saveInBackgroundWithBlock:^(BOOL succeeded, NSError *error) {
+        //enqueue 之后，进入waitingJoin状态
+        [self fireEvent:CUHostGameManagerWaitingJoinEvent userInfo:nil];
+    }];
+}
+
+- (void)sendJoinConfirm {
+    //发送加入确认消息给Guest
+    AVMessage *message = [AVMessage messageForPeerWithSession:self.session
+                                               toPeerId:self.peerId
+                                                payload:@"join_confirm"];
+    [self.session sendMessage:message transient:YES];
+}
+
+- (void)session:(AVSession *)session didReceiveMessage:(AVMessage *)message
+{
+    if ([message.payload isEqualToString:@"join"]) {
+        //收到Join（邀请）之后，发送确认消息
+        self.peerId = message.fromPeerId;
+
+        //因为LeanCloud的API比较挫，watch 之后才能发送消息，但是我们不知道什么时候才watch成功。。。。
+        //好在只是demo，我们只好用这种方式work around，延迟2s发送消息
+        [NSObject cancelPreviousPerformRequestsWithTarget:self selector:@selector(sendInviteConfirmRequest:) object:nil];
+        [self performSelector:@selector(sendInviteConfirmRequest:)
+                withObject:@[message.fromPeerId]
+                afterDelay:2.0f];
+    }
+    else if ([message.payload isEqualToString:@"go"]) {
+        //收到go消息，流程结束
+        [self fireEvent:CUHostGameManagerReceiveConfirmEvent userInfo:nil];
+    }
+}
+
+- (void)sendInviteConfirmRequest:(NSArray *)watchPeerIds {
+    [self.session watchPeerIds:watchPeerIds];
+    [self fireEvent:CUHostGameManagerReceiveInviteEvent userInfo:nil];
+}
+</code></pre>
+
+<p>{% endcodeblock %}</p>
 
 <h3>定义State（Guest）</h3>
 
-<p><div class='bogus-wrapper'><notextile><figure class='code'> <div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
-<span class='line-number'>2</span>
-<span class='line-number'>3</span>
-<span class='line-number'>4</span>
-<span class='line-number'>5</span>
-<span class='line-number'>6</span>
-<span class='line-number'>7</span>
-<span class='line-number'>8</span>
-<span class='line-number'>9</span>
-<span class='line-number'>10</span>
-<span class='line-number'>11</span>
-<span class='line-number'>12</span>
-<span class='line-number'>13</span>
-<span class='line-number'>14</span>
-<span class='line-number'>15</span>
-<span class='line-number'>16</span>
-<span class='line-number'>17</span>
-<span class='line-number'>18</span>
-</pre></td><td class='code'><pre><code class='objc'><span class='line'><span class="o">&lt;/</span><span class="n">p</span><span class="o">&gt;</span>
-</span><span class='line'>
-</span><span class='line'><span class="o">&lt;</span><span class="n">pre</span><span class="o">&gt;&lt;</span><span class="n">code</span><span class="o">&gt;</span><span class="n">TKState</span> <span class="o">*</span><span class="n">idleState</span> <span class="o">=</span> <span class="p">[</span><span class="n">TKState</span> <span class="nl">stateWithName:</span><span class="s">@&quot;idle&quot;</span><span class="p">];</span>
-</span><span class='line'><span class="n">TKState</span> <span class="o">*</span><span class="n">waitingReplyState</span> <span class="o">=</span> <span class="p">[</span><span class="n">TKState</span> <span class="nl">stateWithName:</span><span class="s">@&quot;waitingReply&quot;</span><span class="p">];</span>
-</span><span class='line'><span class="n">TKState</span> <span class="o">*</span><span class="n">goState</span> <span class="o">=</span> <span class="p">[</span><span class="n">TKState</span> <span class="nl">stateWithName:</span><span class="s">@&quot;go&quot;</span><span class="p">];</span>
-</span><span class='line'>
-</span><span class='line'><span class="p">[</span><span class="n">waitingReplyState</span> <span class="nl">setWillEnterStateBlock:</span><span class="o">^</span><span class="p">(</span><span class="n">TKState</span> <span class="o">*</span><span class="n">state</span><span class="p">,</span> <span class="n">TKTransition</span> <span class="o">*</span><span class="n">transition</span><span class="p">)</span> <span class="p">{</span>
-</span><span class='line'>    <span class="p">[</span><span class="n">selfWeak</span> <span class="n">searchingGames</span><span class="p">];</span>
-</span><span class='line'><span class="p">}];</span>
-</span><span class='line'>
-</span><span class='line'><span class="p">[</span><span class="n">goState</span> <span class="nl">setDidEnterStateBlock:</span><span class="o">^</span><span class="p">(</span><span class="n">TKState</span> <span class="o">*</span><span class="n">state</span><span class="p">,</span> <span class="n">TKTransition</span> <span class="o">*</span><span class="n">transition</span><span class="p">)</span> <span class="p">{</span>
-</span><span class='line'>    <span class="p">[</span><span class="n">selfWeak</span> <span class="n">sendGo</span><span class="p">];</span>
-</span><span class='line'>    <span class="n">NSLog</span><span class="p">(</span><span class="s">@&quot;happy ending&quot;</span><span class="p">);</span>
-</span><span class='line'>    <span class="p">[</span><span class="n">SVProgressHUD</span> <span class="nl">showSuccessWithStatus:</span><span class="s">@&quot;ok&quot;</span><span class="p">];</span>
-</span><span class='line'><span class="p">}];</span>
-</span><span class='line'><span class="o">&lt;/</span><span class="n">code</span><span class="o">&gt;&lt;/</span><span class="n">pre</span><span class="o">&gt;</span>
-</span><span class='line'>
-</span><span class='line'><span class="o">&lt;</span><span class="n">p</span><span class="o">&gt;</span>
-</span></code></pre></td></tr></table></div></figure></notextile></div></p>
+<p>{% codeblock lang:objc %}</p>
+
+<pre><code>TKState *idleState = [TKState stateWithName:@"idle"];
+TKState *waitingReplyState = [TKState stateWithName:@"waitingReply"];
+TKState *goState = [TKState stateWithName:@"go"];
+
+[waitingReplyState setWillEnterStateBlock:^(TKState *state, TKTransition *transition) {
+    [selfWeak searchingGames];
+}];
+
+[goState setDidEnterStateBlock:^(TKState *state, TKTransition *transition) {
+    [selfWeak sendGo];
+    NSLog(@"happy ending");
+    [SVProgressHUD showSuccessWithStatus:@"ok"]; 
+}];
+</code></pre>
+
+<p>{% endcodeblock %}</p>
 
 <h3>定义Event（Guest）</h3>
 
-<p><div class='bogus-wrapper'><notextile><figure class='code'> <div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
-<span class='line-number'>2</span>
-<span class='line-number'>3</span>
-<span class='line-number'>4</span>
-<span class='line-number'>5</span>
-<span class='line-number'>6</span>
-<span class='line-number'>7</span>
-<span class='line-number'>8</span>
-<span class='line-number'>9</span>
-<span class='line-number'>10</span>
-<span class='line-number'>11</span>
-<span class='line-number'>12</span>
-<span class='line-number'>13</span>
-<span class='line-number'>14</span>
-<span class='line-number'>15</span>
-<span class='line-number'>16</span>
-</pre></td><td class='code'><pre><code class='objc'><span class='line'><span class="o">&lt;/</span><span class="n">p</span><span class="o">&gt;</span>
-</span><span class='line'>
-</span><span class='line'><span class="o">&lt;</span><span class="n">pre</span><span class="o">&gt;&lt;</span><span class="n">code</span><span class="o">&gt;</span><span class="n">TKEvent</span> <span class="o">*</span><span class="n">searchingEvent</span> <span class="o">=</span> <span class="p">[</span><span class="n">TKEvent</span> <span class="nl">eventWithName:</span><span class="n">CUGestGameManagerSearchingEvent</span>
-</span><span class='line'>                       <span class="nl">transitioningFromStates:</span><span class="err">@</span><span class="p">[</span><span class="n">idleState</span><span class="p">]</span>
-</span><span class='line'>                                       <span class="nl">toState:</span><span class="n">waitingReplyState</span><span class="p">];</span>
-</span><span class='line'>
-</span><span class='line'><span class="n">TKEvent</span> <span class="o">*</span><span class="n">receiveConfirmEvent</span> <span class="o">=</span> <span class="p">[</span><span class="n">TKEvent</span> <span class="nl">eventWithName:</span><span class="n">CUGestGameManagerReceiveConfirmEvent</span>
-</span><span class='line'>                            <span class="nl">transitioningFromStates:</span><span class="err">@</span><span class="p">[</span><span class="n">waitingReplyState</span><span class="p">]</span>
-</span><span class='line'>                                            <span class="nl">toState:</span><span class="n">goState</span><span class="p">];</span>
-</span><span class='line'>
-</span><span class='line'><span class="n">TKEvent</span> <span class="o">*</span><span class="n">disconnectedEvent</span> <span class="o">=</span> <span class="p">[</span><span class="n">TKEvent</span> <span class="nl">eventWithName:</span><span class="n">CUGestGameManagerDisconnectedEvent</span>
-</span><span class='line'>                          <span class="nl">transitioningFromStates:</span><span class="nb">nil</span>
-</span><span class='line'>                                          <span class="nl">toState:</span><span class="n">idleState</span><span class="p">];</span>
-</span><span class='line'><span class="o">&lt;/</span><span class="n">code</span><span class="o">&gt;&lt;/</span><span class="n">pre</span><span class="o">&gt;</span>
-</span><span class='line'>
-</span><span class='line'><span class="o">&lt;</span><span class="n">p</span><span class="o">&gt;</span>
-</span></code></pre></td></tr></table></div></figure></notextile></div></p>
+<p>{% codeblock lang:objc %}</p>
+
+<pre><code>TKEvent *searchingEvent = [TKEvent eventWithName:CUGestGameManagerSearchingEvent
+                       transitioningFromStates:@[idleState]
+                                       toState:waitingReplyState];
+
+TKEvent *receiveConfirmEvent = [TKEvent eventWithName:CUGestGameManagerReceiveConfirmEvent
+                            transitioningFromStates:@[waitingReplyState]
+                                            toState:goState];
+
+TKEvent *disconnectedEvent = [TKEvent eventWithName:CUGestGameManagerDisconnectedEvent
+                          transitioningFromStates:nil
+                                          toState:idleState];
+</code></pre>
+
+<p>{% endcodeblock %}</p>
 
 <h3>定义过程（Guest）</h3>
 
-<p><div class='bogus-wrapper'><notextile><figure class='code'> <div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
-<span class='line-number'>2</span>
-<span class='line-number'>3</span>
-<span class='line-number'>4</span>
-<span class='line-number'>5</span>
-<span class='line-number'>6</span>
-<span class='line-number'>7</span>
-<span class='line-number'>8</span>
-<span class='line-number'>9</span>
-<span class='line-number'>10</span>
-<span class='line-number'>11</span>
-<span class='line-number'>12</span>
-<span class='line-number'>13</span>
-<span class='line-number'>14</span>
-<span class='line-number'>15</span>
-<span class='line-number'>16</span>
-<span class='line-number'>17</span>
-<span class='line-number'>18</span>
-<span class='line-number'>19</span>
-<span class='line-number'>20</span>
-<span class='line-number'>21</span>
-<span class='line-number'>22</span>
-<span class='line-number'>23</span>
-<span class='line-number'>24</span>
-<span class='line-number'>25</span>
-<span class='line-number'>26</span>
-<span class='line-number'>27</span>
-<span class='line-number'>28</span>
-<span class='line-number'>29</span>
-<span class='line-number'>30</span>
-<span class='line-number'>31</span>
-<span class='line-number'>32</span>
-<span class='line-number'>33</span>
-<span class='line-number'>34</span>
-<span class='line-number'>35</span>
-<span class='line-number'>36</span>
-<span class='line-number'>37</span>
-<span class='line-number'>38</span>
-<span class='line-number'>39</span>
-<span class='line-number'>40</span>
-<span class='line-number'>41</span>
-<span class='line-number'>42</span>
-<span class='line-number'>43</span>
-<span class='line-number'>44</span>
-<span class='line-number'>45</span>
-<span class='line-number'>46</span>
-<span class='line-number'>47</span>
-<span class='line-number'>48</span>
-<span class='line-number'>49</span>
-<span class='line-number'>50</span>
-<span class='line-number'>51</span>
-<span class='line-number'>52</span>
-<span class='line-number'>53</span>
-<span class='line-number'>54</span>
-<span class='line-number'>55</span>
-<span class='line-number'>56</span>
-<span class='line-number'>57</span>
-<span class='line-number'>58</span>
-<span class='line-number'>59</span>
-<span class='line-number'>60</span>
-<span class='line-number'>61</span>
-<span class='line-number'>62</span>
-<span class='line-number'>63</span>
-</pre></td><td class='code'><pre><code class='objc'><span class='line'><span class="o">&lt;/</span><span class="n">p</span><span class="o">&gt;</span>
-</span><span class='line'>
-</span><span class='line'><span class="o">&lt;</span><span class="n">ul</span><span class="o">&gt;</span>
-</span><span class='line'><span class="o">&lt;</span><span class="n">li</span><span class="o">&gt;&lt;</span><span class="n">p</span><span class="o">&gt;</span><span class="p">(</span><span class="kt">void</span><span class="p">)</span><span class="n">joinGame</span> <span class="p">{</span><span class="o">&lt;/</span><span class="n">p</span><span class="o">&gt;</span>
-</span><span class='line'>
-</span><span class='line'><span class="o">&lt;</span><span class="n">p</span><span class="o">&gt;</span><span class="k">if</span> <span class="p">(</span><span class="o">!</span><span class="p">[</span><span class="n">self</span><span class="p">.</span><span class="n">stateMachine</span><span class="p">.</span><span class="n">currentState</span><span class="p">.</span><span class="n">name</span> <span class="nl">isEqual:</span><span class="s">@&quot;idle&quot;</span><span class="p">])</span> <span class="p">{</span>
-</span><span class='line'>  <span class="p">[</span><span class="n">self</span> <span class="nl">fireEvent:</span><span class="n">CUGestGameManagerDisconnectedEvent</span> <span class="nl">userInfo:</span><span class="nb">nil</span><span class="p">];</span>
-</span><span class='line'><span class="p">}</span><span class="o">&lt;/</span><span class="n">p</span><span class="o">&gt;</span>
-</span><span class='line'>
-</span><span class='line'><span class="o">&lt;</span><span class="n">p</span><span class="o">&gt;</span><span class="p">[</span><span class="n">self</span> <span class="nl">fireEvent:</span><span class="n">CUGestGameManagerSearchingEvent</span> <span class="nl">userInfo:</span><span class="nb">nil</span><span class="p">];</span>
-</span><span class='line'><span class="p">}</span><span class="o">&lt;/</span><span class="n">p</span><span class="o">&gt;&lt;/</span><span class="n">li</span><span class="o">&gt;</span>
-</span><span class='line'><span class="o">&lt;</span><span class="n">li</span><span class="o">&gt;&lt;</span><span class="n">p</span><span class="o">&gt;</span><span class="p">(</span><span class="kt">void</span><span class="p">)</span><span class="n">searchingGames</span> <span class="p">{</span>
-</span><span class='line'><span class="n">AVQuery</span> <span class="o">*</span><span class="n">query</span> <span class="o">=</span> <span class="p">[</span><span class="n">AVQuery</span> <span class="nl">queryWithClassName:</span><span class="s">@&quot;waiting_join_Ids&quot;</span><span class="p">];</span>
-</span><span class='line'><span class="p">[</span><span class="n">query</span> <span class="nl">orderByDescending:</span><span class="s">@&quot;updatedAt&quot;</span><span class="p">];</span>
-</span><span class='line'><span class="p">[</span><span class="n">query</span> <span class="nl">setLimit:</span><span class="mi">1</span><span class="p">];</span><span class="o">&lt;/</span><span class="n">p</span><span class="o">&gt;</span>
-</span><span class='line'>
-</span><span class='line'><span class="o">&lt;</span><span class="n">p</span><span class="o">&gt;</span><span class="p">[</span><span class="n">query</span> <span class="nl">findObjectsInBackgroundWithBlock:</span><span class="o">&lt;</span><span class="n">sup</span><span class="o">&gt;</span><span class="p">(</span><span class="n">NSArray</span><span class="o">&lt;/</span><span class="n">sup</span><span class="o">&gt;</span> <span class="o">&lt;</span><span class="n">em</span><span class="o">&gt;</span><span class="n">objects</span><span class="p">,</span> <span class="n">NSError</span> <span class="o">&lt;/</span><span class="n">em</span><span class="o">&gt;</span><span class="n">error</span><span class="p">)</span> <span class="p">{</span>
-</span><span class='line'>  <span class="n">NSMutableArray</span> <span class="o">&lt;</span><span class="n">em</span><span class="o">&gt;</span><span class="n">installationIds</span> <span class="o">=</span> <span class="p">[[</span><span class="n">NSMutableArray</span> <span class="n">alloc</span><span class="p">]</span> <span class="n">init</span><span class="p">];</span>
-</span><span class='line'>  <span class="k">for</span> <span class="p">(</span><span class="n">AVObject</span> <span class="o">&lt;/</span><span class="n">em</span><span class="o">&gt;</span><span class="n">object</span> <span class="k">in</span> <span class="n">objects</span><span class="p">)</span> <span class="p">{</span><span class="o">&lt;/</span><span class="n">p</span><span class="o">&gt;</span>
-</span><span class='line'>
-</span><span class='line'><span class="o">&lt;</span><span class="n">pre</span><span class="o">&gt;&lt;</span><span class="n">code</span><span class="o">&gt;</span><span class="k">if</span> <span class="p">([</span><span class="n">object</span> <span class="nl">objectForKey:</span><span class="s">@&quot;peerId&quot;</span><span class="p">])</span> <span class="p">{</span>
-</span><span class='line'>  <span class="p">[</span><span class="n">installationIds</span> <span class="nl">addObject:</span><span class="p">[</span><span class="n">object</span> <span class="nl">objectForKey:</span><span class="s">@&quot;peerId&quot;</span><span class="p">]];</span>
-</span><span class='line'><span class="p">}</span>
-</span><span class='line'><span class="o">&lt;/</span><span class="n">code</span><span class="o">&gt;&lt;/</span><span class="n">pre</span><span class="o">&gt;</span>
-</span><span class='line'>
-</span><span class='line'><span class="o">&lt;</span><span class="n">p</span><span class="o">&gt;</span>  <span class="p">}</span><span class="o">&lt;/</span><span class="n">p</span><span class="o">&gt;</span>
-</span><span class='line'>
-</span><span class='line'><span class="o">&lt;</span><span class="n">p</span><span class="o">&gt;</span>  <span class="p">[</span><span class="n">self</span><span class="p">.</span><span class="n">session</span> <span class="nl">watchPeerIds:</span><span class="n">installationIds</span><span class="p">];</span><span class="o">&lt;/</span><span class="n">p</span><span class="o">&gt;</span>
-</span><span class='line'>
-</span><span class='line'><span class="o">&lt;</span><span class="n">p</span><span class="o">&gt;</span>  <span class="p">[</span><span class="n">NSObject</span> <span class="nl">cancelPreviousPerformRequestsWithTarget:</span><span class="n">self</span> <span class="nl">selector:</span><span class="k">@selector</span><span class="p">(</span><span class="n">sendJoinRequest</span><span class="p">)</span> <span class="nl">object:</span><span class="nb">nil</span><span class="p">];</span>
-</span><span class='line'>  <span class="p">[</span><span class="n">self</span> <span class="nl">performSelector:</span><span class="k">@selector</span><span class="p">(</span><span class="n">sendJoinRequest</span><span class="p">)</span><span class="o">&lt;/</span><span class="n">p</span><span class="o">&gt;</span>
-</span><span class='line'>
-</span><span class='line'><span class="o">&lt;</span><span class="n">pre</span><span class="o">&gt;&lt;</span><span class="n">code</span><span class="o">&gt;</span>         <span class="nl">withObject:</span><span class="nb">nil</span>
-</span><span class='line'>         <span class="nl">afterDelay:</span><span class="mf">2.0f</span><span class="p">];</span>
-</span><span class='line'><span class="o">&lt;/</span><span class="n">code</span><span class="o">&gt;&lt;/</span><span class="n">pre</span><span class="o">&gt;</span>
-</span><span class='line'>
-</span><span class='line'><span class="o">&lt;</span><span class="n">p</span><span class="o">&gt;</span><span class="p">}];</span>
-</span><span class='line'><span class="p">}</span><span class="o">&lt;/</span><span class="n">p</span><span class="o">&gt;&lt;/</span><span class="n">li</span><span class="o">&gt;</span>
-</span><span class='line'><span class="o">&lt;</span><span class="n">li</span><span class="o">&gt;&lt;</span><span class="n">p</span><span class="o">&gt;</span><span class="p">(</span><span class="kt">void</span><span class="p">)</span><span class="n">sendJoinRequest</span> <span class="p">{</span><span class="o">&lt;/</span><span class="n">p</span><span class="o">&gt;</span>
-</span><span class='line'>
-</span><span class='line'><span class="o">&lt;</span><span class="n">p</span><span class="o">&gt;</span><span class="k">for</span> <span class="p">(</span><span class="n">NSString</span> <span class="o">&lt;</span><span class="n">em</span><span class="o">&gt;</span><span class="n">item</span> <span class="k">in</span> <span class="n">self</span><span class="p">.</span><span class="n">session</span><span class="p">.</span><span class="n">watchedPeerIds</span><span class="p">)</span> <span class="p">{</span>
-</span><span class='line'>  <span class="n">AVMessage</span> <span class="o">&lt;/</span><span class="n">em</span><span class="o">&gt;</span><span class="n">message</span> <span class="o">=</span> <span class="p">[</span><span class="n">AVMessage</span> <span class="nl">messageForPeerWithSession:</span><span class="n">self</span><span class="p">.</span><span class="n">session</span><span class="o">&lt;/</span><span class="n">p</span><span class="o">&gt;</span>
-</span><span class='line'>
-</span><span class='line'><span class="o">&lt;</span><span class="n">pre</span><span class="o">&gt;&lt;</span><span class="n">code</span><span class="o">&gt;</span>                                               <span class="nl">toPeerId:</span><span class="n">item</span>
-</span><span class='line'>                                                <span class="nl">payload:</span><span class="s">@&quot;join&quot;</span><span class="p">];</span>
-</span><span class='line'><span class="o">&lt;/</span><span class="n">code</span><span class="o">&gt;&lt;/</span><span class="n">pre</span><span class="o">&gt;</span>
-</span><span class='line'>
-</span><span class='line'><span class="o">&lt;</span><span class="n">p</span><span class="o">&gt;</span>  <span class="p">[</span><span class="n">self</span><span class="p">.</span><span class="n">session</span> <span class="nl">sendMessage:</span><span class="n">message</span> <span class="nl">transient:</span><span class="n">YES</span><span class="p">];</span>
-</span><span class='line'><span class="p">}</span>
-</span><span class='line'><span class="p">}</span><span class="o">&lt;/</span><span class="n">p</span><span class="o">&gt;&lt;/</span><span class="n">li</span><span class="o">&gt;</span>
-</span><span class='line'><span class="o">&lt;</span><span class="n">li</span><span class="o">&gt;&lt;</span><span class="n">p</span><span class="o">&gt;</span><span class="p">(</span><span class="kt">void</span><span class="p">)</span><span class="n">sendGo</span><span class="p">{</span>
-</span><span class='line'><span class="n">AVMessage</span> <span class="o">*</span><span class="n">message</span> <span class="o">=</span> <span class="p">[</span><span class="n">AVMessage</span> <span class="nl">messageForPeerWithSession:</span><span class="n">self</span><span class="p">.</span><span class="n">session</span><span class="o">&lt;/</span><span class="n">p</span><span class="o">&gt;</span>
-</span><span class='line'>
-</span><span class='line'><span class="o">&lt;</span><span class="n">pre</span><span class="o">&gt;&lt;</span><span class="n">code</span><span class="o">&gt;</span>                                             <span class="nl">toPeerId:</span><span class="n">self</span><span class="p">.</span><span class="n">otherPeerId</span>
-</span><span class='line'>                                              <span class="nl">payload:</span><span class="s">@&quot;go&quot;</span><span class="p">];</span>
-</span><span class='line'><span class="o">&lt;/</span><span class="n">code</span><span class="o">&gt;&lt;/</span><span class="n">pre</span><span class="o">&gt;</span>
-</span><span class='line'>
-</span><span class='line'><span class="o">&lt;</span><span class="n">p</span><span class="o">&gt;</span><span class="p">[</span><span class="n">self</span><span class="p">.</span><span class="n">session</span> <span class="nl">sendMessage:</span><span class="n">message</span> <span class="nl">transient:</span><span class="n">YES</span><span class="p">];</span>
-</span><span class='line'><span class="p">}</span><span class="o">&lt;/</span><span class="n">p</span><span class="o">&gt;&lt;/</span><span class="n">li</span><span class="o">&gt;</span>
-</span><span class='line'><span class="o">&lt;/</span><span class="n">ul</span><span class="o">&gt;</span>
-</span><span class='line'>
-</span><span class='line'>
-</span><span class='line'><span class="o">&lt;</span><span class="n">p</span><span class="o">&gt;</span>
-</span></code></pre></td></tr></table></div></figure></notextile></div></p>
+<p>{% codeblock lang:objc %}</p>
+
+<ul>
+<li><p>(void)joinGame {</p>
+
+<p>if (![self.stateMachine.currentState.name isEqual:@"idle"]) {
+  [self fireEvent:CUGestGameManagerDisconnectedEvent userInfo:nil];
+}</p>
+
+<p>[self fireEvent:CUGestGameManagerSearchingEvent userInfo:nil];
+}</p></li>
+<li><p>(void)searchingGames {
+AVQuery *query = [AVQuery queryWithClassName:@"waiting_join_Ids"];
+[query orderByDescending:@"updatedAt"];
+[query setLimit:1];</p>
+
+<p>[query findObjectsInBackgroundWithBlock:<sup>(NSArray</sup> <em>objects, NSError </em>error) {
+  NSMutableArray <em>installationIds = [[NSMutableArray alloc] init];
+  for (AVObject </em>object in objects) {</p>
+
+<pre><code>if ([object objectForKey:@"peerId"]) {
+  [installationIds addObject:[object objectForKey:@"peerId"]];
+}
+</code></pre>
+
+<p>  }</p>
+
+<p>  [self.session watchPeerIds:installationIds];</p>
+
+<p>  [NSObject cancelPreviousPerformRequestsWithTarget:self selector:@selector(sendJoinRequest) object:nil];
+  [self performSelector:@selector(sendJoinRequest)</p>
+
+<pre><code>         withObject:nil
+         afterDelay:2.0f];
+</code></pre>
+
+<p>}];
+}</p></li>
+<li><p>(void)sendJoinRequest {</p>
+
+<p>for (NSString <em>item in self.session.watchedPeerIds) {
+  AVMessage </em>message = [AVMessage messageForPeerWithSession:self.session</p>
+
+<pre><code>                                               toPeerId:item
+                                                payload:@"join"];
+</code></pre>
+
+<p>  [self.session sendMessage:message transient:YES];
+}
+}</p></li>
+<li><p>(void)sendGo{
+AVMessage *message = [AVMessage messageForPeerWithSession:self.session</p>
+
+<pre><code>                                             toPeerId:self.otherPeerId
+                                              payload:@"go"];
+</code></pre>
+
+<p>[self.session sendMessage:message transient:YES];
+}</p></li>
+</ul>
+
+
+<p>{% endcodeblock %}</p>
 
 <h1>最后</h1>
 
@@ -481,7 +285,7 @@
 
 <p>我们有2个页面。</p>
 
-<p><span class='caption-wrapper'><img class='caption' src='/images/architecture0.gif' width='' height='' title=''><span class='caption-text'></span></span></p>
+<p>{% imgcap /images/architecture0.gif%}</p>
 
 <ul>
 <li>页面A：主页面</li>
@@ -493,7 +297,7 @@
 
 <p>2个页面分别显示一个数字，这个数字应该相同。详情会修改这个数字，这里我们发现，详情页面和主页面数字不一样。</p>
 
-<p><span class='caption-wrapper'><img class='caption' src='/images/architecture1.gif' width='' height='' title='数据不一致'><span class='caption-text'>数据不一致</span></span></p>
+<p>{% imgcap /images/architecture1.gif 数据不一致%}</p>
 
 <h2>问题1 解决方法A</h2>
 
@@ -574,7 +378,7 @@
 
 <p>过了一段时间，我们发现问题2的方法有一个Bug，当界面停在页面B的时候，切换到页面C，修改数据，B中再返回时，数据和页面A的数据不一致。</p>
 
-<p><span class='caption-wrapper'><img class='caption' src='/images/architecture2.gif' width='' height='' title='数据不一致'><span class='caption-text'>数据不一致</span></span></p>
+<p>{% imgcap /images/architecture2.gif 数据不一致%}</p>
 
 <p>那也可以类比解决方法B，得到了下面的方法</p>
 
@@ -635,7 +439,7 @@
 
 <p>我们把数据库中的数据，显示到屏幕上，或是传递给View时，这个过程其实是对data 做了一次copy。而且只要不是通过引用或是指针这些方式，通过值传递的方式都是对data做了一次copy。而这个copy的过程，非常类似<strong>Cache</strong>。</p>
 
-<p><span class='caption-wrapper'><img class='caption' src='/images/ios-architecture0.png' width='' height='' title=''><span class='caption-text'></span></span></p>
+<p>{% imgcap /images/ios-architecture0.png%}</p>
 
 <p>通常建立一个Cache会遇到2种问题。</p>
 
@@ -655,17 +459,17 @@
 
 <p>页面之间的关系可以用下面来描述</p>
 
-<p><span class='caption-wrapper'><img class='caption' src='/images/ios-architecture1.png' width='' height='' title=''><span class='caption-text'></span></span></p>
+<p>{% imgcap /images/ios-architecture1.png%}</p>
 
 <p>这里我们隐隐能够感觉到问题，A的数据变化依赖于2个地方。不急，再往后看</p>
 
 <h2>解决方法C</h2>
 
-<p><span class='caption-wrapper'><img class='caption' src='/images/ios-architecture2.png' width='' height='' title=''><span class='caption-text'></span></span></p>
+<p>{% imgcap /images/ios-architecture2.png%}</p>
 
 <h2>解决方法D</h2>
 
-<p><span class='caption-wrapper'><img class='caption' src='/images/ios-architecture3.png' width='' height='' title=''><span class='caption-text'></span></span></p>
+<p>{% imgcap /images/ios-architecture3.png%}</p>
 
 <p>事情变得更糟了</p>
 
@@ -677,7 +481,7 @@
 
 <p>现在还是一个简单的Model，如果project变得很大，那么就会变成这个样子</p>
 
-<p><span class='caption-wrapper'><img class='caption' src='/images/ios-architecture4.png' width='' height='' title=''><span class='caption-text'></span></span></p>
+<p>{% imgcap /images/ios-architecture4.png%}</p>
 
 <p>每一个<code>X</code>都可能是一个Bug。</p>
 
@@ -689,7 +493,7 @@
 
 <p>DAO的数据库似乎很难做这件事情，我们引入了一个新的元素<code>dataSource</code>（当然他本身又是DAO的一个Cache)。其中A、B、C3个都会显示数据，那么他们应该在一个层级，其中B、C会修改数据，他们会把这个数据返回给<code>dataSource</code>，而通过<code>dataSource</code>来把这个变化通知到A、B、C。</p>
 
-<p><span class='caption-wrapper'><img class='caption' src='/images/ios-architecture5.png' width='' height='' title=''><span class='caption-text'></span></span></p>
+<p>{% imgcap /images/ios-architecture5.png%}</p>
 
 <p>这样带来的好处很明显，我们再添加一个D，也不会对其他地方的数据产生任何影响，我们的Unit Test、Mock也更加好写。</p>
 
@@ -757,35 +561,20 @@
 
 <p><code>presentation tree</code> 是Layer在屏幕中的真实位置。比如我们创建一个动画</p>
 
-<p><div class='bogus-wrapper'><notextile><figure class='code'> <div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
-<span class='line-number'>2</span>
-<span class='line-number'>3</span>
-<span class='line-number'>4</span>
-<span class='line-number'>5</span>
-<span class='line-number'>6</span>
-<span class='line-number'>7</span>
-<span class='line-number'>8</span>
-<span class='line-number'>9</span>
-<span class='line-number'>10</span>
-<span class='line-number'>11</span>
-<span class='line-number'>12</span>
-<span class='line-number'>13</span>
-<span class='line-number'>14</span>
-</pre></td><td class='code'><pre><code class='objc'><span class='line'><span class="o">&lt;/</span><span class="n">p</span><span class="o">&gt;</span>
-</span><span class='line'>
-</span><span class='line'><span class="o">&lt;</span><span class="n">pre</span><span class="o">&gt;&lt;</span><span class="n">code</span><span class="o">&gt;</span>  <span class="p">[</span><span class="n">UIView</span> <span class="nl">animateWithDuration:</span><span class="mf">5.0f</span>
-</span><span class='line'>               <span class="nl">animations:</span><span class="o">^</span><span class="p">{</span>
-</span><span class='line'>                 <span class="n">self</span><span class="p">.</span><span class="n">animationLabel</span><span class="p">.</span><span class="n">center</span> <span class="o">=</span> <span class="n">CGPointMake</span><span class="p">(</span><span class="mi">200</span><span class="p">,</span> <span class="mi">400</span><span class="p">);</span>
-</span><span class='line'>               <span class="p">}];</span>
-</span><span class='line'>
-</span><span class='line'><span class="c1">//这里用一个Timer print presentLayer的位置。</span>
-</span><span class='line'><span class="n">CALayer</span> <span class="o">*</span><span class="n">layer</span> <span class="o">=</span> <span class="n">self</span><span class="p">.</span><span class="n">animationLabel</span><span class="p">.</span><span class="n">layer</span><span class="p">.</span><span class="n">presentationLayer</span><span class="p">;</span>
-</span><span class='line'>
-</span><span class='line'><span class="n">NSLog</span><span class="p">(</span><span class="s">@&quot;model:%@, presentLayer%@&quot;</span><span class="p">,</span> <span class="n">NSStringFromCGPoint</span><span class="p">(</span><span class="n">self</span><span class="p">.</span><span class="n">animationLabel</span><span class="p">.</span><span class="n">layer</span><span class="p">.</span><span class="n">position</span><span class="p">),</span> <span class="n">NSStringFromCGPoint</span><span class="p">(</span><span class="n">layer</span><span class="p">.</span><span class="n">position</span><span class="p">));</span>
-</span><span class='line'><span class="o">&lt;/</span><span class="n">code</span><span class="o">&gt;&lt;/</span><span class="n">pre</span><span class="o">&gt;</span>
-</span><span class='line'>
-</span><span class='line'><span class="o">&lt;</span><span class="n">p</span><span class="o">&gt;</span>
-</span></code></pre></td></tr></table></div></figure></notextile></div></p>
+<p>{% codeblock lang:objc %}</p>
+
+<pre><code>  [UIView animateWithDuration:5.0f
+               animations:^{
+                 self.animationLabel.center = CGPointMake(200, 400);
+               }];
+
+//这里用一个Timer print presentLayer的位置。
+CALayer *layer = self.animationLabel.layer.presentationLayer;
+
+NSLog(@"model:%@, presentLayer%@", NSStringFromCGPoint(self.animationLabel.layer.position), NSStringFromCGPoint(layer.position));
+</code></pre>
+
+<p>{% endcodeblock %}</p>
 
 <p>下面是屏幕输出结果</p>
 
@@ -800,17 +589,21 @@ model:{200, 400}, presentLayer{199.99576, 399.99182}
 model:{200, 400}, presentLayer{200, 400}
 </code></pre>
 
-<p><div class='notebox'><p><strong>Note: </strong>render tree 在apple的render server进程中，是真正处理动画的地方。而且线程的优先级也比我们主线程优先级高。所以有时候即使我们的App主线程busy，依然不会影响到手机屏幕的绘制工作。</p></div></p>
+<p>{%notebox%}
+render tree 在apple的render server进程中，是真正处理动画的地方。而且线程的优先级也比我们主线程优先级高。所以有时候即使我们的App主线程busy，依然不会影响到手机屏幕的绘制工作。
+{%endnotebox%}</p>
 
 <h1>CADisplayLink</h1>
 
 <p>了解<a href="http://www.cocos2d-x.org/?v=EN">cocos2dx</a>对CADisplayLink一点也不陌生，对APP开发者可能就有一点远，但是facebook的<a href="https://github.com/facebook/pop">Pop</a>一下子拉近了我们和CADisplayLink的距离。通过设置callback函数，当屏幕刷新的时候，就可以执行我们的代码。当然，我们也可以利用NSTimer 或是GCD来实现类似的功能。但是CADisplayLink是最优的，因为不管是哪种类型的Timer，即使我们的刷新间隔和屏幕刷新保持一致。我们都无法知道系统什么时候刷新屏幕。</p>
 
-<p><span class='caption-wrapper'><img class='caption' src='/images/core_animation1.png' width='' height='' title='1-1 NSTimer中每一帧其实只有8ms的时间，如果大于8ms，那么就会丢帧'><span class='caption-text'>1-1 NSTimer中每一帧其实只有8ms的时间，如果大于8ms，那么就会丢帧</span></span></p>
+<p>{% imgcap /images/core_animation1.png 1-1 NSTimer中每一帧其实只有8ms的时间，如果大于8ms，那么就会丢帧%}</p>
 
 <p>facebook的<a href="https://github.com/facebook/pop">Pop</a>非常类似UIDynamic，但是我们需要注意一点，相对于传统的model动画来说，CADisplayLink导致部分绘制工作放在了我们APP的地址空间中，也就是说，增大了APP内存，CPU的开销。也更容易遇到性能瓶颈。</p>
 
-<p><div class='notebox'><p><strong>Note: </strong>model layer的这部分绘制是完全在render server，而render server运行在比APP更高优先级的进程中，而这个也意味着会有进程间通讯的开销。传递的数据包括整个render tree还有动画，所以，Apple 并不推荐我们手动commit transaction, Core Animation 默认会在run loop 中提交transaction。</p></div></p>
+<p>{% notebox %}
+model layer的这部分绘制是完全在render server，而render server运行在比APP更高优先级的进程中，而这个也意味着会有进程间通讯的开销。传递的数据包括整个render tree还有动画，所以，Apple 并不推荐我们手动commit transaction, Core Animation 默认会在run loop 中提交transaction。
+{% endnotebox %}</p>
 
 <h1>UIView animation</h1>
 
@@ -818,7 +611,7 @@ model:{200, 400}, presentLayer{200, 400}
 
 <p><a href="https://github.com/studentdeng/CoreAnimationAdditiveExample">下图的相关代码</a></p>
 
-<p><span class='caption-wrapper'><img class='caption' src='/images/core_animation1.gif' width='' height='' title=''><span class='caption-text'></span></span></p>
+<p>{% imgcap /images/core_animation1.gif %}</p>
 
 <p>这里我们看到了3种情况。</p>
 
@@ -834,39 +627,24 @@ model:{200, 400}, presentLayer{200, 400}
 <p>UIKit的动画最后都会通过Core Animation 来实现, 那么当我们修改layer（model layer）的数值时，系统是如何理解并创建动画呢？
 比如这里有一个线性的动画，将animationView的坐标从（0，0）移动到（0,500）</p>
 
-<p><div class='bogus-wrapper'><notextile><figure class='code'> <div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
-<span class='line-number'>2</span>
-<span class='line-number'>3</span>
-<span class='line-number'>4</span>
-<span class='line-number'>5</span>
-<span class='line-number'>6</span>
-<span class='line-number'>7</span>
-<span class='line-number'>8</span>
-<span class='line-number'>9</span>
-<span class='line-number'>10</span>
-<span class='line-number'>11</span>
-<span class='line-number'>12</span>
-<span class='line-number'>13</span>
-<span class='line-number'>14</span>
-</pre></td><td class='code'><pre><code class='objc'><span class='line'><span class="o">&lt;/</span><span class="n">p</span><span class="o">&gt;</span>
-</span><span class='line'>
-</span><span class='line'><span class="o">&lt;</span><span class="n">pre</span><span class="o">&gt;&lt;</span><span class="n">code</span><span class="o">&gt;</span>  <span class="n">animationView</span><span class="p">.</span><span class="n">center</span> <span class="o">=</span> <span class="n">CGPointMake</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="mi">0</span><span class="p">);</span>
-</span><span class='line'>  <span class="p">[</span><span class="n">UIView</span> <span class="nl">animateWithDuration:</span><span class="mf">1.0f</span>
-</span><span class='line'>                    <span class="nl">delay:</span><span class="mi">0</span>
-</span><span class='line'>                  <span class="nl">options:</span><span class="n">UIViewAnimationOptionCurveLinear</span>
-</span><span class='line'>               <span class="nl">animations:</span><span class="o">^</span><span class="p">{</span>
-</span><span class='line'>                 <span class="n">animationView</span><span class="p">.</span><span class="n">center</span> <span class="o">=</span> <span class="n">CGPointMake</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="mi">500</span><span class="p">);</span>
-</span><span class='line'>               <span class="p">}</span> <span class="nl">completion:</span><span class="o">^</span><span class="p">(</span><span class="kt">BOOL</span> <span class="n">finished</span><span class="p">)</span> <span class="p">{</span>
-</span><span class='line'>
-</span><span class='line'>               <span class="p">}];</span>
-</span><span class='line'><span class="o">&lt;/</span><span class="n">code</span><span class="o">&gt;&lt;/</span><span class="n">pre</span><span class="o">&gt;</span>
-</span><span class='line'>
-</span><span class='line'><span class="o">&lt;</span><span class="n">p</span><span class="o">&gt;</span>
-</span></code></pre></td></tr></table></div></figure></notextile></div></p>
+<p>{% codeblock lang:objc %}</p>
+
+<pre><code>  animationView.center = CGPointMake(0, 0);
+  [UIView animateWithDuration:1.0f
+                    delay:0
+                  options:UIViewAnimationOptionCurveLinear
+               animations:^{
+                 animationView.center = CGPointMake(0, 500);
+               } completion:^(BOOL finished) {
+
+               }];
+</code></pre>
+
+<p>{% endcodeblock %}</p>
 
 <h3>下面是当我们创建一个UIKit的动画时发生的事情</h3>
 
-<p><span class='caption-wrapper'><img class='caption' src='/images/core_animation9.png' width='' height='' title=''><span class='caption-text'></span></span></p>
+<p>{% imgcap /images/core_animation9.png %}</p>
 
 <ul>
 <li>Model：在<code>animationView.center = CGPointMake(0, 500);</code>之后会立刻修改<code>animationView</code>的model Layer中的<code>position</code>的值为（0， 500）。</li>
@@ -875,47 +653,35 @@ model:{200, 400}, presentLayer{200, 400}
 </ul>
 
 
-<p><div class='notebox'><p><strong>Note: </strong>Animation的部分如果没有明白，可以结合后面的回头再看</p></div></p>
+<p>{%notebox%}
+Animation的部分如果没有明白，可以结合后面的回头再看
+{%endnotebox%}</p>
 
 <h3>当我们看到屏幕上面的View移动的时候，发生了下面的事情</h3>
 
 <p>这是在0.4s时刻之前的状态。Model Layer的数值没有变化，而Presentation则在变化，和真正的屏幕动画保持一致。</p>
 
-<p><span class='caption-wrapper'><img class='caption' src='/images/core_animation10.png' width='' height='' title=''><span class='caption-text'></span></span></p>
+<p>{% imgcap /images/core_animation10.png %}</p>
 
 <h3>在一个animation并没有完成的情况下，再创建一个动画系统是如何理解的呢？</h3>
 
 <p>如果我们在<strong>0.5时刻</strong>创建一个reverse动画，<code>animationView.center = CGPointMake(0, 0);</code></p>
 
-<p><div class='bogus-wrapper'><notextile><figure class='code'> <div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
-<span class='line-number'>2</span>
-<span class='line-number'>3</span>
-<span class='line-number'>4</span>
-<span class='line-number'>5</span>
-<span class='line-number'>6</span>
-<span class='line-number'>7</span>
-<span class='line-number'>8</span>
-<span class='line-number'>9</span>
-<span class='line-number'>10</span>
-<span class='line-number'>11</span>
-<span class='line-number'>12</span>
-<span class='line-number'>13</span>
-</pre></td><td class='code'><pre><code class='objc'><span class='line'><span class="o">&lt;/</span><span class="n">p</span><span class="o">&gt;</span>
-</span><span class='line'>
-</span><span class='line'><span class="o">&lt;</span><span class="n">pre</span><span class="o">&gt;&lt;</span><span class="n">code</span><span class="o">&gt;</span>  <span class="p">[</span><span class="n">UIView</span> <span class="nl">animateWithDuration:</span><span class="mf">1.0f</span>
-</span><span class='line'>                    <span class="nl">delay:</span><span class="mi">0</span>
-</span><span class='line'>                  <span class="nl">options:</span><span class="n">UIViewAnimationOptionCurveLinear</span>
-</span><span class='line'>               <span class="nl">animations:</span><span class="o">^</span><span class="p">{</span>
-</span><span class='line'>                 <span class="n">animationView</span><span class="p">.</span><span class="n">center</span> <span class="o">=</span> <span class="n">CGPointMake</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="mi">0</span><span class="p">);</span>
-</span><span class='line'>               <span class="p">}</span> <span class="nl">completion:</span><span class="o">^</span><span class="p">(</span><span class="kt">BOOL</span> <span class="n">finished</span><span class="p">)</span> <span class="p">{</span>
-</span><span class='line'>
-</span><span class='line'>               <span class="p">}];</span>
-</span><span class='line'><span class="o">&lt;/</span><span class="n">code</span><span class="o">&gt;&lt;/</span><span class="n">pre</span><span class="o">&gt;</span>
-</span><span class='line'>
-</span><span class='line'><span class="o">&lt;</span><span class="n">p</span><span class="o">&gt;</span>
-</span></code></pre></td></tr></table></div></figure></notextile></div></p>
+<p>{% codeblock lang:objc %}</p>
 
-<p><span class='caption-wrapper'><img class='caption' src='/images/core_animation5.png' width='' height='' title=''><span class='caption-text'></span></span></p>
+<pre><code>  [UIView animateWithDuration:1.0f
+                    delay:0
+                  options:UIViewAnimationOptionCurveLinear
+               animations:^{
+                 animationView.center = CGPointMake(0, 0);
+               } completion:^(BOOL finished) {
+
+               }];
+</code></pre>
+
+<p>{% endcodeblock%}</p>
+
+<p>{% imgcap /images/core_animation5.png %}</p>
 
 <ul>
 <li>Model：的数值会被立刻修改成目标数值(0, 0)</li>
@@ -930,7 +696,7 @@ model:{200, 400}, presentLayer{200, 400}
 
 <p>在上面的基础之前，绿色的就可以简单说一些</p>
 
-<p><span class='caption-wrapper'><img class='caption' src='/images/core_animation6.png' width='' height='' title=''><span class='caption-text'></span></span></p>
+<p>{% imgcap /images/core_animation6.png %}</p>
 
 <ul>
 <li>Model 这里还是和之前一样，表示目标值</li>
@@ -939,8 +705,8 @@ model:{200, 400}, presentLayer{200, 400}
 </ul>
 
 
-<p><span class='caption-wrapper'><img class='caption' src='/images/core_animation2.png' width='' height='' title='linear animation 图中的颜色和本文的颜色无关，只是表示2个动画的stage'><span class='caption-text'>linear animation 图中的颜色和本文的颜色无关，只是表示2个动画的stage</span></span>
-<span class='caption-wrapper'><img class='caption' src='/images/core_animation3.png' width='' height='' title='EseInOut animation 图中的颜色和本文的颜色无关，只是表示2个动画的stage'><span class='caption-text'>EseInOut animation 图中的颜色和本文的颜色无关，只是表示2个动画的stage</span></span></p>
+<p>{% imgcap /images/core_animation2.png linear animation 图中的颜色和本文的颜色无关，只是表示2个动画的stage%}
+{% imgcap /images/core_animation3.png EseInOut animation 图中的颜色和本文的颜色无关，只是表示2个动画的stage%}</p>
 
 <p>可以看出来2个动画相接的曲线不平滑，而造成这个不平滑的原因在于把之前的动画覆盖了, 丢掉了之前动画的速度，如果要实现一个更一般化的解决方案，我们很自然的想到了动画合成。</p>
 
@@ -950,19 +716,21 @@ model:{200, 400}, presentLayer{200, 400}
 
 <p>首先，解释一下什么是相对的动画。</p>
 
-<p><span class='caption-wrapper'><img class='caption' src='/images/core_animation7.png' width='' height='' title=''><span class='caption-text'></span></span></p>
+<p>{% imgcap /images/core_animation7.png %}</p>
 
 <p>这里很容易看到，view的真实位置是Animation 的值 + Model的值。系统的理解就是相对目标值(0, 500)来说，创建一个从-500 到 0 的动画。</p>
 
 <p>其次，相比之前的动画，在0.6时刻（为了方便计算，把之前的0.5时刻移动到了0.6时刻）并没有删除掉之前的动画，而是添加了一个新的动画Animation2。也就是一个相对目标值(0,0)来说，创建一个从500到0的动画。整个运动变成了2个动画的合成。</p>
 
-<p><span class='caption-wrapper'><img class='caption' src='/images/core_animation8.png' width='' height='' title=''><span class='caption-text'></span></span></p>
+<p>{% imgcap /images/core_animation8.png %}</p>
 
-<p><div class='notebox'><p><strong>Note: </strong>Animation2的duration修改了，在demo code里面并没有修改 ：）</p></div></p>
+<p>{%notebox%}
+Animation2的duration修改了，在demo code里面并没有修改 ：）
+{%endnotebox%}</p>
 
 <p>这里，我们就得到了一个一般化的解决方案。</p>
 
-<p><span class='caption-wrapper'><img class='caption' src='/images/core_animation4.png' width='' height='' title='图中的颜色和本文的颜色无关，只是表示2个动画的stage'><span class='caption-text'>图中的颜色和本文的颜色无关，只是表示2个动画的stage</span></span></p>
+<p>{% imgcap /images/core_animation4.png 图中的颜色和本文的颜色无关，只是表示2个动画的stage%}</p>
 
 <h2>iOS8的改动</h2>
 
@@ -1013,21 +781,21 @@ model:{200, 400}, presentLayer{200, 400}
 
 <p>这里的坐标和笛卡尔坐标系不同的是Y的方向</p>
 
-<p><span class='caption-wrapper'><img class='caption' src='/images/autolayout-1.png' width='' height='' title='1-1 The default layer geometries for iOS'><span class='caption-text'>1-1 The default layer geometries for iOS</span></span></p>
+<p>{% imgcap /images/autolayout-1.png 1-1 The default layer geometries for iOS%}</p>
 
 <p>这里表示了anchorPoint含义，用于表示position相对bounds的位置，比如（0.5, 0.5）表示中心，（0,0）表示左上角</p>
 
-<p><span class='caption-wrapper'><img class='caption' src='/images/autolayout-2.png' width='' height='' title='1-2 The default unit coordinate systems for iOS'><span class='caption-text'>1-2 The default unit coordinate systems for iOS</span></span></p>
+<p>{% imgcap /images/autolayout-2.png 1-2 The default unit coordinate systems for iOS%}</p>
 
 <p>下面表示了frame bounds position anchorPoint之间的关系，你可能觉得这个anchorPoint似乎没有什么用</p>
 
-<p><span class='caption-wrapper'><img class='caption' src='/images/autolayout-3.png' width='' height='' title='1-3, 1-4  How the anchor point affects the layer’s position property'><span class='caption-text'>1-3, 1-4  How the anchor point affects the layer’s position property</span></span>
-<span class='caption-wrapper'><img class='caption' src='/images/autolayout-7.png' width='' height='' title=''><span class='caption-text'></span></span></p>
+<p>{% imgcap /images/autolayout-3.png 1-3, 1-4  How the anchor point affects the layer’s position property%}
+{% imgcap /images/autolayout-7.png%}</p>
 
 <p>但是当我们旋转一个View的时候，好处就来了</p>
 
-<p><span class='caption-wrapper'><img class='caption' src='/images/autolayout-4.png' width='' height='' title='1-5 , 1-6 How the anchor point affects the layer’s position property'><span class='caption-text'>1-5 , 1-6 How the anchor point affects the layer’s position property</span></span>
-<span class='caption-wrapper'><img class='caption' src='/images/autolayout-5.png' width='' height='' title=''><span class='caption-text'></span></span></p>
+<p>{% imgcap /images/autolayout-4.png 1-5 , 1-6 How the anchor point affects the layer’s position property%}
+{% imgcap /images/autolayout-5.png%}</p>
 
 <h1>传统布局的问题</h1>
 
@@ -1060,11 +828,11 @@ model:{200, 400}, presentLayer{200, 400}
 
 <p>一般来说<code>layoutSubviews</code>负责布局，比如调整View之间的距离，大小，<code>drawRect</code>负责绘制，比如使用什么颜色。而AutoLayout则是在layout之前增加了一个设定约束的过程,也就是上面提到了<code>update constraints</code>。</p>
 
-<p><span class='caption-wrapper'><img class='caption' src='/images/autolayout-8.png' width='' height='' title='1-7'><span class='caption-text'>1-7</span></span></p>
+<p>{% imgcap /images/autolayout-8.png 1-7%}</p>
 
 <p>在view的<code>layoutSubView</code>中，如果我们调用了<code>[super layoutSubView]</code> 系统就把设定的这些约束计算成每个view的bounds，center属性。当然我们也可以基于AutoLayout的结果,再做布局的调整。</p>
 
-<p><span class='caption-wrapper'><img class='caption' src='/images/autolayout-9.png' width='' height='' title='1-8'><span class='caption-text'>1-8</span></span></p>
+<p>{% imgcap /images/autolayout-9.png 1-8%}</p>
 
 <p><strong>Display 不是这篇文章的重点，这里略过</strong></p>
 
@@ -1073,37 +841,25 @@ model:{200, 400}, presentLayer{200, 400}
 <p>仔细阅读文档的同学会发现在Apple AutoLayout document中可以看到Alignment Rect 这个家伙。
 AutoLayout中的Left，Right等约束，并不是针对View的frame。而是根据Alignment Rect。在绝大多数情况下Alignment = Frame。但是如果对某些需要交互的元素，而图片素材很小的时候，就可以利用Alignment把交互区域变大。可以参考UIImage 中的 <code>imageWithAlignmentRectInsets</code>。</p>
 
-<p><span class='caption-wrapper'><img class='caption' src='/images/autolayout-10.png' width='' height='' title='1-9'><span class='caption-text'>1-9</span></span></p>
+<p>{% imgcap /images/autolayout-10.png 1-9%}</p>
 
 <h2>Animation</h2>
 
 <p>AutoLayout也可以配合传统的animation方法，整体代码结构如下。</p>
 
-<p><div class='bogus-wrapper'><notextile><figure class='code'> <div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
-<span class='line-number'>2</span>
-<span class='line-number'>3</span>
-<span class='line-number'>4</span>
-<span class='line-number'>5</span>
-<span class='line-number'>6</span>
-<span class='line-number'>7</span>
-<span class='line-number'>8</span>
-<span class='line-number'>9</span>
-<span class='line-number'>10</span>
-<span class='line-number'>11</span>
-<span class='line-number'>12</span>
-</pre></td><td class='code'><pre><code class='objc'><span class='line'>  <span class="p">[</span><span class="n">self</span><span class="p">.</span><span class="n">view</span> <span class="n">layoutIfNeeded</span><span class="p">];</span>
-</span><span class='line'>  <span class="p">[</span><span class="n">UIView</span> <span class="nl">animateWithDuration:</span><span class="mf">0.3f</span><span class="o">&lt;/</span><span class="n">p</span><span class="o">&gt;</span>
-</span><span class='line'>
-</span><span class='line'><span class="o">&lt;</span><span class="n">pre</span><span class="o">&gt;&lt;</span><span class="n">code</span><span class="o">&gt;</span>               <span class="nl">animations:</span><span class="o">^</span><span class="p">{</span>
-</span><span class='line'>
-</span><span class='line'>                 <span class="c1">//... update constraints  </span>
-</span><span class='line'>
-</span><span class='line'>                 <span class="p">[</span><span class="n">self</span><span class="p">.</span><span class="n">view</span> <span class="n">layoutIfNeeded</span><span class="p">];</span>
-</span><span class='line'>               <span class="p">}];</span>
-</span><span class='line'><span class="o">&lt;/</span><span class="n">code</span><span class="o">&gt;&lt;/</span><span class="n">pre</span><span class="o">&gt;</span>
-</span><span class='line'>
-</span><span class='line'><span class="o">&lt;</span><span class="n">p</span><span class="o">&gt;</span>
-</span></code></pre></td></tr></table></div></figure></notextile></div></p>
+<p>{% codeblock lang:objc %}
+  [self.view layoutIfNeeded];
+  [UIView animateWithDuration:0.3f</p>
+
+<pre><code>               animations:^{
+
+                 //... update constraints  
+
+                 [self.view layoutIfNeeded];
+               }];
+</code></pre>
+
+<p>{% endcodeblock %}</p>
 
 <p>使用AutoLayout也可以轻易的实现之前的设置frame很难实现的动画效果。比如下面的例子(很奇怪，优酷吃掉了后面几秒的动画...)</p>
 
@@ -1164,73 +920,47 @@ facebook提供了一个非常赞的topic-<a href="http://www.youtube.com/playlis
 
 <p>这个动画效果很简单，有很多方式都可以做到，但是pop来实现它，只需要下面几行代码。</p>
 
-<p><div class='bogus-wrapper'><notextile><figure class='code'> <div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
-<span class='line-number'>2</span>
-<span class='line-number'>3</span>
-<span class='line-number'>4</span>
-<span class='line-number'>5</span>
-<span class='line-number'>6</span>
-<span class='line-number'>7</span>
-</pre></td><td class='code'><pre><code class='objc'><span class='line'>  <span class="n">POPBasicAnimation</span> <span class="o">*</span><span class="n">animation</span> <span class="o">=</span> <span class="p">[</span><span class="n">POPBasicAnimation</span> <span class="n">animation</span><span class="p">];</span>
-</span><span class='line'>  <span class="n">animation</span><span class="p">.</span><span class="n">property</span> <span class="o">=</span> <span class="p">[</span><span class="n">self</span> <span class="n">animationProperty</span><span class="p">];</span>
-</span><span class='line'>  <span class="n">animation</span><span class="p">.</span><span class="n">fromValue</span> <span class="o">=</span> <span class="err">@</span><span class="p">(</span><span class="mi">0</span><span class="p">);</span>
-</span><span class='line'>  <span class="n">animation</span><span class="p">.</span><span class="n">toValue</span> <span class="o">=</span> <span class="err">@</span><span class="p">(</span><span class="mi">8000</span><span class="p">);</span>
-</span><span class='line'>  <span class="n">animation</span><span class="p">.</span><span class="n">duration</span> <span class="o">=</span> <span class="mf">2.0f</span><span class="p">;</span><span class="o">&lt;/</span><span class="n">p</span><span class="o">&gt;</span>
-</span><span class='line'>
-</span><span class='line'><span class="o">&lt;</span><span class="n">p</span><span class="o">&gt;</span>  <span class="p">[</span><span class="n">self</span><span class="p">.</span><span class="n">numberLabel</span> <span class="nl">pop_addAnimation:</span><span class="n">animation</span> <span class="nl">forKey:</span><span class="s">@&quot;numberLabelAnimation&quot;</span><span class="p">];</span>
-</span></code></pre></td></tr></table></div></figure></notextile></div></p>
+<p>{% codeblock lang:objc %}
+  POPBasicAnimation *animation = [POPBasicAnimation animation];
+  animation.property = [self animationProperty];
+  animation.fromValue = @(0);
+  animation.toValue = @(8000);
+  animation.duration = 2.0f;</p>
 
-<p><div class='bogus-wrapper'><notextile><figure class='code'> <div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
-<span class='line-number'>2</span>
-<span class='line-number'>3</span>
-<span class='line-number'>4</span>
-<span class='line-number'>5</span>
-<span class='line-number'>6</span>
-<span class='line-number'>7</span>
-<span class='line-number'>8</span>
-<span class='line-number'>9</span>
-<span class='line-number'>10</span>
-<span class='line-number'>11</span>
-<span class='line-number'>12</span>
-<span class='line-number'>13</span>
-<span class='line-number'>14</span>
-<span class='line-number'>15</span>
-</pre></td><td class='code'><pre><code class='objc'><span class='line'>  <span class="o">-</span> <span class="p">(</span><span class="n">POPMutableAnimatableProperty</span> <span class="o">*</span><span class="p">)</span><span class="n">animationProperty</span> <span class="p">{</span>
-</span><span class='line'>  <span class="k">return</span> <span class="p">[</span><span class="n">POPMutableAnimatableProperty</span><span class="o">&lt;/</span><span class="n">p</span><span class="o">&gt;</span>
-</span><span class='line'>
-</span><span class='line'><span class="o">&lt;</span><span class="n">pre</span><span class="o">&gt;&lt;</span><span class="n">code</span><span class="o">&gt;</span>  <span class="nl">propertyWithName:</span><span class="s">@&quot;com.curer.test&quot;</span>
-</span><span class='line'>       <span class="nl">initializer:</span><span class="o">^</span><span class="p">(</span><span class="n">POPMutableAnimatableProperty</span> <span class="o">*</span><span class="n">prop</span><span class="p">)</span> <span class="p">{</span>
-</span><span class='line'>           <span class="n">prop</span><span class="p">.</span><span class="n">writeBlock</span> <span class="o">=</span> <span class="o">^</span><span class="p">(</span><span class="kt">id</span> <span class="n">obj</span><span class="p">,</span> <span class="k">const</span> <span class="n">CGFloat</span> <span class="n">values</span><span class="p">[])</span> <span class="p">{</span>
-</span><span class='line'>             <span class="n">UILabel</span> <span class="o">*</span><span class="n">label</span> <span class="o">=</span> <span class="p">(</span><span class="n">UILabel</span> <span class="o">*</span><span class="p">)</span><span class="n">obj</span><span class="p">;</span>
-</span><span class='line'>             <span class="n">NSNumber</span> <span class="o">*</span><span class="n">number</span> <span class="o">=</span> <span class="err">@</span><span class="p">(</span><span class="n">values</span><span class="p">[</span><span class="mi">0</span><span class="p">]);</span>
-</span><span class='line'>             <span class="kt">int</span> <span class="n">num</span> <span class="o">=</span> <span class="p">[</span><span class="n">number</span> <span class="n">intValue</span><span class="p">];</span>
-</span><span class='line'>             <span class="n">label</span><span class="p">.</span><span class="n">text</span> <span class="o">=</span> <span class="p">[</span><span class="err">@</span><span class="p">(</span><span class="n">num</span><span class="p">)</span> <span class="n">stringValue</span><span class="p">];</span>
-</span><span class='line'>           <span class="p">};</span>
-</span><span class='line'>       <span class="p">}];</span>
-</span><span class='line'><span class="o">&lt;/</span><span class="n">code</span><span class="o">&gt;&lt;/</span><span class="n">pre</span><span class="o">&gt;</span>
-</span><span class='line'>
-</span><span class='line'><span class="o">&lt;</span><span class="n">p</span><span class="o">&gt;</span><span class="p">}</span>
-</span></code></pre></td></tr></table></div></figure></notextile></div></p>
+<p>  [self.numberLabel pop_addAnimation:animation forKey:@"numberLabelAnimation"];
+{% endcodeblock %}</p>
+
+<p>{% codeblock lang:objc %}
+  - (POPMutableAnimatableProperty *)animationProperty {
+  return [POPMutableAnimatableProperty</p>
+
+<pre><code>  propertyWithName:@"com.curer.test"
+       initializer:^(POPMutableAnimatableProperty *prop) {
+           prop.writeBlock = ^(id obj, const CGFloat values[]) {
+             UILabel *label = (UILabel *)obj;
+             NSNumber *number = @(values[0]);
+             int num = [number intValue];
+             label.text = [@(num) stringValue];
+           };
+       }];
+</code></pre>
+
+<p>}
+{% endcodeblock %}</p>
 
 <p>哈哈，搞定了。pop太强大了。但是细心的同学会发现动画似乎不是我们想要的，我们希望做到那种一开始很快速很激动，最后却有一点慢慢的“欲求不能”的感觉。</p>
 
 <p>很直观的，我们使用了万能的EaseOut动画</p>
 
-<p><div class='bogus-wrapper'><notextile><figure class='code'> <div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
-<span class='line-number'>2</span>
-<span class='line-number'>3</span>
-<span class='line-number'>4</span>
-<span class='line-number'>5</span>
-<span class='line-number'>6</span>
-<span class='line-number'>7</span>
-</pre></td><td class='code'><pre><code class='objc'><span class='line'>  <span class="n">POPBasicAnimation</span> <span class="o">*</span><span class="n">animation</span> <span class="o">=</span> <span class="p">[</span><span class="n">POPBasicAnimation</span> <span class="n">animation</span><span class="p">];</span>
-</span><span class='line'>  <span class="n">animation</span><span class="p">.</span><span class="n">property</span> <span class="o">=</span> <span class="p">[</span><span class="n">self</span> <span class="n">animationProperty</span><span class="p">];</span>
-</span><span class='line'>  <span class="n">animation</span><span class="p">.</span><span class="n">fromValue</span> <span class="o">=</span> <span class="err">@</span><span class="p">(</span><span class="mi">0</span><span class="p">);</span>
-</span><span class='line'>  <span class="n">animation</span><span class="p">.</span><span class="n">toValue</span> <span class="o">=</span> <span class="err">@</span><span class="p">(</span><span class="mi">8000</span><span class="p">);</span>
-</span><span class='line'>  <span class="n">animation</span><span class="p">.</span><span class="n">duration</span> <span class="o">=</span> <span class="mf">2.0f</span><span class="p">;</span>
-</span><span class='line'>  <span class="c1">//增加animation 时间函数控制</span>
-</span><span class='line'>  <span class="n">animation</span><span class="p">.</span><span class="n">timingFunction</span> <span class="o">=</span> <span class="p">[</span><span class="n">CAMediaTimingFunction</span> <span class="nl">functionWithName:</span><span class="n">kCAMediaTimingFunctionEaseOut</span><span class="p">];</span>
-</span></code></pre></td></tr></table></div></figure></notextile></div></p>
+<p>{% codeblock lang:objc %}
+  POPBasicAnimation *animation = [POPBasicAnimation animation];
+  animation.property = [self animationProperty];
+  animation.fromValue = @(0);
+  animation.toValue = @(8000);
+  animation.duration = 2.0f;
+  //增加animation 时间函数控制
+  animation.timingFunction = [CAMediaTimingFunction functionWithName:kCAMediaTimingFunctionEaseOut];
+{% endcodeblock %}</p>
 
 <p>增加了一行代码，但是发现这个动画变化的时间还是不能让我们满意，一开始变化的还是慢，后面变化的又有点快。</p>
 
@@ -1238,41 +968,35 @@ facebook提供了一个非常赞的topic-<a href="http://www.youtube.com/playlis
 
 <p>动画的实现其实很简单，抛开性能，就是一个个不断变化的图片，对于我们这个简单的动画，就是一个从0到8000的变化，如果x轴为时间，y轴为大小。我们第一个动画其实是这个样子</p>
 
-<p><span class='caption-wrapper'><img class='caption' src='/images/pop-demo-3.png' width='' height='' title=''><span class='caption-text'></span></span></p>
+<p>{% imgcap /images/pop-demo-3.png %}</p>
 
 <p>easeout好一点是这样子</p>
 
-<p><span class='caption-wrapper'><img class='caption' src='/images/pop-demo-1.png' width='' height='' title=''><span class='caption-text'></span></span></p>
+<p>{% imgcap /images/pop-demo-1.png %}</p>
 
 <p>我们其实希望是这个样子</p>
 
-<p><span class='caption-wrapper'><img class='caption' src='/images/pop-demo-2.png' width='' height='' title=''><span class='caption-text'></span></span></p>
+<p>{% imgcap /images/pop-demo-2.png %}</p>
 
 <p>CAMediaTimingFunction 实际上还提供另一个方法，不是很常用，但是却非常适合我们现在的场景。
-<div class='bogus-wrapper'><notextile><figure class='code'> <div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
-</pre></td><td class='code'><pre><code class='objc'><span class='line'><span class="k">+</span> <span class="p">(</span><span class="kt">id</span><span class="p">)</span><span class="nf">functionWithControlPoints:</span><span class="p">(</span><span class="kt">float</span><span class="p">)</span><span class="nv">c1x</span> <span class="o">:</span><span class="p">(</span><span class="kt">float</span><span class="p">)</span><span class="n">c1y</span> <span class="o">:</span><span class="p">(</span><span class="kt">float</span><span class="p">)</span><span class="n">c2x</span> <span class="o">:</span><span class="p">(</span><span class="kt">float</span><span class="p">)</span><span class="n">c2y</span><span class="p">;</span>
-</span></code></pre></td></tr></table></div></figure></notextile></div></p>
+{% codeblock lang:objc %}
++ (id)functionWithControlPoints:(float)c1x :(float)c1y :(float)c2x :(float)c2y;
+{% endcodeblock %}</p>
 
 <p>这里我们描述的“时间函数”其实就是<a href="http://en.wikipedia.org/wiki/B%C3%A9zier_curve">贝塞尔曲线</a>。</p>
 
 <p>这里推荐一个<a href="http://cubic-bezier.com/">网站</a>可以很直观的生成贝塞尔曲线。
 这里我们得到了参数（.12,1,.11,.94）。</p>
 
-<p><div class='bogus-wrapper'><notextile><figure class='code'> <div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
-<span class='line-number'>2</span>
-<span class='line-number'>3</span>
-<span class='line-number'>4</span>
-<span class='line-number'>5</span>
-<span class='line-number'>6</span>
-<span class='line-number'>7</span>
-</pre></td><td class='code'><pre><code class='objc'><span class='line'>  <span class="n">POPBasicAnimation</span> <span class="o">*</span><span class="n">animation</span> <span class="o">=</span> <span class="p">[</span><span class="n">POPBasicAnimation</span> <span class="n">animation</span><span class="p">];</span>
-</span><span class='line'>  <span class="n">animation</span><span class="p">.</span><span class="n">property</span> <span class="o">=</span> <span class="p">[</span><span class="n">self</span> <span class="n">animationProperty</span><span class="p">];</span>
-</span><span class='line'>  <span class="n">animation</span><span class="p">.</span><span class="n">fromValue</span> <span class="o">=</span> <span class="err">@</span><span class="p">(</span><span class="mi">0</span><span class="p">);</span>
-</span><span class='line'>  <span class="n">animation</span><span class="p">.</span><span class="n">toValue</span> <span class="o">=</span> <span class="err">@</span><span class="p">(</span><span class="mi">8000</span><span class="p">);</span>
-</span><span class='line'>  <span class="n">animation</span><span class="p">.</span><span class="n">duration</span> <span class="o">=</span> <span class="mf">2.0f</span><span class="p">;</span>
-</span><span class='line'>  <span class="c1">//修改animation 时间函数</span>
-</span><span class='line'>  <span class="n">animation</span><span class="p">.</span><span class="n">timingFunction</span> <span class="o">=</span> <span class="p">[</span><span class="n">CAMediaTimingFunction</span> <span class="nl">functionWithControlPoints:</span><span class="mf">0.12</span> <span class="o">:</span><span class="mi">1</span><span class="o">:</span> <span class="mf">0.11</span><span class="o">:</span><span class="mf">0.94</span><span class="p">];</span>
-</span></code></pre></td></tr></table></div></figure></notextile></div></p>
+<p>{% codeblock lang:objc %}
+  POPBasicAnimation *animation = [POPBasicAnimation animation];
+  animation.property = [self animationProperty];
+  animation.fromValue = @(0);
+  animation.toValue = @(8000);
+  animation.duration = 2.0f;
+  //修改animation 时间函数
+  animation.timingFunction = [CAMediaTimingFunction functionWithControlPoints:0.12 :1: 0.11:0.94];
+{% endcodeblock %}</p>
 
 <p>这里我们已经得到我们想要的动画效果了。而且看上去相当不错。</p>
 
@@ -1281,82 +1005,48 @@ facebook提供了一个非常赞的topic-<a href="http://www.youtube.com/playlis
 <p>如何才能有更好的效果呢？动画的速度，时间，等等参数都会影响到动画的效果是不是会完美。如何判断动画效果是否足够好。的确是个很难的问题。而解决这个问题的关键，不在于工程师自己折腾，应该找专业的人来做。而这时<a href="https://github.com/facebook/Tweaks">Tweaks</a>就闪亮登场了。</p>
 
 <p>初始化的时候创建2个tweak用来动态调整时间和目标数值。并修改一下默认的UIWindow为<code>FBTweakShakeWindow</code>
-<div class='bogus-wrapper'><notextile><figure class='code'> <div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
-<span class='line-number'>2</span>
-<span class='line-number'>3</span>
-<span class='line-number'>4</span>
-<span class='line-number'>5</span>
-<span class='line-number'>6</span>
-<span class='line-number'>7</span>
-<span class='line-number'>8</span>
-<span class='line-number'>9</span>
-<span class='line-number'>10</span>
-<span class='line-number'>11</span>
-<span class='line-number'>12</span>
-<span class='line-number'>13</span>
-<span class='line-number'>14</span>
-<span class='line-number'>15</span>
-<span class='line-number'>16</span>
-<span class='line-number'>17</span>
-<span class='line-number'>18</span>
-</pre></td><td class='code'><pre><code class='objc'><span class='line'>  <span class="c1">//reset window</span>
-</span><span class='line'>  <span class="n">self</span><span class="p">.</span><span class="n">window</span> <span class="o">=</span> <span class="p">[[</span><span class="n">FBTweakShakeWindow</span> <span class="n">alloc</span><span class="p">]</span> <span class="nl">initWithFrame:</span><span class="p">[[</span><span class="n">UIScreen</span> <span class="n">mainScreen</span><span class="p">]</span> <span class="n">bounds</span><span class="p">]];</span><span class="o">&lt;/</span><span class="n">p</span><span class="o">&gt;</span>
-</span><span class='line'>
-</span><span class='line'><span class="o">&lt;</span><span class="n">p</span><span class="o">&gt;</span>  <span class="n">FBTweak</span> <span class="o">*</span><span class="n">animationDurationTweak</span> <span class="o">=&lt;/</span><span class="n">p</span><span class="o">&gt;</span>
-</span><span class='line'>
-</span><span class='line'><span class="o">&lt;</span><span class="n">pre</span><span class="o">&gt;&lt;</span><span class="n">code</span><span class="o">&gt;</span>  <span class="n">FBTweakInline</span><span class="p">(</span><span class="s">@&quot;Content&quot;</span><span class="p">,</span> <span class="s">@&quot;Animation&quot;</span><span class="p">,</span> <span class="s">@&quot;Duration&quot;</span><span class="p">,</span> <span class="mf">2.0</span><span class="p">,</span> <span class="mf">1.0</span><span class="p">,</span> <span class="mf">3.0</span><span class="p">);</span>
-</span><span class='line'><span class="o">&lt;/</span><span class="n">code</span><span class="o">&gt;&lt;/</span><span class="n">pre</span><span class="o">&gt;</span>
-</span><span class='line'>
-</span><span class='line'><span class="o">&lt;</span><span class="n">p</span><span class="o">&gt;</span>  <span class="n">animationDurationTweak</span><span class="p">.</span><span class="n">stepValue</span> <span class="o">=</span> <span class="p">[</span><span class="n">NSNumber</span> <span class="nl">numberWithFloat:</span><span class="mf">0.1f</span><span class="p">];</span>
-</span><span class='line'>  <span class="n">animationDurationTweak</span><span class="p">.</span><span class="n">precisionValue</span> <span class="o">=</span> <span class="p">[</span><span class="n">NSNumber</span> <span class="nl">numberWithFloat:</span><span class="mf">3.0f</span><span class="p">];</span><span class="o">&lt;/</span><span class="n">p</span><span class="o">&gt;</span>
-</span><span class='line'>
-</span><span class='line'><span class="o">&lt;</span><span class="n">p</span><span class="o">&gt;</span>  <span class="n">FBTweak</span> <span class="o">*</span><span class="n">animationToValueTweak</span> <span class="o">=&lt;/</span><span class="n">p</span><span class="o">&gt;</span>
-</span><span class='line'>
-</span><span class='line'><span class="o">&lt;</span><span class="n">pre</span><span class="o">&gt;&lt;</span><span class="n">code</span><span class="o">&gt;</span>  <span class="n">FBTweakInline</span><span class="p">(</span><span class="s">@&quot;Content&quot;</span><span class="p">,</span> <span class="s">@&quot;Animation&quot;</span><span class="p">,</span> <span class="s">@&quot;ToValue&quot;</span><span class="p">,</span> <span class="mi">8000</span><span class="p">,</span> <span class="mi">1000</span><span class="p">,</span> <span class="mi">10000</span><span class="p">);</span>
-</span><span class='line'><span class="o">&lt;/</span><span class="n">code</span><span class="o">&gt;&lt;/</span><span class="n">pre</span><span class="o">&gt;</span>
-</span><span class='line'>
-</span><span class='line'><span class="o">&lt;</span><span class="n">p</span><span class="o">&gt;</span>  <span class="n">animationToValueTweak</span><span class="p">.</span><span class="n">stepValue</span> <span class="o">=</span> <span class="err">@</span><span class="p">(</span><span class="mi">1000</span><span class="p">);</span>
-</span><span class='line'>  <span class="n">animationDurationTweak</span><span class="p">.</span><span class="n">precisionValue</span> <span class="o">=</span> <span class="p">[</span><span class="n">NSNumber</span> <span class="nl">numberWithFloat:</span><span class="mf">1.0f</span><span class="p">];</span>
-</span></code></pre></td></tr></table></div></figure></notextile></div></p>
+{% codeblock lang:objc %}
+  //reset window
+  self.window = [[FBTweakShakeWindow alloc] initWithFrame:[[UIScreen mainScreen] bounds]];</p>
+
+<p>  FBTweak *animationDurationTweak =</p>
+
+<pre><code>  FBTweakInline(@"Content", @"Animation", @"Duration", 2.0, 1.0, 3.0);
+</code></pre>
+
+<p>  animationDurationTweak.stepValue = [NSNumber numberWithFloat:0.1f];
+  animationDurationTweak.precisionValue = [NSNumber numberWithFloat:3.0f];</p>
+
+<p>  FBTweak *animationToValueTweak =</p>
+
+<pre><code>  FBTweakInline(@"Content", @"Animation", @"ToValue", 8000, 1000, 10000);
+</code></pre>
+
+<p>  animationToValueTweak.stepValue = @(1000);
+  animationDurationTweak.precisionValue = [NSNumber numberWithFloat:1.0f];
+{% endcodeblock %}</p>
 
 <p>再把原来创建动画的代码稍微修正一下
-<div class='bogus-wrapper'><notextile><figure class='code'> <div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
-<span class='line-number'>2</span>
-<span class='line-number'>3</span>
-<span class='line-number'>4</span>
-<span class='line-number'>5</span>
-<span class='line-number'>6</span>
-<span class='line-number'>7</span>
-<span class='line-number'>8</span>
-<span class='line-number'>9</span>
-<span class='line-number'>10</span>
-<span class='line-number'>11</span>
-<span class='line-number'>12</span>
-<span class='line-number'>13</span>
-<span class='line-number'>14</span>
-<span class='line-number'>15</span>
-<span class='line-number'>16</span>
-<span class='line-number'>17</span>
-<span class='line-number'>18</span>
-</pre></td><td class='code'><pre><code class='objc'><span class='line'>  <span class="n">POPBasicAnimation</span> <span class="o">*</span><span class="n">animation</span> <span class="o">=</span> <span class="p">[</span><span class="n">POPBasicAnimation</span> <span class="n">animation</span><span class="p">];</span>
-</span><span class='line'>  <span class="n">animation</span><span class="p">.</span><span class="n">property</span> <span class="o">=</span> <span class="p">[</span><span class="n">self</span> <span class="n">animationProperty</span><span class="p">];</span>
-</span><span class='line'>  <span class="n">animation</span><span class="p">.</span><span class="n">timingFunction</span> <span class="o">=</span> <span class="p">[</span><span class="n">CAMediaTimingFunction</span> <span class="nl">functionWithControlPoints:</span><span class="mf">0.12</span> <span class="o">:</span><span class="mi">1</span><span class="o">:</span> <span class="mf">0.11</span><span class="o">:</span><span class="mf">0.94</span><span class="p">];</span>
-</span><span class='line'>  <span class="n">animation</span><span class="p">.</span><span class="n">fromValue</span> <span class="o">=</span> <span class="err">@</span><span class="p">(</span><span class="mi">0</span><span class="p">);</span><span class="o">&lt;/</span><span class="n">p</span><span class="o">&gt;</span>
-</span><span class='line'>
-</span><span class='line'><span class="o">&lt;</span><span class="n">p</span><span class="o">&gt;</span>  <span class="kt">double</span> <span class="n">animationDuration</span> <span class="o">=&lt;/</span><span class="n">p</span><span class="o">&gt;</span>
-</span><span class='line'>
-</span><span class='line'><span class="o">&lt;</span><span class="n">pre</span><span class="o">&gt;&lt;</span><span class="n">code</span><span class="o">&gt;</span>  <span class="n">FBTweakValue</span><span class="p">(</span><span class="s">@&quot;Content&quot;</span><span class="p">,</span> <span class="s">@&quot;Animation&quot;</span><span class="p">,</span> <span class="s">@&quot;Duration&quot;</span><span class="p">,</span> <span class="mf">2.0</span><span class="p">);</span>
-</span><span class='line'><span class="o">&lt;/</span><span class="n">code</span><span class="o">&gt;&lt;/</span><span class="n">pre</span><span class="o">&gt;</span>
-</span><span class='line'>
-</span><span class='line'><span class="o">&lt;</span><span class="n">p</span><span class="o">&gt;</span>  <span class="n">animation</span><span class="p">.</span><span class="n">toValue</span> <span class="o">=&lt;/</span><span class="n">p</span><span class="o">&gt;</span>
-</span><span class='line'>
-</span><span class='line'><span class="o">&lt;</span><span class="n">pre</span><span class="o">&gt;&lt;</span><span class="n">code</span><span class="o">&gt;</span>  <span class="err">@</span><span class="p">(</span><span class="n">FBTweakValue</span><span class="p">(</span><span class="s">@&quot;Content&quot;</span><span class="p">,</span> <span class="s">@&quot;Animation&quot;</span><span class="p">,</span> <span class="s">@&quot;ToValue&quot;</span><span class="p">,</span> <span class="mi">8000</span><span class="p">));</span>
-</span><span class='line'><span class="o">&lt;/</span><span class="n">code</span><span class="o">&gt;&lt;/</span><span class="n">pre</span><span class="o">&gt;</span>
-</span><span class='line'>
-</span><span class='line'><span class="o">&lt;</span><span class="n">p</span><span class="o">&gt;</span>  <span class="n">animation</span><span class="p">.</span><span class="n">duration</span> <span class="o">=</span> <span class="n">animationDuration</span><span class="p">;</span><span class="o">&lt;/</span><span class="n">p</span><span class="o">&gt;</span>
-</span><span class='line'>
-</span><span class='line'><span class="o">&lt;</span><span class="n">p</span><span class="o">&gt;</span>  <span class="p">[</span><span class="n">self</span><span class="p">.</span><span class="n">numberLabel</span> <span class="nl">pop_addAnimation:</span><span class="n">animation</span> <span class="nl">forKey:</span><span class="s">@&quot;numberLabelAnimation&quot;</span><span class="p">];</span>
-</span></code></pre></td></tr></table></div></figure></notextile></div></p>
+{% codeblock lang:objc %}
+  POPBasicAnimation *animation = [POPBasicAnimation animation];
+  animation.property = [self animationProperty];
+  animation.timingFunction = [CAMediaTimingFunction functionWithControlPoints:0.12 :1: 0.11:0.94];
+  animation.fromValue = @(0);</p>
+
+<p>  double animationDuration =</p>
+
+<pre><code>  FBTweakValue(@"Content", @"Animation", @"Duration", 2.0);
+</code></pre>
+
+<p>  animation.toValue =</p>
+
+<pre><code>  @(FBTweakValue(@"Content", @"Animation", @"ToValue", 8000));
+</code></pre>
+
+<p>  animation.duration = animationDuration;</p>
+
+<p>  [self.numberLabel pop_addAnimation:animation forKey:@"numberLabelAnimation"];
+{% endcodeblock %}</p>
 
 <p>这样当摇晃手机的时候就可以动态调整动画参数了，最后数据会保存在plist ：）。</p>
 

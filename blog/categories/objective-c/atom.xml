@@ -4,7 +4,7 @@
   <title><![CDATA[Category: Objective-C | 不会开机的男孩]]></title>
   <link href="http://studentdeng.github.com/blog/categories/objective-c/atom.xml" rel="self"/>
   <link href="http://studentdeng.github.com/"/>
-  <updated>2015-01-02T21:46:46+08:00</updated>
+  <updated>2015-04-08T22:16:34+08:00</updated>
   <id>http://studentdeng.github.com/</id>
   <author>
     <name><![CDATA[studentdeng]]></name>
@@ -794,7 +794,9 @@ NSLog (@"%s", (char *)selector);  //print message
 </code></pre>
 
 <p>　　
-<div class='notebox'><p><strong>Note: </strong>这里之所以说粗鲁，是因为，这个的定义和object runtime 的具体实现息息相关，未来很可能改变，而这些定义也是没有文档化的，后面还会详细介绍SEL的具体实现。因为这里有不少为了提高效率而做的优化。</p></div></p>
+{% notebox %}
+这里之所以说粗鲁，是因为，这个的定义和object runtime 的具体实现息息相关，未来很可能改变，而这些定义也是没有文档化的，后面还会详细介绍SEL的具体实现。因为这里有不少为了提高效率而做的优化。
+{% endnotebox %}</p>
 
 <p>不知道有没有人惊呼这个问题。特别是如果之前从事C++的家伙们。传统的C++ 编译器在处理函数上，为了支持函数重载。使用了一种函数别名的方式如</p>
 
@@ -833,7 +835,9 @@ NSLog (@"%s", (char *)selector);  //print message
 </code></pre>
 
 <p>　　
-<div class='notebox'><p><strong>Note: </strong>这样的函数命名的好坏，只能说是因人而异的，站在我的角度来讲。object c 的这种命名实在是太臃肿了，这种冗长的名字让人感到作呕而没有任何美感。当然，这样的命名的确可以避免很多的错误，比如因C++ 函数重载而引起的人为上的小失误，而且减少了理解函数的负担。总有利弊，需要平衡：P，不过，我还是不喜欢object c 编译器，因为他彻底阻挡了你的想法，至于为什么这样设计，我的理解是为了runtime，在这里为了性能而做了妥协，具体原因，后面再讲。</p></div></p>
+{% notebox %}
+这样的函数命名的好坏，只能说是因人而异的，站在我的角度来讲。object c 的这种命名实在是太臃肿了，这种冗长的名字让人感到作呕而没有任何美感。当然，这样的命名的确可以避免很多的错误，比如因C++ 函数重载而引起的人为上的小失误，而且减少了理解函数的负担。总有利弊，需要平衡：P，不过，我还是不喜欢object c 编译器，因为他彻底阻挡了你的想法，至于为什么这样设计，我的理解是为了runtime，在这里为了性能而做了妥协，具体原因，后面再讲。
+{% endnotebox %}</p>
 
 <pre><code>popup our brain stack
 </code></pre>

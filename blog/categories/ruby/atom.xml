@@ -4,7 +4,7 @@
   <title><![CDATA[Category: ruby | 不会开机的男孩]]></title>
   <link href="http://studentdeng.github.com/blog/categories/ruby/atom.xml" rel="self"/>
   <link href="http://studentdeng.github.com/"/>
-  <updated>2015-01-02T21:46:46+08:00</updated>
+  <updated>2015-04-08T22:16:34+08:00</updated>
   <id>http://studentdeng.github.com/</id>
   <author>
     <name><![CDATA[studentdeng]]></name>
@@ -20,85 +20,53 @@
     <id>http://studentdeng.github.com/blog/2014/04/04/octopress-notebox-plugin</id>
     <content type="html"><![CDATA[<p>用了这么长时间的<a href="http://octopress.org/">octopress</a>总该扩展一点点事情了，在Blogging的时候，总有一些信息是需要被特殊标记的，但是我并不喜欢简单的加粗或是斜体。类似的东西在Apple Document中有很多</p>
 
-<p><span class='caption-wrapper'><img class='caption' src='/images/octopress_notebox_plugin1.png' width='' height='' title='Apple Document Note sample'><span class='caption-text'>Apple Document Note sample</span></span></p>
+<p>{% imgcap /images/octopress_notebox_plugin1.png Apple Document Note sample%}</p>
 
 <p>这里我就把这个功能照搬到octopress中了。</p>
 
 <p>1.在<em>plugins</em>目录创建一个notebox.rb</p>
 
-<p><div class='bogus-wrapper'><notextile><figure class='code'> <div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
-<span class='line-number'>2</span>
-<span class='line-number'>3</span>
-<span class='line-number'>4</span>
-<span class='line-number'>5</span>
-<span class='line-number'>6</span>
-<span class='line-number'>7</span>
-<span class='line-number'>8</span>
-<span class='line-number'>9</span>
-<span class='line-number'>10</span>
-<span class='line-number'>11</span>
-<span class='line-number'>12</span>
-<span class='line-number'>13</span>
-<span class='line-number'>14</span>
-<span class='line-number'>15</span>
-<span class='line-number'>16</span>
-<span class='line-number'>17</span>
-<span class='line-number'>18</span>
-<span class='line-number'>19</span>
-<span class='line-number'>20</span>
-<span class='line-number'>21</span>
-<span class='line-number'>22</span>
-<span class='line-number'>23</span>
-<span class='line-number'>24</span>
-<span class='line-number'>25</span>
-</pre></td><td class='code'><pre><code class='Ruby'><span class='line'><span class="k">module</span> <span class="nn">Jekyll</span>
-</span><span class='line'>  <span class="k">class</span> <span class="nc">Notebox</span> <span class="o">&amp;</span><span class="n">lt</span><span class="p">;</span> <span class="ss">Liquid</span><span class="p">:</span><span class="ss">:Block</span><span class="o">&lt;</span><span class="sr">/p&gt;</span>
-</span><span class='line'>
-</span><span class='line'><span class="sr">&lt;pre&gt;&lt;code&gt;def initialize(name, id, tokens)</span>
-</span><span class='line'><span class="sr">  super</span>
-</span><span class='line'><span class="sr">  @id = id</span>
-</span><span class='line'><span class="sr">end</span>
-</span><span class='line'>
-</span><span class='line'><span class="sr">def render(context)</span>
-</span><span class='line'><span class="sr">  stressText = paragraphize(super)</span>
-</span><span class='line'>
-</span><span class='line'><span class="sr">  source = &quot;&amp;lt;div class=&#39;notebox&#39;&amp;gt;&amp;lt;p&amp;gt;&amp;lt;strong&amp;gt;Note: &amp;lt;/s</span><span class="n">trong</span><span class="o">&amp;</span><span class="n">gt</span><span class="p">;</span><span class="c1">#{stressText}&amp;lt;/p&amp;gt;&amp;lt;/div&amp;gt;&quot;</span>
-</span><span class='line'>  <span class="n">source</span>
-</span><span class='line'>
-</span><span class='line'><span class="k">end</span>
-</span><span class='line'>
-</span><span class='line'><span class="k">def</span> <span class="nf">paragraphize</span><span class="p">(</span><span class="n">input</span><span class="p">)</span>
-</span><span class='line'>  <span class="s2">&quot;</span><span class="si">#{</span><span class="n">input</span><span class="o">.</span><span class="n">lstrip</span><span class="o">.</span><span class="n">rstrip</span><span class="o">.</span><span class="n">gsub</span><span class="p">(</span><span class="sr">/\n\n/</span><span class="p">,</span> <span class="s1">&#39;&amp;lt;/p&amp;gt;&amp;lt;p&amp;gt;&#39;</span><span class="p">)</span><span class="o">.</span><span class="n">gsub</span><span class="p">(</span><span class="sr">/\n/</span><span class="p">,</span> <span class="s1">&#39;&amp;lt;br/&amp;gt;&#39;</span><span class="p">)</span><span class="si">}</span><span class="s2">&quot;</span>
-</span><span class='line'><span class="k">end</span>
-</span><span class='line'><span class="o">&lt;</span><span class="sr">/code&gt;&lt;/</span><span class="n">pre</span><span class="o">&gt;</span>
-</span><span class='line'>
-</span><span class='line'><span class="o">&lt;</span><span class="nb">p</span><span class="o">&gt;</span>  <span class="k">end</span>
-</span><span class='line'><span class="k">end</span><span class="o">&lt;</span><span class="sr">/p&gt;</span>
-</span><span class='line'>
-</span><span class='line'><span class="sr">&lt;p&gt;Liquid::Template.register_tag(&#39;notebox&#39;, Jekyll::Notebox)</span>
-</span></code></pre></td></tr></table></div></figure></notextile></div></p>
+<p>{% codeblock lang:Ruby %}
+module Jekyll
+  class Notebox &lt; Liquid::Block</p>
+
+<pre><code>def initialize(name, id, tokens)
+  super
+  @id = id
+end
+
+def render(context)
+  stressText = paragraphize(super)
+
+  source = "&lt;div class='notebox'&gt;&lt;p&gt;&lt;strong&gt;Note: &lt;/strong&gt;#{stressText}&lt;/p&gt;&lt;/div&gt;"
+  source
+
+end
+
+def paragraphize(input)
+  "#{input.lstrip.rstrip.gsub(/\n\n/, '&lt;/p&gt;&lt;p&gt;').gsub(/\n/, '&lt;br/&gt;')}"
+end
+</code></pre>
+
+<p>  end
+end</p>
+
+<p>Liquid::Template.register_tag('notebox', Jekyll::Notebox)
+{% endcodeblock %}</p>
 
 <p>2.在<em>sass/custom</em>中的文件<em>_stype.scss</em>的最后添加下面的代码</p>
 
-<p><div class='bogus-wrapper'><notextile><figure class='code'> <div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
-<span class='line-number'>2</span>
-<span class='line-number'>3</span>
-<span class='line-number'>4</span>
-<span class='line-number'>5</span>
-<span class='line-number'>6</span>
-<span class='line-number'>7</span>
-<span class='line-number'>8</span>
-<span class='line-number'>9</span>
-</pre></td><td class='code'><pre><code class='css'><span class='line'><span class="nc">.notebox</span> <span class="p">{</span>
-</span><span class='line'>  <span class="k">border</span><span class="o">:</span><span class="m">1px</span><span class="p">;</span>
-</span><span class='line'>  <span class="k">border-style</span><span class="o">:</span> <span class="k">solid</span><span class="p">;</span>
-</span><span class='line'>  <span class="k">border-color</span><span class="o">:</span> <span class="m">#5088C5</span><span class="p">;</span>
-</span><span class='line'>  <span class="k">background-color</span><span class="o">:</span><span class="m">#fff</span><span class="p">;</span>
-</span><span class='line'>  <span class="k">margin</span><span class="o">:.</span><span class="m">75em</span> <span class="m">0</span> <span class="m">1.5em</span><span class="p">;</span>
-</span><span class='line'>  <span class="k">padding</span><span class="o">:.</span><span class="m">75em</span> <span class="m">.667em</span> <span class="m">.75em</span> <span class="m">.750em</span><span class="p">;</span>
-</span><span class='line'>  <span class="k">text-align</span><span class="o">:</span><span class="k">left</span><span class="p">;</span>
-</span><span class='line'><span class="p">}</span>
-</span></code></pre></td></tr></table></div></figure></notextile></div></p>
+<p>{% codeblock lang:css %}
+.notebox {
+  border:1px;
+  border-style: solid;
+  border-color: #5088C5;
+  background-color:#fff;
+  margin:.75em 0 1.5em;
+  padding:.75em .667em .75em .750em;
+  text-align:left;
+}
+{% endcodeblock %}</p>
 
 <p>3.markdown的语法（<em>因为格式问题写成了％，需要替换成%</em>）</p>
 
@@ -109,7 +77,9 @@ the text to note
 
 <p>效果</p>
 
-<p><div class='notebox'><p><strong>Note: </strong>text</p></div></p>
+<p>{% notebox %}
+text
+{% endnotebox %}</p>
 ]]></content>
   </entry>
   
